@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="StayPilot.Api/StayPilot.Api.csproj" Id="b91d8911-111a-46cb-a7d0-2a3603b14e50" />
+  <Project Path="StayPilot.Application/StayPilot.Application.csproj" Id="a278f319-1a11-4678-aa22-fe255798297f" />
+  <Project Path="StayPilot.Domain/StayPilot.Domain.csproj" Id="ee59923e-ab65-4e08-a951-00e8ff819959" />
+  <Project Path="StayPilot.Infrastructure/StayPilot.Infrastructure.csproj" Id="f9bae085-27eb-4d05-8682-cd0f5917a073" />
+  <Project Path="StayPilot.UnitTests/StayPilot.UnitTests.csproj" Id="2ff38d2a-3be8-40b8-958b-be32a446788f" />
+</Solution>
