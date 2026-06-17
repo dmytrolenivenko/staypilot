@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/StayPilot/.vs/ProjectEvaluation
+/StayPilot/.vs/StayPilot.slnx/FileContentIndex
+/StayPilot/.vs/StayPilot.slnx/DesignTimeBuild
+/StayPilot/.vs/StayPilot.slnx/v18
