@@ -1,4 +1,6 @@
 ﻿
+using StayPilot.Domain.Enums;
+
 namespace StayPilot.Domain.Entities
 {
     public class PropertyListing
@@ -7,9 +9,9 @@ namespace StayPilot.Domain.Entities
 
         public int MarketAreaId {  get; set; }
 
-        public int PropertyType { get; set; }
+        public PropertyType PropertyType { get; set; }
 
-        public int Typology { get; set; }
+        public Typology Typology { get; set; }
 
         public string SourceName { get; set; } = string.Empty;
 
@@ -25,7 +27,7 @@ namespace StayPilot.Domain.Entities
 
         public bool? HasElevator { get; set; }
 
-        public int Condition { get; set; }
+        public PropertyCondition Condition { get; set; }
 
         public int? ConstructionYear { get; set; }
 
