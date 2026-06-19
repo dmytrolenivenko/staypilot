@@ -1,37 +1,41 @@
-﻿
-using StayPilot.Domain.Enums;
+﻿using StayPilot.Domain.Enums;
 
 namespace StayPilot.Domain.Entities
 {
-    public class PropertyListing
+    public class OwnedProperty
     {
         public int Id { get; set; }
 
-        public int MarketAreaId {  get; set; }
+        public string Name { get; set; } = string.Empty;
+
+        public int MarketAreaId { get; set; }
+        public MarketArea MarketArea { get; set; } = null!;
 
         public PropertyType PropertyType { get; set; }
 
         public Typology Typology { get; set; }
 
-        public string SourceName { get; set; } = string.Empty;
+        public decimal PurchasePrice { get; set; }
 
-        public string SourceUrl { get; set;} = string.Empty;
+        public DateTime PurchaseDate { get; set; }
+
+        public decimal? RenovationInvestment { get; set; }
 
         public int AreaM2 { get; set; }
 
-        public int Bathrooms { get; set; }
+        public int? Bathrooms { get; set; }
 
-        public int? Floor {  get; set; }
+        public int? Floor { get; set; }
 
         public int? TotalFloors { get; set; }
 
         public bool? HasElevator { get; set; }
 
-        public PropertyCondition Condition { get; set; }
-
         public int? ConstructionYear { get; set; }
 
         public int? RenovationYear { get; set; }
+
+        public PropertyCondition Condition { get; set; }
 
         public int BalconyCount { get; set; }
 
@@ -47,9 +51,9 @@ namespace StayPilot.Domain.Entities
 
         public bool HasSeaView { get; set; }
 
-        public bool HasCityView {  get; set; } 
+        public bool HasCityView { get; set; }
 
-        public int? DistanceToBeachMeters {  get; set; }
+        public int? DistanceToBeachMeters { get; set; }
 
         public decimal? Latitude { get; set; }
 
@@ -59,10 +63,8 @@ namespace StayPilot.Domain.Entities
 
         public string? Notes { get; set; }
 
-        public DateTime CreatedAtUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAtUtc { get; set; }
-
-        public List<ListingSnapshot> ListingSnapshots { get; set; } = new();
     }
 }
