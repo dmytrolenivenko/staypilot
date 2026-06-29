@@ -27,6 +27,8 @@ namespace StayPilot.Domain.Entities
 
         public bool? HasElevator { get; set; }
 
+        public bool? HasAirConditioning { get; set; }
+
         public PropertyCondition Condition { get; set; }
 
         public int? ConstructionYear { get; set; }
