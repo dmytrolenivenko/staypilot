@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using StayPilot.Application.Interfaces;
 using StayPilot.Infrastructure.Persistence;
+using StayPilot.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,8 @@ builder.Services.AddSwaggerGen();
 
 // DbContext registration   
 builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
 
 var app = builder.Build();
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StayPilot.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using StayPilot.Infrastructure.Persistence;
 namespace StayPilot.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(StayPilotDbContext))]
-    partial class StayPilotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260630144455_SeedBeachMarkers")]
+    partial class SeedBeachMarkers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

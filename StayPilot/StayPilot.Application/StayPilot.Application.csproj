@@ -10,4 +10,8 @@
     <ProjectReference Include="..\StayPilot.Domain\StayPilot.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Contracts\Request\" />
+  </ItemGroup>
+
 </Project>

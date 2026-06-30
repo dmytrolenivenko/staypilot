@@ -9,6 +9,8 @@ namespace StayPilot.Domain.Entities
 
         public int MarketAreaId {  get; set; }
 
+        public MarketArea MarketArea { get; set; } = null!;
+
         public PropertyType PropertyType { get; set; }
 
         public Typology Typology { get; set; }
@@ -55,6 +57,8 @@ namespace StayPilot.Domain.Entities
 
         public int? NearestBeachMarkerId { get; set; }
 
+        public BeachMarker? NearestBeachMarker { get; set; }
+
         public string? NearestBeachName { get; set; }
 
         public string? DistanceToBeachMethod { get; set; }
@@ -72,8 +76,5 @@ namespace StayPilot.Domain.Entities
         public DateTime? UpdatedAtUtc { get; set; }
 
         public List<ListingSnapshot> ListingSnapshots { get; set; } = new();
-
-        public BeachMarker? NearestBeachMarker { get; set; }
-
     }
 }

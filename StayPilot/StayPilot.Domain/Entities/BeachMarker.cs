@@ -15,6 +15,6 @@ namespace StayPilot.Domain.Entities
 
         public string? Region { get; set; }
 
-        public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAtUtc { get; set; }
     }
 }
