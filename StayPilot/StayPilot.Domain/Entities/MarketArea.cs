@@ -17,7 +17,7 @@ namespace StayPilot.Domain.Entities
 
         public string? Notes { get; set; }
 
-        public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAtUtc { get; set; }
 
         public List<PropertyListing> Properties { get; set; } = new ();
     }

@@ -53,6 +53,12 @@ namespace StayPilot.Domain.Entities
 
         public int? DistanceToBeachMeters {  get; set; }
 
+        public int? NearestBeachMarkerId { get; set; }
+
+        public string? NearestBeachName { get; set; }
+
+        public string? DistanceToBeachMethod { get; set; }
+
         public decimal? Latitude { get; set; }
 
         public decimal? Longitude { get; set; }
@@ -66,5 +72,8 @@ namespace StayPilot.Domain.Entities
         public DateTime? UpdatedAtUtc { get; set; }
 
         public List<ListingSnapshot> ListingSnapshots { get; set; } = new();
+
+        public BeachMarker? NearestBeachMarker { get; set; }
+
     }
 }

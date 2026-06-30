@@ -9,6 +9,8 @@ namespace StayPilot.Domain.Entities
         public int PropertyListingId { get; set; }
 
         public decimal Price { get; set; }
+
+        public decimal PricePerM2 { get; set; }
         
         public ListingStatus Status { get; set; }
 
