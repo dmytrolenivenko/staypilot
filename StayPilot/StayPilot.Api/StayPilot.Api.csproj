@@ -22,4 +22,8 @@
     <ProjectReference Include="..\StayPilot.Infrastructure\StayPilot.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="NewFolder\" />
+  </ItemGroup>
+
 </Project>
