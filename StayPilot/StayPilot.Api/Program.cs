@@ -17,7 +17,9 @@ builder.Services.AddSwaggerGen();
 // DbContext registration   
 builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// DI for services
 builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
+builder.Services.AddScoped<IPropertyListingService, PropertyListingService>();
 
 var app = builder.Build();
 

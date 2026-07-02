@@ -16,6 +16,7 @@ namespace StayPilot.Infrastructure.Services
         public async Task<List<MarketAreaResponse>> GetAllMarketAreasAsync()
         {
             var marketAreas = await _context.MarketAreas.ToListAsync();
+
             return marketAreas.Select(x => new MarketAreaResponse
             {
                 Id = x.Id,
