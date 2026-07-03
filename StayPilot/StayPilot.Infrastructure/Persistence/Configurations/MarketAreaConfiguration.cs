@@ -9,7 +9,7 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<MarketArea> builder)
         {
-            // Added defaul CreatedAy
+            // Added defaul CreatedBy
             builder.Property(x => x.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
 
             // All the MarketAreas from Idealista

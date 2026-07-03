@@ -1,17 +1,19 @@
 ﻿
 using StayPilot.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace StayPilot.Application.Contracts.Request
 {
     public class PropertyListingRequest
     {
-        public string Country { get; set; } = "Portugal";
+        public int? MarketAreaId { get; set; }
+        public string? Country { get; set; } = "Portugal";
 
-        public string District { get; set; } = string.Empty;
+        public string? District { get; set; } = string.Empty;
 
-        public string Municipality { get; set; } = string.Empty;
+        public string? Municipality { get; set; } = string.Empty;
 
-        public string Town { get; set; } = string.Empty;
+        public string? Town { get; set; } = string.Empty;
 
         public string? Zone { get; set; }
 
@@ -21,6 +23,7 @@ namespace StayPilot.Application.Contracts.Request
 
         public string SourceName { get; set; } = string.Empty;
 
+        [Required(AllowEmptyStrings = false)]
         public string SourceUrl { get; set; } = string.Empty;
 
         public int AreaM2 { get; set; }

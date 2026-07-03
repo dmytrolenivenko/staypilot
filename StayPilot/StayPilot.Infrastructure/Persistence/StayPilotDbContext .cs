@@ -34,6 +34,8 @@ namespace StayPilot.Infrastructure.Persistence
 
             modelBuilder.Entity<PropertyListing>().Property(x => x.AreaM2).HasPrecision(10, 2);
 
+            modelBuilder.Entity<PropertyListing>().Property(x => x.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
+
             modelBuilder.Entity<ListingSnapshot>().Property(x => x.Price).HasPrecision(18, 2);
 
             modelBuilder.Entity<ListingSnapshot>().Property(x => x.PricePerM2).HasPrecision(18, 2);

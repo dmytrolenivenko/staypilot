@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Interfaces;
 using StayPilot.Infrastructure.Persistence;
@@ -21,7 +23,30 @@ builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServe
 builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
 builder.Services.AddScoped<IPropertyListingService, PropertyListingService>();
 
+// Adding ProblemDetails middleware to handle exceptions and return standardized error responses
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
+
+// Wrapping the app with AddProblemDetails middleware to handle exceptions and return standardized error responses
+app.UseExceptionHandler(exceptionHandlerApp =>
+{
+    exceptionHandlerApp.Run(async context =>
+    {
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        context.Response.StatusCode = exception switch
+        {
+            InvalidOperationException => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError,
+        };
+        await Results.Problem(
+            
+            title: exception?.Message ?? "An unexpected error occurred.",
+            statusCode: context.Response.StatusCode
+            ).ExecuteAsync(context);
+    });
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

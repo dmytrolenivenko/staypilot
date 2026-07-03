@@ -5,7 +5,6 @@ using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces;
 using StayPilot.Domain.Entities;
 using StayPilot.Infrastructure.Persistence;
-using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Text;
 
@@ -22,13 +21,14 @@ namespace StayPilot.Infrastructure.Services
 
         public async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing)
         {
-            var marketAreaId = await GetMarketId(_context, propertyListing);
+            // Map the request to the entity and set the MarketAreaId
+            var property = MapToEntity(propertyListing);
+            property.MarketAreaId = propertyListing.MarketAreaId.HasValue ? propertyListing.MarketAreaId.Value : await GetMarketId(_context, propertyListing);
 
+            // Get the closest beach to the property listing
             var closesBeach = await GetTheClosestBeach(_context, propertyListing);
 
-            var property = MapToEntity(propertyListing);
-            property.MarketAreaId = marketAreaId;
-
+            // If a closest beach is found, calculate the distance and set the relevant properties
             if (closesBeach is not null)
             {
                 var distanceToBeachMeters = CalculateDistanceMeters(
@@ -40,7 +40,7 @@ namespace StayPilot.Infrastructure.Services
                 property.NearestBeachName = closesBeach.Name;
                 property.NearestBeachMarkerId = closesBeach.Id;
                 property.DistanceToBeachMeters = (int)distanceToBeachMeters;
-                property.DistanceToBeachMethod = "Haversine";
+                property.DistanceToBeachMethod = "osm_center_point";
             } 
 
             _context.PropertyListings.Add(property);
@@ -91,6 +91,9 @@ namespace StayPilot.Infrastructure.Services
                 HasAirConditioning = property.HasAirConditioning,
                 Condition = property.Condition,
                 ConstructionYear = property.ConstructionYear,
+                DistanceToBeachMeters = property.DistanceToBeachMeters,
+                NearestBeachMarkerId = property.NearestBeachMarkerId,
+                NearestBeachName = property.NearestBeachName,
                 RenovationYear = property.RenovationYear,
                 BalconyCount = property.BalconyCount,
                 HasTerrace = property.HasTerrace,
