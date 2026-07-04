@@ -11,3 +11,10 @@ AddProperty/.vs/AddProperty.slnx/FileContentIndex/27f36f28-1a74-4f65-8459-9f211e
 AddProperty/.vs/AddProperty.slnx/FileContentIndex/94423e9c-25df-4e6a-9902-04780029f32d.vsidx
 AddProperty/.vs/AddProperty.slnx/FileContentIndex/dd00c43f-e5c6-4adc-92e3-a80cd0671404.vsidx
 AddProperty/.vs/AddProperty.slnx/v18/.suo
+
+# Build output
+**/bin/
+**/obj/
+
+# Visual Studio
+**/.vs/

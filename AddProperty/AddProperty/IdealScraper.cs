@@ -1,22 +1,22 @@
 using Microsoft.Playwright;
+using System.Globalization;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace AddProperty;
 
 /// <summary>
 /// Scrapes Idealista Faro/Algarve apartment listings using Playwright in headed mode.
 /// Designed for personal-scale use: one browser, human-paced, persistent login.
+/// All CSS selectors, regexes, and text markers live in <see cref="IdealistaLocators"/> —
+/// update that file when Idealista's markup or wording changes, not this one.
 /// </summary>
 public class IdealScraper
 {
-    private const string SearchUrlBase = "https://www.idealista.pt/comprar-casas/faro-distrito/com-apartamentos";
-    private const string SearchUrlSuffix = "?ordem=atualizado-asc";
-
     private readonly string _jsonFolder;
     private readonly string _profilePath;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly Random _rng = new();
+    private HashSet<string> _alreadyScrapedUrls = new(StringComparer.OrdinalIgnoreCase);
 
     public IdealScraper(string jsonFolder, JsonSerializerOptions jsonOptions)
     {
@@ -36,6 +36,9 @@ public class IdealScraper
     {
         int startPage = GetNextPageNumber();
         var savedFiles = new List<string>();
+
+        _alreadyScrapedUrls = LoadAlreadyScrapedSourceUrls();
+        Logger.LogInformation($"Loaded {_alreadyScrapedUrls.Count} previously-scraped listing URL(s) for dedup.");
 
         Logger.LogInformation($"Starting scrape from page {startPage}, {pageCount} page(s).");
         Logger.LogInformation($"Browser profile: {_profilePath}");
@@ -89,17 +92,23 @@ public class IdealScraper
 
     private async Task<string?> ScrapeSearchPageAsync(IPage page, int pageNum)
     {
-        // Build URL: page 1 has no /pagina-N/ segment
-        var url = pageNum == 1
-            ? $"{SearchUrlBase}/{SearchUrlSuffix}"
-            : $"{SearchUrlBase}/pagina-{pageNum}{SearchUrlSuffix}";
+        var url = IdealistaLocators.SearchUrl.ForPage(pageNum);
 
         await page.GotoAsync(url, new PageGotoOptions
         {
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 30_000
         });
-        await Task.Delay(3000);
+
+        try
+        {
+            await page.WaitForSelectorAsync(IdealistaLocators.SearchResults.ListingLinks,
+                new PageWaitForSelectorOptions { Timeout = 15_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Might be blocked, or genuinely no listings on this page — both checked below.
+        }
 
         if (await IsBlockedAsync(page))
         {
@@ -112,7 +121,7 @@ public class IdealScraper
 
         // Collect listing URLs
         var listingUrls = await page.EvaluateAsync<string[]>(
-            "Array.from(document.querySelectorAll('article.item a.item-link')).map(a => a.href)");
+            $"Array.from(document.querySelectorAll('{IdealistaLocators.SearchResults.ListingLinks}')).map(a => a.href)");
 
         if (listingUrls.Length == 0)
         {
@@ -124,9 +133,18 @@ public class IdealScraper
 
         var kept = new List<PropertyListingRequest>();
         var excluded = new List<(string url, string reason)>();
+        var skipped = 0;
 
         foreach (var listingUrl in listingUrls)
         {
+            var normalizedUrl = NormalizeUrl(listingUrl);
+            if (_alreadyScrapedUrls.Contains(normalizedUrl))
+            {
+                skipped++;
+                Logger.LogInformation($"  SKIPPED (already scraped): {listingUrl}");
+                continue;
+            }
+
             await RandomDelay(15_000, 40_000); // Human-paced between listings
 
             try
@@ -141,6 +159,7 @@ public class IdealScraper
                 else if (listing != null)
                 {
                     kept.Add(listing);
+                    _alreadyScrapedUrls.Add(normalizedUrl);
                     Logger.LogInformation($"  KEPT: {listingUrl} — {listing.Typology} {listing.AreaM2}m² {listing.ListingSnapshot.Price}€");
                 }
             }
@@ -161,7 +180,7 @@ public class IdealScraper
 
         // Report
         Logger.LogInformation($"\nPage {pageNum} summary:");
-        Logger.LogInformation($"  Total: {listingUrls.Length}, Kept: {kept.Count}, Excluded: {excluded.Count}");
+        Logger.LogInformation($"  Total: {listingUrls.Length}, Kept: {kept.Count}, Excluded: {excluded.Count}, Skipped (dedup): {skipped}");
         Logger.LogInformation($"  Saved: {filePath}");
         foreach (var (eUrl, reason) in excluded)
             Logger.LogInformation($"  - {eUrl}: {reason}");
@@ -178,7 +197,16 @@ public class IdealScraper
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 30_000
         });
-        await Task.Delay(2000);
+
+        try
+        {
+            await page.WaitForSelectorAsync(IdealistaLocators.Listing.Title,
+                new PageWaitForSelectorOptions { Timeout = 10_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Might be blocked — checked below.
+        }
 
         if (await IsBlockedAsync(page))
         {
@@ -187,30 +215,31 @@ public class IdealScraper
         }
 
         // Extract all data in one JS call
-        var raw = await page.EvaluateAsync<JsonElement>(@"(() => {
-            const price = document.querySelector('.info-data-price')?.innerText || '';
-            const title = document.querySelector('h1')?.innerText || '';
-            const location = document.querySelector('.main-info__title-minor')?.innerText || '';
-            const ref = document.querySelector('.txt-ref')?.innerText || '';
+        var raw = await page.EvaluateAsync<JsonElement>($@"(() => {{
+            const price = document.querySelector('{IdealistaLocators.Listing.Price}')?.innerText || '';
+            const title = document.querySelector('{IdealistaLocators.Listing.Title}')?.innerText || '';
+            const location = document.querySelector('{IdealistaLocators.Listing.Location}')?.innerText || '';
+            const ref = document.querySelector('{IdealistaLocators.Listing.Reference}')?.innerText || '';
             const features = Array.from(
-                document.querySelectorAll('.details-property-feature-one li, .details-property_features li')
+                document.querySelectorAll('{IdealistaLocators.Listing.Features}')
             ).map(li => li.innerText);
-            const desc = document.querySelector('.comment')?.innerText
-                      || document.querySelector('.adCommentsLanguage')?.innerText || '';
-            const energy = document.querySelector('[class*=""icon-energy""]');
-            const energyClass = energy
-                ? (energy.className.match(/icon-energy-(\w)/)?.[1] || '').toUpperCase()
-                : '';
-            return { price, title, location, ref, features, desc, energyClass };
-        })()");
+            const desc = document.querySelector('{IdealistaLocators.Listing.DescriptionPrimary}')?.innerText
+                      || document.querySelector('{IdealistaLocators.Listing.DescriptionFallback}')?.innerText || '';
+            const energy = document.querySelector('{IdealistaLocators.Listing.EnergyIcon}');
+            const energyClassName = energy ? energy.className : '';
+            return {{ price, title, location, ref, features, desc, energyClassName }};
+        }})()");
 
         var title = raw.GetProperty("title").GetString() ?? "";
         var location = raw.GetProperty("location").GetString() ?? "";
         var desc = raw.GetProperty("desc").GetString() ?? "";
         var priceText = raw.GetProperty("price").GetString() ?? "";
         var refCode = raw.GetProperty("ref").GetString() ?? "";
-        var energyClass = raw.GetProperty("energyClass").GetString();
+        var energyClassName = raw.GetProperty("energyClassName").GetString() ?? "";
         var features = raw.GetProperty("features").EnumerateArray().Select(f => f.GetString() ?? "").ToList();
+
+        var energyMatch = IdealistaLocators.Listing.EnergyClassPattern.Match(energyClassName);
+        var energyClass = energyMatch.Success ? energyMatch.Groups[1].Value.ToUpperInvariant() : null;
 
         // ── Exclusion checks ──
         var exclusion = CheckExclusion(title, desc, features);
@@ -220,7 +249,7 @@ public class IdealScraper
         var listing = new PropertyListingRequest
         {
             SourceName = "Idealista",
-            SourceUrl = url.TrimEnd('/') + "/",
+            SourceUrl = NormalizeUrl(url),
             Country = "Portugal",
             District = "Faro",
             PropertyType = PropertyType.Apartment,
@@ -232,19 +261,30 @@ public class IdealScraper
         };
 
         // Price
-        var priceMatch = Regex.Match(priceText, @"[\d.]+");
+        var priceMatch = IdealistaLocators.MiscPatterns.Price.Match(priceText);
         if (priceMatch.Success)
         {
-            var priceVal = decimal.Parse(priceMatch.Value.Replace(".", ""));
+            var priceVal = decimal.Parse(priceMatch.Value.Replace(".", ""), CultureInfo.InvariantCulture);
             listing.ListingSnapshot.Price = priceVal;
         }
 
         // Location (e.g. "Torralta, Lagos Cidade, Lagos")
         var locParts = location.Split(',').Select(s => s.Trim()).ToList();
-        if (locParts.Count >= 1) listing.Town = locParts[0];
-        if (locParts.Count >= 2) listing.Zone = locParts.Count > 2 ? locParts[0] : null;
         listing.Municipality = locParts.LastOrDefault() ?? "";
-        if (locParts.Count >= 2) listing.Town = locParts.Count > 2 ? locParts[1] : locParts[0];
+        if (locParts.Count >= 3)
+        {
+            listing.Zone = locParts[0];
+            listing.Town = locParts[1];
+        }
+        else if (locParts.Count == 2)
+        {
+            listing.Zone = null;
+            listing.Town = locParts[0];
+        }
+        else if (locParts.Count == 1)
+        {
+            listing.Town = locParts[0];
+        }
 
         // Features parsing
         ParseFeatures(listing, features);
@@ -258,7 +298,7 @@ public class IdealScraper
             listing.ListingSnapshot.PricePerM2 = Math.Round(listing.ListingSnapshot.Price / listing.AreaM2, 2);
 
         // Energy certificate
-        if (!string.IsNullOrEmpty(energyClass) && energyClass.Length == 1)
+        if (!string.IsNullOrEmpty(energyClass))
             listing.EnergyCertificate = energyClass;
 
         // Condition from text (photos can't be analyzed programmatically)
@@ -266,8 +306,8 @@ public class IdealScraper
 
         // Furnished detection
         if (!listing.IsFurnished)
-            listing.IsFurnished = desc.Contains("mobilado", StringComparison.OrdinalIgnoreCase)
-                               || desc.Contains("equipado", StringComparison.OrdinalIgnoreCase);
+            listing.IsFurnished = desc.Contains(IdealistaLocators.FeatureKeywords.Furnished, StringComparison.OrdinalIgnoreCase)
+                               || desc.Contains(IdealistaLocators.FeatureKeywords.Equipped, StringComparison.OrdinalIgnoreCase);
 
         // Strip contact info from description for rawText
         var cleanDesc = StripContactInfo(desc);
@@ -295,9 +335,9 @@ public class IdealScraper
         if (listing.Bathrooms == 0) notes.Add("bathrooms not stated, defaulted to 0");
 
         // Beach distance mention
-        var beachMatch = Regex.Match(desc, @"(\d+)\s*(?:m|metros?)\s*(?:da|do|das?)\s*praia", RegexOptions.IgnoreCase);
+        var beachMatch = IdealistaLocators.MiscPatterns.BeachDistanceMeters.Match(desc);
         if (beachMatch.Success) notes.Add($"Beach distance mentioned: {beachMatch.Value}");
-        var beachMinMatch = Regex.Match(desc, @"(\d+)\s*min.*praia", RegexOptions.IgnoreCase);
+        var beachMinMatch = IdealistaLocators.MiscPatterns.BeachDistanceMinutes.Match(desc);
         if (beachMinMatch.Success) notes.Add($"Beach distance mentioned: {beachMinMatch.Value}");
 
         listing.Notes = string.Join(" | ", notes);
@@ -326,28 +366,24 @@ public class IdealScraper
         // Wait for map tiles and footer links to render
         await Task.Delay(10_000);
 
-        // Check if approximate location
+        // Check if the advertiser opted out of showing an exact pin
         var isApproximate = await page.EvaluateAsync<bool>(
-            "document.body.innerText.includes('não indicou a localização exata')");
+            $"document.body.innerText.includes('{IdealistaLocators.Map.ApproximateLocationMarker}')");
 
-        // Extract coordinates from "Report a map error" link
-        var coords = await page.EvaluateAsync<JsonElement>(@"(() => {
-            const a = Array.from(document.querySelectorAll('a'))
-                .find(x => /report a map error/i.test(x.textContent || ''));
-            if (a) {
-                const m = a.href.match(/@(-?\d{1,3}\.\d{3,8}),(-?\d{1,3}\.\d{3,8})/);
-                if (m) return { lat: m[1], lng: m[2] };
-            }
-            return { lat: null, lng: null };
-        })()");
+        // Pull coordinates from any Google Maps link's href (always encodes "@lat,lng"),
+        // independent of that link's visible text or the page's rendering language.
+        var hrefs = await page.EvaluateAsync<string[]>(
+            "Array.from(document.querySelectorAll('a')).map(a => a.href)");
 
-        var latStr = coords.GetProperty("lat").GetString();
-        var lngStr = coords.GetProperty("lng").GetString();
+        var coordinateHref = hrefs.FirstOrDefault(href =>
+            IdealistaLocators.Map.GoogleMapsHrefPattern.IsMatch(href) &&
+            IdealistaLocators.Map.CoordinatesInHrefPattern.IsMatch(href));
 
-        if (latStr != null && lngStr != null)
+        if (coordinateHref != null)
         {
-            var lat = decimal.Parse(latStr, System.Globalization.CultureInfo.InvariantCulture);
-            var lng = decimal.Parse(lngStr, System.Globalization.CultureInfo.InvariantCulture);
+            var match = IdealistaLocators.Map.CoordinatesInHrefPattern.Match(coordinateHref);
+            var lat = decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+            var lng = decimal.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
             var precision = isApproximate ? "approximate" : "exact";
             return (Math.Round(lat, 6), Math.Round(lng, 6), precision);
         }
@@ -364,9 +400,9 @@ public class IdealScraper
             var f = feat.Trim();
 
             // Area: prefer úteis over bruta
-            var areaUteis = Regex.Match(f, @"(\d+)\s*m²\s*úteis");
-            var areaBruta = Regex.Match(f, @"(\d+)\s*m²\s*área\s*bruta");
-            var areaPlain = Regex.Match(f, @"(\d+)\s*m²");
+            var areaUteis = IdealistaLocators.FeaturePatterns.AreaUteis.Match(f);
+            var areaBruta = IdealistaLocators.FeaturePatterns.AreaBruta.Match(f);
+            var areaPlain = IdealistaLocators.FeaturePatterns.AreaPlain.Match(f);
             if (areaUteis.Success)
                 listing.AreaM2 = int.Parse(areaUteis.Groups[1].Value);
             else if (listing.AreaM2 == 0 && areaBruta.Success)
@@ -375,50 +411,53 @@ public class IdealScraper
                 listing.AreaM2 = int.Parse(areaPlain.Groups[1].Value);
 
             // Typology
-            var typoMatch = Regex.Match(f, @"^T(\d+)$");
+            var typoMatch = IdealistaLocators.FeaturePatterns.Typology.Match(f);
             if (typoMatch.Success)
             {
                 var tNum = int.Parse(typoMatch.Groups[1].Value);
                 if (Enum.IsDefined(typeof(Typology), tNum))
                     listing.Typology = (Typology)tNum;
             }
-            if (f.Contains("Estúdio", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.Studio, StringComparison.OrdinalIgnoreCase))
                 listing.Typology = Typology.T0;
 
             // Bathrooms
-            var bathMatch = Regex.Match(f, @"(\d+)\s*casa", RegexOptions.IgnoreCase);
+            var bathMatch = IdealistaLocators.FeaturePatterns.Bathrooms.Match(f);
             if (bathMatch.Success)
                 listing.Bathrooms = int.Parse(bathMatch.Groups[1].Value);
 
             // Floor
-            var floorMatch = Regex.Match(f, @"(\d+)º\s*andar", RegexOptions.IgnoreCase);
+            var floorMatch = IdealistaLocators.FeaturePatterns.Floor.Match(f);
             if (floorMatch.Success)
                 listing.Floor = int.Parse(floorMatch.Groups[1].Value);
-            if (f.Contains("Rés-do-chão", StringComparison.OrdinalIgnoreCase) || f.Contains("R/C", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.GroundFloor, StringComparison.OrdinalIgnoreCase)
+                || f.Contains(IdealistaLocators.FeatureKeywords.GroundFloorAlt, StringComparison.OrdinalIgnoreCase))
                 listing.Floor = 0;
 
             // Boolean features
-            if (f.Contains("elevador", StringComparison.OrdinalIgnoreCase))
-                listing.HasElevator = !f.Contains("sem", StringComparison.OrdinalIgnoreCase);
-            if (f.Contains("Ar condicionado", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.Elevator, StringComparison.OrdinalIgnoreCase))
+                listing.HasElevator = !f.Contains(IdealistaLocators.FeatureKeywords.Negation, StringComparison.OrdinalIgnoreCase);
+            if (f.Contains(IdealistaLocators.FeatureKeywords.AirConditioning, StringComparison.OrdinalIgnoreCase))
                 listing.HasAirConditioning = true;
-            if (f.Contains("Piscina", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.SwimmingPool, StringComparison.OrdinalIgnoreCase))
                 listing.HasSwimmingPool = true;
-            if (f.Contains("garagem", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.Garage, StringComparison.OrdinalIgnoreCase))
                 listing.HasGarage = true;
-            if (f.Contains("estacionamento", StringComparison.OrdinalIgnoreCase) || f.Contains("parking", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.Parking, StringComparison.OrdinalIgnoreCase)
+                || f.Contains(IdealistaLocators.FeatureKeywords.ParkingAlt, StringComparison.OrdinalIgnoreCase))
                 listing.HasParking = true;
-            if (f.Contains("Terraço", StringComparison.OrdinalIgnoreCase) || f.Contains("Terraço", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.Terrace, StringComparison.OrdinalIgnoreCase))
                 listing.HasTerrace = true;
-            if (f.Contains("Varanda", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.Balcony, StringComparison.OrdinalIgnoreCase))
                 listing.BalconyCount = Math.Max(listing.BalconyCount, 1);
-            if (f.Contains("mobilado", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.Furnished, StringComparison.OrdinalIgnoreCase))
                 listing.IsFurnished = true;
-            if (f.Contains("vista mar", StringComparison.OrdinalIgnoreCase) || f.Contains("vista de mar", StringComparison.OrdinalIgnoreCase))
+            if (f.Contains(IdealistaLocators.FeatureKeywords.SeaView, StringComparison.OrdinalIgnoreCase)
+                || f.Contains(IdealistaLocators.FeatureKeywords.SeaViewAlt, StringComparison.OrdinalIgnoreCase))
                 listing.HasSeaView = true;
 
             // Construction year
-            var yearMatch = Regex.Match(f, @"Construído em (\d{4})", RegexOptions.IgnoreCase);
+            var yearMatch = IdealistaLocators.FeaturePatterns.ConstructionYear.Match(f);
             if (yearMatch.Success)
                 listing.ConstructionYear = int.Parse(yearMatch.Groups[1].Value);
         }
@@ -428,15 +467,15 @@ public class IdealScraper
     {
         var all = string.Join(" ", features) + " " + description;
 
-        if (Regex.IsMatch(all, @"nova construção|empreendimento.*terminado|obra nova", RegexOptions.IgnoreCase))
+        if (IdealistaLocators.ConditionPatterns.NewBuild.IsMatch(all))
             return PropertyCondition.NewBuild;
-        if (Regex.IsMatch(all, @"remodelad|renovad|reabilitad", RegexOptions.IgnoreCase))
+        if (IdealistaLocators.ConditionPatterns.Renovated.IsMatch(all))
             return PropertyCondition.Renovated;
-        if (Regex.IsMatch(all, @"bom estado", RegexOptions.IgnoreCase))
+        if (IdealistaLocators.ConditionPatterns.Good.IsMatch(all))
             return PropertyCondition.Good;
-        if (Regex.IsMatch(all, @"segunda mão|usado", RegexOptions.IgnoreCase))
+        if (IdealistaLocators.ConditionPatterns.Used.IsMatch(all))
             return PropertyCondition.Used;
-        if (Regex.IsMatch(all, @"para recuperar|para remodelar|a necessitar|ruína", RegexOptions.IgnoreCase))
+        if (IdealistaLocators.ConditionPatterns.NeedsRenovation.IsMatch(all))
             return PropertyCondition.NeedsRenovation;
 
         return PropertyCondition.Unknown;
@@ -449,31 +488,32 @@ public class IdealScraper
         var all = (title + " " + description + " " + string.Join(" ", features)).ToLowerInvariant();
 
         // Not an apartment
-        if (Regex.IsMatch(all, @"\b(moradia|quinta|terreno|garagem|loja|escritório|armazém)\b"))
+        if (IdealistaLocators.ExclusionPatterns.NotApartment.IsMatch(all))
             return "Not an apartment";
 
         // Trespass / business transfer
-        if (all.Contains("trespasse"))
+        if (all.Contains(IdealistaLocators.ExclusionKeywords.Trespasse))
             return "Trespasse (business transfer)";
 
         // Usufruct / bare ownership
-        if (Regex.IsMatch(all, @"usufruto|nua-propriedade|nua propriedade|direito de superfície"))
+        if (IdealistaLocators.ExclusionPatterns.Usufruct.IsMatch(all))
             return "Usufruct or bare ownership";
 
         // Timeshare / fractional
-        if (Regex.IsMatch(all, @"multipropriedade|direito de habitação periódica|semanas? por ano"))
+        if (IdealistaLocators.ExclusionPatterns.Timeshare.IsMatch(all))
             return "Timeshare or fractional ownership";
 
         // Auction / judicial
-        if (Regex.IsMatch(all, @"leilão|venda judicial|penhora|insolvência|hasta pública"))
+        if (IdealistaLocators.ExclusionPatterns.Auction.IsMatch(all))
             return "Auction or judicial sale";
 
         // Rental mislisted
-        if (Regex.IsMatch(all, @"\barrendamento\b|\bpara arrendar\b") && !all.Contains("arrendamento turístico"))
+        if (IdealistaLocators.ExclusionPatterns.RentalListing.IsMatch(all)
+            && !all.Contains(IdealistaLocators.FeatureKeywords.TouristRentalException))
             return "Rental listing, not a sale";
 
         // Tenanted / occupied
-        if (Regex.IsMatch(all, @"\barrendado\b|com inquilino|com contrato em vigor|\bocupado\b"))
+        if (IdealistaLocators.ExclusionPatterns.Tenanted.IsMatch(all))
             return "Tenanted or occupied";
 
         return null;
@@ -491,7 +531,7 @@ public class IdealScraper
 
         foreach (var file in files)
         {
-            var match = Regex.Match(Path.GetFileName(file), @"page(\d+)");
+            var match = IdealistaLocators.MiscPatterns.PageNumberInFilename.Match(Path.GetFileName(file));
             if (match.Success)
             {
                 var pageNum = int.Parse(match.Groups[1].Value);
@@ -501,6 +541,41 @@ public class IdealScraper
 
         return maxPage + 1;
     }
+
+    /// <summary>
+    /// Reads every JSON file already saved in the output folder and collects their SourceUrls,
+    /// so a listing already captured in a prior run is skipped instead of re-visited and
+    /// re-written — pagination on Idealista shifts daily ("atualizado-asc"), so the same
+    /// listing can reappear on a different page number across runs.
+    /// </summary>
+    private HashSet<string> LoadAlreadyScrapedSourceUrls()
+    {
+        var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!Directory.Exists(_jsonFolder))
+            return urls;
+
+        foreach (var file in Directory.GetFiles(_jsonFolder, "*.json"))
+        {
+            try
+            {
+                var json = File.ReadAllText(file);
+                var listings = JsonSerializer.Deserialize<List<PropertyListingRequest>>(json, _jsonOptions);
+                if (listings == null) continue;
+
+                foreach (var listing in listings)
+                    if (!string.IsNullOrEmpty(listing.SourceUrl))
+                        urls.Add(NormalizeUrl(listing.SourceUrl));
+            }
+            catch (JsonException ex)
+            {
+                Logger.LogError($"Could not parse existing file {Path.GetFileName(file)} for dedup: {ex.Message}");
+            }
+        }
+
+        return urls;
+    }
+
+    private static string NormalizeUrl(string url) => url.TrimEnd('/') + "/";
 
     private async Task RandomDelay(int minMs, int maxMs)
     {
@@ -512,18 +587,14 @@ public class IdealScraper
     private async Task<bool> IsBlockedAsync(IPage page)
     {
         var content = await page.ContentAsync();
-        return content.Contains("captcha", StringComparison.OrdinalIgnoreCase)
-            || content.Contains("datadome", StringComparison.OrdinalIgnoreCase)
-            || content.Contains("blocked", StringComparison.OrdinalIgnoreCase)
-            || content.Contains("verify you are human", StringComparison.OrdinalIgnoreCase);
+        return IdealistaLocators.BlockMarkers.Values.Any(marker =>
+            content.Contains(marker, StringComparison.OrdinalIgnoreCase));
     }
 
     private string StripContactInfo(string text)
     {
-        // Remove phone numbers
-        var result = Regex.Replace(text, @"\+?\d[\d\s-]{7,}\d", "[REDACTED]");
-        // Remove email addresses
-        result = Regex.Replace(result, @"[\w.+-]+@[\w-]+\.[\w.-]+", "[REDACTED]");
+        var result = IdealistaLocators.MiscPatterns.PhoneNumber.Replace(text, "[REDACTED]");
+        result = IdealistaLocators.MiscPatterns.Email.Replace(result, "[REDACTED]");
         return result;
     }
 }
