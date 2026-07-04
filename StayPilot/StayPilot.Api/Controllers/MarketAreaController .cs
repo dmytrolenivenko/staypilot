@@ -6,11 +6,11 @@ namespace StayPilot.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class MarketAreasController : ControllerBase
+    public class MarketAreaController : ControllerBase
     {
         private readonly IMarketAreaService _service;
 
-        public MarketAreasController(IMarketAreaService service)
+        public MarketAreaController(IMarketAreaService service)
         {
             _service = service;
         }

@@ -3,9 +3,9 @@ namespace StayPilot.Domain.Enums
 {
     public enum PropertyType
     {
-        Apartment = 0,
-        Villa = 1,
-        House = 2,
-        Land = 3
+        Apartment = 1,
+        Villa = 2,
+        House = 3,
+        Land = 4
     }
 }

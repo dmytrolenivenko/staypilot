@@ -3,11 +3,11 @@ namespace StayPilot.Domain.Enums
 {
     public enum PropertyCondition
     {
-        Unknown = 0,
-        NeedsRenovation = 1,
-        Used = 2,
-        Good = 3,
-        Renovated = 4,
-        NewBuild = 5
+        Unknown = 1,
+        NeedsRenovation = 2,
+        Used = 3,
+        Good = 4,
+        Renovated = 5,
+        NewBuild = 6
     }
 }

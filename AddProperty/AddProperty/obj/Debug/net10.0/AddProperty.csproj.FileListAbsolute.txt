@@ -1,0 +1,15 @@
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.GeneratedMSBuildEditorConfig.editorconfig
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.AssemblyInfoInputs.cache
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.AssemblyInfo.cs
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.csproj.CoreCompileInputs.cache
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.sourcelink.json
+C:\repos\staypilot\AddProperty\AddProperty\bin\Debug\net10.0\AddProperty.exe
+C:\repos\staypilot\AddProperty\AddProperty\bin\Debug\net10.0\AddProperty.deps.json
+C:\repos\staypilot\AddProperty\AddProperty\bin\Debug\net10.0\AddProperty.runtimeconfig.json
+C:\repos\staypilot\AddProperty\AddProperty\bin\Debug\net10.0\AddProperty.dll
+C:\repos\staypilot\AddProperty\AddProperty\bin\Debug\net10.0\AddProperty.pdb
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.dll
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\refint\AddProperty.dll
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.pdb
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\AddProperty.genruntimeconfig.cache
+C:\repos\staypilot\AddProperty\AddProperty\obj\Debug\net10.0\ref\AddProperty.dll

@@ -70,5 +70,9 @@ namespace StayPilot.Application.Contracts.Response
         public decimal? Longitude { get; set; }
 
         public string? EnergyCertificate { get; set; }
+
+        public string? Notes { get; set; }
+
+        public ListingSnapshotResponse? ListingSnapshot { get; set; }
     }
 }

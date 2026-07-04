@@ -2,13 +2,16 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Interfaces;
+using StayPilot.Application.Services;
 using StayPilot.Infrastructure.Persistence;
-using StayPilot.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
 
 // Tells the app to discover all your endpoints so Swagger knows about them.
 builder.Services.AddEndpointsApiExplorer();

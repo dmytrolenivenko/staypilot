@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\StayPilot.Application\StayPilot.Application.csproj" />
     <ProjectReference Include="..\StayPilot.Domain\StayPilot.Domain.csproj" />
   </ItemGroup>
 

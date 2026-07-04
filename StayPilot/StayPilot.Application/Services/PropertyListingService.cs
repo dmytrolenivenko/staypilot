@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
@@ -8,7 +8,7 @@ using StayPilot.Infrastructure.Persistence;
 using System.Globalization;
 using System.Text;
 
-namespace StayPilot.Infrastructure.Services
+namespace StayPilot.Application.Services
 {
     public class PropertyListingService : IPropertyListingService
     {
@@ -21,9 +21,21 @@ namespace StayPilot.Infrastructure.Services
 
         public async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing)
         {
+            // Firstly, check if the property listing already exists based on the SourceUrl
+            var propertyExist = await _context.PropertyListings.Include(x => x.MarketArea).FirstOrDefaultAsync(x => x.SourceUrl == propertyListing.SourceUrl);
+
+            if (propertyExist != null)
+            {
+                return MapToResponse(propertyExist);
+            }
+
             // Map the request to the entity and set the MarketAreaId
             var property = MapToEntity(propertyListing);
             property.MarketAreaId = propertyListing.MarketAreaId.HasValue ? propertyListing.MarketAreaId.Value : await GetMarketId(_context, propertyListing);
+
+            // Extract the ListingSnapshot from the request
+            var listingSnapshot = MapToEntitySnapshot(propertyListing.ListingSnapshot);
+            listingSnapshot.PropertyListing = property;
 
             // Get the closest beach to the property listing
             var closesBeach = await GetTheClosestBeach(_context, propertyListing);
@@ -32,21 +44,22 @@ namespace StayPilot.Infrastructure.Services
             if (closesBeach is not null)
             {
                 var distanceToBeachMeters = CalculateDistanceMeters(
-                    (double)propertyListing.Latitude.Value, 
-                    (double)propertyListing.Longitude.Value, 
-                    (double)closesBeach.Latitude, 
+                    (double)propertyListing.Latitude.Value,
+                    (double)propertyListing.Longitude.Value,
+                    (double)closesBeach.Latitude,
                     (double)closesBeach.Longitude);
 
                 property.NearestBeachName = closesBeach.Name;
                 property.NearestBeachMarkerId = closesBeach.Id;
                 property.DistanceToBeachMeters = (int)distanceToBeachMeters;
                 property.DistanceToBeachMethod = "osm_center_point";
-            } 
+            }
 
-            _context.PropertyListings.Add(property);
+            await _context.PropertyListings.AddAsync(property);
+            await _context.ListingSnapshots.AddAsync(listingSnapshot);
             await _context.SaveChangesAsync();
             await _context.Entry(property).Reference(p => p.MarketArea).LoadAsync();
-            return MapToResponse(property);
+            return MapToResponse(property, listingSnapshot);
         }
 
         public async Task<PropertyListingResponse?> GetPropertyListingByIdAsync(int propertyId)
@@ -57,13 +70,13 @@ namespace StayPilot.Infrastructure.Services
 
             if (property == null)
             {
-                return null;
+                throw new InvalidOperationException("Property not found");
             }
 
             return MapToResponse(property);
         }
 
-        private PropertyListingResponse MapToResponse(PropertyListing property)
+        private PropertyListingResponse MapToResponse(PropertyListing property, ListingSnapshot listingSnapshot = null)
         {
 
             if (property.MarketArea == null)
@@ -105,7 +118,9 @@ namespace StayPilot.Infrastructure.Services
                 HasCityView = property.HasCityView,
                 Latitude = property.Latitude,
                 Longitude = property.Longitude,
-                EnergyCertificate = property.EnergyCertificate
+                EnergyCertificate = property.EnergyCertificate,
+                Notes = property.Notes,
+                ListingSnapshot = listingSnapshot is not null ? MapEntityToResponse(listingSnapshot) : null
             };
         }
 
@@ -136,7 +151,32 @@ namespace StayPilot.Infrastructure.Services
                 HasCityView = property.HasCityView,
                 Latitude = property.Latitude,
                 Longitude = property.Longitude,
-                EnergyCertificate = property.EnergyCertificate
+                EnergyCertificate = property.EnergyCertificate,
+                Notes = property.Notes,
+            };
+        }
+
+        public ListingSnapshot MapToEntitySnapshot(ListingSnapshotRequest snapshot)
+        {
+            return new ListingSnapshot
+            {
+                Price = snapshot.Price,
+                PricePerM2 = snapshot.PricePerM2,
+                Status = snapshot.Status,
+                SnapshotDateUtc = snapshot.SnapshotDateUtc
+            };
+        }
+
+        public ListingSnapshotResponse MapEntityToResponse(ListingSnapshot snapshot)
+        {
+            return new ListingSnapshotResponse
+            {
+                Id = snapshot.Id,
+                PropertyListingId = snapshot.PropertyListingId,
+                Price = snapshot.Price,
+                PricePerM2 = snapshot.PricePerM2,
+                Status = snapshot.Status,
+                SnapshotDateUtc = snapshot.SnapshotDateUtc
             };
         }
 

@@ -7,6 +7,7 @@ namespace StayPilot.Application.Contracts.Request
     public class PropertyListingRequest
     {
         public int? MarketAreaId { get; set; }
+
         public string? Country { get; set; } = "Portugal";
 
         public string? District { get; set; } = string.Empty;
@@ -65,5 +66,9 @@ namespace StayPilot.Application.Contracts.Request
         public decimal? Longitude { get; set; }
 
         public string? EnergyCertificate { get; set; }
+
+        public string? Notes { get; set; }
+
+        public ListingSnapshotRequest ListingSnapshot { get; set; } = new ListingSnapshotRequest();
     }
 }

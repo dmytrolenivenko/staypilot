@@ -1,14 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces;
 using StayPilot.Infrastructure.Persistence;
 
-namespace StayPilot.Infrastructure.Services
+namespace StayPilot.Application.Services
 {
     public class MarketAreaService : IMarketAreaService
     {
         private readonly StayPilotDbContext _context;
-        public MarketAreaService(StayPilotDbContext context) 
+        public MarketAreaService(StayPilotDbContext context)
         {
             _context = context;
         }
@@ -25,7 +25,7 @@ namespace StayPilot.Infrastructure.Services
                 Municipality = x.Municipality,
                 Town = x.Town,
                 Zone = x.Zone,
-                Notes = x.Notes 
+                Notes = x.Notes
             }).ToList();
          }
     }
