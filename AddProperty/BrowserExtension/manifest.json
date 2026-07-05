@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Idealista Capture Helper",
+  "version": "1.0",
+  "description": "Reads listing data from Idealista pages you open normally and sends it to your local AddProperty app.",
+  "permissions": ["tabs"],
+  "host_permissions": [
+    "https://www.idealista.pt/*",
+    "http://localhost:5099/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.idealista.pt/imovel/*"],
+      "exclude_matches": ["https://www.idealista.pt/imovel/*/mapa*"],
+      "js": ["content-ad.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.idealista.pt/imovel/*/mapa*"],
+      "js": ["content-map.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

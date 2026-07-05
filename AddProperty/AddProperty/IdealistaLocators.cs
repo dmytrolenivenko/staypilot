@@ -2,73 +2,43 @@ using System.Text.RegularExpressions;
 
 namespace AddProperty;
 
-/// <summary>
-/// Every CSS selector, regex pattern, and text marker the scraper depends on, in one place.
-/// If Idealista changes its markup or wording, this is the only file that should need editing —
-/// IdealScraper.cs itself should never need to change for a site-side tweak.
-/// </summary>
+// ─────────────────────────────────────────────────────────────────────────
+// IF IDEALISTA'S LISTINGS CHANGE FORMAT AND PARSING BREAKS, START HERE.
+//
+// This app no longer visits Idealista's pages itself (that used to be Playwright, and got
+// blocked). Instead, the browser extension in BrowserExtension/ reads pages you open normally
+// and sends the raw text here. That split means there are TWO places selectors/patterns live:
+//
+//   - CSS selectors (which HTML element has the price, the title, etc.) live in
+//     BrowserExtension/content-ad.js and content-map.js, as a SELECTORS object at the
+//     top of each file. If Idealista changes its page markup, edit those.
+//
+//   - Everything in THIS file is about making sense of the TEXT once it's already been
+//     read off the page — regexes and keyword lists for area/typology/price/condition/etc.
+//     If a listing gets parsed wrong (wrong area, missed a feature, wrongly excluded), the
+//     fix is almost always here.
+// ─────────────────────────────────────────────────────────────────────────
 public static class IdealistaLocators
 {
-    // ── Search URL construction ──────────────────────────────────────────
-    public static class SearchUrl
-    {
-        public const string Base = "https://www.idealista.pt/comprar-casas/faro-distrito/com-apartamentos";
-        public const string Suffix = "?ordem=atualizado-asc";
+    // ── Energy certificate ────────────────────────────────────────────────
+    // The extension sends the raw CSS class name of the energy icon (e.g. "icon-energy-c");
+    // this pulls the single letter grade out of it.
+    public static readonly Regex EnergyClassPattern = new(@"icon-energy-(\w)", RegexOptions.Compiled);
 
-        public static string ForPage(int pageNum) =>
-            pageNum == 1 ? $"{Base}/{Suffix}" : $"{Base}/pagina-{pageNum}{Suffix}";
-    }
-
-    // ── Search results page ───────────────────────────────────────────────
-    public static class SearchResults
-    {
-        public const string ListingLinks = "article.item a.item-link";
-    }
-
-    // ── Individual listing page ──────────────────────────────────────────
-    public static class Listing
-    {
-        public const string Price = ".info-data-price";
-        public const string Title = "h1";
-        public const string Location = ".main-info__title-minor";
-        public const string Reference = ".txt-ref";
-        public const string Features = ".details-property-feature-one li, .details-property_features li";
-        public const string DescriptionPrimary = ".comment";
-        public const string DescriptionFallback = ".adCommentsLanguage";
-        public const string EnergyIcon = "[class*=\"icon-energy\"]";
-        public static readonly Regex EnergyClassPattern = new(@"icon-energy-(\w)", RegexOptions.Compiled);
-    }
-
-    // ── Map page (listingUrl + "/mapa") ───────────────────────────────────
+    // ── Coordinates ───────────────────────────────────────────────────────
+    // The extension sends the href of whatever Google Maps link it found on the /mapa page.
+    // Coordinates always appear in that URL as "@lat,lng" regardless of page wording/language.
     public static class Map
     {
-        // The browser context runs with Locale = pt-PT, so all page text is Portuguese.
-        public const string ApproximateLocationMarker = "não indicou a localização exata";
-
-        // Coordinates are read from the href of any Google Maps link on the page (they always
-        // encode "@lat,lng"), never from the link's visible text — text is language/wording
-        // dependent and breaks the moment Idealista rephrases it or renders a different locale.
         public static readonly Regex GoogleMapsHrefPattern =
             new(@"(google\.com/maps|maps\.google)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         public static readonly Regex CoordinatesInHrefPattern =
             new(@"@(-?\d{1,3}\.\d{3,8}),(-?\d{1,3}\.\d{3,8})", RegexOptions.Compiled);
     }
 
-    // ── Anti-bot / block-page detection ───────────────────────────────────
-    public static class BlockMarkers
-    {
-        public static readonly string[] Values =
-        {
-            "captcha",
-            "datadome",
-            "blocked",
-            "verify you are human",
-            "não sou um robô",
-            "acesso bloqueado",
-        };
-    }
-
-    // ── Feature-list parsing patterns ─────────────────────────────────────
+    // ── Feature-list parsing ──────────────────────────────────────────────
+    // Idealista lists a bullet-point "feature" per line (e.g. "63 m² úteis", "T2", "Elevador").
+    // These pull structured values out of that plain text.
     public static class FeaturePatterns
     {
         public static readonly Regex AreaUteis = new(@"(\d+)\s*m²\s*úteis", RegexOptions.Compiled);
@@ -80,7 +50,7 @@ public static class IdealistaLocators
         public static readonly Regex ConstructionYear = new(@"Construído em (\d{4})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     }
 
-    // ── Boolean feature keywords (plain substring checks) ─────────────────
+    // Boolean amenities are just "does this feature line contain this word" checks.
     public static class FeatureKeywords
     {
         public const string Elevator = "elevador";
@@ -102,7 +72,7 @@ public static class IdealistaLocators
         public const string TouristRentalException = "arrendamento turístico";
     }
 
-    // ── Condition classification (from listing text) ──────────────────────
+    // ── Condition classification (from the description text) ─────────────
     public static class ConditionPatterns
     {
         public static readonly Regex NewBuild = new(@"nova construção|empreendimento.*terminado|obra nova", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -112,7 +82,7 @@ public static class IdealistaLocators
         public static readonly Regex NeedsRenovation = new(@"para recuperar|para remodelar|a necessitar|ruína", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     }
 
-    // ── Exclusion filters (listings to skip entirely) ──────────────────────
+    // ── Exclusion filters (listings we never want to keep) ────────────────
     public static class ExclusionPatterns
     {
         public static readonly Regex NotApartment = new(@"\b(moradia|quinta|terreno|garagem|loja|escritório|armazém)\b", RegexOptions.Compiled);
@@ -128,7 +98,7 @@ public static class IdealistaLocators
         public const string Trespasse = "trespasse";
     }
 
-    // ── Misc text patterns ──────────────────────────────────────────────────
+    // ── Everything else ────────────────────────────────────────────────────
     public static class MiscPatterns
     {
         public static readonly Regex Price = new(@"[\d.]+", RegexOptions.Compiled);
@@ -136,6 +106,5 @@ public static class IdealistaLocators
         public static readonly Regex BeachDistanceMinutes = new(@"(\d+)\s*min.*praia", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         public static readonly Regex PhoneNumber = new(@"\+?\d[\d\s-]{7,}\d", RegexOptions.Compiled);
         public static readonly Regex Email = new(@"[\w.+-]+@[\w-]+\.[\w.-]+", RegexOptions.Compiled);
-        public static readonly Regex PageNumberInFilename = new(@"page(\d+)", RegexOptions.Compiled);
     }
 }
