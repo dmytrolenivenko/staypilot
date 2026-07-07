@@ -89,4 +89,5 @@ public class PastedCoordFields
     public string? SourceUrl { get; set; }
     public string? MapHref { get; set; }
     public bool Approximate { get; set; }
+    public bool TimedOut { get; set; }
 }

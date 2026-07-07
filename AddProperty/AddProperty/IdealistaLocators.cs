@@ -32,8 +32,13 @@ public static class IdealistaLocators
     {
         public static readonly Regex GoogleMapsHrefPattern =
             new(@"(google\.com/maps|maps\.google)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        // Google Maps links encode coordinates two different ways depending on which link on
+        // the page it is — "@lat,lng" in the path (e.g. the "Report a map error" link) or
+        // "ll=lat,lng" as a query parameter (e.g. the "Open this area in Google Maps" link).
+        // Both point at the same coordinates; the non-capturing prefix means Group 1/2 are
+        // always lat/lng regardless of which form matched.
         public static readonly Regex CoordinatesInHrefPattern =
-            new(@"@(-?\d{1,3}\.\d{3,8}),(-?\d{1,3}\.\d{3,8})", RegexOptions.Compiled);
+            new(@"(?:@|ll=)(-?\d{1,3}\.\d{3,8}),(-?\d{1,3}\.\d{3,8})", RegexOptions.Compiled);
     }
 
     // ── Feature-list parsing ──────────────────────────────────────────────
@@ -90,7 +95,7 @@ public static class IdealistaLocators
         public static readonly Regex Timeshare = new(@"multipropriedade|direito de habitação periódica|semanas? por ano", RegexOptions.Compiled);
         public static readonly Regex Auction = new(@"leilão|venda judicial|penhora|insolvência|hasta pública", RegexOptions.Compiled);
         public static readonly Regex RentalListing = new(@"\barrendamento\b|\bpara arrendar\b", RegexOptions.Compiled);
-        public static readonly Regex Tenanted = new(@"\barrendado\b|com inquilino|com contrato em vigor|\bocupado\b", RegexOptions.Compiled);
+        public static readonly Regex Tenanted = new(@"\barrendado\b|com inquilino|com contrato em vigor", RegexOptions.Compiled);
     }
 
     public static class ExclusionKeywords

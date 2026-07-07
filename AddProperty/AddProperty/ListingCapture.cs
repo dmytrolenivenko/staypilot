@@ -108,7 +108,9 @@ public class ListingCapture
                 return $"Buffered coordinates (no matching saved ad yet): {url}";
             }
 
-            ApplyCoordinates(match, fields);
+            if (!ApplyCoordinates(match, fields))
+                return $"Coordinates message arrived, but no usable map link was found on that page: {url} (mapHref: {fields.MapHref ?? "null"})";
+
             SaveTodayFile(listings, filePath);
             return $"Coordinates added: {url}";
         }
@@ -178,11 +180,19 @@ public class ListingCapture
         return (listing, null);
     }
 
-    /// <summary>Fills in Latitude/Longitude from a captured map href and appends a note about it.</summary>
-    private void ApplyCoordinates(PropertyListingRequest listing, PastedCoordFields coords)
+    /// <summary>Fills in Latitude/Longitude from a captured map href and appends a note about it. Returns whether it actually found usable coordinates.</summary>
+    private bool ApplyCoordinates(PropertyListingRequest listing, PastedCoordFields coords)
     {
         if (coords.MapHref == null || !IdealistaLocators.Map.CoordinatesInHrefPattern.IsMatch(coords.MapHref))
-            return;
+        {
+            // A timeout looks identical to "this page genuinely has no location shown" from
+            // the JS side alone — tag it so these listings are visibly distinguishable and
+            // can be re-crawled, instead of silently ending up indistinguishable from a
+            // listing that never had coordinates in the first place.
+            var missingNote = coords.TimedOut ? "coords: capture timed out" : "coords: no location shown on page";
+            listing.Notes = string.IsNullOrEmpty(listing.Notes) ? missingNote : $"{listing.Notes} | {missingNote}";
+            return false;
+        }
 
         var match = IdealistaLocators.Map.CoordinatesInHrefPattern.Match(coords.MapHref);
         listing.Latitude = Math.Round(decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), 6);
@@ -190,6 +200,7 @@ public class ListingCapture
 
         var coordNote = coords.Approximate ? "coords approximate" : "coords exact";
         listing.Notes = string.IsNullOrEmpty(listing.Notes) ? coordNote : $"{listing.Notes} | {coordNote}";
+        return true;
     }
 
     /// <summary>Builds the free-text Notes field: a short structured summary, then the raw description.</summary>
@@ -261,7 +272,7 @@ public class ListingCapture
             if (f.Contains(IdealistaLocators.FeatureKeywords.Elevator, StringComparison.OrdinalIgnoreCase))
                 listing.HasElevator = !f.Contains(IdealistaLocators.FeatureKeywords.Negation, StringComparison.OrdinalIgnoreCase);
             if (f.Contains(IdealistaLocators.FeatureKeywords.AirConditioning, StringComparison.OrdinalIgnoreCase))
-                listing.HasAirConditioning = true;
+                listing.HasAirConditioning = !f.Contains(IdealistaLocators.FeatureKeywords.Negation, StringComparison.OrdinalIgnoreCase);
             if (f.Contains(IdealistaLocators.FeatureKeywords.SwimmingPool, StringComparison.OrdinalIgnoreCase))
                 listing.HasSwimmingPool = true;
             if (f.Contains(IdealistaLocators.FeatureKeywords.Garage, StringComparison.OrdinalIgnoreCase))
@@ -300,10 +311,27 @@ public class ListingCapture
 
     private string? CheckExclusion(string title, string description, List<string> features)
     {
+        // Property TYPE and transaction-type words (apartment vs. villa/garage/rental-only)
+        // are checked against the TITLE ONLY. Idealista states these plainly in the title
+        // ("Apartamento T2 em...", "Moradia T4 em...", "... para arrendar"), whereas checking
+        // the full text — including the amenities feature list — false-positives constantly:
+        // an apartment that simply HAS a garage as an amenity contains the word "garagem" just
+        // as much as a listing that IS a garage, and a for-sale unit's description mentioning
+        // rental income as an investment angle contains "arrendamento" just as much as an
+        // actual rental listing. The title doesn't have that noise.
+        var titleText = title.ToLowerInvariant();
+
+        if (IdealistaLocators.ExclusionPatterns.NotApartment.IsMatch(titleText))
+            return "Not an apartment";
+        if (IdealistaLocators.ExclusionPatterns.RentalListing.IsMatch(titleText)
+            && !titleText.Contains(IdealistaLocators.FeatureKeywords.TouristRentalException))
+            return "Rental listing, not a sale";
+
+        // Legal/ownership disclosures genuinely only show up in the description, not the
+        // title, so these still need the full text — they're not common amenity/investment
+        // vocabulary, so they're far less prone to the same false-positive problem.
         var all = (title + " " + description + " " + string.Join(" ", features)).ToLowerInvariant();
 
-        if (IdealistaLocators.ExclusionPatterns.NotApartment.IsMatch(all))
-            return "Not an apartment";
         if (all.Contains(IdealistaLocators.ExclusionKeywords.Trespasse))
             return "Trespasse (business transfer)";
         if (IdealistaLocators.ExclusionPatterns.Usufruct.IsMatch(all))
@@ -312,9 +340,6 @@ public class ListingCapture
             return "Timeshare or fractional ownership";
         if (IdealistaLocators.ExclusionPatterns.Auction.IsMatch(all))
             return "Auction or judicial sale";
-        if (IdealistaLocators.ExclusionPatterns.RentalListing.IsMatch(all)
-            && !all.Contains(IdealistaLocators.FeatureKeywords.TouristRentalException))
-            return "Rental listing, not a sale";
         if (IdealistaLocators.ExclusionPatterns.Tenanted.IsMatch(all))
             return "Tenanted or occupied";
 

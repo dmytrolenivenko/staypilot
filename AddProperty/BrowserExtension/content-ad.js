@@ -1,5 +1,6 @@
-// Runs automatically on every Idealista ad page you open. Reads the same fields the app
-// needs, then hands them to background.js, which forwards them to AddProperty.
+// Runs automatically on every Idealista ad page you open (or that the crawl opens for you).
+// Reads the same fields the app needs, then hands them to background.js, which forwards
+// them to AddProperty.
 //
 // SELECTORS below is the ONLY thing that should need editing if Idealista changes its page
 // markup and captures start coming back empty — see IdealistaLocators.cs in the C# project
@@ -49,9 +50,23 @@ var SELECTORS = {
     // Auto-open the coordinates sub-page in the background — you never have to
     // click into it yourself. Randomized delay again, same reasoning.
     var mapUrl = sourceUrl + 'mapa';
-    var delay = 2000 + Math.floor(Math.random() * 3000);
+    var mapDelay = 2000 + Math.floor(Math.random() * 3000);
     setTimeout(function () {
       chrome.runtime.sendMessage({ type: 'open-map', url: mapUrl });
-    }, delay);
+    }, mapDelay);
+
+    // Crawl mode: if you're not manually browsing but let the extension drive itself
+    // (toggled via the toolbar icon), this tab has done its job — move on to the next
+    // listing and close this one. In normal (non-crawl) use, this does nothing and the
+    // tab just stays open like it always did.
+    chrome.storage.local.get(['crawling'], function (state) {
+      if (!state.crawling) return;
+
+      var moveOnDelay = mapDelay + 3000 + Math.floor(Math.random() * 4000);
+      setTimeout(function () {
+        chrome.runtime.sendMessage({ type: 'open-next' });
+        chrome.runtime.sendMessage({ type: 'close-self' });
+      }, moveOnDelay);
+    });
   }, 1500 + Math.floor(Math.random() * 1500));
 })();
