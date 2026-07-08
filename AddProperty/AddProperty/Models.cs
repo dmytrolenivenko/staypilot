@@ -70,7 +70,10 @@ public enum Typology { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10 }
 // These two match the JSON shape of BrowserExtension/content-ad.js and content-map.js
 // exactly. If you change what a content script sends, update the matching class here.
 
-/// <summary>Raw fields read straight off an Idealista ad page by content-ad.js — nothing parsed yet.</summary>
+/// <summary>Raw fields read straight off an Idealista ad page by content-ad.js — nothing parsed
+/// yet. content-ad.js only ever sends this once it already has coordinates in hand (MapHref):
+/// it asks background.js for the /mapa coordinates first and waits, so an "ad" message never
+/// arrives without a resolved location already attached.</summary>
 public class PastedAdFields
 {
     public string? SourceUrl { get; set; }
@@ -81,13 +84,6 @@ public class PastedAdFields
     public List<string>? Features { get; set; }
     public string? Desc { get; set; }
     public string? EnergyClassName { get; set; }
-}
-
-/// <summary>Coordinates read off a listing's /mapa page by content-map.js.</summary>
-public class PastedCoordFields
-{
-    public string? SourceUrl { get; set; }
     public string? MapHref { get; set; }
     public bool Approximate { get; set; }
-    public bool TimedOut { get; set; }
 }

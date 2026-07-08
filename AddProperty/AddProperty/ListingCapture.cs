@@ -18,11 +18,6 @@ public class ListingCapture
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly object _lock = new();
 
-    // Coordinates that arrived before their matching ad was saved (the ad message is sent
-    // first, but with several tabs open at once these can still interleave). Held only in
-    // memory — if the ad never shows up, these are just quietly never used.
-    private readonly Dictionary<string, PastedCoordFields> _orphanCoords = new(StringComparer.OrdinalIgnoreCase);
-
     // SourceUrls already saved (any day), so re-capturing the same listing is a no-op instead
     // of a duplicate row. Loaded once at startup, kept in memory for the rest of the session.
     private readonly HashSet<string> _alreadyCapturedUrls;
@@ -37,7 +32,10 @@ public class ListingCapture
 
     // ── Entry points — called by CaptureServer as extension messages arrive ──────────────
 
-    /// <summary>Handles one captured ad page. Builds, validates, and saves a listing immediately.</summary>
+    /// <summary>Handles one captured ad page. The browser extension only ever sends this once
+    /// it already has coordinates in hand — content-ad.js asks background.js for the /mapa
+    /// coordinates first and waits for them (or a genuine give-up) before extracting or sending
+    /// anything — so building, validating, and saving all happen in one shot here.</summary>
     public string HandleCapturedAd(string dataJson)
     {
         PastedAdFields? fields;
@@ -64,9 +62,8 @@ public class ListingCapture
             if (exclusionReason != null)
                 return $"EXCLUDED: {url} — {exclusionReason}";
 
-            // Coordinates for this listing may have already arrived (rare race) — apply now.
-            if (_orphanCoords.Remove(url, out var earlyCoords))
-                ApplyCoordinates(listing!, earlyCoords);
+            if (!ApplyCoordinates(listing!, fields.MapHref, fields.Approximate))
+                return $"SKIPPED (no usable coordinates on ad message): {url} (mapHref: {fields.MapHref ?? "null"})";
 
             var (listings, filePath) = LoadTodayFile();
             listings.Add(listing!);
@@ -74,45 +71,6 @@ public class ListingCapture
             _alreadyCapturedUrls.Add(url);
 
             return $"KEPT: {url} — {listing!.Typology} {listing.AreaM2}m² {listing.ListingSnapshot.Price}€";
-        }
-    }
-
-    /// <summary>Handles one captured /mapa page. Patches the matching already-saved listing.</summary>
-    public string HandleCapturedCoords(string dataJson)
-    {
-        PastedCoordFields? fields;
-        try
-        {
-            fields = JsonSerializer.Deserialize<PastedCoordFields>(dataJson, _jsonOptions);
-        }
-        catch (JsonException ex)
-        {
-            return $"Could not parse captured coordinates JSON: {ex.Message}";
-        }
-
-        if (fields == null || string.IsNullOrWhiteSpace(fields.SourceUrl))
-            return "Ignored: captured coordinates JSON has no sourceUrl.";
-
-        var url = NormalizeUrl(fields.SourceUrl);
-
-        lock (_lock)
-        {
-            var (listings, filePath) = LoadTodayFile();
-            var match = listings.FirstOrDefault(l => NormalizeUrl(l.SourceUrl) == url);
-
-            if (match == null)
-            {
-                // The ad hasn't been saved yet (still loading, or got excluded) — hold onto
-                // these coordinates in case a matching ad arrives shortly after.
-                _orphanCoords[url] = fields;
-                return $"Buffered coordinates (no matching saved ad yet): {url}";
-            }
-
-            if (!ApplyCoordinates(match, fields))
-                return $"Coordinates message arrived, but no usable map link was found on that page: {url} (mapHref: {fields.MapHref ?? "null"})";
-
-            SaveTodayFile(listings, filePath);
-            return $"Coordinates added: {url}";
         }
     }
 
@@ -180,25 +138,24 @@ public class ListingCapture
         return (listing, null);
     }
 
-    /// <summary>Fills in Latitude/Longitude from a captured map href and appends a note about it. Returns whether it actually found usable coordinates.</summary>
-    private bool ApplyCoordinates(PropertyListingRequest listing, PastedCoordFields coords)
+    /// <summary>Fills in Latitude/Longitude from a captured map href and appends a note about it.
+    /// Returns whether it actually found usable coordinates. In practice this should always
+    /// succeed — content-ad.js only ever sends an "ad" message once background.js has already
+    /// confirmed a usable map link exists — but stay defensive rather than assume it.</summary>
+    private bool ApplyCoordinates(PropertyListingRequest listing, string? mapHref, bool approximate)
     {
-        if (coords.MapHref == null || !IdealistaLocators.Map.CoordinatesInHrefPattern.IsMatch(coords.MapHref))
+        if (mapHref == null || !IdealistaLocators.Map.CoordinatesInHrefPattern.IsMatch(mapHref))
         {
-            // A timeout looks identical to "this page genuinely has no location shown" from
-            // the JS side alone — tag it so these listings are visibly distinguishable and
-            // can be re-crawled, instead of silently ending up indistinguishable from a
-            // listing that never had coordinates in the first place.
-            var missingNote = coords.TimedOut ? "coords: capture timed out" : "coords: no location shown on page";
+            var missingNote = "coords: no location shown on page";
             listing.Notes = string.IsNullOrEmpty(listing.Notes) ? missingNote : $"{listing.Notes} | {missingNote}";
             return false;
         }
 
-        var match = IdealistaLocators.Map.CoordinatesInHrefPattern.Match(coords.MapHref);
+        var match = IdealistaLocators.Map.CoordinatesInHrefPattern.Match(mapHref);
         listing.Latitude = Math.Round(decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), 6);
         listing.Longitude = Math.Round(decimal.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture), 6);
 
-        var coordNote = coords.Approximate ? "coords approximate" : "coords exact";
+        var coordNote = approximate ? "coords approximate" : "coords exact";
         listing.Notes = string.IsNullOrEmpty(listing.Notes) ? coordNote : $"{listing.Notes} | {coordNote}";
         return true;
     }

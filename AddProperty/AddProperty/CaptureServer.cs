@@ -82,8 +82,11 @@ public class CaptureServer
 
             var result = message?.Type switch
             {
+                // "coords"/"coords-failed" from content-map.js never reach here — background.js
+                // resolves them into the requesting ad tab's next message, which only ever
+                // arrives as a single "ad" message with coordinates already attached (or, on
+                // failure, doesn't arrive at all — see content-ad.js/background.js).
                 "ad" => _capture.HandleCapturedAd(message.Data.GetRawText()),
-                "coords" => _capture.HandleCapturedCoords(message.Data.GetRawText()),
                 _ => "Ignored: unknown or missing message type."
             };
 

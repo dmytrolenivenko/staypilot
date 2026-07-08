@@ -45,34 +45,92 @@ chrome.action.onClicked.addListener(async function (tab) {
   }
 });
 
-// ── Map-tab visibility ──────────────────────────────────────────────────
-// Idealista gates the Google Maps script (and the Didomi consent script in front of it)
-// behind actual tab visibility — Chrome deprioritizes third-party script execution in
-// hidden/background tabs, so a background map tab never even loads Didomi, let alone Maps.
-// That means the map tab MUST be the active (focused) tab to have any chance of working.
+// ── Map-tab handling ────────────────────────────────────────────────────
+// content-ad.js asks for coordinates FIRST (via 'need-coords') and does nothing else — no
+// extraction, no save — until it hears back. This module owns the map tab's entire lifecycle
+// and reports the outcome straight back to the ad tab that asked, via chrome.tabs.sendMessage.
 //
-// Doing that naively for every listing would mean each new map tab steals focus from an
-// EARLIER map tab still waiting on its scripts — backgrounding it right when it needs to be
-// visible, and starving it the same way. So map-tab opens are serialized here: only one is
-// ever open (and focused) at a time. It does mean your browser's foreground tab flickers to
-// each map page briefly during a crawl — an accepted trade-off since nothing works hidden.
-let mapQueue = [];
+// A reload() of the SAME tab turned out to be unreliable — whatever state gets a map stuck
+// (a half-loaded Didomi consent flow, a throttled renderer) can survive a same-document reload.
+// So instead of reloading, a stuck attempt gets its tab closed outright and a brand new tab
+// opened for the same URL — a clean process every time. Requests are serialized one at a time
+// (only one map tab open at once) since Idealista's map script only seems to progress on the
+// actual foreground tab, and racing several at once would just starve each other of focus.
+const MAP_TAB_TIMEOUT_MS = 3000;   // how long one attempt gets before it's killed and retried
+const MAX_MAP_ATTEMPTS = 30;       // safety ceiling (~90s worst case) — not an expected outcome
+
+let mapQueue = [];      // { sourceUrl, mapUrl, requesterTabId }
 let mapProcessing = false;
-let currentMapTabId = null;
+let currentJob = null;  // { sourceUrl, mapUrl, requesterTabId, attempt, tabId, watchdog }
+
+async function focusMapWindow(tab) {
+  try {
+    await chrome.windows.update(tab.windowId, { focused: true });
+  } catch (err) {
+    console.error('[Idealista Capture] Failed to focus map window:', err);
+  }
+}
+
+async function safeRemoveTab(tabId) {
+  if (tabId == null) return;
+  try {
+    await chrome.tabs.remove(tabId);
+  } catch (err) {
+    // Already closed — nothing to do.
+  }
+}
 
 async function processMapQueue() {
   if (mapProcessing || mapQueue.length === 0) return;
   mapProcessing = true;
-  const url = mapQueue.shift();
+  const job = mapQueue.shift();
+  await startMapAttempt(Object.assign({ attempt: 1 }, job));
+}
+
+async function startMapAttempt(job) {
+  currentJob = job;
   try {
-    const tab = await chrome.tabs.create({ url: url, active: true });
-    currentMapTabId = tab.id;
-    console.log('[Idealista Capture] Map tab opened (focused):', tab.id);
+    const tab = await chrome.tabs.create({ url: job.mapUrl, active: true });
+    currentJob.tabId = tab.id;
+    await focusMapWindow(tab);
+    console.log(`[Idealista Capture] Map tab opened (attempt ${job.attempt}/${MAX_MAP_ATTEMPTS}):`, tab.id, job.sourceUrl);
+    currentJob.watchdog = setTimeout(function () { handleMapTimeout(job.sourceUrl); }, MAP_TAB_TIMEOUT_MS);
   } catch (err) {
     console.error('[Idealista Capture] Failed to open map tab:', err);
-    mapProcessing = false;
-    await processMapQueue();
+    await finishMapJob(job, null);
   }
+}
+
+async function handleMapTimeout(sourceUrl) {
+  if (!currentJob || currentJob.sourceUrl !== sourceUrl) return; // stale timer from a finished job
+  const job = currentJob;
+  await safeRemoveTab(job.tabId);
+
+  if (job.attempt >= MAX_MAP_ATTEMPTS) {
+    console.warn('[Idealista Capture] Giving up on coordinates after', job.attempt, 'attempts:', job.sourceUrl);
+    await finishMapJob(job, null);
+    return;
+  }
+
+  console.log('[Idealista Capture] Map tab stuck, closing and reopening (attempt', job.attempt + 1, '):', job.sourceUrl);
+  await startMapAttempt({ sourceUrl: job.sourceUrl, mapUrl: job.mapUrl, requesterTabId: job.requesterTabId, attempt: job.attempt + 1 });
+}
+
+async function finishMapJob(job, coordsData) {
+  if (currentJob && currentJob.watchdog) clearTimeout(currentJob.watchdog);
+  currentJob = null;
+
+  try {
+    await chrome.tabs.sendMessage(job.requesterTabId,
+      coordsData
+        ? { type: 'coords-ready', data: coordsData }
+        : { type: 'coords-failed', data: { sourceUrl: job.sourceUrl } });
+  } catch (err) {
+    console.warn('[Idealista Capture] Could not notify ad tab (closed already?):', job.requesterTabId, err);
+  }
+
+  mapProcessing = false;
+  await processMapQueue();
 }
 
 chrome.runtime.onMessage.addListener(function (message, sender) {
@@ -84,7 +142,7 @@ chrome.runtime.onMessage.addListener(function (message, sender) {
 async function handleMessage(message, sender) {
   console.log('[Idealista Capture] Message received:', message.type, 'from tab', sender.tab && sender.tab.id);
 
-  if (message.type === 'ad' || message.type === 'coords') {
+  if (message.type === 'ad') {
     fetch(LISTENER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -92,19 +150,18 @@ async function handleMessage(message, sender) {
     }).catch(function (err) {
       console.error('AddProperty listener unreachable (is it running?):', err);
     });
-  } else if (message.type === 'open-map') {
-    mapQueue.push(message.url);
+  } else if (message.type === 'need-coords' && sender.tab) {
+    mapQueue.push({ sourceUrl: message.sourceUrl, mapUrl: message.mapUrl, requesterTabId: sender.tab.id });
     await processMapQueue();
+  } else if (message.type === 'coords' && sender.tab) {
+    if (currentJob && currentJob.sourceUrl === message.data.sourceUrl && currentJob.tabId === sender.tab.id) {
+      await safeRemoveTab(currentJob.tabId);
+      await finishMapJob(currentJob, message.data);
+    }
   } else if (message.type === 'debug') {
     console.log('[Idealista Capture]', message.data);
   } else if (message.type === 'close-self' && sender.tab) {
-    const wasMapTab = sender.tab.id === currentMapTabId;
-    chrome.tabs.remove(sender.tab.id);
-    if (wasMapTab) {
-      currentMapTabId = null;
-      mapProcessing = false;
-      await processMapQueue();
-    }
+    await safeRemoveTab(sender.tab.id);
   } else if (message.type === 'search-page') {
     await queueSearchPage(message.data, sender.tab ? sender.tab.id : null);
   } else if (message.type === 'open-next') {
