@@ -90,12 +90,11 @@ public static class IdealistaLocators
     // ── Exclusion filters (listings we never want to keep) ────────────────
     public static class ExclusionPatterns
     {
-        public static readonly Regex NotApartment = new(@"\b(moradia|quinta|terreno|garagem|loja|escritório|armazém)\b", RegexOptions.Compiled);
         public static readonly Regex Usufruct = new(@"usufruto|nua-propriedade|nua propriedade|direito de superfície", RegexOptions.Compiled);
         public static readonly Regex Timeshare = new(@"multipropriedade|direito de habitação periódica|semanas? por ano", RegexOptions.Compiled);
         public static readonly Regex Auction = new(@"leilão|venda judicial|penhora|insolvência|hasta pública", RegexOptions.Compiled);
         public static readonly Regex RentalListing = new(@"\barrendamento\b|\bpara arrendar\b", RegexOptions.Compiled);
-        public static readonly Regex Tenanted = new(@"\barrendado\b|com inquilino|com contrato em vigor", RegexOptions.Compiled);
+        public static readonly Regex Tenanted = new(@"\barrendad[oa]\b|com inquilino|com contrato em vigor", RegexOptions.Compiled);
     }
 
     public static class ExclusionKeywords

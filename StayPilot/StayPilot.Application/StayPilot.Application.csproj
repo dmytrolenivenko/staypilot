@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Abp" Version="10.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\StayPilot.Domain\StayPilot.Domain.csproj" />
-    <ProjectReference Include="..\StayPilot.Infrastructure\StayPilot.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

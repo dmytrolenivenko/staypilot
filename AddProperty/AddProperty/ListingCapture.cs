@@ -107,12 +107,38 @@ public class ListingCapture
         if (priceMatch.Success)
             listing.ListingSnapshot.Price = decimal.Parse(priceMatch.Value.Replace(".", ""), CultureInfo.InvariantCulture);
 
-        // Location, e.g. "Torralta, Lagos Cidade, Lagos" -> Zone / Town / Municipality
-        var locParts = location.Split(',').Select(s => s.Trim()).ToList();
-        listing.Municipality = locParts.LastOrDefault() ?? "";
-        if (locParts.Count >= 3) { listing.Zone = locParts[0]; listing.Town = locParts[1]; }
-        else if (locParts.Count == 2) { listing.Zone = null; listing.Town = locParts[0]; }
-        else if (locParts.Count == 1) { listing.Town = locParts[0]; }
+        // Location: Idealista's subtitle is most-specific → least-specific, comma-separated
+        // (e.g. "Vilamoura, Quarteira" or "Fojo, Portimão Cidade, Portimão") — never a plain
+        // "Town == Municipality" value. Treating the raw text as both Town AND Municipality
+        // (the old, old behavior) saved the wrong Municipality on every single capture, and
+        // treating the whole string as one lookup term (also tried and wrong) failed to match
+        // anything whenever there was more than one part. Resolve against the same seed data
+        // the API's exact-match lookup (GetMarketId) requires, instead of guessing.
+        string? locationNote = null;
+        var resolved = MarketAreaLookup.Resolve(location);
+        if (resolved != null)
+        {
+            listing.Municipality = resolved.Municipality;
+            listing.Town = resolved.Town;
+            listing.Zone = resolved.Zone;
+            if (resolved.ZoneAmbiguous)
+                locationNote = "zone not determined from page text — verify manually";
+            if (resolved.UnmatchedParts.Count > 0)
+                locationNote = (locationNote == null ? "" : locationNote + " | ")
+                    + $"extra location detail from page (not matched to a known zone): {string.Join(", ", resolved.UnmatchedParts)}";
+        }
+        else
+        {
+            // Unrecognized location text (new place name, typo, non-Algarve listing that slipped
+            // through) — fall back to the old best-effort split so nothing is lost, but flag it:
+            // GetMarketId will very likely reject this on upload with "Market area not found".
+            var locParts = location.Split(',').Select(s => s.Trim()).ToList();
+            listing.Municipality = locParts.LastOrDefault() ?? "";
+            if (locParts.Count >= 3) { listing.Zone = locParts[0]; listing.Town = locParts[1]; }
+            else if (locParts.Count == 2) { listing.Zone = null; listing.Town = locParts[0]; }
+            else if (locParts.Count == 1) { listing.Town = locParts[0]; }
+            locationNote = "location not recognized against known market areas — verify manually";
+        }
 
         ParseFeatures(listing, features);
 
@@ -123,9 +149,20 @@ public class ListingCapture
         if (listing.ListingSnapshot.Price > 0 && listing.AreaM2 > 0)
             listing.ListingSnapshot.PricePerM2 = Math.Round(listing.ListingSnapshot.Price / listing.AreaM2, 2);
 
-        var energyMatch = IdealistaLocators.EnergyClassPattern.Match(fields.EnergyClassName ?? "");
-        if (energyMatch.Success)
-            listing.EnergyCertificate = energyMatch.Groups[1].Value.ToUpperInvariant();
+        // The icon's title attribute holds the real grade now (including "a+"); the CSS class
+        // is a constant "icon-energy-c-<N>" style variant unrelated to the grade. Fall back to
+        // the old class-name regex only if a page ever comes back without a title attribute.
+        var energyTitle = fields.EnergyTitle?.Trim();
+        if (!string.IsNullOrEmpty(energyTitle))
+        {
+            listing.EnergyCertificate = energyTitle.ToUpperInvariant();
+        }
+        else
+        {
+            var energyMatch = IdealistaLocators.EnergyClassPattern.Match(fields.EnergyClassName ?? "");
+            if (energyMatch.Success)
+                listing.EnergyCertificate = energyMatch.Groups[1].Value.ToUpperInvariant();
+        }
 
         listing.Condition = ParseCondition(features, desc);
 
@@ -133,7 +170,7 @@ public class ListingCapture
             listing.IsFurnished = desc.Contains(IdealistaLocators.FeatureKeywords.Furnished, StringComparison.OrdinalIgnoreCase)
                                || desc.Contains(IdealistaLocators.FeatureKeywords.Equipped, StringComparison.OrdinalIgnoreCase);
 
-        listing.Notes = BuildNotes(listing, refCode, features, desc);
+        listing.Notes = BuildNotes(listing, refCode, features, desc, locationNote);
 
         return (listing, null);
     }
@@ -161,7 +198,7 @@ public class ListingCapture
     }
 
     /// <summary>Builds the free-text Notes field: a short structured summary, then the raw description.</summary>
-    private string BuildNotes(PropertyListingRequest listing, string refCode, List<string> features, string desc)
+    private string BuildNotes(PropertyListingRequest listing, string refCode, List<string> features, string desc, string? locationNote)
     {
         var notes = new List<string>
         {
@@ -170,6 +207,7 @@ public class ListingCapture
             $"Condition: {listing.Condition} (text-based, no photo analysis)"
         };
         if (listing.Bathrooms == 0) notes.Add("bathrooms not stated, defaulted to 0");
+        if (locationNote != null) notes.Add(locationNote);
 
         var beachMatch = IdealistaLocators.MiscPatterns.BeachDistanceMeters.Match(desc);
         if (beachMatch.Success) notes.Add($"Beach distance mentioned: {beachMatch.Value}");
@@ -257,29 +295,34 @@ public class ListingCapture
     {
         var all = string.Join(" ", features) + " " + description;
 
+        // NeedsRenovation is checked before Used: Idealista often gives a compound string like
+        // "Segunda mão/para recuperar" — both halves would match (segunda mão = Used, para
+        // recuperar = NeedsRenovation), and the more specific/severe qualifier should win
+        // rather than the generic "not new" one that happens to come first.
         if (IdealistaLocators.ConditionPatterns.NewBuild.IsMatch(all)) return PropertyCondition.NewBuild;
         if (IdealistaLocators.ConditionPatterns.Renovated.IsMatch(all)) return PropertyCondition.Renovated;
         if (IdealistaLocators.ConditionPatterns.Good.IsMatch(all)) return PropertyCondition.Good;
-        if (IdealistaLocators.ConditionPatterns.Used.IsMatch(all)) return PropertyCondition.Used;
         if (IdealistaLocators.ConditionPatterns.NeedsRenovation.IsMatch(all)) return PropertyCondition.NeedsRenovation;
+        if (IdealistaLocators.ConditionPatterns.Used.IsMatch(all)) return PropertyCondition.Used;
 
         return PropertyCondition.Unknown;
     }
 
     private string? CheckExclusion(string title, string description, List<string> features)
     {
-        // Property TYPE and transaction-type words (apartment vs. villa/garage/rental-only)
-        // are checked against the TITLE ONLY. Idealista states these plainly in the title
-        // ("Apartamento T2 em...", "Moradia T4 em...", "... para arrendar"), whereas checking
-        // the full text — including the amenities feature list — false-positives constantly:
-        // an apartment that simply HAS a garage as an amenity contains the word "garagem" just
-        // as much as a listing that IS a garage, and a for-sale unit's description mentioning
-        // rental income as an investment angle contains "arrendamento" just as much as an
+        // Transaction-type words (sale vs. rental-only) are checked against the TITLE ONLY.
+        // Idealista states this plainly in the title ("Apartamento T2 em...", "... para
+        // arrendar"), whereas checking the full text — including the description's investment
+        // angle or the amenities feature list — false-positives constantly: a for-sale unit's
+        // description mentioning rental income contains "arrendamento" just as much as an
         // actual rental listing. The title doesn't have that noise.
+        //
+        // Property-type filtering (apartment vs. villa/garage/etc.) is NOT done here — the
+        // Idealista search itself is already filtered to apartments only, and a title-only
+        // regex for that produced false positives on place names that happen to contain
+        // property-type words (e.g. "Quinta do Lago" tripping a "quinta" match).
         var titleText = title.ToLowerInvariant();
 
-        if (IdealistaLocators.ExclusionPatterns.NotApartment.IsMatch(titleText))
-            return "Not an apartment";
         if (IdealistaLocators.ExclusionPatterns.RentalListing.IsMatch(titleText)
             && !titleText.Contains(IdealistaLocators.FeatureKeywords.TouristRentalException))
             return "Rental listing, not a sale";

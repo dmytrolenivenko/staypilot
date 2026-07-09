@@ -60,6 +60,11 @@ var SELECTORS = {
       features: features,
       desc: descEl ? descEl.innerText : '',
       energyClassName: energyEl ? energyEl.className : '',
+      // The class name used to encode the grade directly (icon-energy-a, icon-energy-c, ...)
+      // but Idealista now uses a constant "icon-energy-c-<N>" style variant that has nothing
+      // to do with the real grade — the actual letter (including "a+") only lives in this
+      // title attribute now.
+      energyTitle: energyEl ? (energyEl.getAttribute('title') || '') : '',
       mapHref: coords.mapHref,
       approximate: !!coords.approximate
     };

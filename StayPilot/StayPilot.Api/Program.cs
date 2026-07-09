@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using StayPilot.Application.Interfaces;
-using StayPilot.Application.Services;
 using StayPilot.Infrastructure.Persistence;
+using StayPilot.Infrastructure.Services;
+using StayPilot.Infrastructure.Repositories;
+using StayPilot.Application.Interfaces.Repositories;
+using StayPilot.Application.Interfaces.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,12 @@ builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServe
 // DI for services
 builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
 builder.Services.AddScoped<IPropertyListingService, PropertyListingService>();
+
+//DI for repositories
+builder.Services.AddScoped<IPropertyListingRepository, PropertyListingRepository>();
+builder.Services.AddScoped<IMarketAreaRepository, MarketAreaRepository>();
+builder.Services.AddScoped<IBeachMarkerRepository, BeachMarkerRepository>();
+builder.Services.AddScoped<IListingSnapshotRepository, ListingSnapshotRepository>();
 
 // Adding ProblemDetails middleware to handle exceptions and return standardized error responses
 builder.Services.AddProblemDetails();

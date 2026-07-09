@@ -2,7 +2,11 @@
 // anything that needs the extension's own permissions: opening/closing tabs, or making the
 // cross-origin request to localhost.
 const LISTENER_URL = 'http://localhost:5099/capture';
-const SEARCH_URL_PATTERN = /idealista\.pt\/comprar-casas\/faro-distrito\/com-apartamentos/;
+// Idealista folds active filters (price, etc.) into this same path segment, comma-separated,
+// which can push "apartamentos" anywhere in it (e.g. "com-preco-max_340000,apartamentos"
+// instead of "com-apartamentos") — match on it appearing anywhere in that segment, not at a
+// fixed position, or a filtered search URL silently fails this check.
+const SEARCH_URL_PATTERN = /idealista\.pt\/comprar-casas\/faro-distrito\/[^/]*apartamentos/;
 
 // ── Crawl mode ───────────────────────────────────────────────────────────
 // Off by default. Click the toolbar icon to turn it on/off — a badge ("ON") shows the

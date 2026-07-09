@@ -74,9 +74,18 @@ etc.) live in `StayPilot.Infrastructure/Services/`, not in `StayPilot.Applicatio
 only holds the DTOs and interfaces. Follow this existing split rather than "fixing" it by moving
 services — it's a deliberate simplification for a single-developer project, not an oversight.
 
-Controller → Service (interface, injected) → `StayPilotDbContext` directly (no repository layer).
-Mapping between entities and DTOs is manual (see `MapToResponse`/`MapToEntity` in
-`PropertyListingService`) — there is no AutoMapper.
+Controller → Service (interface, injected) → Repository (interface, injected) → `StayPilotDbContext`.
+Repositories live in `StayPilot.Infrastructure/Repositories/` and own all LINQ/EF query logic
+(`.Where()`, `.Include()`, `.ToListAsync()`, etc.) against entities — they return entities, never
+DTOs. Services hold business rules and do entity↔DTO mapping (see `MapToResponse`/`MapToEntity` in
+`PropertyListingService`) — there is no AutoMapper. Register each repository in `Program.cs` DI
+alongside its service.
+
+> **Note on history:** earlier sessions deliberately skipped a repository layer as a simplification
+> for a single-developer project. That was revisited in Session 10 — the user wants the repository
+> pattern for its own sake (practice), and is retrofitting existing services to use it. Being
+> retrofitted incrementally, service by service — check current session logs in the vault for which
+> services have been converted before assuming this pattern is uniformly in place everywhere yet.
 
 ### Domain model
 

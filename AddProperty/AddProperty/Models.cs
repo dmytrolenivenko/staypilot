@@ -84,6 +84,7 @@ public class PastedAdFields
     public List<string>? Features { get; set; }
     public string? Desc { get; set; }
     public string? EnergyClassName { get; set; }
+    public string? EnergyTitle { get; set; }
     public string? MapHref { get; set; }
     public bool Approximate { get; set; }
 }

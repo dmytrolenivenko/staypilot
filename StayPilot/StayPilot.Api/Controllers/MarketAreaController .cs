@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using StayPilot.Application.Contracts.Response;
-using StayPilot.Application.Interfaces;
+using StayPilot.Application.Interfaces.Services;
 
 namespace StayPilot.Api.Controllers
 {
