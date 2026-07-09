@@ -11,11 +11,10 @@ single-developer project (see commit history) — a lot of the design is intenti
 (no AutoMapper, no repository abstraction over EF Core, no auth) and should stay that way unless
 a milestone specifically calls for more.
 
-The project has two independent .NET solutions in this repo:
-
-- **`StayPilot/`** — the Web API (`StayPilot.slnx`). This is where almost all work happens.
-- **`AddProperty/`** — a standalone console app + Playwright scraper (`AddProperty.slnx`) that
-  feeds the API. Not part of the API solution; build/run it separately.
+This repo holds the Web API only (`StayPilot/`, `StayPilot.slnx`). The scraper that feeds the API
+(`AddProperty`) used to live here as a second solution but now has its own repo:
+https://github.com/dmytrolenivenko/AddProperty — clone it separately if you need to work on
+scraping/ingestion.
 
 The living architecture doc, milestone plan, and design rationale for this project are tracked
 outside this repo, in the Obsidian vault at `c:\repos\EngineeringVault\vault\StayPilot\Project\StayPilot.md`
@@ -40,15 +39,6 @@ dotnet test --filter "FullyQualifiedName~ClassName.MethodName"   # run a single 
 # EF Core migrations (run from StayPilot/ folder)
 dotnet ef migrations add <Name> --project StayPilot.Infrastructure --startup-project StayPilot.Api
 dotnet ef database update --project StayPilot.Infrastructure --startup-project StayPilot.Api
-```
-
-```bash
-# AddProperty scraper (separate solution, run from AddProperty/AddProperty/)
-dotnet run                      # upload existing JSON files in the vault's Idealista folder to the API
-dotnet run scrape               # scrape 1 page via Playwright, save JSON, then upload
-dotnet run scrape --pages 3     # scrape 3 pages, save, then upload
-dotnet run scrape-only          # scrape without uploading
-dotnet run scrape-only --pages 3
 ```
 
 Local DB is SQL Server **LocalDB** (`(localdb)\MSSQLLocalDB`), configured in
@@ -107,26 +97,14 @@ in-memory table scan with C#-side string normalization / Haversine math instead 
 filter into SQL. Deliberately deferred until data volume or an observed slow response justifies
 the work — don't "fix" this speculatively.
 
-### Scraper (`AddProperty/`)
+### Scraper (now a separate repo)
 
-`IdealScraper.cs` drives a headed Playwright Chromium session against Idealista, human-paced
-(random multi-second delays between actions, persistent browser profile for staying logged in,
-manual CAPTCHA-solving prompts via `Console.ReadLine()`). It scrapes one search-results page at a
-time, extracts each listing via in-page `EvaluateAsync` JS, applies exclusion rules
-(`CheckExclusion` — non-apartments, timeshares, rentals, auctions, tenanted properties, etc.),
-strips phone numbers/emails from descriptions (`StripContactInfo`), and writes results as JSON to
-the vault (`vault/StayPilot/Project/Adds/Idealista/YYYY-MM-DD-pageNN.json`). `Program.cs` then
-POSTs each listing in that JSON to the running API and writes response/error logs to
-`vault/StayPilot/Project/Logs/Idealista/`.
-
-The scraper has its **own copies** of `PropertyListingRequest`/`ListingSnapshotRequest` and the
-enums (`PropertyType`, `Typology`, `PropertyCondition`, `ListingStatus`) defined inline in
-`Program.cs` — it does not reference `StayPilot.Application` or `StayPilot.Domain`. If you change
-a contract or enum values in the API, update the matching copy here too, and double check enum
-**numeric values** match exactly (JSON serializes/deserializes enums by the API's
-`JsonStringEnumConverter`, but a numeric mismatch between the two independent enum definitions
-would silently produce the wrong value).
-
-Because Idealista scraping this way is against their Terms of Service and this is explicitly a
-low-volume, personal-use tool, don't parallelize it, remove the human-paced delays, or otherwise
-make it faster/more aggressive.
+The `AddProperty` scraper that feeds this API lives in its own repo now:
+https://github.com/dmytrolenivenko/AddProperty. It POSTs to this API's `PropertyListing`
+endpoints and keeps its **own copies** of `PropertyListingRequest`/`ListingSnapshotRequest` and
+the enums (`PropertyType`, `Typology`, `PropertyCondition`, `ListingStatus`) — it does not
+reference `StayPilot.Application` or `StayPilot.Domain`. If you change a contract or enum values
+in this API, update the matching copy in that repo too, and double check enum **numeric values**
+match exactly (JSON serializes/deserializes enums by the API's `JsonStringEnumConverter`, but a
+numeric mismatch between the two independent enum definitions would silently produce the wrong
+value).
