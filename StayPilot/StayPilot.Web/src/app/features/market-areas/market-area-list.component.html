@@ -1,0 +1,47 @@
+<section class="panel">
+  <div class="panel-head">
+    <h1>Market Areas</h1>
+    <span class="hint">n = {{ filteredAreas().length }} of {{ areas().length }}</span>
+  </div>
+
+  <input
+    class="text-input"
+    type="text"
+    placeholder="Filter by district, municipality, town or zone..."
+    [ngModel]="filterText()"
+    (ngModelChange)="filterText.set($event)"
+  />
+
+  @if (loading()) {
+    <p class="hint">Loading...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>District</th>
+          <th>Municipality</th>
+          <th>Town</th>
+          <th>Zone</th>
+          <th>Country</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of filteredAreas(); track a.id) {
+          <tr>
+            <td>{{ a.id }}</td>
+            <td>{{ a.district }}</td>
+            <td>{{ a.municipality }}</td>
+            <td>{{ a.town }}</td>
+            <td>{{ a.zone ?? '—' }}</td>
+            <td>{{ a.country }}</td>
+            <td class="notes">{{ a.notes ?? '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

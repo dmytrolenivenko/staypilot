@@ -1,0 +1,42 @@
+<section class="panel">
+  <h1>Listing Lookup</h1>
+  <p class="hint">
+    There's no "list all listings" endpoint yet (see the Listing Browser module) — look up one
+    listing at a time by id.
+  </p>
+
+  <form class="lookup-form" (ngSubmit)="lookup()">
+    <input
+      class="text-input"
+      type="number"
+      min="1"
+      placeholder="Listing id"
+      [ngModel]="idInput()"
+      (ngModelChange)="idInput.set($event)"
+      name="id"
+    />
+    <button type="submit">Look up</button>
+  </form>
+
+  @if (recentListings.ids().length > 0) {
+    <p class="hint">
+      Recently viewed:
+      @for (id of recentListings.ids(); track id) {
+        <button class="link-button" type="button" (click)="lookup(id)">#{{ id }}</button>
+      }
+    </p>
+  }
+
+  @if (loading()) {
+    <p class="hint">Loading...</p>
+  }
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+</section>
+
+@if (listing()) {
+  <section class="panel">
+    <app-listing-detail [listing]="listing()!" />
+  </section>
+}

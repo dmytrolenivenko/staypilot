@@ -1,0 +1,49 @@
+.listing-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.source-link {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.fact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.fact-grid h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.75rem;
+}
+
+dt {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.notes-block {
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}

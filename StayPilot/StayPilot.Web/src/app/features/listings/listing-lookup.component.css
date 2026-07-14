@@ -1,0 +1,19 @@
+.lookup-form {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.lookup-form .text-input {
+  max-width: 200px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0 0.25rem;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+}

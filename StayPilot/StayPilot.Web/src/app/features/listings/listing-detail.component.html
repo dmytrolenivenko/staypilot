@@ -1,0 +1,81 @@
+<div class="listing-detail">
+  <header class="listing-head">
+    <h2>Listing #{{ listing.id }}</h2>
+    <a class="source-link" [href]="listing.sourceUrl" target="_blank" rel="noopener">{{ listing.sourceName || 'Source' }} ↗</a>
+  </header>
+
+  <div class="fact-grid">
+    <section>
+      <h3>Location</h3>
+      <dl>
+        <dt>District</dt><dd>{{ listing.marketAreaDistrict }}</dd>
+        <dt>Municipality</dt><dd>{{ listing.marketAreaMunicipality }}</dd>
+        <dt>Town</dt><dd>{{ listing.marketAreaTown }}</dd>
+        <dt>Zone</dt><dd>{{ listing.marketAreaZone || '—' }}</dd>
+        <dt>Coordinates</dt>
+        <dd>{{ listing.latitude ?? '—' }}, {{ listing.longitude ?? '—' }}</dd>
+        <dt>Nearest beach</dt>
+        <dd>
+          @if (listing.nearestBeachName) {
+            {{ listing.nearestBeachName }} ({{ listing.distanceToBeachMeters }} m)
+          } @else {
+            —
+          }
+        </dd>
+      </dl>
+    </section>
+
+    <section>
+      <h3>Property</h3>
+      <dl>
+        <dt>Type</dt><dd>{{ listing.propertyType }}</dd>
+        <dt>Typology</dt><dd>{{ listing.typology }}</dd>
+        <dt>Area</dt><dd>{{ listing.areaM2 }} m²</dd>
+        <dt>Bathrooms</dt><dd>{{ listing.bathrooms }}</dd>
+        <dt>Floor</dt><dd>{{ listing.floor ?? '—' }} / {{ listing.totalFloors ?? '—' }}</dd>
+        <dt>Condition</dt><dd>{{ listing.condition }}</dd>
+        <dt>Construction year</dt><dd>{{ listing.constructionYear ?? '—' }}</dd>
+        <dt>Renovation year</dt><dd>{{ listing.renovationYear ?? '—' }}</dd>
+        <dt>Energy certificate</dt><dd>{{ listing.energyCertificate ?? '—' }}</dd>
+      </dl>
+    </section>
+
+    <section>
+      <h3>Features</h3>
+      <dl>
+        <dt>Elevator</dt><dd>{{ yesNo(listing.hasElevator) }}</dd>
+        <dt>Air conditioning</dt><dd>{{ yesNo(listing.hasAirConditioning) }}</dd>
+        <dt>Garage</dt><dd>{{ yesNo(listing.hasGarage) }}</dd>
+        <dt>Parking</dt><dd>{{ yesNo(listing.hasParking) }}</dd>
+        <dt>Terrace</dt><dd>{{ yesNo(listing.hasTerrace) }}</dd>
+        <dt>Balconies</dt><dd>{{ listing.balconyCount }}</dd>
+        <dt>Swimming pool</dt><dd>{{ yesNo(listing.hasSwimmingPool) }}</dd>
+        <dt>Furnished</dt><dd>{{ yesNo(listing.isFurnished) }}</dd>
+        <dt>Sea view</dt><dd>{{ yesNo(listing.hasSeaView) }}</dd>
+        <dt>City view</dt><dd>{{ yesNo(listing.hasCityView) }}</dd>
+      </dl>
+    </section>
+
+    <section>
+      <h3>Latest snapshot</h3>
+      @if (listing.listingSnapshot) {
+        <dl>
+          <dt>Price</dt><dd>€{{ listing.listingSnapshot.price | number: '1.0-0' }}</dd>
+          <dt>Price / m²</dt><dd>€{{ listing.listingSnapshot.pricePerM2 | number: '1.0-0' }}</dd>
+          <dt>Status</dt><dd>{{ listing.listingSnapshot.status }}</dd>
+          <dt>Snapshot date</dt><dd>{{ listing.listingSnapshot.snapshotDateUtc | date: 'yyyy-MM-dd' }}</dd>
+        </dl>
+      } @else {
+        <p class="hint">No snapshot on this response (expected on GET by id today — the price
+          history endpoint isn't built yet, see Price History module).</p>
+      }
+    </section>
+  </div>
+
+  @if (listing.notes) {
+    <section>
+      <h3>Notes</h3>
+      <p class="notes-block">{{ listing.notes }}</p>
+    </section>
+  }
+</div>

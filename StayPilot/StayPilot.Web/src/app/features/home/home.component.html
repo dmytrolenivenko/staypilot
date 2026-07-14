@@ -1,0 +1,27 @@
+<section class="panel">
+  <h1>StayPilot Comps</h1>
+  <p class="lede">
+    A private market-intelligence tool for the Algarve — turns scraped Idealista listings into
+    market stats, feature-impact analysis, and a personal property valuation. Single-user,
+    no login. Median over average, always show sample size, never hide the messiness of real data.
+  </p>
+</section>
+
+<section class="panel">
+  <h2>Modules</h2>
+  <div class="module-grid">
+    @for (m of modules; track m.title) {
+      <a class="module-card" [routerLink]="m.link">
+        <div class="module-card-head">
+          <span class="module-title">{{ m.title }}</span>
+          @if (m.live) {
+            <span class="badge badge-live">Live</span>
+          } @else {
+            <span class="badge badge-soon">Not available yet</span>
+          }
+        </div>
+        <p class="module-desc">{{ m.description }}</p>
+      </a>
+    }
+  </div>
+</section>

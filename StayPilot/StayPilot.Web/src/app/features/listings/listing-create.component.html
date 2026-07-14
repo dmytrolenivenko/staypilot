@@ -1,0 +1,173 @@
+<section class="panel">
+  <h1>Add Listing</h1>
+
+  @if (createdId()) {
+    <div class="success-box">
+      <p>Listing created with id <strong>{{ createdId() }}</strong>.</p>
+      <button type="button" (click)="viewCreated()">View it</button>
+      <button type="button" (click)="createdId.set(null)">Add another</button>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <fieldset>
+        <legend>Location</legend>
+        <label>
+          Market area *
+          <select formControlName="marketAreaId">
+            <option [ngValue]="null">-- select --</option>
+            @for (a of marketAreas(); track a.id) {
+              <option [ngValue]="a.id">{{ a.district }} / {{ a.municipality }} / {{ a.town }}{{ a.zone ? ' / ' + a.zone : '' }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Latitude *
+          <input type="number" step="0.000001" formControlName="latitude" />
+        </label>
+        <label>
+          Longitude *
+          <input type="number" step="0.000001" formControlName="longitude" />
+        </label>
+      </fieldset>
+      <p class="hint">* Latitude/longitude are required by the API — it uses them to compute the nearest beach.</p>
+
+      <fieldset>
+        <legend>Property</legend>
+        <label>
+          Property type *
+          <select formControlName="propertyType">
+            @for (t of propertyTypes; track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Typology *
+          <select formControlName="typology">
+            @for (t of typologies; track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Area (m²) *
+          <input type="number" min="1" formControlName="areaM2" />
+        </label>
+        <label>
+          Bathrooms
+          <input type="number" min="0" formControlName="bathrooms" />
+        </label>
+        <label>
+          Floor
+          <input type="number" formControlName="floor" />
+        </label>
+        <label>
+          Total floors
+          <input type="number" formControlName="totalFloors" />
+        </label>
+        <label>
+          Condition *
+          <select formControlName="condition">
+            @for (c of conditions; track c) {
+              <option [value]="c">{{ c }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Construction year
+          <input type="number" formControlName="constructionYear" />
+        </label>
+        <label>
+          Renovation year
+          <input type="number" formControlName="renovationYear" />
+        </label>
+        <label>
+          Energy certificate
+          <input type="text" formControlName="energyCertificate" placeholder="e.g. B-" />
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Features</legend>
+        <label>
+          Elevator
+          <select formControlName="hasElevator">
+            <option value="unknown">Unknown</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+        <label>
+          Air conditioning
+          <select formControlName="hasAirConditioning">
+            <option value="unknown">Unknown</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+        <label>
+          Balconies
+          <input type="number" min="0" formControlName="balconyCount" />
+        </label>
+        <label class="checkbox"><input type="checkbox" formControlName="hasTerrace" /> Terrace</label>
+        <label class="checkbox"><input type="checkbox" formControlName="hasGarage" /> Garage</label>
+        <label class="checkbox"><input type="checkbox" formControlName="hasParking" /> Parking</label>
+        <label class="checkbox"><input type="checkbox" formControlName="hasSwimmingPool" /> Swimming pool</label>
+        <label class="checkbox"><input type="checkbox" formControlName="isFurnished" /> Furnished</label>
+        <label class="checkbox"><input type="checkbox" formControlName="hasSeaView" /> Sea view</label>
+        <label class="checkbox"><input type="checkbox" formControlName="hasCityView" /> City view</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Source & notes</legend>
+        <label>
+          Source name
+          <input type="text" formControlName="sourceName" />
+        </label>
+        <label class="wide">
+          Source URL *
+          <input type="text" formControlName="sourceUrl" placeholder="https://www.idealista.pt/imovel/..." />
+        </label>
+        <label class="wide">
+          Notes
+          <textarea rows="2" formControlName="notes"></textarea>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Initial price snapshot</legend>
+        <label>
+          Price (€) *
+          <input type="number" min="1" formControlName="price" />
+        </label>
+        <label>
+          Price / m²
+          <span class="input-with-button">
+            <input type="number" formControlName="pricePerM2" />
+            <button type="button" (click)="recalculatePricePerM2()">Recalc</button>
+          </span>
+        </label>
+        <label>
+          Status *
+          <select formControlName="status">
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Snapshot date *
+          <input type="date" formControlName="snapshotDate" />
+        </label>
+      </fieldset>
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      <button type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Saving...' : 'Create listing' }}
+      </button>
+    </form>
+  }
+</section>

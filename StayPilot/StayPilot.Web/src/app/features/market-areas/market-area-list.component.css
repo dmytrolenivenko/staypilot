@@ -1,0 +1,15 @@
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.text-input {
+  margin: 0.75rem 0;
+  max-width: 420px;
+}
+
+.notes {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

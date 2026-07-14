@@ -1,0 +1,29 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-title">StayPilot</span>
+      <span class="brand-sub">Comps</span>
+    </div>
+
+    <nav>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+
+      <span class="nav-group-label">Data</span>
+      <a routerLink="/market-areas" routerLinkActive="active">Market Areas</a>
+      <a routerLink="/listings/lookup" routerLinkActive="active">Listing Lookup</a>
+      <a routerLink="/listings/new" routerLinkActive="active">Add Listing</a>
+
+      <span class="nav-group-label">Analysis (planned)</span>
+      <a routerLink="/market-overview" routerLinkActive="active">Market Overview</a>
+      <a routerLink="/feature-impact" routerLinkActive="active">Feature Impact</a>
+      <a routerLink="/listing-browser" routerLinkActive="active">Listing Browser</a>
+      <a routerLink="/price-history" routerLinkActive="active">Price History</a>
+      <a routerLink="/valuation" routerLinkActive="active">My Valuation</a>
+      <a routerLink="/beach-proximity" routerLinkActive="active">Beach Proximity</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

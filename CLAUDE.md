@@ -11,8 +11,14 @@ single-developer project (see commit history) — a lot of the design is intenti
 (no AutoMapper, no repository abstraction over EF Core, no auth) and should stay that way unless
 a milestone specifically calls for more.
 
-This repo holds the Web API only (`StayPilot/`, `StayPilot.slnx`). The scraper that feeds the API
-(`AddProperty`) used to live here as a second solution but now has its own repo:
+This repo holds the Web API (`StayPilot/`, `StayPilot.slnx`) and, as of 2026-07-14, a minimal
+Angular front end at `StayPilot/StayPilot.Web/` — see its own `README.md` for how to run it. It's
+plain CSS/standalone-components, no UI framework, and only wires up the screens the API actually
+supports today (Market Areas, Listing Lookup, Add Listing); everything else in the product pitch
+(Market Overview, Feature Impact, Listing Browser, Price History, My Valuation, Beach Proximity)
+is a placeholder screen stating which backend endpoint it's waiting on — check `app.routes.ts`
+there before assuming a module is real. The scraper that feeds the API (`AddProperty`) used to
+live here as a second solution but now has its own repo:
 https://github.com/dmytrolenivenko/AddProperty — clone it separately if you need to work on
 scraping/ingestion.
 
