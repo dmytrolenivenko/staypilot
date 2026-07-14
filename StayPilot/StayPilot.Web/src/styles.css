@@ -12,20 +12,20 @@
   --accent-contrast: #ffffff;
   --error: #c0392b;
   --success: #1e824c;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15171a;
-    --surface: #1d2024;
-    --surface-hover: #262a2f;
-    --sidebar-bg: #1a1c1f;
-    --border: #33373d;
-    --text: #e6e8ea;
-    --text-muted: #9aa1a9;
-    --accent: #5b8cff;
-    --accent-contrast: #0b0d0f;
-  }
+:root[data-theme='dark'] {
+  --bg: #191b1e;
+  --surface: #212428;
+  --surface-hover: #2a2e33;
+  --sidebar-bg: #1d1f23;
+  --border: #383c42;
+  --text: #e6e8ea;
+  --text-muted: #9aa1a9;
+  --accent: #6a9bff;
+  --accent-contrast: #0b0d0f;
+  color-scheme: dark;
 }
 
 * {
@@ -111,6 +111,14 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.4rem 0.5rem;
+}
+
+/* Explicit option colors stop the browser from painting the dropdown
+   popup with its default light UA style for a frame before the dark
+   theme catches up (visible as a flash when opening a select). */
+option {
+  background: var(--surface);
+  color: var(--text);
 }
 
 input:focus,

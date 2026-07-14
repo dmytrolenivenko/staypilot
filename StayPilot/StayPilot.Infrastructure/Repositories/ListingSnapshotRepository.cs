@@ -20,9 +20,9 @@ namespace StayPilot.Infrastructure.Repositories
             return entry.Entity;
         }
 
-        public async Task<ListingSnapshot> GetListingSnapshotByPropertyIdAsync(int propertyListingId)
+        public async Task<ListingSnapshot?> GetListingSnapshotByPropertyIdAsync(int propertyListingId)
         {
-            return await _context.ListingSnapshots.FirstOrDefaultAsync(x => x.PropertyListingId == propertyListingId);
+            return await _context.ListingSnapshots.OrderByDescending(x => x.SnapshotDateUtc).FirstOrDefaultAsync(x => x.PropertyListingId == propertyListingId) ?? null;
         }
     }
 }

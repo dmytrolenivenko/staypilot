@@ -27,33 +27,28 @@
 
     <section>
       <h3>Property</h3>
-      <dl>
-        <dt>Type</dt><dd>{{ listing.propertyType }}</dd>
-        <dt>Typology</dt><dd>{{ listing.typology }}</dd>
-        <dt>Area</dt><dd>{{ listing.areaM2 }} m²</dd>
-        <dt>Bathrooms</dt><dd>{{ listing.bathrooms }}</dd>
-        <dt>Floor</dt><dd>{{ listing.floor ?? '—' }} / {{ listing.totalFloors ?? '—' }}</dd>
-        <dt>Condition</dt><dd>{{ listing.condition }}</dd>
-        <dt>Construction year</dt><dd>{{ listing.constructionYear ?? '—' }}</dd>
-        <dt>Renovation year</dt><dd>{{ listing.renovationYear ?? '—' }}</dd>
-        <dt>Energy certificate</dt><dd>{{ listing.energyCertificate ?? '—' }}</dd>
-      </dl>
+      @if (propertyFacts.length) {
+        <dl>
+          @for (fact of propertyFacts; track fact.label) {
+            <dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd>
+          }
+        </dl>
+      } @else {
+        <p class="hint">No property details available.</p>
+      }
     </section>
 
     <section>
       <h3>Features</h3>
-      <dl>
-        <dt>Elevator</dt><dd>{{ yesNo(listing.hasElevator) }}</dd>
-        <dt>Air conditioning</dt><dd>{{ yesNo(listing.hasAirConditioning) }}</dd>
-        <dt>Garage</dt><dd>{{ yesNo(listing.hasGarage) }}</dd>
-        <dt>Parking</dt><dd>{{ yesNo(listing.hasParking) }}</dd>
-        <dt>Terrace</dt><dd>{{ yesNo(listing.hasTerrace) }}</dd>
-        <dt>Balconies</dt><dd>{{ listing.balconyCount }}</dd>
-        <dt>Swimming pool</dt><dd>{{ yesNo(listing.hasSwimmingPool) }}</dd>
-        <dt>Furnished</dt><dd>{{ yesNo(listing.isFurnished) }}</dd>
-        <dt>Sea view</dt><dd>{{ yesNo(listing.hasSeaView) }}</dd>
-        <dt>City view</dt><dd>{{ yesNo(listing.hasCityView) }}</dd>
-      </dl>
+      @if (presentFeatures.length) {
+        <ul class="feature-list">
+          @for (feature of presentFeatures; track feature) {
+            <li>{{ feature }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="hint">No features available.</p>
+      }
     </section>
 
     <section>
@@ -73,7 +68,7 @@
   </div>
 
   @if (listing.notes) {
-    <section>
+    <section class="notes-panel">
       <h3>Notes</h3>
       <p class="notes-block">{{ listing.notes }}</p>
     </section>

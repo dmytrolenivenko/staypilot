@@ -68,3 +68,21 @@ nav a.active {
   padding: 1.5rem 2rem;
   max-width: 1200px;
 }
+
+.theme-toggle {
+  margin: 0 1rem 0.75rem;
+  align-self: flex-start;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  text-align: left;
+  padding: 0.25rem 0.55rem;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  opacity: 1;
+}

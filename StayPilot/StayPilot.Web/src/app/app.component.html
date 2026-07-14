@@ -5,6 +5,10 @@
       <span class="brand-sub">Comps</span>
     </div>
 
+    <button type="button" class="theme-toggle" (click)="toggleTheme()">
+      {{ theme() === 'light' ? 'Dark mode' : 'Light mode' }}
+    </button>
+
     <nav>
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
 

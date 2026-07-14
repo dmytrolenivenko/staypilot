@@ -36,12 +36,14 @@ namespace StayPilot.Infrastructure.Services
         {
             var property = await _propertyListingRepo.GetPropertyListingByIdAsync(propertyId);
 
+            var listing = await _listingSnapshotRepo.GetListingSnapshotByPropertyIdAsync(propertyId);
+
             if (property == null)
             {
                 return null;
             }
 
-            return Converter.MapToResponse(property);
+            return Converter.MapToResponse(property, listing);
         }
 
 
