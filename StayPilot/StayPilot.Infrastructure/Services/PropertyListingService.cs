@@ -8,6 +8,9 @@ using System.Text;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
+using Nito.Disposables;
+using Nito.AsyncEx;
+using Microsoft.Identity.Client;
 
 namespace StayPilot.Infrastructure.Services
 {
@@ -53,55 +56,81 @@ namespace StayPilot.Infrastructure.Services
         /// <param name="propertyListing"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        
+
         public async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing)
         {
-                // Creating repos for helpers
-                var marketAreasRepo = await _marketAreaRepo.GetAllMarketAreasAsync();
-                var beachesRepo = await _beachMarkerRepo.GetAllBeachMarkersAsync();
+            // Creating repos for helpers
+            var marketAreasRepo = await _marketAreaRepo.GetAllMarketAreasAsync();
+            var beachesRepo = await _beachMarkerRepo.GetAllBeachMarkersAsync();
 
-                // Firstly, check if the property listing already exists based on the SourceUrl
-                var propertyExist = await _propertyListingRepo.GetPropertyListingByUrlAsync(propertyListing.SourceUrl);
+            // Firstly, check if the property listing already exists based on the SourceUrl
+            var propertyExist = await _propertyListingRepo.GetPropertyListingByUrlAsync(propertyListing.SourceUrl);
 
-                if (propertyExist != null)
-                {
-                    return Converter.MapToResponse(propertyExist);
-                }
+            if (propertyExist != null)
+            {
+                return Converter.MapToResponse(propertyExist);
+            }
 
-                // Map the request to the entity and set the MarketAreaId
-                var property = Converter.MapToEntity(propertyListing);
-                property.MarketAreaId = propertyListing.MarketAreaId ?? GetMarketId(marketAreasRepo, propertyListing);
-                property.MarketArea = marketAreasRepo.FirstOrDefault(x => x.Id == property.MarketAreaId) ?? throw new InvalidOperationException("MarketArea can not be null");
+            // Map the request to the entity and set the MarketAreaId
+            var property = Converter.MapToEntity(propertyListing);
+            property.MarketAreaId = propertyListing.MarketAreaId ?? GetMarketId(marketAreasRepo, propertyListing);
+            property.MarketArea = marketAreasRepo.FirstOrDefault(x => x.Id == property.MarketAreaId) ?? throw new InvalidOperationException("MarketArea can not be null");
 
-                // Check the Lat and Lon and throw if absent
-                if (propertyListing.Latitude == null || propertyListing.Longitude == null)
-                {
-                    throw new InvalidOperationException("Latitude and Longitude must be provided for the property listing.");
-                }
+            // Check the Lat and Lon and throw if absent
+            if (propertyListing.Latitude == null || propertyListing.Longitude == null)
+            {
+                throw new InvalidOperationException("Latitude and Longitude must be provided for the property listing.");
+            }
 
-                // Get the closest beach to the property listing
-                var closesBeach = GetTheClosestBeach(beachesRepo, propertyListing);
+            // Get the closest beach to the property listing
+            var closesBeach = GetTheClosestBeach(beachesRepo, propertyListing);
 
-                // If a closest beach is found, calculate the distance and set the relevant properties
-                if (closesBeach is not null)
-                {
-                    var distanceToBeachMeters = CalculateDistanceMeters((double)propertyListing.Latitude.Value, (double)propertyListing.Longitude.Value, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
+            // If a closest beach is found, calculate the distance and set the relevant properties
+            if (closesBeach is not null)
+            {
+                var distanceToBeachMeters = CalculateDistanceMeters((double)propertyListing.Latitude.Value, (double)propertyListing.Longitude.Value, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
 
-                    property.NearestBeachName = closesBeach.Name;
-                    property.NearestBeachMarkerId = closesBeach.Id;
-                    property.DistanceToBeachMeters = (int)distanceToBeachMeters;
-                    property.DistanceToBeachMethod = "osm_center_point";
-                }
+                property.NearestBeachName = closesBeach.Name;
+                property.NearestBeachMarkerId = closesBeach.Id;
+                property.DistanceToBeachMeters = (int)distanceToBeachMeters;
+                property.DistanceToBeachMethod = "osm_center_point";
+            }
 
-                // Create the ListingSnapshot from the request
-                var listingSnapshot = Converter.MapToEntity(propertyListing.ListingSnapshot);
-                listingSnapshot.PropertyListing = property;
+            // Create the ListingSnapshot from the request
+            var listingSnapshot = Converter.MapToEntity(propertyListing.ListingSnapshot);
+            listingSnapshot.PropertyListing = property;
 
             await _propertyListingRepo.AddPropertyListingAsync(property);
             await _listingSnapshotRepo.AddListingSnapshotAsync(listingSnapshot);
             await _propertyListingRepo.SaveChangesAsync();
 
             return Converter.MapToResponse(property, listingSnapshot);
+        }
+
+        /// <summary>
+        /// Controller to search properties by filters
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<ListPropertyListingResponse> FilterPropertyAsync(ListPropertyListingRequest request)
+        {
+            var (items, totalRecords) = await _propertyListingRepo.FilterPropertyAsync(request);
+
+            var response = new ListPropertyListingResponse();
+
+            foreach(var property in items)
+            {
+                var snapshot = property.ListingSnapshots.FirstOrDefault();
+                var item = Converter.MapToResponse(property, snapshot);
+                response.Items.Add(item);
+            }
+
+            response.TotalRecords = totalRecords;
+            response.PageNumber = request.PageNumber;
+            response.PageSize = request.PageSize;
+            
+
+            return response;
         }
 
         private static string NormalizeText(string value)
