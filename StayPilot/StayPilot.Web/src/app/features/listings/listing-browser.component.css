@@ -1,0 +1,122 @@
+/* The filter form: a responsive grid of small labelled fields. */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem 1rem;
+  margin-top: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field > span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* The "Must have" checkbox group spans a bit wider and lays its boxes in a row. */
+.checkboxes {
+  grid-column: 1 / -1;
+}
+
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.checkbox-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+/* Search / Reset buttons on their own full-width row. */
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.secondary {
+  background: var(--surface-hover);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Results header: match count on the left, "per page" on the right. */
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-size {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.page-size select {
+  padding: 0.2rem 0.4rem;
+}
+
+/* Clickable, sortable column headers. */
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.data-table th.sortable:hover {
+  color: var(--text);
+}
+
+/* Paging controls under the table. */
+.pager {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+/* Numbered / First / Last buttons — light by default, accent when it's the current page. */
+.page-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  min-width: 2.2rem;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.page-btn.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+  cursor: default;
+}
+
+.data-table a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.data-table a:hover {
+  text-decoration: underline;
+}

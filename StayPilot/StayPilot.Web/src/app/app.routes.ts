@@ -3,6 +3,7 @@ import { HomeComponent } from './features/home/home.component';
 import { MarketAreaListComponent } from './features/market-areas/market-area-list.component';
 import { ListingLookupComponent } from './features/listings/listing-lookup.component';
 import { ListingCreateComponent } from './features/listings/listing-create.component';
+import { ListingBrowserComponent } from './features/listings/listing-browser.component';
 import { ComingSoonComponent } from './features/coming-soon/coming-soon.component';
 import { ComingSoonInfo } from './core/models/coming-soon-info';
 
@@ -15,6 +16,7 @@ export const routes: Routes = [
   { path: 'market-areas', component: MarketAreaListComponent },
   { path: 'listings/lookup', component: ListingLookupComponent },
   { path: 'listings/new', component: ListingCreateComponent },
+  { path: 'listing-browser', component: ListingBrowserComponent },
   {
     path: 'market-overview',
     component: ComingSoonComponent,
@@ -33,16 +35,6 @@ export const routes: Routes = [
       description:
         'Pick a feature (garage, elevator, sea view, beach-under-500m, renovated...) and see the price delta with/without it. Correlation, not causation.',
       needs: 'A GET /api/analysis/features endpoint on the API.'
-    })
-  },
-  {
-    path: 'listing-browser',
-    component: ComingSoonComponent,
-    data: comingSoon({
-      title: 'Listing Browser',
-      description:
-        'Filterable table of all listings — city, typology, price range, area range, garage, beach distance, sorted by price/m².',
-      needs: 'A GET /api/PropertyListing (list + filter + paging) endpoint on the API — today only get-by-id exists.'
     })
   },
   {

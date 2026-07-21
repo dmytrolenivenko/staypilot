@@ -51,7 +51,7 @@ export class HomeComponent {
       title: 'Listing Browser',
       description: 'Filterable table of all listings — city, typology, price, area, garage, beach distance.',
       link: '/listing-browser',
-      live: false
+      live: true
     },
     {
       title: 'Price History',

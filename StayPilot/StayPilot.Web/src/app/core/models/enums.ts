@@ -24,3 +24,16 @@ export const PROPERTY_CONDITIONS: PropertyCondition[] = [
 export type ListingStatus = 'Sold' | 'Active' | 'PriceChanged';
 
 export const LISTING_STATUSES: ListingStatus[] = ['Sold', 'Active', 'PriceChanged'];
+
+// The field the API can sort the listing browser by. Names match StayPilot.Domain/Enums/SortBy.cs.
+export type SortBy = 'Id' | 'Price' | 'PricePerM2' | 'AreaM2' | 'CreatedAtUtc' | 'DistanceToBeachMeters';
+
+// value = what we send to the API, label = what the user reads in the dropdown.
+export const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: 'Id', label: 'Newest (id)' },
+  { value: 'Price', label: 'Price' },
+  { value: 'PricePerM2', label: 'Price per m²' },
+  { value: 'AreaM2', label: 'Area' },
+  { value: 'DistanceToBeachMeters', label: 'Distance to beach' },
+  { value: 'CreatedAtUtc', label: 'Date added' }
+];
