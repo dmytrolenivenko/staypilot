@@ -80,6 +80,7 @@ namespace StayPilot.Application.Services
                 var newListingSnapshot = Converter.MapToEntity(propertyListing.ListingSnapshot);
                 newListingSnapshot.PropertyListing = propertyExist;
                 await _listingSnapshotRepo.AddListingSnapshotAsync(newListingSnapshot);
+                await _propertyListingRepo.SaveChangesAsync();
                 return Converter.MapToResponse(propertyExist, newListingSnapshot);
             }
 
