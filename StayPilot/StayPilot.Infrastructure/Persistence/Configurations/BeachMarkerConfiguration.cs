@@ -4,16 +4,23 @@ using StayPilot.Domain.Entities;
 
 namespace StayPilot.Infrastructure.Persistence.Configurations
 {
+    /// <summary>
+    /// Maps the BeachMarker entity to its table and loads the beach seed data.
+    /// The seed rows are written into the table when the migration runs.
+    /// </summary>
     public class BeachMarkerConfiguration : IEntityTypeConfiguration<BeachMarker>
     {
+        /// <summary>
+        /// Sets column rules and adds the fixed list of Algarve beaches.
+        /// </summary>
         public void Configure(EntityTypeBuilder<BeachMarker> builder)
         {
-            // Timestamp supplied by the DB on insert, NOT by the seed objects.
-            // (Avoids the non-deterministic-HasData / PendingModelChangeadd ssWarning trap.)
+            // The database fills the create date on insert (UTC now), not the seed rows below.
+            // (Fixed dates in seed rows would make EF think the model keeps changing.)
             builder.Property(x => x.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
 
-            // 291 Algarve beaches from OpenStreetMap (natural=beach), Overpass export 2026-06-30.
-            // Fixed IDs 1-291 are a stable contract: PropertyListing.NearestBeachMarkerId points here.
+            // Seed data: the known beaches of the Algarve, from OpenStreetMap.
+            // The Ids 1-291 stay the same forever, because PropertyListing.NearestBeachMarkerId points to them.
             builder.HasData(
                 new BeachMarker { Id = 1, OsmId = 432987903L, Name = "Meia Praia", Latitude = 37.119263m, Longitude = -8.637639m },
                 new BeachMarker { Id = 2, OsmId = 1069286046L, Name = "Meia Praia", Latitude = 37.120719m, Longitude = -8.626936m },

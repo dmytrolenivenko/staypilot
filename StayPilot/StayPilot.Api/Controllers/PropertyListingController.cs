@@ -6,6 +6,10 @@ using StayPilot.Application.Interfaces.Services;
 namespace StayPilot.Api.Controllers
 
 {
+    /// <summary>
+    /// Endpoints for a single property.
+    /// It can save a new property and read one property by its Id.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class PropertyListingController : ControllerBase
@@ -17,7 +21,10 @@ namespace StayPilot.Api.Controllers
             _service = service;
         }
 
-        // Controller action to add a new property listing
+        /// <summary>
+        /// Save a new property.
+        /// Returns the saved property and a link to read it by its Id.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult<PropertyListingResponse>> AddPropertyListing(PropertyListingRequest request)
         {
@@ -26,7 +33,10 @@ namespace StayPilot.Api.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
-        // Controller action to get a property listing by ID
+        /// <summary>
+        /// Return one property by its Id.
+        /// Returns 404 Not Found if no property has this Id.
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<PropertyListingResponse>> GetById(int id)
         {

@@ -1,50 +1,52 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Infrastructure.Persistence;
-using StayPilot.Infrastructure.Services;
+using StayPilot.Application.Services;
 using StayPilot.Infrastructure.Repositories;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add the controllers. Also tell JSON to write enums as their text name, not a number.
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
-// Tells the app to discover all your endpoints so Swagger knows about them.
+// Find all the endpoints so Swagger knows about them.
 builder.Services.AddEndpointsApiExplorer();
 
-// Generates the Swagger JSON specification from your controllers.
+// Build the Swagger page that shows and tests the API.
 builder.Services.AddSwaggerGen();
 
-// DbContext registration   
+// Connect to the SQL Server database. The connection string is read from the config.
 builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// DI for services
+// Register the services (the business logic classes) so they can be injected.
 builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
 builder.Services.AddScoped<IPropertyListingService, PropertyListingService>();
 
-//DI for repositories
+// Register the repositories (the classes that read and write the database).
 builder.Services.AddScoped<IPropertyListingRepository, PropertyListingRepository>();
 builder.Services.AddScoped<IMarketAreaRepository, MarketAreaRepository>();
 builder.Services.AddScoped<IBeachMarkerRepository, BeachMarkerRepository>();
 builder.Services.AddScoped<IListingSnapshotRepository, ListingSnapshotRepository>();
+builder.Services.AddScoped<IListingSnapshotService, ListingSnapshotService>();
 
-// Adding ProblemDetails middleware to handle exceptions and return standardized error responses
+// Turn on ProblemDetails: send errors back in a standard shape.
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-// Wrapping the app with AddProblemDetails middleware to handle exceptions and return standardized error responses
+// Catch any unhandled error and turn it into a clean error response.
 app.UseExceptionHandler(exceptionHandlerApp =>
 {
     exceptionHandlerApp.Run(async context =>
     {
         var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
 
+        // Pick the HTTP status: bad request for a known input error, else 500.
         context.Response.StatusCode = exception switch
         {
             InvalidOperationException => StatusCodes.Status400BadRequest,
@@ -58,18 +60,23 @@ app.UseExceptionHandler(exceptionHandlerApp =>
     });
 });
 
-// Configure the HTTP request pipeline.
+// Set up the HTTP pipeline: the steps every request goes through.
+// Only show Swagger when running in development.
 if (app.Environment.IsDevelopment())
 {
-    // UI of Swagger
+    // Swagger JSON and the test page in the browser.
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Send HTTP requests to HTTPS.
 app.UseHttpsRedirection();
 
+// Check the user is allowed to call the endpoint.
 app.UseAuthorization();
 
+// Send each request to the matching controller.
 app.MapControllers();
 
+// Start the app.
 app.Run();

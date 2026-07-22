@@ -6,6 +6,10 @@ using StayPilot.Domain.Entities;
 
 namespace StayPilot.Api.Controllers
 {
+    /// <summary>
+    /// Endpoints to search properties.
+    /// It takes filters and returns one page of matching properties.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class ListPropertyListingController : ControllerBase
@@ -17,7 +21,10 @@ namespace StayPilot.Api.Controllers
             _service = service;
         }
 
-        // Controller to filter Properties
+        /// <summary>
+        /// Search properties by the given filters.
+        /// Returns one page of properties and the total count of matches.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult<ListPropertyListingResponse>> FilterPropertyAsync(ListPropertyListingRequest request)
         {

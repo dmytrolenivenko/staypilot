@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace StayPilot.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Talks to the database for beaches.
+    /// </summary>
     public class BeachMarkerRepository : IBeachMarkerRepository
     {
         private readonly StayPilotDbContext _context;
@@ -15,6 +18,9 @@ namespace StayPilot.Infrastructure.Repositories
             _context = context;
         }
 
+        /// <summary>
+        /// Reads all beaches from the database.
+        /// </summary>
         public async Task<List<BeachMarker>> GetAllBeachMarkersAsync()
         {
             return await _context.BeachMarkers.ToListAsync();

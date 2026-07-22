@@ -4,11 +4,20 @@ using StayPilot.Domain.Entities;
 
 namespace StayPilot.Application.Helpers.Mappers
 {
+    /// <summary>
+    /// Maps between database entities and the request/response shapes.
+    /// Each method just copies fields from one object into another.
+    /// </summary>
     public class Converter
     {
+        /// <summary>
+        /// Turn a PropertyListing entity (plus its snapshot) into the response we send back.
+        /// The snapshot is optional; pass null if there is none.
+        /// </summary>
         public static PropertyListingResponse MapToResponse(PropertyListing property, ListingSnapshot listingSnapshot = null)
         {
 
+            // The market area must be loaded first, because we copy its fields below.
             if (property.MarketArea == null)
             {
                 throw new InvalidOperationException("MarketArea must be loaded before mapping.");
@@ -54,6 +63,9 @@ namespace StayPilot.Application.Helpers.Mappers
             };
         }
 
+        /// <summary>
+        /// Turn a PropertyListingRequest (data from the caller) into a PropertyListing entity to save.
+        /// </summary>
         public static PropertyListing MapToEntity(PropertyListingRequest property)
         {
             return new PropertyListing
@@ -86,6 +98,9 @@ namespace StayPilot.Application.Helpers.Mappers
             };
         }
 
+        /// <summary>
+        /// Turn a ListingSnapshotRequest (data from the caller) into a ListingSnapshot entity to save.
+        /// </summary>
         public static ListingSnapshot MapToEntity(ListingSnapshotRequest snapshot)
         {
             return new ListingSnapshot
@@ -97,6 +112,9 @@ namespace StayPilot.Application.Helpers.Mappers
             };
         }
 
+        /// <summary>
+        /// Turn a ListingSnapshot entity into the snapshot response we send back.
+        /// </summary>
         public static ListingSnapshotResponse MapToResponse(ListingSnapshot snapshot)
         {
             return new ListingSnapshotResponse
@@ -110,6 +128,9 @@ namespace StayPilot.Application.Helpers.Mappers
             };
         }
 
+        /// <summary>
+        /// Turn a MarketArea entity into the market area response we send back.
+        /// </summary>
         public static MarketAreaResponse MapToResponse(MarketArea marketArea)
         {
             return new MarketAreaResponse
@@ -124,6 +145,10 @@ namespace StayPilot.Application.Helpers.Mappers
             };
         }
 
+        /// <summary>
+        /// Turn a ListingSnapshot entity into the snapshot response we send back.
+        /// (Same result as MapToResponse for a ListingSnapshot.)
+        /// </summary>
         public static ListingSnapshotResponse MapEntityToResponse(ListingSnapshot snapshot)
         {
             return new ListingSnapshotResponse

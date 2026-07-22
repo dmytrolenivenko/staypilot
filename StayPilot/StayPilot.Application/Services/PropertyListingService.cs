@@ -1,5 +1,3 @@
-
-using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Domain.Entities;
@@ -8,11 +6,8 @@ using System.Text;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
-using Nito.Disposables;
-using Nito.AsyncEx;
-using Microsoft.Identity.Client;
 
-namespace StayPilot.Infrastructure.Services
+namespace StayPilot.Application.Services
 {
     public class PropertyListingService : IPropertyListingService
     {
@@ -30,62 +25,80 @@ namespace StayPilot.Infrastructure.Services
         }
 
         /// <summary>
-        /// Controller method to get a property listing by its ID.
+        /// Get one property by its Id.
+        /// Returns null if the property does not exist.
         /// </summary>
-        /// <param name="propertyId"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
         public async Task<PropertyListingResponse?> GetPropertyListingByIdAsync(int propertyId)
         {
+            // Read the property and its snapshot (price, photos, etc.) from the database.
             var property = await _propertyListingRepo.GetPropertyListingByIdAsync(propertyId);
 
             var listing = await _listingSnapshotRepo.GetListingSnapshotByPropertyIdAsync(propertyId);
 
+            // No property with this Id -> nothing to return.
             if (property == null)
             {
                 return null;
             }
 
+            // Change the database data into the shape we send back to the caller.
             return Converter.MapToResponse(property, listing);
         }
 
 
         /// <summary>
-        /// Controller method to add a new property listing.
+        /// Save a new property.
+        /// If the same property already exists (same URL), we do not save it again.
+        /// We also set its market area and its closest beach.
         /// </summary>
-        /// <param name="propertyListing"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-
         public async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing)
         {
-            // Creating repos for helpers
+            // Load all market areas and all beaches once. We use these lists below.
             var marketAreasRepo = await _marketAreaRepo.GetAllMarketAreasAsync();
             var beachesRepo = await _beachMarkerRepo.GetAllBeachMarkersAsync();
 
-            // Firstly, check if the property listing already exists based on the SourceUrl
+            // Is this property already saved? We check by its URL.
             var propertyExist = await _propertyListingRepo.GetPropertyListingByUrlAsync(propertyListing.SourceUrl);
+            var samePrice = false;
 
-            if (propertyExist != null)
+            // If property exist, let's check if the price changed
+            if (propertyExist is not null)
+            {
+                var lastListing = await _listingSnapshotRepo.GetListingSnapshotByPropertyIdAsync(propertyExist.Id);
+                samePrice = lastListing.Price == propertyListing.ListingSnapshot.Price;
+            }
+
+            // Already there -> return the existing one and stop.
+            if (propertyExist is not null && samePrice)
             {
                 return Converter.MapToResponse(propertyExist);
             }
 
-            // Map the request to the entity and set the MarketAreaId
+            // If the property exists, but the price is differnt update ONLY Snapshot
+            if (propertyExist is not null && !samePrice)
+            {
+                var newListingSnapshot = Converter.MapToEntity(propertyListing.ListingSnapshot);
+                newListingSnapshot.PropertyListing = propertyExist;
+                await _listingSnapshotRepo.AddListingSnapshotAsync(newListingSnapshot);
+                return Converter.MapToResponse(propertyExist, newListingSnapshot);
+            }
+
+            // Build the entity from the request.
             var property = Converter.MapToEntity(propertyListing);
+            // Use the market area sent by the caller, or find it from the address.
             property.MarketAreaId = propertyListing.MarketAreaId ?? GetMarketId(marketAreasRepo, propertyListing);
             property.MarketArea = marketAreasRepo.FirstOrDefault(x => x.Id == property.MarketAreaId) ?? throw new InvalidOperationException("MarketArea can not be null");
 
-            // Check the Lat and Lon and throw if absent
+            // Location is required. Stop if it is missing.
             if (propertyListing.Latitude == null || propertyListing.Longitude == null)
             {
                 throw new InvalidOperationException("Latitude and Longitude must be provided for the property listing.");
             }
 
-            // Get the closest beach to the property listing
+            // Find the nearest beach to this property.
             var closesBeach = GetTheClosestBeach(beachesRepo, propertyListing);
 
-            // If a closest beach is found, calculate the distance and set the relevant properties
+            // If we found a beach, save its name and how far it is (in meters).
             if (closesBeach is not null)
             {
                 var distanceToBeachMeters = CalculateDistanceMeters((double)propertyListing.Latitude.Value, (double)propertyListing.Longitude.Value, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
@@ -96,10 +109,11 @@ namespace StayPilot.Infrastructure.Services
                 property.DistanceToBeachMethod = "osm_center_point";
             }
 
-            // Create the ListingSnapshot from the request
+            // Build the snapshot and link it to the property.
             var listingSnapshot = Converter.MapToEntity(propertyListing.ListingSnapshot);
             listingSnapshot.PropertyListing = property;
 
+            // Save property + snapshot together, then commit to the database.
             await _propertyListingRepo.AddPropertyListingAsync(property);
             await _listingSnapshotRepo.AddListingSnapshotAsync(listingSnapshot);
             await _propertyListingRepo.SaveChangesAsync();
@@ -108,16 +122,17 @@ namespace StayPilot.Infrastructure.Services
         }
 
         /// <summary>
-        /// Controller to search properties by filters
+        /// Search properties using filters, one page at a time.
+        /// Returns the properties for the page and the total count of matches.
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
         public async Task<ListPropertyListingResponse> FilterPropertyAsync(ListPropertyListingRequest request)
         {
+            // Ask the database for this page of properties and the total number of matches.
             var (items, totalRecords) = await _propertyListingRepo.FilterPropertyAsync(request);
 
             var response = new ListPropertyListingResponse();
 
+            // For each property, take its snapshot and build one item for the response.
             foreach(var property in items)
             {
                 var snapshot = property.ListingSnapshots.FirstOrDefault();
@@ -125,23 +140,32 @@ namespace StayPilot.Infrastructure.Services
                 response.Items.Add(item);
             }
 
+            // Add the paging info so the caller knows how many pages exist.
             response.TotalRecords = totalRecords;
             response.PageNumber = request.PageNumber;
             response.PageSize = request.PageSize;
-            
+
 
             return response;
         }
 
+        /// <summary>
+        /// Clean text so two names can be compared safely.
+        /// It makes the text lower case, removes accents (á becomes a), and trims spaces.
+        /// Example: "  Faró " becomes "faro".
+        /// </summary>
         private static string NormalizeText(string value)
         {
+            // Empty or spaces only -> return empty text.
             if (string.IsNullOrWhiteSpace(value))
                 return string.Empty;
 
+            // Lower case, no spaces at the ends, and split each accent from its letter.
             var normalized = value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
 
             var builder = new StringBuilder();
 
+            // Keep every character, but drop the accent marks.
             foreach (var c in normalized)
             {
                 var category = CharUnicodeInfo.GetUnicodeCategory(c);
@@ -152,17 +176,24 @@ namespace StayPilot.Infrastructure.Services
                 }
             }
 
+            // Put the text back together in the normal form.
             return builder.ToString().Normalize(NormalizationForm.FormC);
         }
 
+        /// <summary>
+        /// Find which market area a property belongs to, using its address.
+        /// We try an exact match first. If that fails, we try easier matches.
+        /// </summary>
         private static int GetMarketId(List<MarketArea> marketAreas, PropertyListingRequest propertyListing)
         {
+            // Clean each address part so we can compare it safely (see NormalizeText).
             var country = NormalizeText(propertyListing.Country);
             var district = NormalizeText(propertyListing.District);
             var municipality = NormalizeText(propertyListing.Municipality);
             var town = NormalizeText(propertyListing.Town);
             var zone = NormalizeText(propertyListing.Zone ?? string.Empty);
 
+            // Try 1: exact match on all parts (country, district, municipality, town, zone).
             var marketArea = marketAreas.FirstOrDefault(x =>
                 NormalizeText(x.Country) == country &&
                 NormalizeText(x.District) == district &&
@@ -170,10 +201,8 @@ namespace StayPilot.Infrastructure.Services
                 NormalizeText(x.Town) == town &&
                 NormalizeText(x.Zone ?? string.Empty) == zone);
 
-            // Scraped listings often can't tell which Zone a Town falls under — Idealista's page
-            // doesn't expose that level of detail, so Zone frequently arrives null. Rather than
-            // rejecting the whole listing over a missing Zone, fall back to any MarketArea for
-            // the same Town, preferring one with no Zone of its own.
+            // Try 2: many listings have no Zone (the source does not give it).
+            // So match by Town only. Prefer a market area that also has no Zone.
             marketArea ??= marketAreas
                 .Where(x =>
                     NormalizeText(x.Country) == country &&
@@ -184,11 +213,8 @@ namespace StayPilot.Infrastructure.Services
                 .ThenBy(x => x.Id)
                 .FirstOrDefault();
 
-            // Some captures can only tell us the Municipality, not the specific parish (e.g.
-            // Idealista's page just says "Lagoa" with no further breakdown) — Town won't match
-            // any seed row either in that case. Rather than reject the listing outright, land it
-            // on some MarketArea within the right Municipality so it's at least grouped
-            // correctly at that level; it can be corrected to the right parish/zone by hand later.
+            // Try 3: some listings only give the Municipality (no Town).
+            // So match by Municipality only. Someone can fix the exact zone later by hand.
             marketArea ??= marketAreas
                 .Where(x =>
                     NormalizeText(x.Country) == country &&
@@ -198,14 +224,20 @@ namespace StayPilot.Infrastructure.Services
                 .ThenBy(x => x.Id)
                 .FirstOrDefault();
 
+            // Still nothing -> we cannot place this property. Stop with an error.
             if (marketArea == null)
                 throw new InvalidOperationException("Market area not found. Property URL: " + propertyListing.SourceUrl);
 
             return marketArea.Id;
         }
 
+        /// <summary>
+        /// Find the beach nearest to the property.
+        /// Returns null if the property has no location.
+        /// </summary>
         private static BeachMarker? GetTheClosestBeach(List<BeachMarker> beaches, PropertyListingRequest propertyListing)
         {
+            // No location -> we cannot measure distance, so no beach.
             if (propertyListing.Latitude == null || propertyListing.Longitude == null)
             {
                 return null;
@@ -214,6 +246,7 @@ namespace StayPilot.Infrastructure.Services
             var propertyLat = (double)propertyListing.Latitude.Value;
             var propertyLon = (double)propertyListing.Longitude.Value;
 
+            // Sort all beaches by distance to the property and take the closest one.
             var closestBeach = beaches
                 .OrderBy(beach => CalculateDistanceMeters(
                     propertyLat,
@@ -225,8 +258,12 @@ namespace StayPilot.Infrastructure.Services
             return closestBeach;
         }
 
+        /// <summary>
+        /// Distance in meters between two points on Earth (given as latitude/longitude).
+        /// </summary>
         private static double CalculateDistanceMeters(double lat1, double lon1, double lat2, double lon2)
         {
+            // Haversine formula: the standard way to measure distance on a globe.
             const double earthRadiusMeters = 6371000;
 
             double ToRadians(double degrees)

@@ -10,6 +10,9 @@ using StayPilot.Infrastructure.Persistence;
 
 namespace StayPilot.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Talks to the database for properties (read one, read by URL, add, and search).
+    /// </summary>
     public class PropertyListingRepository : IPropertyListingRepository
     {
         private readonly StayPilotDbContext _context;
@@ -20,20 +23,23 @@ namespace StayPilot.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Repository method to get a property listing by its ID.
+        /// Reads one property by its Id, with its market area and its snapshots.
+        /// Returns null if no property has this Id.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         public async Task<PropertyListing?> GetPropertyListingByIdAsync(int id)
         {
             var property = await _context.PropertyListings
-                .Include(x => x.MarketArea)
-                .Include(x => x.ListingSnapshots)
+                .Include(x => x.MarketArea)       // also load the market area
+                .Include(x => x.ListingSnapshots) // also load the snapshots
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             return property;
         }
 
+        /// <summary>
+        /// Reads one property by its source URL, with its market area and its snapshots.
+        /// Used to check if a property is already saved. Returns null if not found.
+        /// </summary>
         public async Task<PropertyListing?> GetPropertyListingByUrlAsync(string url)
         {
             return await _context.PropertyListings
@@ -43,30 +49,30 @@ namespace StayPilot.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Repository method to add a new property listing.
+        /// Adds a new property. It is only kept in memory here;
+        /// SaveChangesAsync writes it to the database.
         /// </summary>
-        /// <param name="propertyListing"></param>
-        /// <returns></returns>
         public async Task<PropertyListing> AddPropertyListingAsync(PropertyListing propertyListing)
         {
             var entry = await _context.PropertyListings.AddAsync(propertyListing);
             return entry.Entity;
         }
 
+        /// <summary>
+        /// Writes all pending changes to the database.
+        /// </summary>
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
         }
 
         /// <summary>
-        /// Repository to get Properties with requests
+        /// Searches properties using the filters in the request, one page at a time.
+        /// Returns the properties for the page and the total count of matches.
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        /// 
         public async Task<(List<PropertyListing> Items, int TotalRecords)> FilterPropertyAsync(ListPropertyListingRequest request)
         {
+            // Start with all properties. We add one filter below for each value the caller sent.
             var query = _context.PropertyListings.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(request.District))
@@ -194,10 +200,14 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.HasCityView == request.HasCityView);
             }
 
+            // Keep only properties whose beach is close enough (distance under the asked limit).
             if (request.DistanceToBeachMeters is not null)
             {
                 query = query.Where(x => x.DistanceToBeachMeters <= request.DistanceToBeachMeters);
             }
+
+            // Price and status live on the snapshot, not the property.
+            // So each filter below looks at the NEWEST snapshot (sorted by date, first one).
 
             if (request.MaxPrice is not null)
             {
@@ -224,8 +234,10 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status == request.ListingStatus);
             }
 
+            // Count all matches BEFORE paging, so the caller knows the real total.
             var totalResults = await query.CountAsync();
 
+            // Order the results. The price sorts use the newest snapshot, same as the filters above.
             query = request.SortBy switch
             {
                 SortBy.Price => request.SortDescending
@@ -252,14 +264,16 @@ namespace StayPilot.Infrastructure.Repositories
                 ? query.OrderByDescending(x => x.Id)
                 : query.OrderBy(x => x.Id),
 
+                // No sort asked (or unknown) -> sort by Id.
                 _ => query.OrderBy(x => x.Id)
             };
 
             var items = await query
-                .Include(x => x.MarketArea)
+                .Include(x => x.MarketArea) // also load the market area
+                // Also load only the newest snapshot of each property (we do not need the older ones).
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
-                .Skip((request.PageNumber - 1) * request.PageSize)
-                .Take(request.PageSize)
+                .Skip((request.PageNumber - 1) * request.PageSize) // jump over the earlier pages
+                .Take(request.PageSize)                            // take only this page
                 .ToListAsync();
 
             return (items, totalResults);
