@@ -12,6 +12,12 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             // Added defaul CreatedBy
             builder.Property(x => x.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
 
+            // Adding collation
+            builder.Property(x => x.District).UseCollation("Latin1_General_CI_AI");
+            builder.Property(x => x.Municipality).UseCollation("Latin1_General_CI_AI");
+            builder.Property(x => x.Town).UseCollation("Latin1_General_CI_AI");
+            builder.Property(x => x.Zone).UseCollation("Latin1_General_CI_AI");
+
             // All the MarketAreas from Idealista
             builder.HasData(
                 // Albufeira

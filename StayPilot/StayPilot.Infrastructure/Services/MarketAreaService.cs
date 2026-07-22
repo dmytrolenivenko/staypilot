@@ -19,5 +19,10 @@ namespace StayPilot.Infrastructure.Services
 
             return marketAreas.Select(Converter.MapToResponse).ToList();
         }
+
+        public async Task<List<string>> GetMarketAreaOptionsAsync(string? district, string? municipality, string? town)
+        {
+            return await _marketAreaRepo.GetMarketAreaOptionsAsync(district, municipality, town);
+        }
     }
 }

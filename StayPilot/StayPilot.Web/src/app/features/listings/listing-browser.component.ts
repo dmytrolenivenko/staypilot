@@ -21,7 +21,9 @@ type SortColumn =
 // The on-screen filter form. '' = "Any" for dropdowns, null = empty for number boxes.
 // We strip those out before sending, so the API only filters on what you actually typed.
 interface FilterForm {
-  location: string;
+  municipality: string;
+  town: string;
+  zone: string;
   propertyType: string;
   typology: string;
   condition: string;
@@ -40,7 +42,9 @@ interface FilterForm {
 
 function emptyForm(): FilterForm {
   return {
-    location: '',
+    municipality: '',
+    town: '',
+    zone: '',
     propertyType: '',
     typology: '',
     condition: '',
@@ -72,9 +76,10 @@ export class ListingBrowserComponent implements OnInit {
   readonly conditions = PROPERTY_CONDITIONS;
   readonly listingStatuses = LISTING_STATUSES;
 
-  // Every real area name (district / municipality / town / zone), deduped and sorted.
-  // Feeds the location autocomplete so you pick a canonical, correctly-spelled name.
-  areaNames = signal<string[]>([]);
+  // The dropdown choices, each level loaded from the backend as you pick the one above.
+  municipalityOptions = signal<string[]>([]);
+  townOptions = signal<string[]>([]);
+  zoneOptions = signal<string[]>([]);
 
   // The editable filter form.
   form: FilterForm = emptyForm();
@@ -141,23 +146,38 @@ export class ListingBrowserComponent implements OnInit {
   ) {}
 
   // Load the area names once, when the page opens, for the location autocomplete.
-  ngOnInit(): void {
-    this.marketAreas.getAll().subscribe({
-      next: areas => {
-        // Collect all four levels, drop blanks, de-duplicate, sort (accent-aware).
-        const names = new Set<string>();
-        for (const a of areas) {
-          for (const value of [a.district, a.municipality, a.town, a.zone]) {
-            if (value && value.trim()) {
-              names.add(value.trim());
-            }
-          }
-        }
-        this.areaNames.set([...names].sort((x, y) => x.localeCompare(y, 'pt')));
-      },
-      // No autocomplete is a soft failure — you can still type freely.
-      error: () => this.areaNames.set([])
+    ngOnInit(): void {
+    // Load the top dropdown (municípios). Nothing picked yet → backend returns municipalities.
+    this.marketAreas.getOptions().subscribe({
+      next: m => this.municipalityOptions.set(m),
+      error: () => this.municipalityOptions.set([])
     });
+  }
+
+    // Município changed → wipe the child pickers and load this município's freguesias.
+  onMunicipalityChange(): void {
+    this.form.town = '';
+    this.form.zone = '';
+    this.townOptions.set([]);
+    this.zoneOptions.set([]);
+    if (this.form.municipality) {
+      this.marketAreas.getOptions(undefined, this.form.municipality).subscribe({
+        next: t => this.townOptions.set(t),
+        error: () => this.townOptions.set([])
+      });
+    }
+  }
+
+    // Freguesia changed → wipe zona and load this freguesia's zonas.
+  onTownChange(): void {
+    this.form.zone = '';
+    this.zoneOptions.set([]);
+    if (this.form.town) {
+      this.marketAreas.getOptions(undefined, this.form.municipality, this.form.town).subscribe({
+        next: z => this.zoneOptions.set(z),
+        error: () => this.zoneOptions.set([])
+      });
+    }
   }
 
   // --- Buttons -------------------------------------------------------------
@@ -187,6 +207,8 @@ export class ListingBrowserComponent implements OnInit {
 
   reset(): void {
     this.form = emptyForm();
+    this.townOptions.set([]);
+    this.zoneOptions.set([]);
     this.allRows.set([]);
     this.sortColumn.set(null);
     this.page.set(1);
@@ -277,7 +299,9 @@ export class ListingBrowserComponent implements OnInit {
       pageSize: 20
     };
 
-    if (f.location.trim()) request.location = f.location.trim();
+    if (f.municipality) request.municipality = f.municipality;
+    if (f.town) request.town = f.town;
+    if (f.zone) request.zone = f.zone;
     if (f.propertyType) request.propertyType = f.propertyType as any;
     if (f.typology) request.typology = f.typology as any;
     if (f.condition) request.condition = f.condition as any;

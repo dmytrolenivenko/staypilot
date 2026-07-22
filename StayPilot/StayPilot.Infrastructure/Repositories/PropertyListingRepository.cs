@@ -69,13 +69,24 @@ namespace StayPilot.Infrastructure.Repositories
         {
             var query = _context.PropertyListings.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(request.Location))
+            if (!string.IsNullOrWhiteSpace(request.District))
             {
-                query = query.Where(x => 
-                x.MarketArea.District.Contains(request.Location) ||
-                x.MarketArea.Municipality.Contains(request.Location) ||
-                x.MarketArea.Town.Contains(request.Location) ||
-                (x.MarketArea.Zone != null && x.MarketArea.Zone.Contains(request.Location)));
+                query = query.Where(x => x.MarketArea.District == request.District);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Municipality))
+            {
+                query = query.Where(x => x.MarketArea.Municipality == request.Municipality);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Town))
+            {
+                query = query.Where(x => x.MarketArea.Town == request.Town);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Zone))
+            {
+                query = query.Where(x => x.MarketArea.Zone == request.Zone);
             }
 
             if (request.PropertyType is not null)

@@ -7,22 +7,29 @@
   </p>
 
   <form class="filters" (ngSubmit)="search()">
-    <!-- Text + dropdown filters -->
+     <!-- Location cascade: Município → Freguesia → Zona. Each pick loads the next. -->
     <label class="field">
-      <span>Location</span>
-      <!-- Type to filter, or pick a real area name from the list. -->
-      <input
-        type="text"
-        name="location"
-        list="area-names"
-        placeholder="Town, municipality..."
-        [(ngModel)]="form.location"
-      />
-      <datalist id="area-names">
-        @for (name of areaNames(); track name) {
-          <option [value]="name"></option>
-        }
-      </datalist>
+      <span>Município</span>
+      <select name="municipality" [(ngModel)]="form.municipality" (ngModelChange)="onMunicipalityChange()">
+        <option value="">Any</option>
+        @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Freguesia</span>
+      <select name="town" [(ngModel)]="form.town" (ngModelChange)="onTownChange()" [disabled]="!form.municipality">
+        <option value="">Any</option>
+        @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Zona</span>
+      <select name="zone" [(ngModel)]="form.zone" [disabled]="!form.town">
+        <option value="">Any</option>
+        @for (z of zoneOptions(); track z) { <option [value]="z">{{ z }}</option> }
+      </select>
     </label>
 
     <label class="field">

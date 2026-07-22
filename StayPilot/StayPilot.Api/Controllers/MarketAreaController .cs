@@ -21,5 +21,12 @@ namespace StayPilot.Api.Controllers
             var response = await _service.GetAllMarketAreasAsync();
             return Ok(response);
         }
+
+        [HttpGet("options")]
+        public async Task<ActionResult<List<string>>> GetOptions([FromQuery] string? district, [FromQuery] string? municipality, [FromQuery] string? town)
+        {
+            var options = await _service.GetMarketAreaOptionsAsync(district, municipality, town);
+            return Ok(options);
+        }
     }
 }

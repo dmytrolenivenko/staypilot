@@ -5,7 +5,10 @@ import { PropertyListingResponse } from './property-listing';
 // out (undefined) and the API simply doesn't filter on it. Matches the C# request
 // ListPropertyListingRequest.cs field-for-field.
 export interface ListPropertyListingRequest {
-  location?: string;
+  district?: string;
+  municipality?: string;
+  town?: string;
+  zone?: string;
   propertyType?: PropertyType;
   typology?: Typology;
   condition?: PropertyCondition;

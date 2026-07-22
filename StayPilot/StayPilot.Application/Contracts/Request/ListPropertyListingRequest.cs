@@ -8,7 +8,13 @@ namespace StayPilot.Application.Contracts.Request
     {
         public int? MarketAreaId { get; set; }
 
-        public string? Location { get; set; }
+        public string? District { get; set; } = string.Empty;
+
+        public string? Municipality { get; set; } = string.Empty;
+
+        public string? Town { get; set; } = string.Empty;
+
+        public string? Zone { get; set; }
 
         public PropertyType? PropertyType { get; set; }
 
