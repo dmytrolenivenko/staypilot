@@ -53,6 +53,8 @@ namespace StayPilot.Infrastructure.Persistence
             // The database fills the create date on insert (UTC now).
             modelBuilder.Entity<PropertyListing>().Property(x => x.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
 
+
+
             // Money values: up to 18 digits, 2 after the point.
             modelBuilder.Entity<ListingSnapshot>().Property(x => x.Price).HasPrecision(18, 2);
 
@@ -60,6 +62,8 @@ namespace StayPilot.Infrastructure.Persistence
 
             // Index to quickly find a property's snapshots and sort them by date.
             modelBuilder.Entity<ListingSnapshot>().HasIndex(x => new { x.PropertyListingId, x.SnapshotDateUtc });
+
+
 
             // Money values for owned properties: up to 18 digits, 2 after the point.
             modelBuilder.Entity<OwnedProperty>().Property(x => x.PurchasePrice).HasPrecision(18, 2);
@@ -69,6 +73,8 @@ namespace StayPilot.Infrastructure.Persistence
             modelBuilder.Entity<OwnedProperty>().Property(x => x.Latitude).HasPrecision(9, 6);
 
             modelBuilder.Entity<OwnedProperty>().Property(x => x.Longitude).HasPrecision(9, 6);
+
+
 
             // Beach coordinates: same accuracy as the properties.
             modelBuilder.Entity<BeachMarker>().Property(x => x.Latitude).HasPrecision(9, 6);

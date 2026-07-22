@@ -1,5 +1,4 @@
-﻿using Abp.Extensions;
-using JetBrains.Annotations;
+﻿
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Interfaces.Repositories;

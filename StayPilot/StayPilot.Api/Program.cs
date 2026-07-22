@@ -33,6 +33,9 @@ builder.Services.AddScoped<IMarketAreaRepository, MarketAreaRepository>();
 builder.Services.AddScoped<IBeachMarkerRepository, BeachMarkerRepository>();
 builder.Services.AddScoped<IListingSnapshotRepository, ListingSnapshotRepository>();
 builder.Services.AddScoped<IListingSnapshotService, ListingSnapshotService>();
+builder.Services.AddScoped<IOwnedPropertyRepository, OwnedPropertyRepository>();
+builder.Services.AddScoped<IOwnedPropertyService, OwnedPropertyService>();
+
 
 // Turn on ProblemDetails: send errors back in a standard shape.
 builder.Services.AddProblemDetails();

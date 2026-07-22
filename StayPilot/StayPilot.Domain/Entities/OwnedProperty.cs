@@ -1,4 +1,5 @@
 ﻿using StayPilot.Domain.Enums;
+using System.Security.Cryptography.X509Certificates;
 
 namespace StayPilot.Domain.Entities
 {
@@ -78,6 +79,8 @@ namespace StayPilot.Domain.Entities
         /// </summary>
         public bool? HasElevator { get; set; }
 
+        public bool? HasAirConditioning { get; set; }
+
         /// <summary>
         /// Year the property was built. Can be empty.
         /// </summary>
@@ -137,6 +140,16 @@ namespace StayPilot.Domain.Entities
         /// Walking distance to the nearest beach, in meters. Can be empty.
         /// </summary>
         public int? DistanceToBeachMeters { get; set; }
+
+        /// <summary>
+        /// The nearest beach point. Can be empty.
+        /// </summary>
+        public BeachMarker? NearestBeachMarker { get; set; }
+
+        /// <summary>
+        /// Name of the nearest beach. Can be empty.
+        /// </summary>
+        public string? NearestBeachName { get; set; }
 
         /// <summary>
         /// Location: north-south position. Can be empty.

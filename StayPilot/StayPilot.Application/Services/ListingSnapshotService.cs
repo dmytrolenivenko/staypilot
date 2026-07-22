@@ -23,9 +23,9 @@ namespace StayPilot.Application.Services
         public async Task<ListingSnapshotResponse> CreateListingSnapshotAsync(ListingSnapshotRequest request)
         {
             // Build the entity from the request and save it.
-            var snapshot = Converter.MapToEntity(request);
+            var snapshot = Helpers.Mappers.Converter.MapToEntity(request);
             await _listingSnapshotRepo.AddListingSnapshotAsync(snapshot);
-            return Converter.MapEntityToResponse(snapshot);
+            return Helpers.Mappers.Converter.MapEntityToResponse(snapshot);
         }
 
         /// <inheritdoc/>
@@ -38,7 +38,7 @@ namespace StayPilot.Application.Services
             {
                 throw new KeyNotFoundException($"Snapshot with Property ID {propertyListingId} not found.");
             }
-            return Converter.MapEntityToResponse(snapshot);
+            return Helpers.Mappers.Converter.MapEntityToResponse(snapshot);
         }
 
     }
