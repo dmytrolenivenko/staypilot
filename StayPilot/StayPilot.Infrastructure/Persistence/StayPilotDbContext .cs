@@ -26,6 +26,8 @@ namespace StayPilot.Infrastructure.Persistence
         /// <summary>The beaches table (used to find the nearest beach to a property).</summary>
         public DbSet<BeachMarker> BeachMarkers => Set<BeachMarker>();
 
+        ///<summary>The premium feature table holds the features that can influence the base price</summary>
+        public DbSet<PremiumFeatures> PremiumFeatures => Set<PremiumFeatures>();
 
         /// <summary>
         /// Builds the database shape: tables, keys, indexes, and number precision.
@@ -80,6 +82,9 @@ namespace StayPilot.Infrastructure.Persistence
             modelBuilder.Entity<BeachMarker>().Property(x => x.Latitude).HasPrecision(9, 6);
 
             modelBuilder.Entity<BeachMarker>().Property(x => x.Longitude).HasPrecision(9, 6);
+
+            // Premuin features data precision digits
+            modelBuilder.Entity<PremiumFeatures>().Property(x => x.PremiumPercent).HasPrecision(9, 2);
         }
     }
 }

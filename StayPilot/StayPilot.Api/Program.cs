@@ -24,17 +24,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register the services (the business logic classes) so they can be injected.
-builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
 builder.Services.AddScoped<IPropertyListingService, PropertyListingService>();
+builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
+builder.Services.AddScoped<IListingSnapshotService, ListingSnapshotService>();
+builder.Services.AddScoped<IOwnedPropertyService, OwnedPropertyService>();
 
 // Register the repositories (the classes that read and write the database).
 builder.Services.AddScoped<IPropertyListingRepository, PropertyListingRepository>();
 builder.Services.AddScoped<IMarketAreaRepository, MarketAreaRepository>();
 builder.Services.AddScoped<IBeachMarkerRepository, BeachMarkerRepository>();
 builder.Services.AddScoped<IListingSnapshotRepository, ListingSnapshotRepository>();
-builder.Services.AddScoped<IListingSnapshotService, ListingSnapshotService>();
 builder.Services.AddScoped<IOwnedPropertyRepository, OwnedPropertyRepository>();
-builder.Services.AddScoped<IOwnedPropertyService, OwnedPropertyService>();
 
 
 // Turn on ProblemDetails: send errors back in a standard shape.

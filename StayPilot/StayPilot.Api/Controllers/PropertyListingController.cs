@@ -11,7 +11,7 @@ namespace StayPilot.Api.Controllers
     /// It can save a new property and read one property by its Id.
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     public class PropertyListingController : ControllerBase
     {
         private readonly IPropertyListingService _service;
@@ -46,6 +46,19 @@ namespace StayPilot.Api.Controllers
             {
                 return NotFound();
             }
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Search properties by the given filters.
+        /// Returns one page of properties and the total count of matches.
+        /// </summary>
+
+        [HttpPost]
+        public async Task<ActionResult<FilterPropertyListingResponse>> FilterPropertyAsync(FilterPropertyListingRequest request)
+        {
+            var result = await _service.FilterPropertyListingAsync(request);
+
             return Ok(result);
         }
     }

@@ -6,8 +6,8 @@ namespace StayPilot.Application.Contracts.Response
 {
     public class OwnedPropertyResponse
     {
-        // Fix: Id was missing, so a caller could never know which row
-        // was created/loaded/changed, and Update had no row to target.
+        // Fix: Id was missing, so a caller (and Converter.MapToResponse, which
+        // already tries to set it) had no way to say which row this is about.
         public int Id { get; set; }
 
         [Required]

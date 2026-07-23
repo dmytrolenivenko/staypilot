@@ -9,7 +9,7 @@ namespace StayPilot.Application.Contracts.Request
     /// Every filter is optional (nullable): only the ones you set are used.
     /// Empty filters are ignored, so they match everything.
     /// </summary>
-    public class ListPropertyListingRequest
+    public class FilterPropertyListingRequest
     {
         /// <summary>Keep only properties in this market area.</summary>
         public int? MarketAreaId { get; set; }

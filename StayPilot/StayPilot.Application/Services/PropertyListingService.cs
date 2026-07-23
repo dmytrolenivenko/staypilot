@@ -99,7 +99,7 @@ namespace StayPilot.Application.Services
             }
 
             // Find the nearest beach to this property.
-            var closesBeach = Calculator.GetTheClosestBeach(beachesRepo, (double)propertyListing.Latitude, (double)propertyListing.Longitude);
+            var closesBeach = Calculator.GetTheClosestBeach(beachesRepo, propertyListing.Latitude, propertyListing.Longitude);
 
             // If we found a beach, save its name and how far it is (in meters).
             if (closesBeach is not null)
@@ -128,12 +128,12 @@ namespace StayPilot.Application.Services
         /// Search properties using filters, one page at a time.
         /// Returns the properties for the page and the total count of matches.
         /// </summary>
-        public async Task<ListPropertyListingResponse> FilterPropertyAsync(ListPropertyListingRequest request)
+        public async Task<FilterPropertyListingResponse> FilterPropertyListingAsync(FilterPropertyListingRequest request)
         {
             // Ask the database for this page of properties and the total number of matches.
             var (items, totalRecords) = await _propertyListingRepo.FilterPropertyAsync(request);
 
-            var response = new ListPropertyListingResponse();
+            var response = new FilterPropertyListingResponse();
 
             // For each property, take its snapshot and build one item for the response.
             foreach(var property in items)

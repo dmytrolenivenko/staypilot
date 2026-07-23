@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Domain.Entities;
@@ -69,7 +70,7 @@ namespace StayPilot.Infrastructure.Repositories
         /// Searches properties using the filters in the request, one page at a time.
         /// Returns the properties for the page and the total count of matches.
         /// </summary>
-        public async Task<(List<PropertyListing> Items, int TotalRecords)> FilterPropertyAsync(ListPropertyListingRequest request)
+        public async Task<(List<PropertyListing> Items, int TotalRecords)> FilterPropertyAsync(FilterPropertyListingRequest request)
         {
             // Start with all properties. We add one filter below for each value the caller sent.
             var query = _context.PropertyListings.AsQueryable();
@@ -276,6 +277,40 @@ namespace StayPilot.Infrastructure.Repositories
                 .ToListAsync();
 
             return (items, totalResults);
+        }
+
+        /// <summary>
+        /// Finds properties that can be compared to the given one: same market area,
+        /// same property type, same typology, and a similar size (within 20% of areaM2).
+        /// Only looks at how fresh the newest snapshot is (oldestAddUtc), nothing else
+        /// about it. Returns every match, there is no limit on how many.
+        /// </summary>
+        public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int months)
+        {
+            var query = _context.PropertyListings.AsQueryable();
+
+            // Same place.
+            query = query.Where(x => x.MarketAreaId == marketId);
+
+            // Same kind of property (apartment, villa, and so on).
+            query = query.Where(x => x.PropertyType == propertyType);
+
+            // Same room layout (T1, T2, and so on).
+            query = query.Where(x => x.Typology == typology);
+
+            // Close enough in size: within 20% smaller or bigger than areaM2.
+            query = query.Where(x => x.AreaM2 <= (areaM2 + (areaM2 * 0.20)) && x.AreaM2 >= (areaM2 - (areaM2 * 0.20)));
+
+            // Only keep it if its newest snapshot is not older than oldestAddUtc.
+            query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Select(s => s.SnapshotDateUtc).FirstOrDefault() >= DateTime.UtcNow.AddMonths(- months));
+
+            var items = await query
+                .Include(x => x.MarketArea)
+
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .ToListAsync();
+
+            return items;
         }
     }
 }

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ListingFilterService } from '../../core/services/listing-filter.service';
 import { MarketAreaService } from '../../core/services/market-area.service';
-import { ListPropertyListingRequest } from '../../core/models/list-property-listing';
+import { FilterPropertyListingRequest } from '../../core/models/filter-property-listing';
 import { PropertyListingResponse } from '../../core/models/property-listing';
 import {
   LISTING_STATUSES,
@@ -290,9 +290,9 @@ export class ListingBrowserComponent implements OnInit {
   // Turns the on-screen form into the API request, dropping any blank field.
   // pageNumber/pageSize here are placeholders — the service overrides them as it walks
   // the pages of 20. Sorting is done in the browser, so sortBy is just a fixed default.
-  private buildRequest(): ListPropertyListingRequest {
+  private buildRequest(): FilterPropertyListingRequest {
     const f = this.form;
-    const request: ListPropertyListingRequest = {
+    const request: FilterPropertyListingRequest = {
       sortBy: 'Id',
       sortDescending: false,
       pageNumber: 1,

@@ -146,23 +146,6 @@ namespace StayPilot.Application.Helpers.Mappers
         }
 
         /// <summary>
-        /// Turn a ListingSnapshot entity into the snapshot response we send back.
-        /// (Same result as MapToResponse for a ListingSnapshot.)
-        /// </summary>
-        public static ListingSnapshotResponse MapEntityToResponse(ListingSnapshot snapshot)
-        {
-            return new ListingSnapshotResponse
-            {
-                Id = snapshot.Id,
-                PropertyListingId = snapshot.PropertyListingId,
-                Price = snapshot.Price,
-                PricePerM2 = snapshot.PricePerM2,
-                Status = snapshot.Status,
-                SnapshotDateUtc = snapshot.SnapshotDateUtc
-            };
-        }
-
-        /// <summary>
         /// Puts the request's values onto an existing property, for Update only.
         /// Name/PropertyType/Typology/AreaM2/Bathrooms are always sent (they are
         /// required), so we always set them. Everything else is optional: we only
@@ -237,8 +220,6 @@ namespace StayPilot.Application.Helpers.Mappers
         {
             return new OwnedPropertyResponse
             {
-                // Fix: Id was missing before, so a caller had no way to know
-                // which row this response was about.
                 Id = entity.Id,
                 Name = entity.Name,
                 MarketAreaId = entity.MarketAreaId,

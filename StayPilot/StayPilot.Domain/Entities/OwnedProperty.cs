@@ -1,5 +1,4 @@
 ﻿using StayPilot.Domain.Enums;
-using System.Security.Cryptography.X509Certificates;
 
 namespace StayPilot.Domain.Entities
 {

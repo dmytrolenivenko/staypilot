@@ -8,7 +8,7 @@ namespace StayPilot.Application.Contracts.Response
     /// It carries one page of properties plus the paging info,
     /// so the caller can work out how many pages exist.
     /// </summary>
-    public class ListPropertyListingResponse
+    public class FilterPropertyListingResponse
     {
         /// <summary>The properties found for this page.</summary>
         public List<PropertyListingResponse> Items { get; set; } = new();

@@ -9,7 +9,7 @@ namespace StayPilot.Api.Controllers
     /// A market area is a place (country, district, town, zone) used to group properties.
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     public class MarketAreaController : ControllerBase
     {
         private readonly IMarketAreaService _service;

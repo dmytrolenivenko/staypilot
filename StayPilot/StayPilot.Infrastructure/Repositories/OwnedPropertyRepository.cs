@@ -39,7 +39,7 @@ namespace StayPilot.Infrastructure.Repositories
             return propertyToDelete.Name;
         }
 
-        public async Task<OwnedProperty> UpdateOwnedPropertyAsync(OwnedProperty entity)
+        public async Task<OwnedProperty?> UpdateOwnedPropertyAsync(OwnedProperty entity)
         {
             var updatedEntity = _context.OwnedProperties.Update(entity);
 

@@ -3,9 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import {
-  ListPropertyListingRequest,
-  ListPropertyListingResponse
-} from '../models/list-property-listing';
+  FilterPropertyListingRequest,
+  FilterPropertyListingResponse
+} from '../models/filter-property-listing';
 import { PropertyListingResponse } from '../models/property-listing';
 
 // The API returns at most 20 rows per call (its PageSize cap), so to sort + page in the
@@ -15,26 +15,29 @@ const API_PAGE_SIZE = 20;
 // The API also caps PageNumber at 50, so we can fetch at most 50 * 20 = 1000 rows.
 const MAX_PAGES = 50;
 
-// Talks to the sort/filter backend: POST /api/ListPropertyListing.
+// Talks to the sort/filter backend: POST /api/PropertyListing/FilterProperty.
 @Injectable({ providedIn: 'root' })
 export class ListingFilterService {
-  private readonly baseUrl = '/api/ListPropertyListing';
+  // Fix: this pointed at /api/ListPropertyListing, a controller that no longer
+  // exists (its one action moved into PropertyListingController). Every search
+  // would have 404'd.
+  private readonly baseUrl = '/api/PropertyListing/FilterProperty';
 
   constructor(private readonly http: HttpClient) {}
 
   // One page (used internally).
   private page(
-    request: ListPropertyListingRequest,
+    request: FilterPropertyListingRequest,
     pageNumber: number
-  ): Observable<ListPropertyListingResponse> {
-    const body: ListPropertyListingRequest = { ...request, pageNumber, pageSize: API_PAGE_SIZE };
-    return this.http.post<ListPropertyListingResponse>(this.baseUrl, body);
+  ): Observable<FilterPropertyListingResponse> {
+    const body: FilterPropertyListingRequest = { ...request, pageNumber, pageSize: API_PAGE_SIZE };
+    return this.http.post<FilterPropertyListingResponse>(this.baseUrl, body);
   }
 
   // All matching rows, gathered across however many pages of 20 it takes.
   // Result also tells us if the set was capped at 1000 (more matches exist on the server).
   filterAll(
-    request: ListPropertyListingRequest
+    request: FilterPropertyListingRequest
   ): Observable<{ items: PropertyListingResponse[]; capped: boolean }> {
     return this.page(request, 1).pipe(
       switchMap(first => {
@@ -47,7 +50,7 @@ export class ListingFilterService {
         }
 
         // Fetch pages 2..N in parallel and stitch them onto page 1.
-        const rest: Observable<ListPropertyListingResponse>[] = [];
+        const rest: Observable<FilterPropertyListingResponse>[] = [];
         for (let p = 2; p <= pagesToFetch; p++) {
           rest.push(this.page(request, p));
         }

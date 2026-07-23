@@ -15,8 +15,14 @@ namespace StayPilot.Application.Contracts.Response
         public int CompsCount { get; set; }                       // how many comps backed it
 
         // the math trail
-        public decimal BasePricePerM2 { get; set; }  // €/m² from the comps
-        public decimal BaseEstimate { get; set; }  // BasePricePerM2 × your AreaM2, before adjustments
+        public decimal MarketRatePerM2 { get; set; }  // median €/m² across the comps
+        public decimal EstimateBeforeAdjustments { get; set; }  // MarketRatePerM2 × your AreaM2, before Adjustments are applied
+
+        // raw comp spread, for convenience (same info is in Comps, this just saves scanning it)
+        public decimal MinCompPricePerM2 { get; set; }  // cheapest comp's €/m²
+
+        public decimal MedianCompPricePerM2 { get; set; }  // median comp's €/m²
+        public decimal MaxCompPricePerM2 { get; set; }  // priciest comp's €/m²
 
         public List<ValuationAdjustment> Adjustments { get; set; } = new List<ValuationAdjustment>();
 

@@ -1,11 +1,12 @@
 ﻿
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
+using StayPilot.Application.Contracts.Response.SubResponse;
 using StayPilot.Application.Helpers.Calculators;
+using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
-using StayPilot.Domain.Entities;
-using StayPilot.Application.Helpers.Mappers;
+using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Services
 {
@@ -14,12 +15,14 @@ namespace StayPilot.Application.Services
         private readonly IOwnedPropertyRepository _ownedPropertyRepository;
         private readonly IMarketAreaRepository _marketAreaRepository;
         private readonly IBeachMarkerRepository _beachMarkerRepository;
+        private readonly IPropertyListingRepository _propertyListingRepository;
 
-        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository)
+        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository)
         {
             _ownedPropertyRepository = ownedPropertyRepository;
             _marketAreaRepository = marketAreaRepository;
             _beachMarkerRepository = beachMarkerRepository;
+            _propertyListingRepository = propertyListingRepository;
         }
 
         public async Task<OwnedPropertyResponse> AddOwnedPropertyAsync(OwnedPropertyRequest request)
@@ -99,5 +102,90 @@ namespace StayPilot.Application.Services
 
             return Converter.MapToResponse(entity);
         }
+
+        public async Task<OwnedPropertyAnalysisResponse?> EstimateOwnedPropertyValue(int id, int months)
+        {
+            var ownedPropertyRepo = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
+
+            if (ownedPropertyRepo is null)
+            {
+                return null;
+            }
+
+            var ownedProperty = Converter.MapToResponse(ownedPropertyRepo);
+
+            var similarPropertiesRepo = await _propertyListingRepository.GetComparablePropertyListingAsync(ownedProperty.MarketAreaId, ownedProperty.PropertyType,  ownedProperty.Typology, ownedProperty.AreaM2, months);
+
+            var sortedPricesPerM2 = similarPropertiesRepo.OrderBy(x => x.ListingSnapshots.First().PricePerM2).Select(x => x.ListingSnapshots.First().PricePerM2).ToList();
+
+            // listings prices
+            var sortedPrices = similarPropertiesRepo.OrderBy(x => x.ListingSnapshots.First().Price).Select(x => x.ListingSnapshots.First().Price).ToList();
+            var minListingPrice = sortedPrices[0];
+            var medianListingPrice = GetMedianValue(sortedPrices);
+            var maxListingPrice = sortedPrices[^1];
+
+            // features price incriments
+            //...
+            //...
+
+            // owned property precies per m2
+            var priceBeforeAdjustments = GetMedianValue(sortedPricesPerM2) * ownedProperty.AreaM2;
+
+            var minOwnedPropertyPrice = sortedPricesPerM2[0] * ownedProperty.AreaM2; // + features
+            var medianOwnedPropertyPrice = GetMedianValue(sortedPricesPerM2) * ownedProperty.AreaM2; // + features
+            var maxOwnedPropertyPrice = sortedPricesPerM2[^1] * ownedProperty.AreaM2; // + features
+
+            // comps comparation
+            var minCompsPricePerM2 = sortedPricesPerM2[0];
+            var medianCompsPricePerM2 = GetMedianValue(sortedPricesPerM2);
+            var maxCompsPricePerM2 = sortedPricesPerM2[^1];
+
+            var compsCount = similarPropertiesRepo.Count;
+
+            var confidenceLevel = compsCount < 3
+                ? ValuationConfidence.Low
+                : (compsCount < 5 ? ValuationConfidence.Medium : ValuationConfidence.High);
+
+            var finalEstimate = new OwnedPropertyAnalysisResponse
+            {
+                MinPrice = minOwnedPropertyPrice,
+                MidPrice = medianOwnedPropertyPrice,
+                MaxPrice = maxOwnedPropertyPrice,
+
+                ConfidenceLevel = confidenceLevel,
+                CompsCount = compsCount,
+
+                MarketRatePerM2 = medianCompsPricePerM2,
+                EstimateBeforeAdjustments = priceBeforeAdjustments,
+
+                MinCompPricePerM2 = minCompsPricePerM2,
+                MedianCompPricePerM2 = medianCompsPricePerM2,
+                MaxCompPricePerM2 = maxCompsPricePerM2,
+
+                Adjustments = similarPropertiesRepo.Select(x => new ValuationAdjustment
+                {
+                    Label = "balcony",
+                    Amount = 123,
+                }).ToList(),
+
+                Comps = similarPropertiesRepo.Select(x => new ValuationComp
+                {
+                    AreaM2 = x.AreaM2,
+                    PricePerM2 = x.ListingSnapshots.First().PricePerM2,
+                    DistanceToBeachMeters = x.DistanceToBeachMeters,
+                    Typology = x.Typology,
+                    SnapshotDateUtc = x.ListingSnapshots.First().SnapshotDateUtc,
+                }).ToList(),
+            };
+
+            return finalEstimate;
+        }
+
+        private decimal GetMedianValue(List<decimal> list)
+        {
+            var count = list.Count;
+            return count %2 != 0 ? list[count / 2] : (list[(count / 2)] + list[(count / 2) - 1]) / 2;
+        }
+
     }
 }

@@ -24,6 +24,6 @@ namespace StayPilot.Application.Interfaces.Services
         /// Search properties with filters, one page at a time.
         /// Returns the page of items and the total number of matches.
         /// </summary>
-        Task<ListPropertyListingResponse> FilterPropertyAsync(ListPropertyListingRequest request);
+        Task<FilterPropertyListingResponse> FilterPropertyListingAsync(FilterPropertyListingRequest request);
     }
 }
