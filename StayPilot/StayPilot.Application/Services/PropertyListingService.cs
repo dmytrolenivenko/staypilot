@@ -66,7 +66,10 @@ namespace StayPilot.Application.Services
             if (propertyExist is not null)
             {
                 var lastListing = await _listingSnapshotRepo.GetListingSnapshotByPropertyIdAsync(propertyExist.Id);
-                samePrice = lastListing.Price == propertyListing.ListingSnapshot.Price;
+
+                // lastListing can be null if the existing property has no snapshot yet.
+                // Treat "no previous snapshot" as "price changed" so we add one below.
+                samePrice = lastListing is not null && lastListing.Price == propertyListing.ListingSnapshot.Price;
             }
 
             // Already there -> return the existing one and stop.

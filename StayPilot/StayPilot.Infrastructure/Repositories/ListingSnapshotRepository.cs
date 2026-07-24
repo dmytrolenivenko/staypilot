@@ -33,7 +33,15 @@ namespace StayPilot.Infrastructure.Repositories
         public async Task<ListingSnapshot?> GetListingSnapshotByPropertyIdAsync(int propertyListingId)
         {
             // Sort by date, newest first, then take the first match for this property.
-            return await _context.ListingSnapshots.OrderByDescending(x => x.SnapshotDateUtc).FirstOrDefaultAsync(x => x.PropertyListingId == propertyListingId) ?? null;
+            return await _context.ListingSnapshots.OrderByDescending(x => x.SnapshotDateUtc).FirstOrDefaultAsync(x => x.PropertyListingId == propertyListingId);
+        }
+
+        /// <summary>
+        /// Writes all pending changes to the database.
+        /// </summary>
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

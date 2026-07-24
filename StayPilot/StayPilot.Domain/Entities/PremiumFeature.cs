@@ -5,7 +5,7 @@ namespace StayPilot.Domain.Entities
     /// The average price premium for having a specific feature (for example a sea view
     /// or a garage), calculated once across the whole market and reused afterward.
     /// </summary>
-    public class PremiumFeatures
+    public class PremiumFeature
     {
         public int Id { get; set; }
 
@@ -24,6 +24,6 @@ namespace StayPilot.Domain.Entities
         /// <summary>
         /// When this premium was last calculated (UTC time).
         /// </summary>
-        public DateTime CalculatedAtUtc { get; set; }
+        public DateTime CalculatedAtUtc { get; set; } = DateTime.UtcNow;
     }
 }

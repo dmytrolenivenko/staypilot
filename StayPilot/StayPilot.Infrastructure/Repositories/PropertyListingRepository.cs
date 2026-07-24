@@ -312,5 +312,18 @@ namespace StayPilot.Infrastructure.Repositories
 
             return items;
         }
+
+        /// <summary>
+        /// Gets every property listing, with just its newest snapshot loaded.
+        /// Used by the feature-premium calculation, which groups by Typology across
+        /// the whole dataset — not one market area or a paged slice of it.
+        /// </summary>
+        public async Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync()
+        {
+            return await _context.PropertyListings
+                .Include(x => x.MarketArea) // needed so the premium calc can filter by town name
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .ToListAsync();
+        }
     }
 }

@@ -43,5 +43,12 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// its newest snapshot is not older than oldestAddUtc. Returns every match.
         /// </summary>
         Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int months);
+
+        /// <summary>
+        /// Gets every property listing across the whole dataset, with just its newest
+        /// snapshot loaded. Used to calculate feature price premiums — no market area
+        /// filter and no pagination, this is a bulk read for analysis, not a UI-facing list.
+        /// </summary>
+        Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync();
     }
 }

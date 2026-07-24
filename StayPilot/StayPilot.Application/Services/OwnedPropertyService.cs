@@ -116,6 +116,18 @@ namespace StayPilot.Application.Services
 
             var similarPropertiesRepo = await _propertyListingRepository.GetComparablePropertyListingAsync(ownedProperty.MarketAreaId, ownedProperty.PropertyType,  ownedProperty.Typology, ownedProperty.AreaM2, months);
 
+            // No comparable listings -> we cannot estimate anything. Return an empty,
+            // low-confidence result instead of indexing into empty lists below (which
+            // would throw ArgumentOutOfRangeException).
+            if (similarPropertiesRepo.Count == 0)
+            {
+                return new OwnedPropertyAnalysisResponse
+                {
+                    CompsCount = 0,
+                    ConfidenceLevel = ValuationConfidence.Low
+                };
+            }
+
             var sortedPricesPerM2 = similarPropertiesRepo.OrderBy(x => x.ListingSnapshots.First().PricePerM2).Select(x => x.ListingSnapshots.First().PricePerM2).ToList();
 
             // listings prices

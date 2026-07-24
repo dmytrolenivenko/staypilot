@@ -25,6 +25,11 @@ namespace StayPilot.Application.Services
             // Build the entity from the request and save it.
             var snapshot = Helpers.Mappers.Converter.MapToEntity(request);
             await _listingSnapshotRepo.AddListingSnapshotAsync(snapshot);
+
+            // Actually write it to the database. Without this, AddAsync only stages the
+            // row in the change tracker and nothing is ever persisted.
+            await _listingSnapshotRepo.SaveChangesAsync();
+
             return Helpers.Mappers.Converter.MapToResponse(snapshot);
         }
 

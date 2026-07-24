@@ -14,7 +14,7 @@ namespace StayPilot.Application.Helpers.Mappers
         /// Turn a PropertyListing entity (plus its snapshot) into the response we send back.
         /// The snapshot is optional; pass null if there is none.
         /// </summary>
-        public static PropertyListingResponse MapToResponse(PropertyListing property, ListingSnapshot listingSnapshot = null)
+        public static PropertyListingResponse MapToResponse(PropertyListing property, ListingSnapshot? listingSnapshot = null)
         {
 
             // The market area must be loaded first, because we copy its fields below.
@@ -105,6 +105,7 @@ namespace StayPilot.Application.Helpers.Mappers
         {
             return new ListingSnapshot
             {
+                PropertyListingId = snapshot.PropertyListingId,
                 Price = snapshot.Price,
                 PricePerM2 = snapshot.PricePerM2,
                 Status = snapshot.Status,

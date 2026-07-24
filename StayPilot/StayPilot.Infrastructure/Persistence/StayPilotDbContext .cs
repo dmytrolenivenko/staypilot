@@ -27,7 +27,7 @@ namespace StayPilot.Infrastructure.Persistence
         public DbSet<BeachMarker> BeachMarkers => Set<BeachMarker>();
 
         ///<summary>The premium feature table holds the features that can influence the base price</summary>
-        public DbSet<PremiumFeatures> PremiumFeatures => Set<PremiumFeatures>();
+        public DbSet<PremiumFeature> PremiumFeatures => Set<PremiumFeature>();
 
         /// <summary>
         /// Builds the database shape: tables, keys, indexes, and number precision.
@@ -84,7 +84,7 @@ namespace StayPilot.Infrastructure.Persistence
             modelBuilder.Entity<BeachMarker>().Property(x => x.Longitude).HasPrecision(9, 6);
 
             // Premuin features data precision digits
-            modelBuilder.Entity<PremiumFeatures>().Property(x => x.PremiumPercent).HasPrecision(9, 2);
+            modelBuilder.Entity<PremiumFeature>().Property(x => x.PremiumPercent).HasPrecision(9, 2);
         }
     }
 }

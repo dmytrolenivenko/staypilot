@@ -17,5 +17,10 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// Add a new snapshot to the database.
         /// </summary>
         Task<ListingSnapshot> AddListingSnapshotAsync(ListingSnapshot listingSnapshot);
+
+        /// <summary>
+        /// Write all pending changes to the database.
+        /// </summary>
+        Task SaveChangesAsync();
     }
 }
