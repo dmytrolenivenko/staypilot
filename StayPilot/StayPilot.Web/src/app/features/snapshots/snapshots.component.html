@@ -1,0 +1,74 @@
+<section class="panel">
+  <h1>Price Snapshots</h1>
+  <p class="hint">
+    Look up the current price/status snapshot for a listing, or record a new observation.
+    A snapshot is the price and state of a property at one moment in time.
+  </p>
+
+  <form class="row" (ngSubmit)="load()">
+    <input
+      class="text-input"
+      type="number"
+      min="1"
+      placeholder="Property id"
+      [ngModel]="propertyIdInput()"
+      (ngModelChange)="propertyIdInput.set($event)"
+      name="propertyId"
+    />
+    <button type="submit">Load current</button>
+  </form>
+
+  @if (loading()) {
+    <p class="hint">Working...</p>
+  }
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+  @if (saved()) {
+    <p class="hint" style="color: var(--success)">Snapshot saved.</p>
+  }
+</section>
+
+@if (current(); as snap) {
+  <section class="panel">
+    <h2>Current snapshot — property #{{ snap.propertyListingId }}</h2>
+    <table class="data-table">
+      <tbody>
+        <tr><th>Price</th><td>{{ snap.price | number: '1.0-2' }} €</td></tr>
+        <tr><th>Price / m²</th><td>{{ snap.pricePerM2 | number: '1.0-2' }} €</td></tr>
+        <tr><th>Status</th><td>{{ snap.status }}</td></tr>
+        <tr><th>Date</th><td>{{ snap.snapshotDateUtc | date: 'medium' }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+}
+
+<section class="panel">
+  <h2>Record a new snapshot</h2>
+  <p class="hint">Uses the property id above. Set a fresh price/status observation.</p>
+  <form class="form-grid" (ngSubmit)="save()">
+    <label>
+      Price (€)
+      <input type="number" min="0" [(ngModel)]="form.price" name="price" />
+    </label>
+    <label>
+      Price / m² (€)
+      <input type="number" min="0" [(ngModel)]="form.pricePerM2" name="pricePerM2" />
+    </label>
+    <label>
+      Status
+      <select [(ngModel)]="form.status" name="status">
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Date
+      <input type="date" [(ngModel)]="form.snapshotDate" name="snapshotDate" />
+    </label>
+    <div class="actions">
+      <button type="submit" [disabled]="loading()">Save snapshot</button>
+    </div>
+  </form>
+</section>

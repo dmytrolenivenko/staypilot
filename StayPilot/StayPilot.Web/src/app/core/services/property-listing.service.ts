@@ -9,11 +9,12 @@ export class PropertyListingService {
 
   constructor(private readonly http: HttpClient) {}
 
+  // The API routes as api/[controller]/[action], so the action name is part of the URL.
   getById(id: number): Observable<PropertyListingResponse> {
-    return this.http.get<PropertyListingResponse>(`${this.baseUrl}/${id}`);
+    return this.http.get<PropertyListingResponse>(`${this.baseUrl}/GetById/${id}`);
   }
 
   create(request: PropertyListingRequest): Observable<PropertyListingResponse> {
-    return this.http.post<PropertyListingResponse>(this.baseUrl, request);
+    return this.http.post<PropertyListingResponse>(`${this.baseUrl}/AddPropertyListing`, request);
   }
 }

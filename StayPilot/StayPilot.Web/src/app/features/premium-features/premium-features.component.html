@@ -1,0 +1,50 @@
+<section class="panel">
+  <h1>Feature Impact</h1>
+  <p class="hint">
+    Average price difference for each tracked feature, as a percentage. This is correlation
+    across current listings, not causation. Recalculate to refresh from the latest data.
+  </p>
+
+  <div class="toolbar">
+    <button type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
+      {{ recalculating() ? 'Recalculating...' : 'Recalculate' }}
+    </button>
+    <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">Refresh</button>
+  </div>
+
+  @if (loading()) {
+    <p class="hint">Loading...</p>
+  }
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+</section>
+
+@if (!loading() && !error()) {
+  <section class="panel">
+    @if (features().length === 0) {
+      <p class="hint">No feature premiums yet. Hit "Recalculate" to compute them from current listings.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Premium</th>
+            <th>Last calculated</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of features(); track f.feature) {
+            <tr>
+              <td>{{ f.feature }}</td>
+              <td [class.pos]="f.premiumPercent > 0" [class.neg]="f.premiumPercent < 0">
+                {{ f.premiumPercent > 0 ? '+' : '' }}{{ f.premiumPercent | number: '1.0-1' }}%
+              </td>
+              <td>{{ f.calculatedAtUtc | date: 'medium' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+}

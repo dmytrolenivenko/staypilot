@@ -36,38 +36,38 @@ export class HomeComponent {
       live: true
     },
     {
-      title: 'Market Overview',
-      description: 'Median/avg/min/max price and price/m² by area + typology, with a price distribution.',
-      link: '/market-overview',
-      live: false
-    },
-    {
-      title: 'Feature Impact',
-      description: 'Price delta with/without a feature (garage, elevator, sea view, ...).',
-      link: '/feature-impact',
-      live: false
-    },
-    {
       title: 'Listing Browser',
       description: 'Filterable table of all listings — city, typology, price, area, garage, beach distance.',
       link: '/listing-browser',
       live: true
     },
     {
-      title: 'Price History',
-      description: 'Price-over-time per listing or area, days-on-market, stale-and-overpriced flags.',
+      title: 'Price Snapshots',
+      description: 'View the current price/status snapshot for a listing and record a new observation.',
       link: '/price-history',
-      live: false
+      live: true
     },
     {
-      title: 'My Property Valuation',
-      description: 'Conservative / realistic / optimistic value estimate plus ranked comparables.',
+      title: 'My Properties',
+      description: 'Add, edit and delete the apartments you own (the base for future valuation).',
       link: '/valuation',
+      live: true
+    },
+    {
+      title: 'Feature Impact',
+      description: 'Price delta with/without a feature (garage, elevator, sea view, ...). Recalculable.',
+      link: '/feature-impact',
+      live: true
+    },
+    {
+      title: 'Market Overview',
+      description: 'Median/avg/min/max price and price/m² by area + typology. Needs a stats endpoint.',
+      link: '/market-overview',
       live: false
     },
     {
       title: 'Beach Proximity',
-      description: 'Price premium by distance-to-beach band.',
+      description: 'Price premium by distance-to-beach band. Needs a stats-by-band endpoint.',
       link: '/beach-proximity',
       live: false
     }

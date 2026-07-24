@@ -4,6 +4,9 @@ import { MarketAreaListComponent } from './features/market-areas/market-area-lis
 import { ListingLookupComponent } from './features/listings/listing-lookup.component';
 import { ListingCreateComponent } from './features/listings/listing-create.component';
 import { ListingBrowserComponent } from './features/listings/listing-browser.component';
+import { SnapshotsComponent } from './features/snapshots/snapshots.component';
+import { PremiumFeaturesComponent } from './features/premium-features/premium-features.component';
+import { OwnedPropertiesComponent } from './features/owned/owned-properties.component';
 import { ComingSoonComponent } from './features/coming-soon/coming-soon.component';
 import { ComingSoonInfo } from './core/models/coming-soon-info';
 
@@ -27,36 +30,9 @@ export const routes: Routes = [
       needs: 'A GET /api/analysis/market-overview endpoint (list/filter listings + stats) on the API.'
     })
   },
-  {
-    path: 'feature-impact',
-    component: ComingSoonComponent,
-    data: comingSoon({
-      title: 'Feature Impact',
-      description:
-        'Pick a feature (garage, elevator, sea view, beach-under-500m, renovated...) and see the price delta with/without it. Correlation, not causation.',
-      needs: 'A GET /api/analysis/features endpoint on the API.'
-    })
-  },
-  {
-    path: 'price-history',
-    component: ComingSoonComponent,
-    data: comingSoon({
-      title: 'Price History / Trend',
-      description:
-        'Price-over-time per listing or area, days-on-market, and a flag for stale-and-overpriced listings.',
-      needs: "A standalone POST/GET /api/ListingSnapshots endpoint — the service layer exists, the controller doesn't yet."
-    })
-  },
-  {
-    path: 'valuation',
-    component: ComingSoonComponent,
-    data: comingSoon({
-      title: 'My Property Valuation',
-      description:
-        "Enter your apartment's specs, get conservative/realistic/optimistic value estimates plus ranked comparable listings.",
-      needs: 'OwnedProperty DTOs/service/controller and a GET /api/owned-properties/{id}/valuation endpoint — none exist yet.'
-    })
-  },
+  { path: 'feature-impact', component: PremiumFeaturesComponent },
+  { path: 'price-history', component: SnapshotsComponent },
+  { path: 'valuation', component: OwnedPropertiesComponent },
   {
     path: 'beach-proximity',
     component: ComingSoonComponent,
