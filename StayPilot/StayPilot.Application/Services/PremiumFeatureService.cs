@@ -57,7 +57,7 @@ namespace StayPilot.Application.Services
 
             // Same list the Calculator itself uses internally - so adding or removing
             // a tracked feature only ever means editing TrackedFeatures in Calculator.cs.
-            foreach (var feature in Calculator.TrackedFeatureNames)
+            foreach (var feature in Calculator.TrackedFeatureList)
             {
                 var valueInPercent = Calculator.CalculateFeaturePremiumPercent(allListings, feature);
 

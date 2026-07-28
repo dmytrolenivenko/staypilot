@@ -2,6 +2,7 @@
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Interfaces.Services;
+using JetBrains.Annotations;
 
 namespace StayPilot.Api.Controllers
 {
@@ -20,6 +21,17 @@ namespace StayPilot.Api.Controllers
         public async Task<ActionResult<OwnedPropertyResponse>> GetOwnedPropertyAsync(int id)
         {
             var result = await _ownedPropertyService.GetOwnedPropertyAsync(id);
+
+            if (result is null)
+                return NotFound();
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<OwnedPropertyResponse>> GetAllOwnedPropertyAsync()
+        {
+            var result = await _ownedPropertyService.GetAllOwnedPropertiesAsync();
 
             if (result is null)
                 return NotFound();
@@ -53,6 +65,14 @@ namespace StayPilot.Api.Controllers
 
             if (result is null)
                 return NotFound();
+
+            return Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<OwnedPropertyAnalysisResponse>> EstimateEvaluationsOwnedpropertyAsync(int id, int months)
+        {
+            var result = await _ownedPropertyService.EstimateOwnedPropertyValue(id, months);
 
             return Ok(result);
         }

@@ -253,5 +253,16 @@ namespace StayPilot.Application.Helpers.Mappers
 
         }
 
+        public static PremiumFeatureResponse MapToResponse(PremiumFeature entity)
+        {
+            var response = new PremiumFeatureResponse
+            {
+                Feature = entity.Feature,
+                PremiumPercent = entity.PremiumPercent,
+                CalculatedAtUtc = entity.CalculatedAtUtc,
+            };
+
+            return response;
+        }
     }
 }

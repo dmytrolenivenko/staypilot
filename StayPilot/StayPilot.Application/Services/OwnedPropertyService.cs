@@ -1,4 +1,5 @@
 ﻿
+using Abp.Application.Features;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.SubResponse;
@@ -6,7 +7,9 @@ using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
+using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
+using System.Security.Cryptography.X509Certificates;
 
 namespace StayPilot.Application.Services
 {
@@ -16,13 +19,15 @@ namespace StayPilot.Application.Services
         private readonly IMarketAreaRepository _marketAreaRepository;
         private readonly IBeachMarkerRepository _beachMarkerRepository;
         private readonly IPropertyListingRepository _propertyListingRepository;
+        private readonly IPremiumFeatureRepository _premiumFeatureRepository;
 
-        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository)
+        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository, IPremiumFeatureRepository premiumFeatureRepository)
         {
             _ownedPropertyRepository = ownedPropertyRepository;
             _marketAreaRepository = marketAreaRepository;
             _beachMarkerRepository = beachMarkerRepository;
             _propertyListingRepository = propertyListingRepository;
+            _premiumFeatureRepository = premiumFeatureRepository;
         }
 
         public async Task<OwnedPropertyResponse> AddOwnedPropertyAsync(OwnedPropertyRequest request)
@@ -105,6 +110,7 @@ namespace StayPilot.Application.Services
 
         public async Task<OwnedPropertyAnalysisResponse?> EstimateOwnedPropertyValue(int id, int months)
         {
+
             var ownedPropertyRepo = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
 
             if (ownedPropertyRepo is null)
@@ -116,9 +122,7 @@ namespace StayPilot.Application.Services
 
             var similarPropertiesRepo = await _propertyListingRepository.GetComparablePropertyListingAsync(ownedProperty.MarketAreaId, ownedProperty.PropertyType,  ownedProperty.Typology, ownedProperty.AreaM2, months);
 
-            // No comparable listings -> we cannot estimate anything. Return an empty,
-            // low-confidence result instead of indexing into empty lists below (which
-            // would throw ArgumentOutOfRangeException).
+            // No comparable listings -> we cannot estimate anything.
             if (similarPropertiesRepo.Count == 0)
             {
                 return new OwnedPropertyAnalysisResponse
@@ -128,35 +132,40 @@ namespace StayPilot.Application.Services
                 };
             }
 
-            var sortedPricesPerM2 = similarPropertiesRepo.OrderBy(x => x.ListingSnapshots.First().PricePerM2).Select(x => x.ListingSnapshots.First().PricePerM2).ToList();
+            // Listing prices per M2
+            var sortedListingPricesPerM2 = similarPropertiesRepo.OrderBy(x => x.ListingSnapshots.First().PricePerM2).Select(x => x.ListingSnapshots.First().PricePerM2).ToList();
 
             // listings prices
-            var sortedPrices = similarPropertiesRepo.OrderBy(x => x.ListingSnapshots.First().Price).Select(x => x.ListingSnapshots.First().Price).ToList();
-            var minListingPrice = sortedPrices[0];
-            var medianListingPrice = GetMedianValue(sortedPrices);
-            var maxListingPrice = sortedPrices[^1];
+            var sortedListingPrices = similarPropertiesRepo.OrderBy(x => x.ListingSnapshots.First().Price).Select(x => x.ListingSnapshots.First().Price).ToList();
+            var minListingPrice = sortedListingPrices[0];
+            var medianListingPrice = GetMedianValue(sortedListingPrices);
+            var maxListingPrice = sortedListingPrices[^1];
 
             // features price incriments
-            //...
-            //...
+            var premiumFeaturesRepo = await _premiumFeatureRepository.GetAllPremiumFeaturesAsync();
+            var premiumFeatures = premiumFeaturesRepo.Select(x => Converter.MapToResponse(x)).ToList();
+            var ownedPropertyFeatures = HasFeatures(ownedProperty);
+
+            var propertyFeaturesList = premiumFeatures.Where(x => ownedPropertyFeatures.Contains(x.Feature)).ToList();
+            var propertyFeaturesListFeaturesSum = premiumFeatures.Where(x => ownedPropertyFeatures.Contains(x.Feature)).Sum(x => x.PremiumPercent) / 100m;
 
             // owned property precies per m2
-            var priceBeforeAdjustments = GetMedianValue(sortedPricesPerM2) * ownedProperty.AreaM2;
+            var priceBeforeAdjustments = GetMedianValue(sortedListingPricesPerM2) * ownedProperty.AreaM2;
 
-            var minOwnedPropertyPrice = sortedPricesPerM2[0] * ownedProperty.AreaM2; // + features
-            var medianOwnedPropertyPrice = GetMedianValue(sortedPricesPerM2) * ownedProperty.AreaM2; // + features
-            var maxOwnedPropertyPrice = sortedPricesPerM2[^1] * ownedProperty.AreaM2; // + features
+            var minOwnedPropertyPrice = sortedListingPricesPerM2[0] * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
+            var medianOwnedPropertyPrice = GetMedianValue(sortedListingPricesPerM2) * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
+            var maxOwnedPropertyPrice = sortedListingPricesPerM2[^1] * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
 
             // comps comparation
-            var minCompsPricePerM2 = sortedPricesPerM2[0];
-            var medianCompsPricePerM2 = GetMedianValue(sortedPricesPerM2);
-            var maxCompsPricePerM2 = sortedPricesPerM2[^1];
+            var minCompsPricePerM2 = sortedListingPricesPerM2[0];
+            var medianCompsPricePerM2 = GetMedianValue(sortedListingPricesPerM2);
+            var maxCompsPricePerM2 = sortedListingPricesPerM2[^1];
 
             var compsCount = similarPropertiesRepo.Count;
 
             var confidenceLevel = compsCount < 3
                 ? ValuationConfidence.Low
-                : (compsCount < 5 ? ValuationConfidence.Medium : ValuationConfidence.High);
+                : (compsCount <= 5 ? ValuationConfidence.Medium : ValuationConfidence.High);
 
             var finalEstimate = new OwnedPropertyAnalysisResponse
             {
@@ -174,11 +183,12 @@ namespace StayPilot.Application.Services
                 MedianCompPricePerM2 = medianCompsPricePerM2,
                 MaxCompPricePerM2 = maxCompsPricePerM2,
 
-                Adjustments = similarPropertiesRepo.Select(x => new ValuationAdjustment
-                {
-                    Label = "balcony",
-                    Amount = 123,
-                }).ToList(),
+                Adjustments = premiumFeatures.Where(x => ownedPropertyFeatures.Contains(x.Feature))
+                    .Select(x => new ValuationAdjustment
+                    {
+                        Label = x.Feature.ToString(),
+                        Amount = priceBeforeAdjustments * (x.PremiumPercent / 100)
+                    }).ToList(),
 
                 Comps = similarPropertiesRepo.Select(x => new ValuationComp
                 {
@@ -188,9 +198,30 @@ namespace StayPilot.Application.Services
                     Typology = x.Typology,
                     SnapshotDateUtc = x.ListingSnapshots.First().SnapshotDateUtc,
                 }).ToList(),
+
+                Equity = new EquitySummary
+                {
+                    PurchasePrice = ownedProperty.PurchasePrice ?? null,
+                    CurrentEstimate = medianOwnedPropertyPrice,
+                    GainAmount = medianOwnedPropertyPrice - ownedProperty.PurchasePrice,
+                    GainPercent = medianOwnedPropertyPrice - ownedProperty.PurchasePrice / 100,
+                    YearsHeld = Date.GetDateOfToday - ownedProperty.PurchaseDateUtc,
+        {
+            get
+                }
             };
 
             return finalEstimate;
+        }
+
+        public async Task<List<OwnedPropertyResponse>> GetAllOwnedPropertiesAsync()
+        {
+            var domainOwnedProperties = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+
+            // Reuse the same mapper every other method here uses
+            return domainOwnedProperties
+                .Select(x => Converter.MapToResponse(x))
+                .ToList();
         }
 
         private decimal GetMedianValue(List<decimal> list)
@@ -199,5 +230,22 @@ namespace StayPilot.Application.Services
             return count %2 != 0 ? list[count / 2] : (list[(count / 2)] + list[(count / 2) - 1]) / 2;
         }
 
+        private List<PremiumFeatures> HasFeatures(OwnedPropertyResponse property)
+        {
+            var premiumFeaturesList = new List<PremiumFeatures>();
+
+            if (property.HasSeaView == true) premiumFeaturesList.Add(PremiumFeatures.HasSeaView);
+            if (property.HasGarage == true) premiumFeaturesList.Add(PremiumFeatures.HasGarage);
+            if (property.HasCityView == true) premiumFeaturesList.Add(PremiumFeatures.HasCityView);
+            if (property.HasSwimmingPool == true) premiumFeaturesList.Add(PremiumFeatures.HasSwimmingPool);
+            if (property.HasTerrace == true) premiumFeaturesList.Add(PremiumFeatures.HasTerrace);
+            if (property.HasElevator == true) premiumFeaturesList.Add(PremiumFeatures.HasElevator);
+            if (property.HasAirConditioning == true) premiumFeaturesList.Add(PremiumFeatures.HasAirConditioning);
+            if (property.IsFurnished == true) premiumFeaturesList.Add(PremiumFeatures.IsFurnished);
+            if (property.Condition == PropertyCondition.NewBuild == true) premiumFeaturesList.Add(PremiumFeatures.IsNewBuild);
+            if (property.Condition == PropertyCondition.Renovated == true) premiumFeaturesList.Add(PremiumFeatures.IsRenovated);
+
+            return premiumFeaturesList;
+        }
     }
 }

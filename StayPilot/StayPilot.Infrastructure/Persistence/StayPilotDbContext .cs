@@ -85,6 +85,11 @@ namespace StayPilot.Infrastructure.Persistence
 
             // Premuin features data precision digits
             modelBuilder.Entity<PremiumFeature>().Property(x => x.PremiumPercent).HasPrecision(9, 2);
+
+            // Store the Feature enum as its NAME ("HasGarage"), not its int. Keeps the column
+            // nvarchar so existing rows stay valid (names match the enum members exactly), the
+            // table stays human-readable, and reordering the enum can't silently repoint rows.
+            modelBuilder.Entity<PremiumFeature>().Property(x => x.Feature).HasConversion<string>();
         }
     }
 }

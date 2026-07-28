@@ -13,6 +13,8 @@ namespace StayPilot.Application.Interfaces.Repositories
 
         Task<OwnedProperty?> GetOwnedPropertyAsync(int id);
 
+        Task<List<OwnedProperty>> GetAllOwnedPropertyAsync();
+
         Task SaveChangesAsync();
     }
 }

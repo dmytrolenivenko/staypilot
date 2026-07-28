@@ -1,3 +1,5 @@
+using StayPilot.Domain.Enums;
+
 namespace StayPilot.Application.Contracts.Response
 {
     /// <summary>
@@ -6,7 +8,7 @@ namespace StayPilot.Application.Contracts.Response
     public class PremiumFeatureResponse
     {
         /// <summary>Which feature this is (for example "HasSeaView").</summary>
-        public string Feature { get; set; } = string.Empty;
+        public PremiumFeatures Feature { get; set; }
 
         /// <summary>Average price difference for having this feature, as a percentage.</summary>
         public decimal PremiumPercent { get; set; }

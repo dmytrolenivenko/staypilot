@@ -50,5 +50,10 @@ namespace StayPilot.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<OwnedProperty>> GetAllOwnedPropertyAsync()
+        {
+            return await _context.OwnedProperties.ToListAsync();
+        }
     }
 }

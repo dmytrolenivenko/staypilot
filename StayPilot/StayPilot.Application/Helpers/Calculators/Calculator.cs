@@ -157,35 +157,35 @@ namespace StayPilot.Application.Helpers.Calculators
         /// worst case they just come back as 0 for lack of matching data, same as any
         /// other feature that can't clear the minimum listings threshold.
         /// </summary>
-        // This is a lookup table from a feature NAME (string) to a small function that
+        // This is a lookup table from a feature (PremiumFeatures) to a small function that
         // checks that one feature on a listing. Each function is written as "x => ..."
         // (a lambda): "x" stands for whatever PropertyListing gets passed in later, and
         // the part after "=>" is what gets returned (true/false).
         //
         // Storing functions like this means CalculateFeaturePremiumPercent below doesn't
         // need to know which feature it's checking - it just does
-        // TrackedFeatures["HasGarage"](someListing) to look up the right function AND
-        // run it in one step, instead of a separate hardcoded if-check per feature.
-        private static readonly Dictionary<string, Func<PropertyListing, bool>> TrackedFeatures = new()
+        // TrackedFeatures[PremiumFeatures.HasGarage](someListing) to look up the right
+        // function AND run it in one step, instead of a separate hardcoded if-check per feature.
+        private static readonly Dictionary<PremiumFeatures, Func<PropertyListing, bool>> TrackedFeatures = new()
         {
-            ["HasElevator"] = x => x.HasElevator ?? false, // ?? false: treat "unknown" (null) as "doesn't have it"
-            ["HasTerrace"] = x => x.HasTerrace,
-            ["HasGarage"] = x => x.HasGarage,
-            ["HasSwimmingPool"] = x => x.HasSwimmingPool,
-            ["IsFurnished"] = x => x.IsFurnished,
-            ["HasParking"] = x => x.HasParking,
-            ["HasSeaView"] = x => x.HasSeaView,
-            ["IsNewBuild"] = x => x.Condition == PropertyCondition.NewBuild,
-            ["IsRenovated"] = x => x.Condition == PropertyCondition.Renovated,
+            [PremiumFeatures.HasElevator] = x => x.HasElevator ?? false, // ?? false: treat "unknown" (null) as "doesn't have it"
+            [PremiumFeatures.HasTerrace] = x => x.HasTerrace,
+            [PremiumFeatures.HasGarage] = x => x.HasGarage,
+            [PremiumFeatures.HasSwimmingPool] = x => x.HasSwimmingPool,
+            [PremiumFeatures.IsFurnished] = x => x.IsFurnished,
+            [PremiumFeatures.HasParking] = x => x.HasParking,
+            [PremiumFeatures.HasSeaView] = x => x.HasSeaView,
+            [PremiumFeatures.IsNewBuild] = x => x.Condition == PropertyCondition.NewBuild,
+            [PremiumFeatures.IsRenovated] = x => x.Condition == PropertyCondition.Renovated,
         };
 
         /// <summary>
-        /// Names of every feature tracked for the price-premium calculation - the single
+        /// Every feature tracked for the price-premium calculation - the single
         /// source of truth for "which features do we calculate." Callers (like the
         /// service that recalculates all of them) should loop over this instead of
         /// keeping their own separate hardcoded list, so the two can never drift apart.
         /// </summary>
-        public static IReadOnlyCollection<string> TrackedFeatureNames => TrackedFeatures.Keys;
+        public static IReadOnlyCollection<PremiumFeatures> TrackedFeatureList => TrackedFeatures.Keys;
 
         /// <summary>
         /// Minimum listings needed on each side of a comparison (within one bucket)
@@ -203,8 +203,8 @@ namespace StayPilot.Application.Helpers.Calculators
         /// what broke the old version. Chosen on plain real-estate logic (a car space and
         /// a sea view are the obvious big extras), not tuned to hit any target.
         /// </summary>
-        private static readonly IReadOnlyCollection<string> DefaultPremiumControls =
-            new[] { "HasGarage", "HasSeaView" };
+        private static readonly IReadOnlyCollection<PremiumFeatures> DefaultPremiumControls =
+            new[] { PremiumFeatures.HasGarage, PremiumFeatures.HasSeaView };
 
         /// <summary>
         /// Calculates how much a feature (for example a garage) changes the price, as a
@@ -219,11 +219,11 @@ namespace StayPilot.Application.Helpers.Calculators
         /// standard control set. See that overload for the full explanation of the math and
         /// of why we match on only a couple of features instead of all of them.
         /// </summary>
-        public static decimal CalculateFeaturePremiumPercent(List<PropertyListing> listings, string targetFeature)
+        public static decimal CalculateFeaturePremiumPercent(List<PropertyListing> listings, PremiumFeatures targetFeature)
             => CalculateFeaturePremiumPercent(listings, targetFeature, DefaultPremiumControls);
 
         /// <summary>
-        /// Same idea as the two-argument <see cref="CalculateFeaturePremiumPercent(List{PropertyListing}, string)"/>,
+        /// Same idea as the two-argument <see cref="CalculateFeaturePremiumPercent(List{PropertyListing}, PremiumFeatures)"/>,
         /// but it also holds a SHORT list of extra features constant inside each bucket -
         /// the handful of big, structural value drivers (a garage, a sea view, a new build)
         /// that most often "travel with" other features and inflate their premium. Matching
@@ -234,8 +234,8 @@ namespace StayPilot.Application.Helpers.Calculators
         /// </summary>
         public static decimal CalculateFeaturePremiumPercent(
             List<PropertyListing> listings,
-            string targetFeature,
-            IReadOnlyCollection<string> controlFeatures)
+            PremiumFeatures targetFeature,
+            IReadOnlyCollection<PremiumFeatures> controlFeatures)
         {
             listings = FilterToComparableListings(listings);
 

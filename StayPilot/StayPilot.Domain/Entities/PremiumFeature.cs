@@ -1,4 +1,6 @@
 ﻿
+using StayPilot.Domain.Enums;
+
 namespace StayPilot.Domain.Entities
 {
     /// <summary>
@@ -13,7 +15,7 @@ namespace StayPilot.Domain.Entities
         /// Which feature this premium is for (for example "HasSeaView", "HasGarage").
         /// Matches a boolean property name on PropertyListing/OwnedProperty.
         /// </summary>
-        public string Feature { get; set; } = string.Empty;
+        public PremiumFeatures Feature { get; set; }
 
         /// <summary>
         /// Average price difference for having this feature, as a percentage
