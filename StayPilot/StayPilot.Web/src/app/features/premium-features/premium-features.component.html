@@ -28,13 +28,23 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Feature</th>
-            <th>Premium</th>
+            <th (click)="sortBy('featureName')" style="cursor: pointer;">
+              Feature
+              @if (sortField() === 'featureName') {
+                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+              }
+            </th>
+            <th (click)="sortBy('premiumPercentage')" style="cursor: pointer;">
+              Impact
+              @if (sortField() === 'premiumPercentage') {
+                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+              }
+            </th>
             <th>Last calculated</th>
           </tr>
         </thead>
         <tbody>
-          @for (f of features(); track f.feature) {
+          @for (f of sortedFeatures(); track f.feature) {
             <tr>
               <td>{{ f.feature }}</td>
               <td [class.pos]="f.premiumPercent > 0" [class.neg]="f.premiumPercent < 0">

@@ -27,6 +27,11 @@ namespace StayPilot.Infrastructure.Repositories
             return entry.Entity;
         }
 
+        public void RemovePremiumFeatures(IEnumerable<PremiumFeature> premiumFeatures)
+        {
+            _context.PremiumFeatures.RemoveRange(premiumFeatures);
+        }
+
         public Task SaveChangesAsync()
         {
             return _context.SaveChangesAsync();

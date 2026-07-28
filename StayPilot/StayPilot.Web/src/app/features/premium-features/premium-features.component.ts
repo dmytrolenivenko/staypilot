@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { PremiumFeatureService } from '../../core/services/premium-feature.service';
 import { PremiumFeatureResponse } from '../../core/models/premium-feature';
+
+// We are going to sort these fields
+type SortField = 'featureName' | 'premiumPercentage' | 'sampleSize';
+type SortDirection = 'asc' | 'desc';
 
 // Feature Impact — how much each tracked feature (sea view, garage, ...) adds to price,
 // as a percentage. Correlation, not causation. Values are precomputed on the server;
@@ -11,13 +15,40 @@ import { PremiumFeatureResponse } from '../../core/models/premium-feature';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './premium-features.component.html',
-  styleUrl: './premium-features.component.css'
+  styleUrl: './premium-features.component.css',
 })
 export class PremiumFeaturesComponent implements OnInit {
   features = signal<PremiumFeatureResponse[]>([]);
   loading = signal(true);
   recalculating = signal(false);
   error = signal<string | null>(null);
+  sortField = signal<SortField>('premiumPercentage');
+  sortDirection = signal<SortDirection>('desc');
+  sortedFeatures = computed(() => {
+    const rows = [...this.features()];
+
+    const field = this.sortField();
+    const direction = this.sortDirection();
+
+    rows.sort((a, b) => {
+      let result = 0;
+      switch(field) {
+      case "premiumPercentage":
+        result = a.premiumPercent - b.premiumPercent;
+        break;
+      
+      case "featureName":
+        result = a.feature.localeCompare(b.feature);
+        break;
+      }
+
+      if (direction === "desc") {
+        return -result;
+      }
+      return result;
+    })
+    return rows; 
+  })
 
   constructor(private readonly service: PremiumFeatureService) {}
 
@@ -54,4 +85,16 @@ export class PremiumFeaturesComponent implements OnInit {
       }
     });
   }
+
+  sortBy(field: SortField): void {
+    if (this.sortField() === field) {
+      this.sortDirection.set(
+        this.sortDirection() === "asc" ? "desc" :"asc"
+      );
+    } else {
+      this.sortField.set(field);
+      this.sortDirection.set("desc");
+    }
+  }
+
 }

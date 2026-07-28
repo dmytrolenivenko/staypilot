@@ -47,6 +47,12 @@ namespace StayPilot.Application.Services
         {
             var allListings = await _propertyListingRepo.GetAllListingsForFeaturePremiumCalculationAsync();
 
+            // Overwrite, not append: clear the previous results first so the table always
+            // ends with exactly one up-to-date row per feature. (Older runs stacked a new
+            // row every time, which is why the same feature showed many timestamps.)
+            var previous = await _premiumFeatureRepo.GetAllPremiumFeaturesAsync();
+            _premiumFeatureRepo.RemovePremiumFeatures(previous);
+
             var allFeatures = new List<PremiumFeature>();
 
             // Same list the Calculator itself uses internally - so adding or removing

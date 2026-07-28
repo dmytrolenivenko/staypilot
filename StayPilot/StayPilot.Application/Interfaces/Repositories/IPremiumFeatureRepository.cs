@@ -9,6 +9,8 @@ namespace StayPilot.Application.Interfaces.Repositories
 
         Task<PremiumFeature> AddPremiumFeatureAsync(PremiumFeature premiumFeature);
 
+        void RemovePremiumFeatures(IEnumerable<PremiumFeature> premiumFeatures);
+
         Task SaveChangesAsync();
     }
 }
