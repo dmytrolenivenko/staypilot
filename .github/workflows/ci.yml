@@ -37,7 +37,7 @@ jobs:
           node-version: 20.x
 
       - name: Install
-        working-directory: './StayPilot/StayPilot.Webpackage'
+        working-directory: './StayPilot/StayPilot.Web'
         run: npm ci
 
       - name: Build
