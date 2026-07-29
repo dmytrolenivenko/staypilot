@@ -1,0 +1,25 @@
+name: CI                                   # label in the Actions tab (free to rename)
+
+on:                                        # triggers: when should this run?
+  push:
+    branches: [ ci/add-github-actions ]    # fixed the typo (was "actioons")
+  pull_request:
+    branches: [ master ]                   # the gate: runs on any PR into master
+
+jobs:
+  backend:                                 # job id — your name; a fresh VM per job
+    runs-on: ubuntu-latest                 # Linux runner (fast + free-tier cheap)
+    steps:
+      - name: Checkout code                # step 1: pull the repo onto the VM
+        uses: actions/checkout@v4          #   note: uses is aligned under "name"
+
+      - name: Setup .NET                   # step 2: install the toolchain
+        uses: actions/setup-dotnet@v4
+        with:                              # "with" = inputs passed to that action
+          dotnet-version: 10.0.x           #   install the .NET 10 SDK
+
+      - name: Restore                      # step 3: download NuGet packages
+        run: dotnet restore StayPilot/StayPilot.slnx
+
+      - name: Build                        # step 4: compile (packages already there)
+        run: dotnet build StayPilot/StayPilot.slnx --no-restore -c Release
