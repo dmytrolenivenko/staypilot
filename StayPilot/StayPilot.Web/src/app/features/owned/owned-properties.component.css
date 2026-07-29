@@ -73,3 +73,48 @@
 .actions {
   grid-column: 1 / -1;
 }
+
+/* Property list */
+.list-table {
+  margin-top: 0.75rem;
+}
+
+.list-table .sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.list-table .sortable:hover {
+  color: var(--text);
+}
+
+.list-table .num {
+  text-align: right;
+}
+
+.list-table .pick {
+  width: 1.5rem;
+}
+
+.list-table .pick input {
+  width: auto;
+  cursor: pointer;
+}
+
+.list-table .row-selected {
+  background: var(--surface-hover);
+}
+
+.list-table .row-editing td {
+  border-left: 2px solid var(--accent);
+}
+
+.list-table .row-editing td:first-child {
+  border-left: none;
+}
+
+button.sm {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+}

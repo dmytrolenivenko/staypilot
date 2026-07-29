@@ -298,15 +298,21 @@ namespace StayPilot.Infrastructure.Repositories
             // Same room layout (T1, T2, and so on).
             query = query.Where(x => x.Typology == typology);
 
-            // Close enough in size: within 20% smaller or bigger than areaM2.
-            query = query.Where(x => x.AreaM2 <= (areaM2 + (areaM2 * 0.20)) && x.AreaM2 >= (areaM2 - (areaM2 * 0.20)));
-
-            // Only keep it if its newest snapshot is not older than oldestAddUtc.
+            // Only keep it if its newest snapshot is not older than the cutoff.
             query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Select(s => s.SnapshotDateUtc).FirstOrDefault() >= DateTime.UtcNow.AddMonths(- months));
 
-            var items = await query
-                .Include(x => x.MarketArea)
+            // Instead of a hard +-20% size band (which starves to a handful of comps when the
+            // property's size is unusual for its typology), take the N closest in size. Same
+            // market / type / typology as above - only the SIZE match is relaxed - so the median
+            // has enough comps to be trustworthy whatever the property's size. ThenBy(Id) keeps
+            // the "top N" deterministic when several comps are equally close in size.
+            const int maxComps = 20;
 
+            var items = await query
+                .OrderBy(x => Math.Abs(x.AreaM2 - areaM2))
+                .ThenBy(x => x.Id)
+                .Take(maxComps)
+                .Include(x => x.MarketArea)
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
                 .ToListAsync();
 

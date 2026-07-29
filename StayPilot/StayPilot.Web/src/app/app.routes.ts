@@ -7,6 +7,8 @@ import { ListingBrowserComponent } from './features/listings/listing-browser.com
 import { SnapshotsComponent } from './features/snapshots/snapshots.component';
 import { PremiumFeaturesComponent } from './features/premium-features/premium-features.component';
 import { OwnedPropertiesComponent } from './features/owned/owned-properties.component';
+import { ValuationComponent } from './features/valuation/valuation.component';
+import { BuildCostComponent } from './features/build-cost/build-cost.component';
 import { ComingSoonComponent } from './features/coming-soon/coming-soon.component';
 import { ComingSoonInfo } from './core/models/coming-soon-info';
 
@@ -32,7 +34,9 @@ export const routes: Routes = [
   },
   { path: 'feature-impact', component: PremiumFeaturesComponent },
   { path: 'price-history', component: SnapshotsComponent },
-  { path: 'valuation', component: OwnedPropertiesComponent },
+  { path: 'my-properties', component: OwnedPropertiesComponent },
+  { path: 'valuation', component: ValuationComponent },
+  { path: 'build-cost', component: BuildCostComponent },
   {
     path: 'beach-proximity',
     component: ComingSoonComponent,

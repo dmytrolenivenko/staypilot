@@ -32,6 +32,61 @@
 
 <section class="panel">
   <div class="form-head">
+    <h2>All properties ({{ properties().length }})</h2>
+    @if (selectedIds().size > 0) {
+      <button type="button" class="danger" (click)="deleteSelected()" [disabled]="loading()">
+        Delete selected ({{ selectedIds().size }})
+      </button>
+    }
+  </div>
+
+  @if (listLoading()) {
+    <p class="hint">Loading...</p>
+  } @else if (properties().length === 0) {
+    <p class="hint">You have no properties yet. Create one below.</p>
+  } @else {
+    <table class="data-table list-table">
+      <thead>
+        <tr>
+          <th class="pick">
+            <input
+              type="checkbox"
+              [checked]="allSelected()"
+              (change)="toggleSelectAll()"
+              title="Select all"
+            />
+          </th>
+          <th class="sortable" (click)="sortBy('id')">Id {{ sortField() === 'id' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
+          <th class="sortable" (click)="sortBy('name')">Name {{ sortField() === 'name' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
+          <th class="sortable" (click)="sortBy('propertyType')">Type {{ sortField() === 'propertyType' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
+          <th class="sortable" (click)="sortBy('typology')">Typology {{ sortField() === 'typology' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
+          <th class="sortable num" (click)="sortBy('areaM2')">Area (m²) {{ sortField() === 'areaM2' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
+          <th class="sortable num" (click)="sortBy('purchasePrice')">Paid (€) {{ sortField() === 'purchasePrice' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of sortedProperties(); track p.id) {
+          <tr [class.row-selected]="isSelected(p.id)" [class.row-editing]="editingId() === p.id">
+            <td class="pick">
+              <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" />
+            </td>
+            <td>#{{ p.id }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ p.propertyType }}</td>
+            <td>{{ p.typology }}</td>
+            <td class="num">{{ p.areaM2 | number: '1.0-0' }}</td>
+            <td class="num">{{ p.purchasePrice != null ? ('€' + (p.purchasePrice | number: '1.0-0')) : '—' }}</td>
+            <td><button type="button" class="secondary sm" (click)="select(p)">Edit</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
+
+<section class="panel">
+  <div class="form-head">
     <h2>{{ editingId() ? 'Edit property #' + editingId() : 'New property' }}</h2>
     @if (editingId()) {
       <button type="button" class="danger" (click)="remove()" [disabled]="loading()">Delete</button>

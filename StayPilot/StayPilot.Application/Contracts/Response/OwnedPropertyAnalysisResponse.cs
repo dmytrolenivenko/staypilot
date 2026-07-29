@@ -7,8 +7,9 @@ namespace StayPilot.Application.Contracts.Response
     {
         // headline (you already have these)
         public decimal MinPrice { get; set; }   // low end of the range
-        public decimal MidPrice { get; set; }   // the headline "best guess"
+        public decimal MidPrice { get; set; }   // the headline "best guess" (median-based)
         public decimal MaxPrice { get; set; }   // high end
+        public decimal AveragePrice { get; set; }  // mean-based price; show next to MidPrice — the gap flags a skewed market
 
         // confidence (the "how much to trust it" we discussed)
         public ValuationConfidence ConfidenceLevel { get; set; }  // High / Medium / Low  (new enum)
@@ -23,6 +24,7 @@ namespace StayPilot.Application.Contracts.Response
 
         public decimal MedianCompPricePerM2 { get; set; }  // median comp's €/m²
         public decimal MaxCompPricePerM2 { get; set; }  // priciest comp's €/m²
+        public decimal AverageCompPricePerM2 { get; set; }  // mean comp's €/m² (vs the median above)
 
         public List<ValuationAdjustment> Adjustments { get; set; } = new List<ValuationAdjustment>();
 

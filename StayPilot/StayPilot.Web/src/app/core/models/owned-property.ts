@@ -1,5 +1,9 @@
 import { PropertyCondition, PropertyType, Typology } from './enums';
 
+// How much to trust the estimate. Mirrors StayPilot.Domain.Enums.ValuationConfidence
+// (serialized as a string by the API).
+export type ValuationConfidence = 'Low' | 'Medium' | 'High';
+
 // Mirrors StayPilot.Application.Contracts.Request.OwnedPropertyRequest.
 // Name, PropertyType, Typology and AreaM2 are required by the API.
 export interface OwnedPropertyRequest {
@@ -69,4 +73,57 @@ export interface OwnedPropertyResponse {
   nearestBeachName?: string | null;
   energyCertificate?: string | null;
   notes?: string | null;
+}
+
+// --- Valuation ------------------------------------------------------------
+// Mirrors StayPilot.Application.Contracts.Response.OwnedPropertyAnalysisResponse
+// and its sub-responses (ValuationAdjustment, ValuationComp, EquitySummary).
+
+// One comparable listing that fed the estimate.
+export interface ValuationComp {
+  areaM2: number;
+  pricePerM2: number;
+  distanceToBeachMeters?: number | null;
+  typology: Typology;
+  snapshotDateUtc: string; // ISO date
+}
+
+// A single +/- tweak to the raw market estimate (e.g. "Sea view", "Needs renovation").
+export interface ValuationAdjustment {
+  label: string;
+  amount: number;
+}
+
+// Purchase-vs-now block. Only meaningful when the property has a purchase price/date.
+export interface EquitySummary {
+  purchasePrice: number;
+  currentEstimate: number;
+  gainAmount: number;
+  gainPercent: number;
+  yearsHeld: number;
+  roiPerYear: number;
+  roiPerMonth: number;
+}
+
+// The full valuation result for one owned property.
+export interface OwnedPropertyAnalysisResponse {
+  minPrice: number;
+  midPrice: number;
+  maxPrice: number;
+  averagePrice: number;
+
+  confidenceLevel: ValuationConfidence;
+  compsCount: number;
+
+  marketRatePerM2: number;
+  estimateBeforeAdjustments: number;
+
+  minCompPricePerM2: number;
+  medianCompPricePerM2: number;
+  maxCompPricePerM2: number;
+  averageCompPricePerM2: number;
+
+  adjustments: ValuationAdjustment[];
+  comps: ValuationComp[];
+  equity: EquitySummary;
 }

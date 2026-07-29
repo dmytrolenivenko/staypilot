@@ -10,6 +10,7 @@ using StayPilot.Application.Interfaces.Services;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 
 namespace StayPilot.Application.Services
 {
@@ -152,14 +153,26 @@ namespace StayPilot.Application.Services
             // owned property precies per m2
             var priceBeforeAdjustments = GetMedianValue(sortedListingPricesPerM2) * ownedProperty.AreaM2;
 
-            var minOwnedPropertyPrice = sortedListingPricesPerM2[0] * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
-            var medianOwnedPropertyPrice = GetMedianValue(sortedListingPricesPerM2) * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
-            var maxOwnedPropertyPrice = sortedListingPricesPerM2[^1] * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
+            // Robust range: use the 25th/75th percentile of comp price/m2 instead of the
+            // absolute cheapest/priciest, so one freak listing (the 6703 penthouse) can't
+            // blow the range wide open. Median still drives the headline mid price.
+            var lowPricePerM2 = GetPercentile(sortedListingPricesPerM2, 0.25);
+            var medianPricePerM2 = GetMedianValue(sortedListingPricesPerM2);
+            var highPricePerM2 = GetPercentile(sortedListingPricesPerM2, 0.75);
 
-            // comps comparation
-            var minCompsPricePerM2 = sortedListingPricesPerM2[0];
-            var medianCompsPricePerM2 = GetMedianValue(sortedListingPricesPerM2);
-            var maxCompsPricePerM2 = sortedListingPricesPerM2[^1];
+            var minOwnedPropertyPrice = lowPricePerM2 * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
+            var medianOwnedPropertyPrice = medianPricePerM2 * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
+            var maxOwnedPropertyPrice = highPricePerM2 * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
+
+            // comps comparison (same robust percentiles, exposed for transparency)
+            var minCompsPricePerM2 = lowPricePerM2;
+            var medianCompsPricePerM2 = medianPricePerM2;
+            var maxCompsPricePerM2 = highPricePerM2;
+
+            // Mean (average) alongside the median. Shown together on purpose: the gap between
+            // them signals a skewed market - a few pricey comps pull the average above the median.
+            var averagePricePerM2 = sortedListingPricesPerM2.Average();
+            var averageOwnedPropertyPrice = averagePricePerM2 * ownedProperty.AreaM2 * (1 + propertyFeaturesListFeaturesSum);
 
             var compsCount = similarPropertiesRepo.Count;
 
@@ -167,11 +180,23 @@ namespace StayPilot.Application.Services
                 ? ValuationConfidence.Low
                 : (compsCount <= 5 ? ValuationConfidence.Medium : ValuationConfidence.High);
 
+            // Equity: what the house has done since purchase. Compute once here so the total
+            // gain and the annualised ROI all use the same numbers.
+            var purchasePrice = ownedProperty.PurchasePrice ?? 0;
+            var gainAmount = medianOwnedPropertyPrice - purchasePrice;
+            var gainPercent = purchasePrice > 0 ? gainAmount / purchasePrice * 100 : 0;
+            // Fractional years (e.g. 2.5) so the ROI/year math is accurate; YearsHeld shows whole years.
+            var yearsHeldExact = ownedProperty.PurchaseDate.HasValue
+                ? (decimal)((DateTime.UtcNow - ownedProperty.PurchaseDate.Value).TotalDays / 365.25)
+                : 0m;
+            var monthsHeldExact = yearsHeldExact * 12;
+
             var finalEstimate = new OwnedPropertyAnalysisResponse
             {
                 MinPrice = minOwnedPropertyPrice,
                 MidPrice = medianOwnedPropertyPrice,
                 MaxPrice = maxOwnedPropertyPrice,
+                AveragePrice = averageOwnedPropertyPrice,
 
                 ConfidenceLevel = confidenceLevel,
                 CompsCount = compsCount,
@@ -182,11 +207,12 @@ namespace StayPilot.Application.Services
                 MinCompPricePerM2 = minCompsPricePerM2,
                 MedianCompPricePerM2 = medianCompsPricePerM2,
                 MaxCompPricePerM2 = maxCompsPricePerM2,
+                AverageCompPricePerM2 = averagePricePerM2,
 
                 Adjustments = premiumFeatures.Where(x => ownedPropertyFeatures.Contains(x.Feature))
                     .Select(x => new ValuationAdjustment
                     {
-                        Label = x.Feature.ToString(),
+                        Label = FriendlyFeatureName(x.Feature),
                         Amount = priceBeforeAdjustments * (x.PremiumPercent / 100)
                     }).ToList(),
 
@@ -201,13 +227,21 @@ namespace StayPilot.Application.Services
 
                 Equity = new EquitySummary
                 {
-                    PurchasePrice = ownedProperty.PurchasePrice ?? null,
+                    PurchasePrice = purchasePrice,
                     CurrentEstimate = medianOwnedPropertyPrice,
-                    GainAmount = medianOwnedPropertyPrice - ownedProperty.PurchasePrice,
-                    GainPercent = medianOwnedPropertyPrice - ownedProperty.PurchasePrice / 100,
-                    YearsHeld = Date.GetDateOfToday - ownedProperty.PurchaseDateUtc,
-        {
-            get
+                    GainAmount = gainAmount,
+                    GainPercent = Math.Round(gainPercent, 2),
+                    YearsHeld = (int)yearsHeldExact,
+                    // ROI per year = total gain % spread over the years held (simple annualisation).
+                    // Needs a full year held AND a purchase price, else annualising is meaningless -> 0.
+                    RoiPerYear = (purchasePrice > 0 && yearsHeldExact >= 1)
+                        ? Math.Round(gainPercent / yearsHeldExact, 2)
+                        : 0,
+                    // ROI per month: same idea, finer granularity - so recent buys (held < 1 year)
+                    // still show a number instead of 0. Only needs some holding time > 0.
+                    RoiPerMonth = (purchasePrice > 0 && monthsHeldExact > 0)
+                        ? Math.Round(gainPercent / monthsHeldExact, 2)
+                        : 0,
                 }
             };
 
@@ -228,6 +262,39 @@ namespace StayPilot.Application.Services
         {
             var count = list.Count;
             return count %2 != 0 ? list[count / 2] : (list[(count / 2)] + list[(count / 2) - 1]) / 2;
+        }
+
+        /// <summary>
+        /// Value at a given percentile (0.0-1.0) of an ascending-sorted list, interpolating
+        /// between neighbours. p=0.5 is the median, p=0.25 the lower quartile. Used instead
+        /// of raw min/max so a single freak listing can't define the range.
+        /// </summary>
+        private decimal GetPercentile(List<decimal> sortedAscending, double percentile)
+        {
+            if (sortedAscending.Count == 0) return 0;
+            if (sortedAscending.Count == 1) return sortedAscending[0];
+
+            var rank = percentile * (sortedAscending.Count - 1);
+            var lowIndex = (int)Math.Floor(rank);
+            var highIndex = (int)Math.Ceiling(rank);
+            if (lowIndex == highIndex) return sortedAscending[lowIndex];
+
+            var weight = (decimal)(rank - lowIndex);
+            return sortedAscending[lowIndex] * (1 - weight) + sortedAscending[highIndex] * weight;
+        }
+
+        /// <summary>
+        /// Turns a feature enum into a human label: drops the "Has"/"Is" prefix and spaces out
+        /// the camel case. E.g. HasSeaView -> "Sea View", IsNewBuild -> "New Build".
+        /// </summary>
+        private static string FriendlyFeatureName(PremiumFeatures feature)
+        {
+            var name = feature.ToString();
+            if (name.StartsWith("Has")) name = name.Substring(3);
+            else if (name.StartsWith("Is")) name = name.Substring(2);
+
+            // Insert a space before each capital that follows a lower-case letter.
+            return Regex.Replace(name, "(?<=[a-z])([A-Z])", " $1");
         }
 
         private List<PremiumFeatures> HasFeatures(OwnedPropertyResponse property)

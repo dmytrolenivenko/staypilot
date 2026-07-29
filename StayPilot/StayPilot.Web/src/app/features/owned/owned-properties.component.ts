@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { OwnedPropertyService } from '../../core/services/owned-property.service';
 import { OwnedPropertyRequest, OwnedPropertyResponse } from '../../core/models/owned-property';
 import {
@@ -9,9 +10,13 @@ import {
   TYPOLOGIES
 } from '../../core/models/enums';
 
+// Columns the property list can be sorted by.
+type SortField = 'id' | 'name' | 'propertyType' | 'typology' | 'areaM2' | 'purchasePrice';
+type SortDirection = 'asc' | 'desc';
+
 // My Properties — CRUD over the developer's own apartments (OwnedProperty).
-// These are the properties the future "valuation vs. comparables" feature will value;
-// that estimate endpoint isn't exposed by the API yet, so this screen manages the data only.
+// This screen only manages the data; the "valuation vs. comparables" estimate
+// for these properties lives on the separate Valuation screen (/valuation).
 @Component({
   selector: 'app-owned-properties',
   standalone: true,
@@ -19,10 +24,59 @@ import {
   templateUrl: './owned-properties.component.html',
   styleUrl: './owned-properties.component.css'
 })
-export class OwnedPropertiesComponent {
+export class OwnedPropertiesComponent implements OnInit {
   readonly propertyTypes = PROPERTY_TYPES;
   readonly typologies = TYPOLOGIES;
   readonly conditions = PROPERTY_CONDITIONS;
+
+  // All owned properties, shown as a list at the top of the screen.
+  properties = signal<OwnedPropertyResponse[]>([]);
+  listLoading = signal(true);
+
+  // Sorting for the list.
+  sortField = signal<SortField>('id');
+  sortDirection = signal<SortDirection>('desc');
+
+  // Ids ticked for multi-delete.
+  selectedIds = signal<Set<number>>(new Set());
+
+  // The list, sorted by the active column/direction (does not mutate the source).
+  sortedProperties = computed(() => {
+    const rows = [...this.properties()];
+    const field = this.sortField();
+    const dir = this.sortDirection() === 'asc' ? 1 : -1;
+
+    rows.sort((a, b) => {
+      let result: number;
+      switch (field) {
+        case 'name':
+          result = a.name.localeCompare(b.name);
+          break;
+        case 'propertyType':
+          result = a.propertyType.localeCompare(b.propertyType);
+          break;
+        case 'typology':
+          result = a.typology.localeCompare(b.typology, undefined, { numeric: true });
+          break;
+        case 'areaM2':
+          result = a.areaM2 - b.areaM2;
+          break;
+        case 'purchasePrice':
+          result = (a.purchasePrice ?? 0) - (b.purchasePrice ?? 0);
+          break;
+        default:
+          result = a.id - b.id;
+      }
+      return result * dir;
+    });
+    return rows;
+  });
+
+  // True only when every listed property is ticked (drives the header checkbox).
+  allSelected = computed(() => {
+    const rows = this.properties();
+    return rows.length > 0 && rows.every(p => this.selectedIds().has(p.id));
+  });
 
   idInput = signal<number | null>(null);
   current = signal<OwnedPropertyResponse | null>(null);
@@ -37,6 +91,95 @@ export class OwnedPropertiesComponent {
   form: OwnedPropertyRequest = this.emptyForm();
 
   constructor(private readonly service: OwnedPropertyService) {}
+
+  ngOnInit(): void {
+    this.loadAll();
+  }
+
+  // Load (or reload) the full list of owned properties for the top table.
+  loadAll(): void {
+    this.listLoading.set(true);
+    this.service.getAll().subscribe({
+      next: rows => {
+        this.properties.set(rows ?? []);
+        this.listLoading.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load your properties from the API.');
+        this.listLoading.set(false);
+      }
+    });
+  }
+
+  // Load a property from the list straight into the form for editing.
+  select(p: OwnedPropertyResponse): void {
+    this.current.set(p);
+    this.fillFormFrom(p);
+    this.editingId.set(p.id);
+    this.idInput.set(p.id);
+    this.error.set(null);
+    this.message.set(null);
+  }
+
+  // --- Sorting -------------------------------------------------------------
+  // Click a header: same column flips direction, a new column starts ascending.
+  sortBy(field: SortField): void {
+    if (this.sortField() === field) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
+    }
+  }
+
+  // --- Multi-select --------------------------------------------------------
+  isSelected(id: number): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  toggleSelect(id: number): void {
+    const next = new Set(this.selectedIds());
+    next.has(id) ? next.delete(id) : next.add(id);
+    this.selectedIds.set(next);
+  }
+
+  // Header checkbox: tick all when not all ticked, clear otherwise.
+  toggleSelectAll(): void {
+    this.selectedIds.set(
+      this.allSelected() ? new Set() : new Set(this.properties().map(p => p.id))
+    );
+  }
+
+  deleteSelected(): void {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) {
+      return;
+    }
+    if (!confirm(`Delete ${ids.length} propert${ids.length === 1 ? 'y' : 'ies'}? This cannot be undone.`)) {
+      return;
+    }
+    this.loading.set(true);
+    this.error.set(null);
+    this.message.set(null);
+
+    forkJoin(ids.map(id => this.service.delete(id))).subscribe({
+      next: () => {
+        this.message.set(`Deleted ${ids.length} propert${ids.length === 1 ? 'y' : 'ies'}.`);
+        // If the property open in the form was among them, reset the form.
+        if (this.editingId() && ids.includes(this.editingId()!)) {
+          this.newProperty();
+        }
+        this.selectedIds.set(new Set());
+        this.loading.set(false);
+        this.loadAll();
+      },
+      error: () => {
+        this.error.set('Could not delete one or more properties. The list may be partly out of date — refresh.');
+        this.loading.set(false);
+        this.loadAll();
+      }
+    });
+  }
 
   private emptyForm(): OwnedPropertyRequest {
     return {
@@ -172,6 +315,7 @@ export class OwnedPropertiesComponent {
         this.idInput.set(prop.id);
         this.message.set(editing ? `Property #${prop.id} updated.` : `Property #${prop.id} created.`);
         this.loading.set(false);
+        this.loadAll();
       },
       error: () => {
         this.error.set('Could not save the property. Check the required fields.');
@@ -197,6 +341,7 @@ export class OwnedPropertiesComponent {
         this.message.set(`Property #${id} deleted.`);
         this.newProperty();
         this.loading.set(false);
+        this.loadAll();
       },
       error: () => {
         this.error.set('Could not delete the property.');
