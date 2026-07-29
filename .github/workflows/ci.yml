@@ -1,8 +1,6 @@
 name: CI                                   # label in the Actions tab (free to rename)
 
 on:                                        # triggers: when should this run?
-  push:
-    branches: [ master ]                   # safety net? confirm
   pull_request:
     branches: [ master ]                   # the gate: runs on any PR into master
 
@@ -26,3 +24,22 @@ jobs:
 
       - name: Test
         run: dotnet test StayPilot/StayPilot.slnx --no-build -c Release
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with: 
+          node-version: 20.x
+
+      - name: Install
+        working-directory: './StayPilot/StayPilot.Webpackage'
+        run: npm ci
+
+      - name: Build
+        working-directory: './StayPilot/StayPilot.Web'
+        run: npm run build
