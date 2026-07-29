@@ -2,7 +2,7 @@ name: CI                                   # label in the Actions tab (free to r
 
 on:                                        # triggers: when should this run?
   push:
-    branches: [ ci/add-github-actions ]    # fixed the typo (was "actioons")
+    branches: [ master ]                   # the gate runs on the push to master
   pull_request:
     branches: [ master ]                   # the gate: runs on any PR into master
 
@@ -23,3 +23,6 @@ jobs:
 
       - name: Build                        # step 4: compile (packages already there)
         run: dotnet build StayPilot/StayPilot.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test StayPilot/StayPilot.slnx --no-build -c Release
