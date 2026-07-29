@@ -2,7 +2,7 @@ name: CI                                   # label in the Actions tab (free to r
 
 on:                                        # triggers: when should this run?
   push:
-    branches: [ master ]                   # the gate runs on the push to master
+    branches: [ master ]                   # safety net? confirm
   pull_request:
     branches: [ master ]                   # the gate: runs on any PR into master
 
