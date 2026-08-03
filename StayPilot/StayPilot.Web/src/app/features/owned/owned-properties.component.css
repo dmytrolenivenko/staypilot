@@ -118,3 +118,42 @@ button.sm {
   padding: 0.2rem 0.55rem;
   font-size: 0.8rem;
 }
+
+/* Cross-links to the Valuation screen ------------------------------------- */
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* A text-style link that sits inline next to buttons. */
+.btn-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.btn-link.sm {
+  font-size: 0.8rem;
+}
+
+/* A filled call-to-action link, styled like the primary button. */
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: 4px;
+  padding: 0.45rem 0.9rem;
+  text-decoration: none;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}

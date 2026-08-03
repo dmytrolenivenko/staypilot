@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { OwnedPropertyService } from '../../core/services/owned-property.service';
+import { MarketAreaService } from '../../core/services/market-area.service';
+import { MarketArea } from '../../core/models/market-area';
 import { OwnedPropertyRequest, OwnedPropertyResponse } from '../../core/models/owned-property';
 import {
   PROPERTY_CONDITIONS,
@@ -20,7 +23,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-owned-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './owned-properties.component.html',
   styleUrl: './owned-properties.component.css'
 })
@@ -28,6 +31,17 @@ export class OwnedPropertiesComponent implements OnInit {
   readonly propertyTypes = PROPERTY_TYPES;
   readonly typologies = TYPOLOGIES;
   readonly conditions = PROPERTY_CONDITIONS;
+
+  // Every seeded market area, loaded once. Drives the location cascade below
+  // (District → Municipality → Town → Zone) so you pick from real places
+  // instead of free-typing — same experience as the Listing Browser filters.
+  private areas = signal<MarketArea[]>([]);
+
+  // The cascade choices. Each level is filled from the level above it.
+  districtOptions = signal<string[]>([]);
+  municipalityOptions = signal<string[]>([]);
+  townOptions = signal<string[]>([]);
+  zoneOptions = signal<string[]>([]);
 
   // All owned properties, shown as a list at the top of the screen.
   properties = signal<OwnedPropertyResponse[]>([]);
@@ -90,10 +104,36 @@ export class OwnedPropertiesComponent implements OnInit {
 
   form: OwnedPropertyRequest = this.emptyForm();
 
-  constructor(private readonly service: OwnedPropertyService) {}
+  constructor(
+    private readonly service: OwnedPropertyService,
+    private readonly marketAreas: MarketAreaService,
+    private readonly route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
     this.loadAll();
+    this.loadAreas();
+  }
+
+  // Load every market area once, then seed the top-level (District) picker.
+  private loadAreas(): void {
+    this.marketAreas.getAll().subscribe({
+      next: rows => {
+        this.areas.set(rows ?? []);
+        this.districtOptions.set(this.distinct(this.areas().map(a => a.district)));
+
+        // Deep-link from Valuation ("Edit this property") — ?edit=<id> opens it.
+        const editId = Number(this.route.snapshot.queryParamMap.get('edit'));
+        if (editId > 0) {
+          this.idInput.set(editId);
+          this.lookup();
+        }
+      },
+      error: () => {
+        // Location pickers just stay empty; the rest of the screen still works.
+        this.areas.set([]);
+      }
+    });
   }
 
   // Load (or reload) the full list of owned properties for the top table.
@@ -109,6 +149,64 @@ export class OwnedPropertiesComponent implements OnInit {
         this.listLoading.set(false);
       }
     });
+  }
+
+  // --- Location cascade (District → Municipality → Town → Zone) ------------
+  // Sorted, de-duplicated, blanks removed.
+  private distinct(values: (string | null | undefined)[]): string[] {
+    return [...new Set(values.filter((v): v is string => !!v && v.trim() !== ''))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }
+
+  private municipalitiesFor(district: string): string[] {
+    return this.distinct(this.areas().filter(a => a.district === district).map(a => a.municipality));
+  }
+
+  private townsFor(municipality: string): string[] {
+    return this.distinct(this.areas().filter(a => a.municipality === municipality).map(a => a.town));
+  }
+
+  private zonesFor(town: string): string[] {
+    return this.distinct(this.areas().filter(a => a.town === town).map(a => a.zone));
+  }
+
+  // District picked → reset the levels below and reload municipalities.
+  onDistrictChange(): void {
+    this.form.municipality = '';
+    this.form.town = '';
+    this.form.zone = null;
+    this.townOptions.set([]);
+    this.zoneOptions.set([]);
+    this.municipalityOptions.set(this.form.district ? this.municipalitiesFor(this.form.district) : []);
+  }
+
+  // Municipality picked → reset town/zone and reload towns.
+  onMunicipalityChange(): void {
+    this.form.town = '';
+    this.form.zone = null;
+    this.zoneOptions.set([]);
+    this.townOptions.set(this.form.municipality ? this.townsFor(this.form.municipality) : []);
+  }
+
+  // Town picked → reset zone and reload zones.
+  onTownChange(): void {
+    this.form.zone = null;
+    this.zoneOptions.set(this.form.town ? this.zonesFor(this.form.town) : []);
+  }
+
+  // Fill the four pickers (options + current values) from a resolved market area.
+  // Used when editing an existing property, whose response only carries a marketAreaId.
+  private populateLocationFrom(marketAreaId: number): void {
+    const area = this.areas().find(a => a.id === marketAreaId);
+    this.form.district = area?.district ?? '';
+    this.form.municipality = area?.municipality ?? '';
+    this.form.town = area?.town ?? '';
+    this.form.zone = area?.zone ?? null;
+
+    this.municipalityOptions.set(this.form.district ? this.municipalitiesFor(this.form.district) : []);
+    this.townOptions.set(this.form.municipality ? this.townsFor(this.form.municipality) : []);
+    this.zoneOptions.set(this.form.town ? this.zonesFor(this.form.town) : []);
   }
 
   // Load a property from the list straight into the form for editing.
@@ -247,6 +345,8 @@ export class OwnedPropertiesComponent implements OnInit {
     this.form = {
       name: p.name,
       country: 'Portugal',
+      // Location is filled from the resolved market area below (the response
+      // only carries marketAreaId, not the address parts).
       district: '',
       municipality: '',
       town: '',
@@ -277,6 +377,7 @@ export class OwnedPropertiesComponent implements OnInit {
       energyCertificate: p.energyCertificate ?? null,
       notes: p.notes ?? null
     };
+    this.populateLocationFrom(p.marketAreaId);
   }
 
   // --- Create / update -----------------------------------------------------
@@ -287,6 +388,10 @@ export class OwnedPropertiesComponent implements OnInit {
     this.error.set(null);
     this.message.set(null);
     this.idInput.set(null);
+    // Clear the location cascade back to just the top-level District picker.
+    this.municipalityOptions.set([]);
+    this.townOptions.set([]);
+    this.zoneOptions.set([]);
   }
 
   save(): void {
@@ -296,6 +401,12 @@ export class OwnedPropertiesComponent implements OnInit {
     }
     if (!this.form.areaM2 || this.form.areaM2 < 1) {
       this.error.set('Area (m²) must be at least 1.');
+      return;
+    }
+    // District + Municipality are what the server matches a property to a market
+    // area on, so both must be chosen or the save fails server-side.
+    if (!this.form.district || !this.form.municipality) {
+      this.error.set('Pick at least a District and a Municipality.');
       return;
     }
 

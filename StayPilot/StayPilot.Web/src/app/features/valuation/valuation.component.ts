@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OwnedPropertyService } from '../../core/services/owned-property.service';
 import {
   OwnedPropertyAnalysisResponse,
@@ -14,7 +15,7 @@ import {
 @Component({
   selector: 'app-valuation',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './valuation.component.html',
   styleUrl: './valuation.component.css'
 })
@@ -34,16 +35,29 @@ export class ValuationComponent implements OnInit {
     this.properties().find(p => p.id === this.selectedId()) ?? null
   );
 
-  constructor(private readonly service: OwnedPropertyService) {}
+  constructor(
+    private readonly service: OwnedPropertyService,
+    private readonly route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
+    // Arriving from "My Properties" with ?propertyId=<id> pre-selects that
+    // property and runs the estimate straight away.
+    const requestedId = Number(this.route.snapshot.queryParamMap.get('propertyId'));
+
     this.service.getAll().subscribe({
       next: rows => {
         this.properties.set(rows ?? []);
         if (rows?.length) {
-          this.selectedId.set(rows[0].id);
+          const preselect = rows.some(p => p.id === requestedId) ? requestedId : rows[0].id;
+          this.selectedId.set(preselect);
         }
         this.loadingProps.set(false);
+
+        // Only auto-estimate when we were sent here for a specific property.
+        if (requestedId > 0 && this.properties().some(p => p.id === requestedId)) {
+          this.estimate();
+        }
       },
       error: () => {
         this.error.set('Could not load your properties from the API.');
