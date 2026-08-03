@@ -77,7 +77,15 @@
             <td>{{ p.typology }}</td>
             <td class="num">{{ p.areaM2 | number: '1.0-0' }}</td>
             <td class="num">{{ p.purchasePrice != null ? ('€' + (p.purchasePrice | number: '1.0-0')) : '—' }}</td>
-            <td><button type="button" class="secondary sm" (click)="select(p)">Edit</button></td>
+            <td class="row-actions">
+              <button type="button" class="secondary sm" (click)="select(p)">Edit</button>
+              <a
+                class="btn-link sm"
+                [routerLink]="['/valuation']"
+                [queryParams]="{ propertyId: p.id }"
+                title="Estimate this property's value against comparable listings"
+              >Evaluate →</a>
+            </td>
           </tr>
         }
       </tbody>
@@ -135,21 +143,45 @@
       <input type="number" [(ngModel)]="form.totalFloors" name="totalFloors" />
     </label>
 
+    <!-- Location cascade: District → Municipality → Town → Zone. Each pick loads
+         the next, from the same market-area data the Listing Browser filters use. -->
     <label>
-      District
-      <input type="text" [(ngModel)]="form.district" name="district" />
+      District *
+      <select [(ngModel)]="form.district" name="district" (ngModelChange)="onDistrictChange()">
+        <option value="">— select —</option>
+        @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
+      </select>
     </label>
     <label>
-      Municipality
-      <input type="text" [(ngModel)]="form.municipality" name="municipality" />
+      Municipality *
+      <select
+        [(ngModel)]="form.municipality"
+        name="municipality"
+        (ngModelChange)="onMunicipalityChange()"
+        [disabled]="!form.district"
+      >
+        <option value="">— select —</option>
+        @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
+      </select>
     </label>
     <label>
       Town
-      <input type="text" [(ngModel)]="form.town" name="town" />
+      <select
+        [(ngModel)]="form.town"
+        name="town"
+        (ngModelChange)="onTownChange()"
+        [disabled]="!form.municipality"
+      >
+        <option value="">— any —</option>
+        @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
+      </select>
     </label>
     <label>
       Zone
-      <input type="text" [(ngModel)]="form.zone" name="zone" />
+      <select [(ngModel)]="form.zone" name="zone" [disabled]="!form.town">
+        <option [ngValue]="null">— any —</option>
+        @for (z of zoneOptions(); track z) { <option [ngValue]="z">{{ z }}</option> }
+      </select>
     </label>
 
     <label>
@@ -211,7 +243,14 @@
 
 @if (current(); as p) {
   <section class="panel">
-    <h2>Saved details</h2>
+    <div class="form-head">
+      <h2>Saved details</h2>
+      <a
+        class="btn-primary"
+        [routerLink]="['/valuation']"
+        [queryParams]="{ propertyId: p.id }"
+      >Estimate value →</a>
+    </div>
     <table class="data-table">
       <tbody>
         <tr><th>Id</th><td>#{{ p.id }}</td></tr>
@@ -220,6 +259,9 @@
         <tr><th>Distance to beach</th><td>{{ p.distanceToBeachMeters != null ? (p.distanceToBeachMeters + ' m') : '—' }}</td></tr>
       </tbody>
     </table>
-    <p class="hint">Market area and nearest beach are resolved by the server from the address / coordinates.</p>
+    <p class="hint">
+      Market area and nearest beach are resolved by the server from the address / coordinates.
+      Use <strong>Estimate value</strong> to value this property against comparable market listings.
+    </p>
   </section>
 }

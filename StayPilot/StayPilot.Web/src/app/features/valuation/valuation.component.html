@@ -30,6 +30,15 @@
       <button type="button" (click)="estimate()" [disabled]="estimating()">
         {{ estimating() ? 'Estimating...' : 'Estimate value' }}
       </button>
+
+      @if (selected(); as p) {
+        <a
+          class="btn-link"
+          [routerLink]="['/my-properties']"
+          [queryParams]="{ edit: p.id }"
+          title="Open this property in My Properties to edit it"
+        >Edit #{{ p.id }} in My Properties →</a>
+      }
     </div>
   }
 
