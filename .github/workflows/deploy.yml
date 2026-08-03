@@ -1,0 +1,39 @@
+name: deploy                          # label shown in the GitHub Actions tab
+
+on:                                   # triggers: what makes this workflow run?
+    push:
+        branches: [ master ]          # auto-run every time a commit lands on master (this is the "CD" part)
+    workflow_dispatch:                # ...and also give me a manual "Run workflow" button
+
+permissions:                          # what this workflow is allowed to do
+    contents: read                    # read the repo (needed to check out the code)
+    id-token: write                   # mint a short-lived OIDC token to log into Azure passwordlessly
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest        # a fresh, ephemeral Linux VM (case-sensitive filesystem!)
+        steps:
+            - name: Checkout the Repo
+              uses: actions/checkout@v4        # pull the repo source onto the runner
+
+            - name: Log into Azure (OIDC)
+              uses: azure/login@v2             # exchange the OIDC token for a real Azure access token
+              with:
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}         # which app registration (the "who")
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}         # which Entra directory
+                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}  # which billing subscription to act in
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4    # install the .NET SDK on the runner so `dotnet` exists
+              with:
+                  dotnet-version: 10.0.x       # major 10, minor 0, patch = latest (the "x" wildcard)
+
+            - name: Publish the API
+              # compile + gather the whole dependency closure into ./publish, a portable, runnable bundle
+              run: dotnet publish StayPilot/StayPilot.Api/StayPilot.Api.csproj -c Release -o ./publish
+
+            - name: Deploy to Azure App Service
+              uses: azure/webapps-deploy@v3    # upload the bundle into the running App Service
+              with:
+                  app-name: app-staypilot-dev  # WHICH app (the App Service, not the plan)
+                  package: ./publish           # WHAT to upload (the folder step "Publish" just created)

@@ -1,4 +1,4 @@
-name: CI                                   # label in the Actions tab (free to rename)
+name: BuildDev                                   # label in the Actions tab (free to rename)
 
 on:                                        # triggers: when should this run?
   pull_request:
