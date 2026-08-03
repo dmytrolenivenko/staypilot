@@ -22,6 +22,21 @@
   width: 6rem;
 }
 
+/* Return link back to the property in My Properties. Sits inline with the
+   Estimate button (the controls row is flex-end aligned). */
+.controls .btn-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding-bottom: 0.5rem;
+  white-space: nowrap;
+}
+
+.controls .btn-link:hover {
+  text-decoration: underline;
+}
+
 /* Headline estimate */
 .headline {
   display: flex;
