@@ -65,14 +65,9 @@ app.UseExceptionHandler(exceptionHandlerApp =>
     });
 });
 
-// Set up the HTTP pipeline: the steps every request goes through.
-// Only show Swagger when running in development.
-if (app.Environment.IsDevelopment())
-{
-    // Swagger JSON and the test page in the browser.
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger JSON and the test page in the browser.
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Send HTTP requests to HTTPS.
 app.UseHttpsRedirection();
