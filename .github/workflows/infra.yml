@@ -3,6 +3,9 @@ name: infra
 on:
     push:
         branches: [ master ] # runs on any push to master
+        paths:
+             - 'infra/**'                          # only when the Bicep changes
+             - '.github/workflows/infra.yml'       # ...or when this workflow itself changes
     workflow_dispatch:       # ...or when you click "Run workflow" manually
 
 permissions:

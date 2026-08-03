@@ -3,6 +3,12 @@ name: deploy                          # label shown in the GitHub Actions tab
 on:                                   # triggers: what makes this workflow run?
     push:
         branches: [ master ]          # auto-run every time a commit lands on master (this is the "CD" part)
+        paths:
+        - 'StayPilot/StayPilot.Api/**'
+        - 'StayPilot/StayPilot.Application/**'
+        - 'StayPilot/StayPilot.Domain/**'
+        - 'StayPilot/StayPilot.Infrastructure/**'
+        - '.github/workflows/deploy.yml'
     workflow_dispatch:                # ...and also give me a manual "Run workflow" button
 
 permissions:                          # what this workflow is allowed to do
