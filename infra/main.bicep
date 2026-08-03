@@ -7,7 +7,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
 
 resource appService 'Microsoft.Web/sites@2023-12-01' = {
     name: 'app-staypilot-dev'
-    location: 'westeurope'
+    location: 'northeurope'
     properties: {
         serverFarmId: appServicePlan.id
         siteConfig: {
