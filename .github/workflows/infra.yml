@@ -1,0 +1,27 @@
+name: infra
+
+on:
+    push:
+        branches: [ master ] # runs on any push to master
+    workflow_dispatch:       # ...or when you click "Run workflow" manually
+
+permissions:
+    id-token: write          # let's the runner create a short-lived OIDC token 
+    contents: read            # allows the runner to read the repo (for checkout)
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v4
+
+            - name : Log into Azure (OIDC)
+              uses: azure/login@v2
+              with:
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}
+                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+            - name: Deploy the Bicep blueprint
+              run: az deployment group create --resource-group rg-staypilot-dev --template-file infra/main.bicep
