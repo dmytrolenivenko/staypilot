@@ -34,6 +34,9 @@ jobs:
               with:
                   dotnet-version: 10.0.x       # major 10, minor 0, patch = latest (the "x" wildcard)
 
+            - name: Restore                      # step 3: download NuGet packages
+              run: dotnet restore StayPilot/StayPilot.slnx
+
             - name: Open SQL Server firewall for runner IP
               run: |
                 RUNNER_IP=$(curl -s https://api.ipify.org)   # this runner's IP
