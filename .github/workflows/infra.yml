@@ -27,4 +27,10 @@ jobs:
                   subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
             - name: Deploy the Bicep blueprint
-              run: az deployment group create --resource-group rg-staypilot-dev --template-file infra/main.bicep
+              env:
+                SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+              run: |
+                az deployment group create \
+                --resource-group rg-staypilot-dev \
+                --template-file infra/main.bicep \
+                --parameters sqlAdminPassword="$SQL_ADMIN_PASSWORD"
