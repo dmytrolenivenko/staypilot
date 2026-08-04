@@ -12,6 +12,12 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
         serverFarmId: appServicePlan.id
         siteConfig: {
             linuxFxVersion: 'DOTNETCORE|10.0'
+            appSettings: [
+                {
+                    name: 'ConnectionStrings__DefaultConnection'
+                    value: 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=db-staypilot-dev;User ID=dmytrolenivenko;Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=False;'
+                }
+            ]
         }
     }
 }
