@@ -78,6 +78,5 @@ resource staticWebApp 'Microsoft.Web/staticSites@2025-03-01' = {
         allowConfigFileUpdates: true
         provider: 'None'
         enterpriseGradeCdnStatus: 'Disabled'
-        deploymentAuthPolicy: 'Github'
     }
 }
