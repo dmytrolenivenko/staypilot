@@ -1,4 +1,4 @@
-name: deploy                          # label shown in the GitHub Actions tab
+name: deploy api                         # label shown in the GitHub Actions tab
 
 on:                                   # triggers: what makes this workflow run?
     push:

@@ -1,0 +1,45 @@
+name: deploy-web                      # label shown in the GitHub Actions tab
+
+on:
+    push:
+        branches: [ master ]          # auto-run every time a commit lands on master (this is the "CD" part)
+        paths:
+        - 'StayPilot/StayPilot.Web/**'
+        - '.github/workflows/deploy-web.yml'
+    workflow_dispatch:                # ...and also give me a manual "Run workflow" button
+
+permissions:                          # what this workflow is allowed to do
+    contents: read                    # read the repo (needed to check out the code)
+    id-token: write                   # mint a short-lived OIDC token to log into Azure passwordlessly
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest        # a fresh, ephemeral Linux VM (case-sensitive filesystem!)
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup node
+              uses: actions/setup-node@v4
+              with: 
+                  node-version: 20.x
+                
+            - name: Install
+              working-directory: './StayPilot/StayPilot.Web'
+              run: npm ci
+            
+            - name: Build
+              working-directory: './StayPilot/StayPilot.Web'
+              run: npm run build
+
+            - name: Deploy Web App to Azure
+              uses: azure/static-web-apps-deploy@v1
+              with:
+                  azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}  # secret from GitHub repo settings
+                  action: "upload"
+                  app_location: "dist/stay-pilot.web/browser"  # where the web app source code is
+                  output_location: ""  # where the build output is (relative to app_location)
+                  skip_app_build: true  # we already built the app in a previous step
+                
+
+      
