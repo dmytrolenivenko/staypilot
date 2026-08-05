@@ -18,6 +18,11 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
                     value: 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=db-staypilot-dev;User ID=dmytrolenivenko;Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=False;'
                 }
             ]
+            cors: {
+                allowedOrigins: [
+                    'https://${staticWebApp.properties.defaultHostname}'
+                ]
+            }
         }
     }
 }
@@ -58,5 +63,21 @@ resource sqlFirewallRule 'Microsoft.Sql/servers/firewallRules@2025-02-01-preview
     properties: {
         startIpAddress: '0.0.0.0'
         endIpAddress: '0.0.0.0'
+    }
+}
+
+resource staticWebApp 'Microsoft.Web/staticSites@2025-03-01' = {
+    name: 'stapp-staypilot-dev'
+    location: 'centralus'
+    sku: {
+        name: 'Free'
+        tier: 'Free'
+    }
+    properties: {
+        stagingEnvironmentPolicy: 'Enabled'
+        allowConfigFileUpdates: true
+        provider: 'None'
+        enterpriseGradeCdnStatus: 'Disabled'
+        deploymentAuthPolicy: 'DeploymentToken'
     }
 }
