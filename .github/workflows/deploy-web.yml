@@ -37,7 +37,7 @@ jobs:
               with:
                   azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}  # secret from GitHub repo settings
                   action: "upload"
-                  app_location: "dist/stay-pilot.web/browser"  # where the web app source code is
+                  app_location: "StayPilot/StayPilot.Web/dist/stay-pilot.web/browser"  # where the web app source code is
                   output_location: ""  # where the build output is (relative to app_location)
                   skip_app_build: true  # we already built the app in a previous step
                 
