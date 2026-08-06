@@ -2,11 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PremiumFeatureResponse } from '../models/premium-feature';
+import { environment } from '../../../environments/environment';
 
 // Talks to PremiumFeatureController. api/[controller]/[action] routing.
 @Injectable({ providedIn: 'root' })
 export class PremiumFeatureService {
-  private readonly baseUrl = '/api/PremiumFeature';
+  private readonly baseUrl = `${environment.apiBase}/api/PremiumFeature`;
 
   constructor(private readonly http: HttpClient) {}
 

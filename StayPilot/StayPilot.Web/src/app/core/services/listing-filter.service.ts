@@ -7,6 +7,7 @@ import {
   FilterPropertyListingResponse
 } from '../models/filter-property-listing';
 import { PropertyListingResponse } from '../models/property-listing';
+import { environment } from '../../../environments/environment';
 
 // The API returns at most 20 rows per call (its PageSize cap), so to sort + page in the
 // browser we first grab page 1, see how many matches there are, then pull the rest.
@@ -21,7 +22,7 @@ export class ListingFilterService {
   // Fix: this pointed at /api/ListPropertyListing, a controller that no longer
   // exists (its one action moved into PropertyListingController). Every search
   // would have 404'd.
-  private readonly baseUrl = '/api/PropertyListing/FilterProperty';
+  private readonly baseUrl = `${environment.apiBase}/api/PropertyListing/FilterProperty`;
 
   constructor(private readonly http: HttpClient) {}
 

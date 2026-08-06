@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 // Session-only convenience list (no backend "list listings" endpoint exists yet).
 // Remembers ids the user has created or looked up in this browser tab, most-recent first.

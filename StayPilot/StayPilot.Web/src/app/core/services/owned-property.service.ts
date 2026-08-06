@@ -6,11 +6,12 @@ import {
   OwnedPropertyRequest,
   OwnedPropertyResponse
 } from '../models/owned-property';
+import { environment } from '../../../environments/environment';
 
 // Talks to OwnedPropertyController. api/[controller]/[action] routing.
 @Injectable({ providedIn: 'root' })
 export class OwnedPropertyService {
-  private readonly baseUrl = '/api/OwnedProperty';
+  private readonly baseUrl = `${environment.apiBase}/api/OwnedProperty`;
 
   constructor(private readonly http: HttpClient) {}
 

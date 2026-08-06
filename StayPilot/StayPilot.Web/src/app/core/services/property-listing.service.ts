@@ -2,10 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PropertyListingRequest, PropertyListingResponse } from '../models/property-listing';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PropertyListingService {
-  private readonly baseUrl = '/api/PropertyListing';
+  private readonly baseUrl = `${environment.apiBase}/api/PropertyListing`;
 
   constructor(private readonly http: HttpClient) {}
 

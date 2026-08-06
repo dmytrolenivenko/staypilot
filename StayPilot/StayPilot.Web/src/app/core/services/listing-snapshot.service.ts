@@ -2,12 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ListingSnapshotRequest, ListingSnapshotResponse } from '../models/property-listing';
+import { environment } from '../../../environments/environment';
 
 // Talks to ListingSnapshotController. The API routes as api/[controller]/[action],
 // so the action name is part of the URL (and ASP.NET drops the "Async" suffix).
 @Injectable({ providedIn: 'root' })
 export class ListingSnapshotService {
-  private readonly baseUrl = '/api/ListingSnapshot';
+  private readonly baseUrl = `${environment.apiBase}/api/ListingSnapshot`;
 
   constructor(private readonly http: HttpClient) {}
 

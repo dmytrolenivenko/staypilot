@@ -2,10 +2,11 @@ import { HttpClient, HttpParams} from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { MarketArea } from '../models/market-area';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class MarketAreaService {
-  private readonly baseUrl = '/api/MarketArea';
+  private readonly baseUrl = `${environment.apiBase}/api/MarketArea`;
 
   constructor(private readonly http: HttpClient) {}
 
