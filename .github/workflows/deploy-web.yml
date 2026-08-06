@@ -1,62 +1,63 @@
-name: deploy-web                      # label shown in the GitHub Actions tab
+name: deploy-web                                  # the name you see in the Actions tab
+                                                  # this workflow ships the ANGULAR site into Azure
 
-on:
-    push:
-        branches: [ master ]          # auto-run every time a commit lands on master (this is the "CD" part)
-        paths:
-        - 'StayPilot/StayPilot.Web/**'
-        - '.github/workflows/deploy-web.yml'
-    workflow_dispatch:                # ...and also give me a manual "Run workflow" button
+on:                                               # when does this workflow run?
+    push:                                         # after a commit lands on...
+        branches: [ master ]                      # ...master — this is the "CD" (deploy) half
+        paths:                                    # and only if one of these changed
+        - 'StayPilot/StayPilot.Web/**'            # the Angular project
+        - '.github/workflows/deploy-web.yml'      # ...or this workflow itself
+    workflow_dispatch:                            # plus a manual "Run workflow" button
 
-permissions:                          # what this workflow is allowed to do
-    contents: read                    # read the repo (needed to check out the code)
-    id-token: write                   # mint a short-lived OIDC token to log into Azure passwordlessly
+permissions:                                     # what this workflow is allowed to do
+    contents: read                               # read the repo (needed to check it out)
+    id-token: write                              # create the short-lived token used to log into Azure
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest        # a fresh, ephemeral Linux VM (case-sensitive filesystem!)
+    deploy:                                      # one job, called "deploy"
+        runs-on: ubuntu-latest                   # brand-new Linux machine (note: file names are case-sensitive here)
         steps:
-            - name: Checkout code
+            - name: Checkout code                # copy the repo onto the machine
               uses: actions/checkout@v4
 
-            - name: Setup node
+            - name: Setup node                   # the machine has no Node — install it so "npm" exists
               uses: actions/setup-node@v4
-              with: 
-                  node-version: 20.x
-                
-            - name: Install
-              working-directory: './StayPilot/StayPilot.Web'
-              run: npm ci
-            
-            - name: Build
-              working-directory: './StayPilot/StayPilot.Web'
-              run: npm run build
-
-            - name: Log into Azure (OIDC)
-              uses: azure/login@v2             # exchange the OIDC token for a real Azure access token
               with:
-                  client-id: ${{ vars.AZURE_CLIENT_ID }}         # which app registration (the "who")
-                  tenant-id: ${{ vars.AZURE_TENANT_ID }}         # which Entra directory
-                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}  # which billing subscription to act in
+                  node-version: 20.x             # Node 20, newest patch
 
-            - name: Get deployment token
-              id: swa
+            - name: Install                      # download the npm packages
+              working-directory: './StayPilot/StayPilot.Web'   # run this command inside the Angular folder
+              run: npm ci                        # "ci" = install exactly what package-lock.json pins
+
+            - name: Build                        # turn Angular into plain HTML/CSS/JS
+              working-directory: './StayPilot/StayPilot.Web'
+              run: npm run build                 # uses the "production" config, so it picks up environment.ts
+
+            - name: Log into Azure (OIDC)        # sign in with NO stored password
+              uses: azure/login@v2               # GitHub proves who it is; Azure hands back an access token
+              with:
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}              # which identity in Azure we are
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}              # which Azure directory it lives in
+                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}  # which subscription gets billed
+
+            - name: Get deployment token         # the upload below needs the site's own key
+              id: swa                            # names this step so later steps can read its output
               run: |
-                  TOKEN=$(az staticwebapp secrets list \
-                    --name stapp-staypilot-dev \
-                    --resource-group rg-staypilot-dev \
-                    --query "properties.apiKey" -o tsv)
-                  echo "::add-mask::$TOKEN"
-                  echo "token=$TOKEN" >> $GITHUB_OUTPUT
+                # Ask Azure for the key instead of storing it in GitHub.
+                # Why: a stored key goes stale the moment the site is recreated.
+                # This always gets the current one, so there is nothing to rotate.
+                TOKEN=$(az staticwebapp secrets list \
+                  --name stapp-staypilot-dev \
+                  --resource-group rg-staypilot-dev \
+                  --query "properties.apiKey" -o tsv)
+                echo "::add-mask::$TOKEN"                 # hide it everywhere in the logs
+                echo "token=$TOKEN" >> $GITHUB_OUTPUT     # hand it to the next step (each step is its own shell)
 
             - name: Deploy Web App to Azure
-              uses: azure/static-web-apps-deploy@v1
+              uses: azure/static-web-apps-deploy@v1       # uploads files to the Static Web App
               with:
-                  azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}  # secret from GitHub repo settings
-                  action: "upload"
-                  app_location: "StayPilot/StayPilot.Web/dist/stay-pilot.web/browser"  # where the web app source code is
-                  output_location: ""  # where the build output is (relative to app_location)
-                  skip_app_build: true  # we already built the app in a previous step
-                
-
-      
+                  azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}   # the key fetched above — never stored
+                  action: "upload"                                                  # upload files (not "close", used for PR previews)
+                  app_location: "StayPilot/StayPilot.Web/dist/stay-pilot.web/browser"   # the finished files. NOTE the "browser" folder — Angular 17+ splits its output
+                  output_location: ""                                               # empty because app_location already points at the built files
+                  skip_app_build: true                                              # don't rebuild — we already built it above

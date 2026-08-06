@@ -1,66 +1,74 @@
-name: deploy api                         # label shown in the GitHub Actions tab
+name: deploy api                                  # the name you see in the Actions tab
+                                                  # this workflow ships the .NET API CODE into Azure
 
-on:                                   # triggers: what makes this workflow run?
-    push:
-        branches: [ master ]          # auto-run every time a commit lands on master (this is the "CD" part)
-        paths:
-        - 'StayPilot/StayPilot.Api/**'
-        - 'StayPilot/StayPilot.Application/**'
+on:                                               # when does this workflow run?
+    push:                                         # after a commit lands on...
+        branches: [ master ]                      # ...master — this is the "CD" (deploy) half
+        paths:                                    # and only if one of these changed
+        - 'StayPilot/StayPilot.Api/**'            # the API project
+        - 'StayPilot/StayPilot.Application/**'    # ...and the projects it is built from
         - 'StayPilot/StayPilot.Domain/**'
         - 'StayPilot/StayPilot.Infrastructure/**'
-        - '.github/workflows/deploy.yml'
-    workflow_dispatch:                # ...and also give me a manual "Run workflow" button
+        - '.github/workflows/deploy-api.yml'      # ...or this workflow itself
+    workflow_dispatch:                            # plus a manual "Run workflow" button
 
-permissions:                          # what this workflow is allowed to do
-    contents: read                    # read the repo (needed to check out the code)
-    id-token: write                   # mint a short-lived OIDC token to log into Azure passwordlessly
+permissions:                                     # what this workflow is allowed to do
+    contents: read                               # read the repo (needed to check it out)
+    id-token: write                              # create the short-lived token used to log into Azure
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest        # a fresh, ephemeral Linux VM (case-sensitive filesystem!)
+    deploy:                                      # one job, called "deploy"
+        runs-on: ubuntu-latest                   # brand-new Linux machine (note: file names are case-sensitive here)
         steps:
-            - name: Checkout the Repo
-              uses: actions/checkout@v4        # pull the repo source onto the runner
+            - name: Checkout the Repo            # copy the repo onto the machine
+              uses: actions/checkout@v4
 
-            - name: Log into Azure (OIDC)
-              uses: azure/login@v2             # exchange the OIDC token for a real Azure access token
+            - name: Log into Azure (OIDC)        # sign in with NO stored password
+              uses: azure/login@v2               # GitHub proves who it is; Azure hands back an access token
               with:
-                  client-id: ${{ vars.AZURE_CLIENT_ID }}         # which app registration (the "who")
-                  tenant-id: ${{ vars.AZURE_TENANT_ID }}         # which Entra directory
-                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}  # which billing subscription to act in
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}              # which identity in Azure we are
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}              # which Azure directory it lives in
+                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}  # which subscription gets billed
 
-            - name: Setup .NET
-              uses: actions/setup-dotnet@v4    # install the .NET SDK on the runner so `dotnet` exists
+            - name: Setup .NET                   # the machine has no .NET — install it
+              uses: actions/setup-dotnet@v4
               with:
-                  dotnet-version: 10.0.x       # major 10, minor 0, patch = latest (the "x" wildcard)
+                  dotnet-version: 10.0.x         # .NET 10, newest patch ("x" = whatever is latest)
 
-            - name: Restore                      # step 3: download NuGet packages
+            - name: Restore                      # download the NuGet packages the code needs
               run: dotnet restore StayPilot/StayPilot.slnx
+
+            # --- database migrations -------------------------------------------------
+            # The SQL firewall only trusts "Azure services". This machine is NOT one,
+            # so we poke a hole for its IP, run the migrations, then close it again.
 
             - name: Open SQL Server firewall for runner IP
               run: |
-                RUNNER_IP=$(curl -s https://api.ipify.org)   # this runner's IP
-                az sql server firewall-rule create --resource-group rg-staypilot-dev --server srv-staypilot-dev --name "gh-runner-${{ github.run_id }}" --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP"   # open firewall for it (unique name per run)
+                RUNNER_IP=$(curl -s https://api.ipify.org)   # ask a public site "what is my IP?"
+                az sql server firewall-rule create --resource-group rg-staypilot-dev --server srv-staypilot-dev --name "gh-runner-${{ github.run_id }}" --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP"   # allow just that one IP (rule name is unique per run)
 
             - name: Apply EF migrations
-              env:
-                ConnectionStrings__DefaultConnection: 'Server=tcp:srv-staypilot-dev.database.windows.net,1433;Initial Catalog=db-staypilot-dev;User ID=dmytrolenivenko;Password=${{ secrets.SQL_ADMIN_PASSWORD }};Encrypt=True;TrustServerCertificate=False;'   # where Azure SQL is; pwd from secret
+              env:                               # variables for this step only
+                ConnectionStrings__DefaultConnection: 'Server=tcp:srv-staypilot-dev.database.windows.net,1433;Initial Catalog=db-staypilot-dev;User ID=dmytrolenivenko;Password=${{ secrets.SQL_ADMIN_PASSWORD }};Encrypt=True;TrustServerCertificate=False;'   # which DB to migrate; password from GitHub secrets
               run: |
-                dotnet tool install --global dotnet-ef        # install EF tool (runner is bare)
-                export PATH="$PATH:$HOME/.dotnet/tools"        # make the tool findable
-                dotnet ef database update -p StayPilot/StayPilot.Infrastructure/StayPilot.Infrastructure.csproj -s StayPilot/StayPilot.Api/StayPilot.Api.csproj   # apply new migrations (idempotent)
+                dotnet tool install --global dotnet-ef        # the machine is bare — install the EF tool
+                export PATH="$PATH:$HOME/.dotnet/tools"       # tell the shell where that tool landed
+                dotnet ef database update -p StayPilot/StayPilot.Infrastructure/StayPilot.Infrastructure.csproj -s StayPilot/StayPilot.Api/StayPilot.Api.csproj   # create/alter TABLES only — never copies data. Safe to re-run.
 
             - name: Close SQL Server firewall for runner IP
-              if: always()   # always run — never leave the hole open
+              if: always()                       # run even if the migration failed — never leave the hole open
               run: |
                 az sql server firewall-rule delete --resource-group rg-staypilot-dev --server srv-staypilot-dev --name "gh-runner-${{ github.run_id }}"   # remove this run's rule
 
+            # --- ship the code -------------------------------------------------------
+
             - name: Publish the API
-              # compile + gather the whole dependency closure into ./publish, a portable, runnable bundle
+              # "build" makes it run on THIS machine; "publish" packs the app plus every
+              # library it needs into one folder that can run on any server.
               run: dotnet publish StayPilot/StayPilot.Api/StayPilot.Api.csproj -c Release -o ./publish
 
             - name: Deploy to Azure App Service
-              uses: azure/webapps-deploy@v3    # upload the bundle into the running App Service
+              uses: azure/webapps-deploy@v3      # upload that folder into the running App Service
               with:
-                  app-name: app-staypilot-dev  # WHICH app (the App Service, not the plan)
-                  package: ./publish           # WHAT to upload (the folder step "Publish" just created)
+                  app-name: app-staypilot-dev    # WHICH app (the App Service "app-", not the plan "asp-")
+                  package: ./publish             # WHAT to upload (the folder the step above created)

@@ -37,7 +37,7 @@ export class MarketAreaListComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Could not load market areas from the API. Is StayPilot.Api running on http://localhost:5278?');
+        this.error.set('Could not load market areas — the API request failed. Check the Network tab for the actual URL and status.');
         this.loading.set(false);
       }
     });

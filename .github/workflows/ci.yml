@@ -1,45 +1,45 @@
-name: BuildDev                                   # label in the Actions tab (free to rename)
+name: BuildDev                             # the name you see in the Actions tab
 
-on:                                        # triggers: when should this run?
-  pull_request:
-    branches: [ master ]                   # the gate: runs on any PR into master
+on:                                        # when does this workflow run?
+  pull_request:                            # only for pull requests...
+    branches: [ master ]                   # ...aimed at master — the gate you pass before merging
 
-jobs:
-  backend:                                 # job id — your name; a fresh VM per job
-    runs-on: ubuntu-latest                 # Linux runner (fast + free-tier cheap)
-    steps:
-      - name: Checkout code                # step 1: pull the repo onto the VM
-        uses: actions/checkout@v4          #   note: uses is aligned under "name"
+jobs:                                      # jobs run at the same time, each on its own machine
+  backend:                                 # job 1 — the .NET side
+    runs-on: ubuntu-latest                 # a brand-new Linux machine, thrown away when done
+    steps:                                 # steps run one after another, top to bottom
+      - name: Checkout code                # copy the repo onto the machine (it starts empty)
+        uses: actions/checkout@v4          # "uses" = run a ready-made action someone else wrote
 
-      - name: Setup .NET                   # step 2: install the toolchain
+      - name: Setup .NET                   # the machine has no .NET — install it
         uses: actions/setup-dotnet@v4
-        with:                              # "with" = inputs passed to that action
-          dotnet-version: 10.0.x           #   install the .NET 10 SDK
+        with:                              # "with" = settings for the action above
+          dotnet-version: 10.0.x           # .NET 10, newest patch ("x" = whatever is latest)
 
-      - name: Restore                      # step 3: download NuGet packages
-        run: dotnet restore StayPilot/StayPilot.slnx
+      - name: Restore                      # download the NuGet packages the code needs
+        run: dotnet restore StayPilot/StayPilot.slnx   # "run" = a plain command in the shell
 
-      - name: Build                        # step 4: compile (packages already there)
-        run: dotnet build StayPilot/StayPilot.slnx --no-restore -c Release
+      - name: Build                        # compile the code
+        run: dotnet build StayPilot/StayPilot.slnx --no-restore -c Release   # --no-restore = reuse the step above
 
-      - name: Test
-        run: dotnet test StayPilot/StayPilot.slnx --no-build -c Release
+      - name: Test                         # run the unit tests
+        run: dotnet test StayPilot/StayPilot.slnx --no-build -c Release      # --no-build = reuse the build above
 
-  frontend:
-    runs-on: ubuntu-latest
+  frontend:                                # job 2 — the Angular side, runs in parallel with backend
+    runs-on: ubuntu-latest                 # its own separate machine
     steps:
-      - name: Checkout code
+      - name: Checkout code                # every job starts empty, so check out again here
         uses: actions/checkout@v4
 
-      - name: Setup node
+      - name: Setup node                   # install Node so "npm" exists
         uses: actions/setup-node@v4
-        with: 
-          node-version: 20.x
+        with:
+          node-version: 20.x               # Node 20, newest patch
 
-      - name: Install
-        working-directory: './StayPilot/StayPilot.Web'
-        run: npm ci
+      - name: Install                      # download the npm packages
+        working-directory: './StayPilot/StayPilot.Web'   # run this command inside the Angular folder
+        run: npm ci                        # "ci" = install exactly what package-lock.json pins
 
-      - name: Build
+      - name: Build                        # turn Angular into plain HTML/CSS/JS
         working-directory: './StayPilot/StayPilot.Web'
         run: npm run build
