@@ -428,8 +428,20 @@ export class OwnedPropertiesComponent implements OnInit {
         this.loading.set(false);
         this.loadAll();
       },
-      error: () => {
-        this.error.set('Could not save the property. Check the required fields.');
+      error: err => {
+        // Show what the API actually said. It replies with ProblemDetails: a plain
+        // "detail" for our own errors, or an "errors" map for [Required]/[Range]
+        // model validation. Falling straight to the generic text hid the real reason.
+        const problem = err.error;
+        const firstValidationMessage = problem?.errors
+          ? (Object.values(problem.errors)[0] as string[])?.[0]
+          : null;
+
+        this.error.set(
+          firstValidationMessage ??
+            problem?.detail ??
+            'Could not save the property. Check the required fields.'
+        );
         this.loading.set(false);
       }
     });

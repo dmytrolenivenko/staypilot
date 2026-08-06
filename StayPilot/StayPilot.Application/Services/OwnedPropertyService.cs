@@ -42,15 +42,13 @@ namespace StayPilot.Application.Services
 
             ownedPropertyEntity.MarketArea = marketAreaRepo.FirstOrDefault(x => x.Id == ownedPropertyEntity.MarketAreaId) ?? throw new InvalidOperationException("MarketArea can not be null");
 
-            // Without this check, the (double) cast below would crash with a confusing
-            // error instead of a clear message, whenever a request has no location.
-            if (request.Latitude is null || request.Longitude is null)
-                throw new InvalidOperationException("Latitude and Longitude must be provided for the owned property.");
-
             var closestBeach = Calculator.GetTheClosestBeach(beackMarkerRepo, request.Latitude, request.Longitude);
 
-            // We only fill in beach info when we actually found one.
-            if (closestBeach is not null)
+            // We only fill in beach info when we actually found one. A property with no
+            // coordinates just gets null beach fields, same as PropertyListing - that is a
+            // normal case, not an error. The lat/lon checks also let the compiler see the
+            // .Value reads below are safe.
+            if (closestBeach is not null && request.Latitude is not null && request.Longitude is not null)
             {
                 ownedPropertyEntity.NearestBeachMarker = closestBeach;
                 ownedPropertyEntity.NearestBeachName = closestBeach.Name;
