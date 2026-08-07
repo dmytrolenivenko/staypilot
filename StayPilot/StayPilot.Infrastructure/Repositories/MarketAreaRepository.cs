@@ -33,24 +33,43 @@ namespace StayPilot.Infrastructure.Repositories
         {
             var query = _context.MarketAreas.AsQueryable();
 
-            // Town is picked -> return its zones (only rows that have a zone). No repeats, sorted.
-            if (!string.IsNullOrWhiteSpace(town))
+            // First narrow by everything already picked. Names repeat across the country
+            // (six different municipalities have a freguesia called "Pinheiro"), so each
+            // level has to be filtered by its parents too, not only by itself.
+            if (!string.IsNullOrWhiteSpace(district))
             {
-                return await query.Where(x => x.Town == town && x.Zone != null).Select(x => x.Zone).Distinct().OrderBy(x => x).ToListAsync();
-            }
-            // Municipality is picked -> return its towns.
-            else if (!string.IsNullOrWhiteSpace(municipality))
-            {
-                return await query.Where(x => x.Municipality == municipality).Select(x => x.Town).Distinct().OrderBy(x => x).ToListAsync();
-            }
-            // District is picked -> return its municipalities.
-            else if (!string.IsNullOrWhiteSpace(district))
-            {
-                return await query.Where(x => x.District == district).Select(x => x.Municipality).Distinct().OrderBy(x => x).ToListAsync();
+                query = query.Where(x => x.District == district);
             }
 
-            // Nothing picked yet -> return the top level (all municipalities), de-duplicated and sorted.
-            return await _context.MarketAreas.Select(x => x.Municipality).Distinct().OrderBy(x => x).ToListAsync();
+            if (!string.IsNullOrWhiteSpace(municipality))
+            {
+                query = query.Where(x => x.Municipality == municipality);
+            }
+
+            if (!string.IsNullOrWhiteSpace(town))
+            {
+                query = query.Where(x => x.Town == town);
+            }
+
+            // Then return the level just below the deepest one picked.
+            // Town is picked -> its zones (only rows that have a zone). No repeats, sorted.
+            if (!string.IsNullOrWhiteSpace(town))
+            {
+                return await query.Where(x => x.Zone != null).Select(x => x.Zone!).Distinct().OrderBy(x => x).ToListAsync();
+            }
+            // Municipality is picked -> its towns.
+            if (!string.IsNullOrWhiteSpace(municipality))
+            {
+                return await query.Select(x => x.Town).Distinct().OrderBy(x => x).ToListAsync();
+            }
+            // District is picked -> its municipalities.
+            if (!string.IsNullOrWhiteSpace(district))
+            {
+                return await query.Select(x => x.Municipality).Distinct().OrderBy(x => x).ToListAsync();
+            }
+
+            // Nothing picked yet -> the top level: the districts.
+            return await query.Select(x => x.District).Distinct().OrderBy(x => x).ToListAsync();
         }
     }
 }

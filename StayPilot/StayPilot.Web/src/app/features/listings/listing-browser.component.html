@@ -7,10 +7,18 @@
   </p>
 
   <form class="filters" (ngSubmit)="search()">
-     <!-- Location cascade: Município → Freguesia → Zona. Each pick loads the next. -->
+     <!-- Location cascade: Distrito → Município → Freguesia → Zona. Each pick loads the next. -->
+    <label class="field">
+      <span>Distrito</span>
+      <select name="district" [(ngModel)]="form.district" (ngModelChange)="onDistrictChange()">
+        <option value="">Any</option>
+        @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
+      </select>
+    </label>
+
     <label class="field">
       <span>Município</span>
-      <select name="municipality" [(ngModel)]="form.municipality" (ngModelChange)="onMunicipalityChange()">
+      <select name="municipality" [(ngModel)]="form.municipality" (ngModelChange)="onMunicipalityChange()" [disabled]="!form.district">
         <option value="">Any</option>
         @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
       </select>

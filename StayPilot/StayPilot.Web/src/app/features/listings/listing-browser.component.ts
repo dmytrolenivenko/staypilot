@@ -21,6 +21,7 @@ type SortColumn =
 // The on-screen filter form. '' = "Any" for dropdowns, null = empty for number boxes.
 // We strip those out before sending, so the API only filters on what you actually typed.
 interface FilterForm {
+  district: string;
   municipality: string;
   town: string;
   zone: string;
@@ -42,6 +43,7 @@ interface FilterForm {
 
 function emptyForm(): FilterForm {
   return {
+    district: '',
     municipality: '',
     town: '',
     zone: '',
@@ -77,6 +79,7 @@ export class ListingBrowserComponent implements OnInit {
   readonly listingStatuses = LISTING_STATUSES;
 
   // The dropdown choices, each level loaded from the backend as you pick the one above.
+  districtOptions = signal<string[]>([]);
   municipalityOptions = signal<string[]>([]);
   townOptions = signal<string[]>([]);
   zoneOptions = signal<string[]>([]);
@@ -147,11 +150,27 @@ export class ListingBrowserComponent implements OnInit {
 
   // Load the area names once, when the page opens, for the location autocomplete.
     ngOnInit(): void {
-    // Load the top dropdown (municípios). Nothing picked yet → backend returns municipalities.
+    // Load the top dropdown (distritos). Nothing picked yet → backend returns districts.
     this.marketAreas.getOptions().subscribe({
-      next: m => this.municipalityOptions.set(m),
-      error: () => this.municipalityOptions.set([])
+      next: d => this.districtOptions.set(d),
+      error: () => this.districtOptions.set([])
     });
+  }
+
+    // Distrito changed → wipe the child pickers and load this distrito's municípios.
+  onDistrictChange(): void {
+    this.form.municipality = '';
+    this.form.town = '';
+    this.form.zone = '';
+    this.municipalityOptions.set([]);
+    this.townOptions.set([]);
+    this.zoneOptions.set([]);
+    if (this.form.district) {
+      this.marketAreas.getOptions(this.form.district).subscribe({
+        next: m => this.municipalityOptions.set(m),
+        error: () => this.municipalityOptions.set([])
+      });
+    }
   }
 
     // Município changed → wipe the child pickers and load this município's freguesias.
@@ -161,7 +180,7 @@ export class ListingBrowserComponent implements OnInit {
     this.townOptions.set([]);
     this.zoneOptions.set([]);
     if (this.form.municipality) {
-      this.marketAreas.getOptions(undefined, this.form.municipality).subscribe({
+      this.marketAreas.getOptions(this.form.district, this.form.municipality).subscribe({
         next: t => this.townOptions.set(t),
         error: () => this.townOptions.set([])
       });
@@ -173,7 +192,7 @@ export class ListingBrowserComponent implements OnInit {
     this.form.zone = '';
     this.zoneOptions.set([]);
     if (this.form.town) {
-      this.marketAreas.getOptions(undefined, this.form.municipality, this.form.town).subscribe({
+      this.marketAreas.getOptions(this.form.district, this.form.municipality, this.form.town).subscribe({
         next: z => this.zoneOptions.set(z),
         error: () => this.zoneOptions.set([])
       });
@@ -207,6 +226,7 @@ export class ListingBrowserComponent implements OnInit {
 
   reset(): void {
     this.form = emptyForm();
+    this.municipalityOptions.set([]);
     this.townOptions.set([]);
     this.zoneOptions.set([]);
     this.allRows.set([]);
@@ -299,6 +319,7 @@ export class ListingBrowserComponent implements OnInit {
       pageSize: 20
     };
 
+    if (f.district) request.district = f.district;
     if (f.municipality) request.municipality = f.municipality;
     if (f.town) request.town = f.town;
     if (f.zone) request.zone = f.zone;
