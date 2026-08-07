@@ -44,7 +44,9 @@ namespace StayPilot.Api.Controllers
         {
             var result = await _ownedPropertyService.AddOwnedPropertyAsync(request);
 
-            return CreatedAtAction(nameof(GetOwnedPropertyAsync), new { id = result.Id }, result);
+            // Action name without the "Async" suffix - that is what routing registered,
+            // so nameof(GetOwnedPropertyAsync) would not match any route here.
+            return CreatedAtAction("GetOwnedProperty", new { id = result.Id }, result);
         }
 
         [HttpDelete("{id}")]

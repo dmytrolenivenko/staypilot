@@ -9,7 +9,9 @@ using StayPilot.Application.Interfaces.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add the controllers. Also tell JSON to write enums as their text name, not a number.
-builder.Services.AddControllers(options => options.SuppressAsyncSuffixInActionNames = false).AddJsonOptions(options =>
+// The "Async" suffix is trimmed from action names (the framework default), so the routes
+// are /api/OwnedProperty/AddOwnedProperty, not .../AddOwnedPropertyAsync.
+builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
