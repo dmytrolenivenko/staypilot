@@ -1,0 +1,7826 @@
+[
+  {
+    "osmId": 1446586,
+    "name": "Praia de Paimongo",
+    "latitude": 39.285156,
+    "longitude": -9.337697
+  },
+  {
+    "osmId": 1446589,
+    "name": "Praia da Areia Branca",
+    "latitude": 39.26646,
+    "longitude": -9.336023
+  },
+  {
+    "osmId": 1480049,
+    "name": null,
+    "latitude": 39.311135,
+    "longitude": -9.346833
+  },
+  {
+    "osmId": 1676133,
+    "name": "Praia do Areal Sul",
+    "latitude": 39.256564,
+    "longitude": -9.337787
+  },
+  {
+    "osmId": 1676134,
+    "name": "Praia da Peralta",
+    "latitude": 39.24705,
+    "longitude": -9.341107
+  },
+  {
+    "osmId": 2252441,
+    "name": "Praia fluvial de Vale das Éguas",
+    "latitude": 40.435502,
+    "longitude": -7.02439
+  },
+  {
+    "osmId": 2953471,
+    "name": "Praia do Meco",
+    "latitude": 38.48842,
+    "longitude": -9.183677
+  },
+  {
+    "osmId": 4830174,
+    "name": "Praia da Arda",
+    "latitude": 41.773454,
+    "longitude": -8.87377
+  },
+  {
+    "osmId": 4830175,
+    "name": "Praia do Forte do Cão",
+    "latitude": 41.800614,
+    "longitude": -8.871005
+  },
+  {
+    "osmId": 4830177,
+    "name": "Praia de Paçô",
+    "latitude": 41.758804,
+    "longitude": -8.877472
+  },
+  {
+    "osmId": 4830178,
+    "name": "Praia de Vila Praia de Âncora",
+    "latitude": 41.813252,
+    "longitude": -8.864515
+  },
+  {
+    "osmId": 5448095,
+    "name": "Praia de Santo António",
+    "latitude": 37.171962,
+    "longitude": -7.417776
+  },
+  {
+    "osmId": 5742362,
+    "name": null,
+    "latitude": 41.818138,
+    "longitude": -8.871497
+  },
+  {
+    "osmId": 5742363,
+    "name": null,
+    "latitude": 41.819479,
+    "longitude": -8.872445
+  },
+  {
+    "osmId": 5742864,
+    "name": null,
+    "latitude": 41.79696,
+    "longitude": -8.873286
+  },
+  {
+    "osmId": 6143763,
+    "name": "Praia da Nazaré",
+    "latitude": 39.597095,
+    "longitude": -9.074931
+  },
+  {
+    "osmId": 6150268,
+    "name": "Praia do Norte",
+    "latitude": 39.622929,
+    "longitude": -9.080431
+  },
+  {
+    "osmId": 6150301,
+    "name": "Praia da Falca",
+    "latitude": 39.644804,
+    "longitude": -9.073605
+  },
+  {
+    "osmId": 6150305,
+    "name": null,
+    "latitude": 39.663885,
+    "longitude": -9.066167
+  },
+  {
+    "osmId": 6150619,
+    "name": null,
+    "latitude": 39.583646,
+    "longitude": -9.080788
+  },
+  {
+    "osmId": 6150660,
+    "name": null,
+    "latitude": 39.578521,
+    "longitude": -9.081754
+  },
+  {
+    "osmId": 6171322,
+    "name": "Praia de São Martinho do Porto",
+    "latitude": 39.50731,
+    "longitude": -9.142107
+  },
+  {
+    "osmId": 6171323,
+    "name": "Duna de Salir do Porto",
+    "latitude": 39.503412,
+    "longitude": -9.149789
+  },
+  {
+    "osmId": 6171559,
+    "name": "Praia do Salgado",
+    "latitude": 39.560092,
+    "longitude": -9.102463
+  },
+  {
+    "osmId": 6172498,
+    "name": "Prainha",
+    "latitude": 39.440485,
+    "longitude": -9.223769
+  },
+  {
+    "osmId": 6172529,
+    "name": null,
+    "latitude": 39.437256,
+    "longitude": -9.226236
+  },
+  {
+    "osmId": 6172530,
+    "name": null,
+    "latitude": 39.438885,
+    "longitude": -9.224943
+  },
+  {
+    "osmId": 6172656,
+    "name": null,
+    "latitude": 39.39892,
+    "longitude": -9.281913
+  },
+  {
+    "osmId": 6196011,
+    "name": "Praia da Vieira",
+    "latitude": 39.874508,
+    "longitude": -8.972987
+  },
+  {
+    "osmId": 6196034,
+    "name": "Praia Velha",
+    "latitude": 39.773742,
+    "longitude": -9.025932
+  },
+  {
+    "osmId": 6196035,
+    "name": null,
+    "latitude": 39.823523,
+    "longitude": -8.999639
+  },
+  {
+    "osmId": 6196380,
+    "name": "Praia da Pedra do Ouro",
+    "latitude": 39.729632,
+    "longitude": -9.045262
+  },
+  {
+    "osmId": 6196397,
+    "name": "Praia de Água de Madeiros",
+    "latitude": 39.737673,
+    "longitude": -9.041463
+  },
+  {
+    "osmId": 6229189,
+    "name": "Praia dos Penedos",
+    "latitude": 38.44726,
+    "longitude": -9.037348
+  },
+  {
+    "osmId": 6802536,
+    "name": "Praia do Forte da Bandeira",
+    "latitude": 37.098841,
+    "longitude": -8.668077
+  },
+  {
+    "osmId": 7057980,
+    "name": "Praia do Homem do Leme",
+    "latitude": 41.160148,
+    "longitude": -8.685355
+  },
+  {
+    "osmId": 7093714,
+    "name": "Praia do Molhe",
+    "latitude": 37.110338,
+    "longitude": -8.519859
+  },
+  {
+    "osmId": 7212953,
+    "name": "Praia de Cacela Velha",
+    "latitude": 37.151574,
+    "longitude": -7.547415
+  },
+  {
+    "osmId": 7523213,
+    "name": "Praia do Homem Nú",
+    "latitude": 37.061961,
+    "longitude": -7.709913
+  },
+  {
+    "osmId": 7765480,
+    "name": "Praia das Pastoras",
+    "latitude": 41.147486,
+    "longitude": -8.674942
+  },
+  {
+    "osmId": 8136034,
+    "name": "Lagoa de Albufeira",
+    "latitude": 38.504775,
+    "longitude": -9.179317
+  },
+  {
+    "osmId": 9606510,
+    "name": "Praia da Baleeira",
+    "latitude": 38.416113,
+    "longitude": -9.189562
+  },
+  {
+    "osmId": 9610968,
+    "name": "Praia de Cramesines",
+    "latitude": 38.427132,
+    "longitude": -9.173459
+  },
+  {
+    "osmId": 9611670,
+    "name": "Praia da Cova da Mijona",
+    "latitude": 38.430619,
+    "longitude": -9.145207
+  },
+  {
+    "osmId": 9611671,
+    "name": null,
+    "latitude": 38.430291,
+    "longitude": -9.147205
+  },
+  {
+    "osmId": 9611673,
+    "name": "Praia do Inferno",
+    "latitude": 38.430401,
+    "longitude": -9.153432
+  },
+  {
+    "osmId": 9617519,
+    "name": "Praia do Ribeiro do Cavalo",
+    "latitude": 38.432721,
+    "longitude": -9.129062
+  },
+  {
+    "osmId": 9617520,
+    "name": "Praia",
+    "latitude": 38.432817,
+    "longitude": -9.126046
+  },
+  {
+    "osmId": 9645706,
+    "name": "Praia Fluvial do Sesmo",
+    "latitude": 39.859622,
+    "longitude": -7.74258
+  },
+  {
+    "osmId": 9648298,
+    "name": "Praia Fluvial do Sabugal",
+    "latitude": 40.348288,
+    "longitude": -7.092223
+  },
+  {
+    "osmId": 9648300,
+    "name": "Parque Fluvial da Lavandeira",
+    "latitude": 40.065963,
+    "longitude": -7.805206
+  },
+  {
+    "osmId": 9648306,
+    "name": "Praia Fluvial da Relva da Reboleira",
+    "latitude": 40.411822,
+    "longitude": -7.467373
+  },
+  {
+    "osmId": 9651215,
+    "name": "Praia Fluvial da Azenhas de Estorãos",
+    "latitude": 41.785294,
+    "longitude": -8.644636
+  },
+  {
+    "osmId": 9651217,
+    "name": "Praia Fluvial de Segade",
+    "latitude": 40.170207,
+    "longitude": -8.317126
+  },
+  {
+    "osmId": 9651221,
+    "name": "Praia Fluvial da Zaboeira",
+    "latitude": 39.70418,
+    "longitude": -8.222541
+  },
+  {
+    "osmId": 9651511,
+    "name": "Praia Fluvial de Ferreirós do Dão",
+    "latitude": 40.46724,
+    "longitude": -8.034111
+  },
+  {
+    "osmId": 9651515,
+    "name": "Praia Fluvial de Rapoula do Côa",
+    "latitude": 40.418248,
+    "longitude": -7.044103
+  },
+  {
+    "osmId": 9660897,
+    "name": null,
+    "latitude": 38.686399,
+    "longitude": -9.035385
+  },
+  {
+    "osmId": 9662000,
+    "name": null,
+    "latitude": 38.684647,
+    "longitude": -9.036257
+  },
+  {
+    "osmId": 9713905,
+    "name": "Praia Tróia-Bico das Lulas",
+    "latitude": 38.485372,
+    "longitude": -8.906378
+  },
+  {
+    "osmId": 9713906,
+    "name": "Praia de Troia (Galé)",
+    "latitude": 38.47488,
+    "longitude": -8.894291
+  },
+  {
+    "osmId": 9713907,
+    "name": "Praia Atlântica",
+    "latitude": 38.459415,
+    "longitude": -8.873263
+  },
+  {
+    "osmId": 9713908,
+    "name": "Malha da Costa",
+    "latitude": 38.416219,
+    "longitude": -8.832383
+  },
+  {
+    "osmId": 9714139,
+    "name": "Praia de Tróia",
+    "latitude": 38.492225,
+    "longitude": -8.907669
+  },
+  {
+    "osmId": 9731220,
+    "name": "Praia de Vale Côvo",
+    "latitude": 38.430129,
+    "longitude": -9.166639
+  },
+  {
+    "osmId": 9735058,
+    "name": "Praia Fluvial da Ponta dos Corvos",
+    "latitude": 38.651547,
+    "longitude": -9.113532
+  },
+  {
+    "osmId": 9786781,
+    "name": "Praia Fluvial de Constância",
+    "latitude": 39.475478,
+    "longitude": -8.34117
+  },
+  {
+    "osmId": 9786940,
+    "name": "Praia Fluvial de Ortiga",
+    "latitude": 39.483054,
+    "longitude": -8.001958
+  },
+  {
+    "osmId": 9787025,
+    "name": "Praia Fluvial do Couço",
+    "latitude": 38.995043,
+    "longitude": -8.285866
+  },
+  {
+    "osmId": 9787864,
+    "name": "Praia Fluvial da Ribeira da Venda na Comenda",
+    "latitude": 39.413656,
+    "longitude": -7.799968
+  },
+  {
+    "osmId": 9788684,
+    "name": "Praia Fluvial do Carvoeiro",
+    "latitude": 39.630121,
+    "longitude": -7.92328
+  },
+  {
+    "osmId": 9788686,
+    "name": null,
+    "latitude": 39.630093,
+    "longitude": -7.922805
+  },
+  {
+    "osmId": 9789871,
+    "name": "Praia Fluvial de Pego das Cancelas",
+    "latitude": 39.734671,
+    "longitude": -8.058188
+  },
+  {
+    "osmId": 9790496,
+    "name": "Praia Fluvial de Cardigos",
+    "latitude": 39.708761,
+    "longitude": -8.013922
+  },
+  {
+    "osmId": 9790538,
+    "name": null,
+    "latitude": 39.709071,
+    "longitude": -8.014245
+  },
+  {
+    "osmId": 9790639,
+    "name": null,
+    "latitude": 39.709274,
+    "longitude": -8.014144
+  },
+  {
+    "osmId": 9814675,
+    "name": "Praia Fluvial da Fróia",
+    "latitude": 39.789956,
+    "longitude": -7.838561
+  },
+  {
+    "osmId": 9815626,
+    "name": "Praia Fluvial da Couca - Cerejeira",
+    "latitude": 39.809686,
+    "longitude": -7.753513
+  },
+  {
+    "osmId": 9842596,
+    "name": "Praia Fluvial Aldeia Ruiva",
+    "latitude": 39.769079,
+    "longitude": -7.982137
+  },
+  {
+    "osmId": 10303937,
+    "name": "Praia da Velha",
+    "latitude": 38.644962,
+    "longitude": -9.086387
+  },
+  {
+    "osmId": 10633726,
+    "name": "Praia Vasco da Gama",
+    "latitude": 37.95281,
+    "longitude": -8.867796
+  },
+  {
+    "osmId": 11084219,
+    "name": "Praia Fluvial do Agroal",
+    "latitude": 39.679272,
+    "longitude": -8.435755
+  },
+  {
+    "osmId": 11222149,
+    "name": "Praia Fluvial de Pisão do Baeta",
+    "latitude": 40.045289,
+    "longitude": -8.185718
+  },
+  {
+    "osmId": 11250835,
+    "name": null,
+    "latitude": 38.674523,
+    "longitude": -9.230499
+  },
+  {
+    "osmId": 11250837,
+    "name": "Praia da Trafaria",
+    "latitude": 38.673766,
+    "longitude": -9.233065
+  },
+  {
+    "osmId": 11310325,
+    "name": null,
+    "latitude": 41.56671,
+    "longitude": -7.259159
+  },
+  {
+    "osmId": 11334507,
+    "name": "Praia Fluvial de Ançã",
+    "latitude": 40.272494,
+    "longitude": -8.524799
+  },
+  {
+    "osmId": 11384145,
+    "name": "Praia dos Tesos",
+    "latitude": 37.006532,
+    "longitude": -7.941509
+  },
+  {
+    "osmId": 12381919,
+    "name": null,
+    "latitude": 39.67757,
+    "longitude": -8.438304
+  },
+  {
+    "osmId": 12567393,
+    "name": "Praia da Ilha de Faro",
+    "latitude": 37.003842,
+    "longitude": -7.990809
+  },
+  {
+    "osmId": 12697042,
+    "name": "Praia da Figueira da Foz",
+    "latitude": 40.156464,
+    "longitude": -8.875892
+  },
+  {
+    "osmId": 12825575,
+    "name": "Praia Fluvial do Ermal",
+    "latitude": 41.592197,
+    "longitude": -8.126827
+  },
+  {
+    "osmId": 13131528,
+    "name": "Praia da Polvoeira",
+    "latitude": 39.715546,
+    "longitude": -9.049965
+  },
+  {
+    "osmId": 13362405,
+    "name": "Praia Fluvial de Badamalos",
+    "latitude": 40.485517,
+    "longitude": -6.991349
+  },
+  {
+    "osmId": 13771055,
+    "name": null,
+    "latitude": 41.380004,
+    "longitude": -7.699586
+  },
+  {
+    "osmId": 14108476,
+    "name": null,
+    "latitude": 37.828386,
+    "longitude": -8.791984
+  },
+  {
+    "osmId": 14211194,
+    "name": "Praia da Foz dos Ouriços",
+    "latitude": 37.657891,
+    "longitude": -8.799966
+  },
+  {
+    "osmId": 14410603,
+    "name": "Praia da Duna do Caldeirão",
+    "latitude": 41.806752,
+    "longitude": -8.866757
+  },
+  {
+    "osmId": 14721442,
+    "name": null,
+    "latitude": 41.374598,
+    "longitude": -7.974719
+  },
+  {
+    "osmId": 18069609,
+    "name": "Praia fluvial de Verim",
+    "latitude": 41.644463,
+    "longitude": -8.313684
+  },
+  {
+    "osmId": 18078943,
+    "name": "Praia do Furadouro - Norte",
+    "latitude": 40.885381,
+    "longitude": -8.672441
+  },
+  {
+    "osmId": 18078987,
+    "name": "Praia do Furadouro - Sul",
+    "latitude": 40.861245,
+    "longitude": -8.679602
+  },
+  {
+    "osmId": 18078988,
+    "name": null,
+    "latitude": 40.822342,
+    "longitude": -8.692765
+  },
+  {
+    "osmId": 18618013,
+    "name": "Praia Fluvial da Amieira",
+    "latitude": 38.291514,
+    "longitude": -7.559577
+  },
+  {
+    "osmId": 19193370,
+    "name": "Praia Fluvial de Albegaria da Serra",
+    "latitude": 40.866004,
+    "longitude": -8.276714
+  },
+  {
+    "osmId": 19231764,
+    "name": "Praia de Caxias",
+    "latitude": 38.6982,
+    "longitude": -9.277764
+  },
+  {
+    "osmId": 19450196,
+    "name": "Praia do Farol",
+    "latitude": 36.977569,
+    "longitude": -7.857225
+  },
+  {
+    "osmId": 19641431,
+    "name": "Praia da Califórnia",
+    "latitude": 38.441274,
+    "longitude": -9.098035
+  },
+  {
+    "osmId": 19868610,
+    "name": "Praia da Rainha",
+    "latitude": 38.698942,
+    "longitude": -9.41802
+  },
+  {
+    "osmId": 20405623,
+    "name": null,
+    "latitude": 41.593873,
+    "longitude": -8.130254
+  },
+  {
+    "osmId": 21099404,
+    "name": null,
+    "latitude": 41.318675,
+    "longitude": -7.855133
+  },
+  {
+    "osmId": 23847872,
+    "name": "Praia do Lagoal",
+    "latitude": 38.698224,
+    "longitude": -9.279291
+  },
+  {
+    "osmId": 23847961,
+    "name": "Praia do Tamariz",
+    "latitude": 38.702674,
+    "longitude": -9.400021
+  },
+  {
+    "osmId": 23848001,
+    "name": "Praia da Cresmina",
+    "latitude": 38.7252,
+    "longitude": -9.476398
+  },
+  {
+    "osmId": 23848062,
+    "name": "Praia do Dragão Vermelho",
+    "latitude": 38.639721,
+    "longitude": -9.23727
+  },
+  {
+    "osmId": 23848066,
+    "name": "Praia do Paraíso",
+    "latitude": 38.641801,
+    "longitude": -9.238804
+  },
+  {
+    "osmId": 23848073,
+    "name": "Praia Nova",
+    "latitude": 38.637569,
+    "longitude": -9.235498
+  },
+  {
+    "osmId": 23848379,
+    "name": "Prainha do Porto Brandão",
+    "latitude": 38.677265,
+    "longitude": -9.207271
+  },
+  {
+    "osmId": 24461578,
+    "name": "Praia da Batata",
+    "latitude": 37.097853,
+    "longitude": -8.667959
+  },
+  {
+    "osmId": 25656137,
+    "name": "Praia do Centro",
+    "latitude": 39.137523,
+    "longitude": -9.380893
+  },
+  {
+    "osmId": 25695661,
+    "name": "Praia de Santa Helena",
+    "latitude": 39.135994,
+    "longitude": -9.382064
+  },
+  {
+    "osmId": 25695662,
+    "name": "Praia da Física",
+    "latitude": 39.137736,
+    "longitude": -9.380513
+  },
+  {
+    "osmId": 25695665,
+    "name": "Praia do Pisão",
+    "latitude": 39.139901,
+    "longitude": -9.378862
+  },
+  {
+    "osmId": 25695667,
+    "name": null,
+    "latitude": 39.141005,
+    "longitude": -9.37789
+  },
+  {
+    "osmId": 25695668,
+    "name": "Praia do Mirante",
+    "latitude": 39.142399,
+    "longitude": -9.377071
+  },
+  {
+    "osmId": 25695669,
+    "name": null,
+    "latitude": 39.144162,
+    "longitude": -9.375524
+  },
+  {
+    "osmId": 25695673,
+    "name": "Praia do Navio",
+    "latitude": 39.145565,
+    "longitude": -9.374689
+  },
+  {
+    "osmId": 25695674,
+    "name": null,
+    "latitude": 39.146473,
+    "longitude": -9.373991
+  },
+  {
+    "osmId": 25695675,
+    "name": "Praia da Vigia",
+    "latitude": 39.147982,
+    "longitude": -9.373011
+  },
+  {
+    "osmId": 25695676,
+    "name": null,
+    "latitude": 39.151248,
+    "longitude": -9.371353
+  },
+  {
+    "osmId": 25695681,
+    "name": "Praia da Foz do Sizandro",
+    "latitude": 39.109547,
+    "longitude": -9.397543
+  },
+  {
+    "osmId": 26193757,
+    "name": "Praia da Mexilhoeira",
+    "latitude": 39.156562,
+    "longitude": -9.368604
+  },
+  {
+    "osmId": 26198186,
+    "name": "Praia do Guincho",
+    "latitude": 39.133586,
+    "longitude": -9.384402
+  },
+  {
+    "osmId": 27264077,
+    "name": "Praia de São Lourenço",
+    "latitude": 39.011824,
+    "longitude": -9.421465
+  },
+  {
+    "osmId": 27264941,
+    "name": "Praia dos Coxos",
+    "latitude": 39.004243,
+    "longitude": -9.425467
+  },
+  {
+    "osmId": 27265003,
+    "name": "Praia Ribeira d' Ilhas",
+    "latitude": 38.987744,
+    "longitude": -9.419247
+  },
+  {
+    "osmId": 27872386,
+    "name": "Praia da Parede",
+    "latitude": 38.685591,
+    "longitude": -9.35393
+  },
+  {
+    "osmId": 29437665,
+    "name": "Praia de Dona Ana",
+    "latitude": 37.092081,
+    "longitude": -8.668811
+  },
+  {
+    "osmId": 29715368,
+    "name": "Praia da Calada",
+    "latitude": 39.032841,
+    "longitude": -9.418431
+  },
+  {
+    "osmId": 38502661,
+    "name": "Praia do Burgau",
+    "latitude": 37.071302,
+    "longitude": -8.775575
+  },
+  {
+    "osmId": 38502688,
+    "name": null,
+    "latitude": 37.319324,
+    "longitude": -8.876724
+  },
+  {
+    "osmId": 38502852,
+    "name": "Praia de Coelha",
+    "latitude": 37.334504,
+    "longitude": -8.860224
+  },
+  {
+    "osmId": 45851840,
+    "name": "Praia Fluvial do Varosa",
+    "latitude": 40.959935,
+    "longitude": -7.77366
+  },
+  {
+    "osmId": 48433466,
+    "name": "Praia do Castelo",
+    "latitude": 37.073176,
+    "longitude": -8.2989
+  },
+  {
+    "osmId": 51789928,
+    "name": "Praia do Evaristo",
+    "latitude": 37.074228,
+    "longitude": -8.302827
+  },
+  {
+    "osmId": 51986551,
+    "name": "Praia dos Salgados",
+    "latitude": 37.086337,
+    "longitude": -8.325025
+  },
+  {
+    "osmId": 55705498,
+    "name": "Praia de Monte Clérigo",
+    "latitude": 37.342187,
+    "longitude": -8.853054
+  },
+  {
+    "osmId": 56304676,
+    "name": "Praia da Boa Nova",
+    "latitude": 41.202157,
+    "longitude": -8.713925
+  },
+  {
+    "osmId": 56304677,
+    "name": "Praia Azul",
+    "latitude": 41.204158,
+    "longitude": -8.714836
+  },
+  {
+    "osmId": 62075882,
+    "name": "Praia das Sereias",
+    "latitude": 41.001383,
+    "longitude": -8.647451
+  },
+  {
+    "osmId": 62075883,
+    "name": "Praia da Baía",
+    "latitude": 41.006914,
+    "longitude": -8.646802
+  },
+  {
+    "osmId": 62075884,
+    "name": "Praia dos Pescadores",
+    "latitude": 40.997674,
+    "longitude": -8.646932
+  },
+  {
+    "osmId": 62075885,
+    "name": "Praia de Silvalde",
+    "latitude": 40.987344,
+    "longitude": -8.64794
+  },
+  {
+    "osmId": 62330064,
+    "name": "Praia da Quebrada",
+    "latitude": 41.237434,
+    "longitude": -8.724407
+  },
+  {
+    "osmId": 62330065,
+    "name": null,
+    "latitude": 41.259542,
+    "longitude": -8.724614
+  },
+  {
+    "osmId": 62330071,
+    "name": "Praia do Funtão",
+    "latitude": 41.255899,
+    "longitude": -8.723888
+  },
+  {
+    "osmId": 62405374,
+    "name": "Praia da Memória",
+    "latitude": 41.230884,
+    "longitude": -8.72227
+  },
+  {
+    "osmId": 62405380,
+    "name": "Praia do Marreco",
+    "latitude": 41.234792,
+    "longitude": -8.723906
+  },
+  {
+    "osmId": 62955217,
+    "name": "Praia de Santa Eulália",
+    "latitude": 37.087686,
+    "longitude": -8.213484
+  },
+  {
+    "osmId": 71293450,
+    "name": "Praia do Carneiro",
+    "latitude": 41.148356,
+    "longitude": -8.675787
+  },
+  {
+    "osmId": 71293456,
+    "name": "Praia do Ourigo",
+    "latitude": 41.149996,
+    "longitude": -8.677058
+  },
+  {
+    "osmId": 71293460,
+    "name": "Praia dos Ingleses",
+    "latitude": 41.151756,
+    "longitude": -8.678049
+  },
+  {
+    "osmId": 71340752,
+    "name": "Praia da Mareta",
+    "latitude": 37.005047,
+    "longitude": -8.938728
+  },
+  {
+    "osmId": 71500098,
+    "name": "Praia do Camilo",
+    "latitude": 37.087326,
+    "longitude": -8.66843
+  },
+  {
+    "osmId": 71500099,
+    "name": "Praia do Camilo",
+    "latitude": 37.087981,
+    "longitude": -8.668616
+  },
+  {
+    "osmId": 74013787,
+    "name": "Praia de Angeiras Sul",
+    "latitude": 41.261707,
+    "longitude": -8.725614
+  },
+  {
+    "osmId": 78417257,
+    "name": "Praia de Pego Fundo",
+    "latitude": 37.472315,
+    "longitude": -7.47697
+  },
+  {
+    "osmId": 78427662,
+    "name": "Praia da Fuseta-Ria",
+    "latitude": 37.049962,
+    "longitude": -7.744352
+  },
+  {
+    "osmId": 78432336,
+    "name": "Praia do Barril",
+    "latitude": 37.073892,
+    "longitude": -7.686754
+  },
+  {
+    "osmId": 78432429,
+    "name": "Praia da Terra Estreita na Ilha de Tavira",
+    "latitude": 37.098588,
+    "longitude": -7.639625
+  },
+  {
+    "osmId": 78432449,
+    "name": null,
+    "latitude": 37.092326,
+    "longitude": -7.649813
+  },
+  {
+    "osmId": 78432559,
+    "name": "Praia da Ilha de Tavira",
+    "latitude": 37.109911,
+    "longitude": -7.620998
+  },
+  {
+    "osmId": 79087228,
+    "name": "Praia Tavira-Ria",
+    "latitude": 37.115079,
+    "longitude": -7.623417
+  },
+  {
+    "osmId": 79503102,
+    "name": "Praia do Cabeço",
+    "latitude": 37.175494,
+    "longitude": -7.468997
+  },
+  {
+    "osmId": 79503288,
+    "name": "Praia Verde",
+    "latitude": 37.173954,
+    "longitude": -7.478928
+  },
+  {
+    "osmId": 79503985,
+    "name": "Praia da Alagoa",
+    "latitude": 37.16948,
+    "longitude": -7.498076
+  },
+  {
+    "osmId": 79504039,
+    "name": "Praia da Lota",
+    "latitude": 37.166069,
+    "longitude": -7.510443
+  },
+  {
+    "osmId": 79504187,
+    "name": "Praia da Manta Rota",
+    "latitude": 37.161878,
+    "longitude": -7.521573
+  },
+  {
+    "osmId": 79509901,
+    "name": "Praia de Cabanas",
+    "latitude": 37.132303,
+    "longitude": -7.59143
+  },
+  {
+    "osmId": 79511624,
+    "name": "Praia do Forte da Barra",
+    "latitude": 37.120012,
+    "longitude": -7.61198
+  },
+  {
+    "osmId": 79522255,
+    "name": "Praia da Fuseta-Mar",
+    "latitude": 37.046321,
+    "longitude": -7.739255
+  },
+  {
+    "osmId": 79527276,
+    "name": null,
+    "latitude": 37.032097,
+    "longitude": -7.763479
+  },
+  {
+    "osmId": 79531240,
+    "name": "Praia da Armona-Mar",
+    "latitude": 37.018157,
+    "longitude": -7.7922
+  },
+  {
+    "osmId": 82505947,
+    "name": null,
+    "latitude": 36.970832,
+    "longitude": -7.875069
+  },
+  {
+    "osmId": 82505950,
+    "name": "Praia da Ilha Deserta",
+    "latitude": 36.962919,
+    "longitude": -7.879166
+  },
+  {
+    "osmId": 84374228,
+    "name": "Praia da Quinta do Lago",
+    "latitude": 37.024676,
+    "longitude": -8.024685
+  },
+  {
+    "osmId": 85956082,
+    "name": "Praia de Vilamoura",
+    "latitude": 37.071106,
+    "longitude": -8.116533
+  },
+  {
+    "osmId": 90144518,
+    "name": null,
+    "latitude": 37.052261,
+    "longitude": -7.741904
+  },
+  {
+    "osmId": 92000516,
+    "name": null,
+    "latitude": 37.07568,
+    "longitude": -8.306681
+  },
+  {
+    "osmId": 93278485,
+    "name": "Praia do Pinhão",
+    "latitude": 37.094389,
+    "longitude": -8.668038
+  },
+  {
+    "osmId": 93278498,
+    "name": "Pinheiro Beach",
+    "latitude": 37.088848,
+    "longitude": -8.668601
+  },
+  {
+    "osmId": 93278499,
+    "name": null,
+    "latitude": 37.094959,
+    "longitude": -8.667712
+  },
+  {
+    "osmId": 93278502,
+    "name": "Praia dos Estudantes",
+    "latitude": 37.096498,
+    "longitude": -8.66749
+  },
+  {
+    "osmId": 93448953,
+    "name": "Praia Tomás Franco",
+    "latitude": 37.077115,
+    "longitude": -8.310642
+  },
+  {
+    "osmId": 94838668,
+    "name": null,
+    "latitude": 37.008333,
+    "longitude": -8.948965
+  },
+  {
+    "osmId": 94838670,
+    "name": "Praia do Beliche",
+    "latitude": 37.025934,
+    "longitude": -8.96508
+  },
+  {
+    "osmId": 98687797,
+    "name": "Praia da Rocha",
+    "latitude": 37.115647,
+    "longitude": -8.536209
+  },
+  {
+    "osmId": 98737833,
+    "name": "Praia da Cruz Quebrada",
+    "latitude": 38.699221,
+    "longitude": -9.252013
+  },
+  {
+    "osmId": 98742809,
+    "name": "Praia do Dafundo",
+    "latitude": 38.697473,
+    "longitude": -9.238085
+  },
+  {
+    "osmId": 98742817,
+    "name": "Praia do Dafundo",
+    "latitude": 38.698473,
+    "longitude": -9.240786
+  },
+  {
+    "osmId": 98742846,
+    "name": "Praia do Forte",
+    "latitude": 38.697929,
+    "longitude": -9.275512
+  },
+  {
+    "osmId": 98742864,
+    "name": "Praia de Caxias",
+    "latitude": 38.698282,
+    "longitude": -9.273998
+  },
+  {
+    "osmId": 98754786,
+    "name": "Praia Fluvial do Areinho",
+    "latitude": 41.13905,
+    "longitude": -8.58532
+  },
+  {
+    "osmId": 98821025,
+    "name": "Giribita",
+    "latitude": 38.697028,
+    "longitude": -9.284321
+  },
+  {
+    "osmId": 98821039,
+    "name": "Praia da Laje",
+    "latitude": 38.683432,
+    "longitude": -9.314154
+  },
+  {
+    "osmId": 98821052,
+    "name": "Praia de Paço de Arcos",
+    "latitude": 38.690445,
+    "longitude": -9.296836
+  },
+  {
+    "osmId": 98821153,
+    "name": "Praia Velha",
+    "latitude": 38.693047,
+    "longitude": -9.29159
+  },
+  {
+    "osmId": 98821166,
+    "name": null,
+    "latitude": 38.690847,
+    "longitude": -9.295465
+  },
+  {
+    "osmId": 101015524,
+    "name": "Praia Grande (Ferragudo)",
+    "latitude": 37.116416,
+    "longitude": -8.52026
+  },
+  {
+    "osmId": 101090519,
+    "name": "Praia de Santa Marta",
+    "latitude": 38.691849,
+    "longitude": -9.421957
+  },
+  {
+    "osmId": 101836680,
+    "name": "Praia da Angrinha",
+    "latitude": 37.121504,
+    "longitude": -8.522726
+  },
+  {
+    "osmId": 103471037,
+    "name": "Praia de São Pedro do Estoril",
+    "latitude": 38.693216,
+    "longitude": -9.369583
+  },
+  {
+    "osmId": 105659049,
+    "name": "Praia Fluvial de Burgães",
+    "latitude": 40.83282,
+    "longitude": -8.391493
+  },
+  {
+    "osmId": 105689399,
+    "name": null,
+    "latitude": 37.133315,
+    "longitude": -8.59544
+  },
+  {
+    "osmId": 106706749,
+    "name": "Praia Fluvial do Faial",
+    "latitude": 41.597771,
+    "longitude": -8.458132
+  },
+  {
+    "osmId": 107913221,
+    "name": "Praia da Cova Redonda",
+    "latitude": 37.098578,
+    "longitude": -8.380612
+  },
+  {
+    "osmId": 108165451,
+    "name": "Praia dos Beijinhos",
+    "latitude": 37.100828,
+    "longitude": -8.373887
+  },
+  {
+    "osmId": 110152811,
+    "name": null,
+    "latitude": 40.56581,
+    "longitude": -8.400004
+  },
+  {
+    "osmId": 110468045,
+    "name": "Praia do Carvalho",
+    "latitude": 37.086638,
+    "longitude": -8.431714
+  },
+  {
+    "osmId": 117570615,
+    "name": "Praia do Pintadinho",
+    "latitude": 37.108079,
+    "longitude": -8.51886
+  },
+  {
+    "osmId": 119246518,
+    "name": "Praia Nova",
+    "latitude": 37.09592,
+    "longitude": -8.388262
+  },
+  {
+    "osmId": 119246525,
+    "name": "Praia dos Tremoços",
+    "latitude": 37.099803,
+    "longitude": -8.377072
+  },
+  {
+    "osmId": 120164558,
+    "name": "Praia da Marinha",
+    "latitude": 37.089777,
+    "longitude": -8.412608
+  },
+  {
+    "osmId": 129212171,
+    "name": "Praia do Carvoeiro",
+    "latitude": 37.096037,
+    "longitude": -8.472388
+  },
+  {
+    "osmId": 129447271,
+    "name": null,
+    "latitude": 41.325161,
+    "longitude": -8.741942
+  },
+  {
+    "osmId": 129575835,
+    "name": "Praia dos Pescadores",
+    "latitude": 37.086563,
+    "longitude": -8.250091
+  },
+  {
+    "osmId": 129575837,
+    "name": "Praia do Peneco",
+    "latitude": 37.086098,
+    "longitude": -8.253657
+  },
+  {
+    "osmId": 129577161,
+    "name": "Praia dos Alemães",
+    "latitude": 37.084011,
+    "longitude": -8.237966
+  },
+  {
+    "osmId": 129580025,
+    "name": "Praia da Baleeira",
+    "latitude": 37.081766,
+    "longitude": -8.262189
+  },
+  {
+    "osmId": 129581895,
+    "name": "Praia da Falésia",
+    "latitude": 37.075193,
+    "longitude": -8.132325
+  },
+  {
+    "osmId": 129581900,
+    "name": "Praia Maria Luísa",
+    "latitude": 37.088785,
+    "longitude": -8.201259
+  },
+  {
+    "osmId": 129581901,
+    "name": "Praia dos Aveiros",
+    "latitude": 37.083406,
+    "longitude": -8.231314
+  },
+  {
+    "osmId": 129584051,
+    "name": "Praia do Barranco das Belharucas",
+    "latitude": 37.089869,
+    "longitude": -8.180487
+  },
+  {
+    "osmId": 129584057,
+    "name": "Praia da Falésia Alfamar",
+    "latitude": 37.083064,
+    "longitude": -8.158103
+  },
+  {
+    "osmId": 130095659,
+    "name": "Furadouro",
+    "latitude": 40.870569,
+    "longitude": -8.678749
+  },
+  {
+    "osmId": 130301682,
+    "name": "Praia de Porto Novo",
+    "latitude": 39.178089,
+    "longitude": -9.356767
+  },
+  {
+    "osmId": 130533264,
+    "name": "Praia do Cabo do Mundo",
+    "latitude": 41.218849,
+    "longitude": -8.715352
+  },
+  {
+    "osmId": 130578307,
+    "name": "Praia de Nossa Senhora",
+    "latitude": 37.654004,
+    "longitude": -8.801909
+  },
+  {
+    "osmId": 132041853,
+    "name": "Praia do Seixal",
+    "latitude": 38.644038,
+    "longitude": -9.105287
+  },
+  {
+    "osmId": 132676483,
+    "name": null,
+    "latitude": 37.156158,
+    "longitude": -7.545889
+  },
+  {
+    "osmId": 134996016,
+    "name": "Praia da Adraga",
+    "latitude": 38.803653,
+    "longitude": -9.484971
+  },
+  {
+    "osmId": 138709035,
+    "name": "Praia do Lagido",
+    "latitude": 39.373819,
+    "longitude": -9.331594
+  },
+  {
+    "osmId": 138709494,
+    "name": "Praia do Baleal",
+    "latitude": 39.365503,
+    "longitude": -9.35585
+  },
+  {
+    "osmId": 138744651,
+    "name": "Praia do Porto de Areia Sul",
+    "latitude": 39.353862,
+    "longitude": -9.388139
+  },
+  {
+    "osmId": 142594780,
+    "name": "Praia de Quarteira",
+    "latitude": 37.065284,
+    "longitude": -8.099553
+  },
+  {
+    "osmId": 143769900,
+    "name": "Praia Fluvial do Gameiro",
+    "latitude": 38.954116,
+    "longitude": -8.108566
+  },
+  {
+    "osmId": 143915392,
+    "name": null,
+    "latitude": 37.125535,
+    "longitude": -8.609114
+  },
+  {
+    "osmId": 147727446,
+    "name": "Praia do Guincho",
+    "latitude": 38.733181,
+    "longitude": -9.473177
+  },
+  {
+    "osmId": 150770670,
+    "name": "Praia da Ursa",
+    "latitude": 38.790524,
+    "longitude": -9.492542
+  },
+  {
+    "osmId": 152354051,
+    "name": "Praia da Ribeira",
+    "latitude": 38.696699,
+    "longitude": -9.419633
+  },
+  {
+    "osmId": 154411022,
+    "name": "Praia do Creiro",
+    "latitude": 38.479263,
+    "longitude": -8.977964
+  },
+  {
+    "osmId": 155804981,
+    "name": "Praia da Pedra dos Bicos",
+    "latitude": 37.085055,
+    "longitude": -8.218348
+  },
+  {
+    "osmId": 156814646,
+    "name": "Praia da Ingrina",
+    "latitude": 37.046621,
+    "longitude": -8.879296
+  },
+  {
+    "osmId": 156814654,
+    "name": "Praia do Barranco",
+    "latitude": 37.042099,
+    "longitude": -8.895173
+  },
+  {
+    "osmId": 156814657,
+    "name": "Praia do Zavial",
+    "latitude": 37.046402,
+    "longitude": -8.870493
+  },
+  {
+    "osmId": 156814659,
+    "name": "Praia das Furnas",
+    "latitude": 37.055223,
+    "longitude": -8.85443
+  },
+  {
+    "osmId": 156815841,
+    "name": "Praia da Figueira",
+    "latitude": 37.060727,
+    "longitude": -8.840333
+  },
+  {
+    "osmId": 156815842,
+    "name": "Praia da Luz",
+    "latitude": 37.086769,
+    "longitude": -8.724609
+  },
+  {
+    "osmId": 157464412,
+    "name": null,
+    "latitude": 38.681578,
+    "longitude": -9.343039
+  },
+  {
+    "osmId": 157464438,
+    "name": "Praia de Carcavelos",
+    "latitude": 38.679249,
+    "longitude": -9.336063
+  },
+  {
+    "osmId": 157532234,
+    "name": "Praia Fluvial das Azenhas",
+    "latitude": 41.889232,
+    "longitude": -8.784345
+  },
+  {
+    "osmId": 157818268,
+    "name": "Praia do Carvalhal",
+    "latitude": 37.500879,
+    "longitude": -8.792577
+  },
+  {
+    "osmId": 157818271,
+    "name": "Praia dos Alteirinhos",
+    "latitude": 37.5185,
+    "longitude": -8.788791
+  },
+  {
+    "osmId": 157867259,
+    "name": null,
+    "latitude": 37.104999,
+    "longitude": -8.94194
+  },
+  {
+    "osmId": 158670981,
+    "name": "Praia Fluvial do Penedo Furado",
+    "latitude": 39.625429,
+    "longitude": -8.162505
+  },
+  {
+    "osmId": 158674709,
+    "name": "Praia Fluvial do Malhadal",
+    "latitude": 39.797222,
+    "longitude": -7.951222
+  },
+  {
+    "osmId": 159418246,
+    "name": "Praia da Culatra",
+    "latitude": 36.99488,
+    "longitude": -7.82439
+  },
+  {
+    "osmId": 160455810,
+    "name": "Praia da Mesquita",
+    "latitude": 37.089199,
+    "longitude": -8.415089
+  },
+  {
+    "osmId": 160455813,
+    "name": "Praia da Malhada do Baraço",
+    "latitude": 37.089945,
+    "longitude": -8.407134
+  },
+  {
+    "osmId": 160455814,
+    "name": "Praia do Pau",
+    "latitude": 37.089741,
+    "longitude": -8.410205
+  },
+  {
+    "osmId": 160455815,
+    "name": "Praia das Fontaínhas",
+    "latitude": 37.092007,
+    "longitude": -8.395594
+  },
+  {
+    "osmId": 162165181,
+    "name": "Parque de Lazer das Frieiras",
+    "latitude": 41.133718,
+    "longitude": -7.12764
+  },
+  {
+    "osmId": 162843102,
+    "name": null,
+    "latitude": 38.625169,
+    "longitude": -9.05336
+  },
+  {
+    "osmId": 162903069,
+    "name": "Praia",
+    "latitude": 41.657838,
+    "longitude": -7.151768
+  },
+  {
+    "osmId": 162903080,
+    "name": "Praia",
+    "latitude": 41.65481,
+    "longitude": -7.154712
+  },
+  {
+    "osmId": 162984753,
+    "name": "Praia do Mexilhoeiro",
+    "latitude": 38.656276,
+    "longitude": -9.090507
+  },
+  {
+    "osmId": 167142539,
+    "name": "Praia do Moinho",
+    "latitude": 38.676287,
+    "longitude": -9.327372
+  },
+  {
+    "osmId": 168456392,
+    "name": "Praia do Palheirão",
+    "latitude": 40.395715,
+    "longitude": -8.822603
+  },
+  {
+    "osmId": 168740954,
+    "name": "Praia da Barra",
+    "latitude": 40.636086,
+    "longitude": -8.748886
+  },
+  {
+    "osmId": 168740960,
+    "name": "Praia da Barra",
+    "latitude": 40.642093,
+    "longitude": -8.74939
+  },
+  {
+    "osmId": 168928166,
+    "name": "Praia Fluvial dos Rebelos",
+    "latitude": 41.390501,
+    "longitude": -7.450114
+  },
+  {
+    "osmId": 169544219,
+    "name": "Praia Fluvial de Aboadela",
+    "latitude": 41.277592,
+    "longitude": -7.995915
+  },
+  {
+    "osmId": 170668040,
+    "name": "Pedras Ruivas",
+    "latitude": 41.890947,
+    "longitude": -8.82488
+  },
+  {
+    "osmId": 171378624,
+    "name": "Ponte da Balsa",
+    "latitude": 40.998347,
+    "longitude": -8.171458
+  },
+  {
+    "osmId": 172993677,
+    "name": null,
+    "latitude": 37.055196,
+    "longitude": -7.722937
+  },
+  {
+    "osmId": 174154918,
+    "name": "Praia da Piscina Natural da Ereira",
+    "latitude": 40.148947,
+    "longitude": -8.712406
+  },
+  {
+    "osmId": 176818984,
+    "name": "Praia da Baleeira",
+    "latitude": 37.011318,
+    "longitude": -8.930381
+  },
+  {
+    "osmId": 180126358,
+    "name": "Praia de Santo Amaro",
+    "latitude": 38.684489,
+    "longitude": -9.309646
+  },
+  {
+    "osmId": 183091902,
+    "name": null,
+    "latitude": 40.964137,
+    "longitude": -7.545033
+  },
+  {
+    "osmId": 183714031,
+    "name": "Praia Fluvial da Valeta",
+    "latitude": 41.848882,
+    "longitude": -8.418872
+  },
+  {
+    "osmId": 183927980,
+    "name": "Praia Fluvial de Merelim São Paio",
+    "latitude": 41.593905,
+    "longitude": -8.465115
+  },
+  {
+    "osmId": 184337201,
+    "name": null,
+    "latitude": 41.956957,
+    "longitude": -8.746314
+  },
+  {
+    "osmId": 184403223,
+    "name": "Praia do Azibo",
+    "latitude": 41.586229,
+    "longitude": -6.906375
+  },
+  {
+    "osmId": 184403254,
+    "name": "Praia Fluvial da Fraga da Pegada",
+    "latitude": 41.581772,
+    "longitude": -6.899349
+  },
+  {
+    "osmId": 185659906,
+    "name": "Praia da Franquia",
+    "latitude": 37.721824,
+    "longitude": -8.786178
+  },
+  {
+    "osmId": 186334925,
+    "name": "Praia da Morena",
+    "latitude": 38.603256,
+    "longitude": -9.210818
+  },
+  {
+    "osmId": 186702860,
+    "name": "Praia da Foz",
+    "latitude": 38.454157,
+    "longitude": -9.19874
+  },
+  {
+    "osmId": 186703222,
+    "name": "Praia do Rebenta Bois",
+    "latitude": 38.451124,
+    "longitude": -9.201243
+  },
+  {
+    "osmId": 186703545,
+    "name": "Praia das Bicas",
+    "latitude": 38.46476,
+    "longitude": -9.192456
+  },
+  {
+    "osmId": 191774761,
+    "name": "Praia fluvial de Santa Eufémia",
+    "latitude": 41.495362,
+    "longitude": -8.321353
+  },
+  {
+    "osmId": 192930545,
+    "name": "Praia Fluvial de Adaúfe",
+    "latitude": 41.608581,
+    "longitude": -8.405644
+  },
+  {
+    "osmId": 192930546,
+    "name": "Praia Fluvial da Ribeira - Barreiros",
+    "latitude": 41.608193,
+    "longitude": -8.401984
+  },
+  {
+    "osmId": 192930547,
+    "name": "Praia Fluvial de Navarra",
+    "latitude": 41.613248,
+    "longitude": -8.386292
+  },
+  {
+    "osmId": 194378528,
+    "name": "Praia do Meco (Tramagueira)",
+    "latitude": 38.477998,
+    "longitude": -9.187014
+  },
+  {
+    "osmId": 195400775,
+    "name": "Praia do Areão",
+    "latitude": 40.533717,
+    "longitude": -8.778173
+  },
+  {
+    "osmId": 195400789,
+    "name": null,
+    "latitude": 40.553702,
+    "longitude": -8.772487
+  },
+  {
+    "osmId": 197531412,
+    "name": "Praia do Pêgo",
+    "latitude": 38.292239,
+    "longitude": -8.778927
+  },
+  {
+    "osmId": 197702450,
+    "name": "Monte Branco",
+    "latitude": 40.75381,
+    "longitude": -8.701542
+  },
+  {
+    "osmId": 199723323,
+    "name": "Praia Fluvial de Palheiros e Zorro",
+    "latitude": 40.202979,
+    "longitude": -8.365
+  },
+  {
+    "osmId": 200860925,
+    "name": null,
+    "latitude": 39.932541,
+    "longitude": -8.895233
+  },
+  {
+    "osmId": 203028079,
+    "name": "Praia da Mina",
+    "latitude": 39.69397,
+    "longitude": -9.054183
+  },
+  {
+    "osmId": 203028083,
+    "name": "Praia de Paredes de Vitória",
+    "latitude": 39.701766,
+    "longitude": -9.051006
+  },
+  {
+    "osmId": 203028095,
+    "name": "Praia de Vale Furado",
+    "latitude": 39.685602,
+    "longitude": -9.057996
+  },
+  {
+    "osmId": 203470883,
+    "name": "Praia de Pedrogão",
+    "latitude": 39.922961,
+    "longitude": -8.951699
+  },
+  {
+    "osmId": 204181234,
+    "name": "Praia do Torrado",
+    "latitude": 37.105866,
+    "longitude": -8.515883
+  },
+  {
+    "osmId": 205214711,
+    "name": null,
+    "latitude": 38.691912,
+    "longitude": -9.293873
+  },
+  {
+    "osmId": 205704490,
+    "name": null,
+    "latitude": 41.346575,
+    "longitude": -8.597766
+  },
+  {
+    "osmId": 206524770,
+    "name": "Praia do Tonel",
+    "latitude": 37.559132,
+    "longitude": -8.792189
+  },
+  {
+    "osmId": 208100114,
+    "name": "Praia do Carvalhal",
+    "latitude": 38.305755,
+    "longitude": -8.780929
+  },
+  {
+    "osmId": 208100412,
+    "name": "Praia da Comporta",
+    "latitude": 38.38093,
+    "longitude": -8.803577
+  },
+  {
+    "osmId": 208101238,
+    "name": "Praia da Raposa",
+    "latitude": 38.257705,
+    "longitude": -8.775824
+  },
+  {
+    "osmId": 208101712,
+    "name": "Praia do Pinheirinho",
+    "latitude": 38.221384,
+    "longitude": -8.775571
+  },
+  {
+    "osmId": 208102819,
+    "name": "Praia da Galé",
+    "latitude": 38.204841,
+    "longitude": -8.777127
+  },
+  {
+    "osmId": 208104800,
+    "name": "Praia da Aberta Nova",
+    "latitude": 38.177462,
+    "longitude": -8.781214
+  },
+  {
+    "osmId": 208108301,
+    "name": "Praia da Costa de Santo André",
+    "latitude": 38.114094,
+    "longitude": -8.797906
+  },
+  {
+    "osmId": 208110575,
+    "name": "Praia do Monte Velho",
+    "latitude": 38.081095,
+    "longitude": -8.81122
+  },
+  {
+    "osmId": 208111115,
+    "name": "Praia das Areias Brancas",
+    "latitude": 38.066654,
+    "longitude": -8.817066
+  },
+  {
+    "osmId": 208111279,
+    "name": "Praia da Fonte do Cortiço",
+    "latitude": 38.05489,
+    "longitude": -8.822159
+  },
+  {
+    "osmId": 208112006,
+    "name": "Praia da Costa do Norte",
+    "latitude": 37.978896,
+    "longitude": -8.86403
+  },
+  {
+    "osmId": 208112443,
+    "name": "Praia de São Torpes",
+    "latitude": 37.919853,
+    "longitude": -8.805566
+  },
+  {
+    "osmId": 208113553,
+    "name": "Praia Carreiro da Fazenda",
+    "latitude": 37.723462,
+    "longitude": -8.792208
+  },
+  {
+    "osmId": 208113986,
+    "name": "Praia do Farol",
+    "latitude": 37.719419,
+    "longitude": -8.790233
+  },
+  {
+    "osmId": 208114752,
+    "name": "Praia das Furnas",
+    "latitude": 37.716492,
+    "longitude": -8.783894
+  },
+  {
+    "osmId": 208115764,
+    "name": "Praia do Brejo Largo",
+    "latitude": 37.675093,
+    "longitude": -8.796371
+  },
+  {
+    "osmId": 208117757,
+    "name": "Praia dos Machados",
+    "latitude": 37.492438,
+    "longitude": -8.794897
+  },
+  {
+    "osmId": 208200024,
+    "name": "Praia do Malhão Sul",
+    "latitude": 37.780154,
+    "longitude": -8.802129
+  },
+  {
+    "osmId": 208217155,
+    "name": "Praia de Albarquel",
+    "latitude": 38.510901,
+    "longitude": -8.915682
+  },
+  {
+    "osmId": 208684188,
+    "name": "Praia da Bica da Areia",
+    "latitude": 37.725876,
+    "longitude": -8.793095
+  },
+  {
+    "osmId": 208684987,
+    "name": "Praia dos Canudos",
+    "latitude": 37.882057,
+    "longitude": -8.795938
+  },
+  {
+    "osmId": 208685139,
+    "name": "Praia da Pedra da Bica",
+    "latitude": 37.532107,
+    "longitude": -8.786237
+  },
+  {
+    "osmId": 208735252,
+    "name": "Praia São Pedro de Moel",
+    "latitude": 39.753753,
+    "longitude": -9.033575
+  },
+  {
+    "osmId": 208834927,
+    "name": "Praia do Mirouço",
+    "latitude": 37.137011,
+    "longitude": -8.920089
+  },
+  {
+    "osmId": 208839203,
+    "name": "Praia do Canal",
+    "latitude": 37.26684,
+    "longitude": -8.860857
+  },
+  {
+    "osmId": 208874601,
+    "name": "Praia do Alvorião",
+    "latitude": 37.504037,
+    "longitude": -8.791722
+  },
+  {
+    "osmId": 208874877,
+    "name": "Praia da Meia Laranja",
+    "latitude": 37.516525,
+    "longitude": -8.790228
+  },
+  {
+    "osmId": 208874909,
+    "name": "Praia das Bernosas",
+    "latitude": 37.514722,
+    "longitude": -8.790599
+  },
+  {
+    "osmId": 208875567,
+    "name": "Praia da Baía da Arquinha",
+    "latitude": 37.535627,
+    "longitude": -8.786229
+  },
+  {
+    "osmId": 208875686,
+    "name": "Praia de Nossa Senhora",
+    "latitude": 37.530086,
+    "longitude": -8.787387
+  },
+  {
+    "osmId": 208877185,
+    "name": "Praia do Cavaleiro",
+    "latitude": 37.601656,
+    "longitude": -8.817173
+  },
+  {
+    "osmId": 208877220,
+    "name": "Praia da Carraca",
+    "latitude": 37.606189,
+    "longitude": -8.815797
+  },
+  {
+    "osmId": 208877269,
+    "name": "Praia da Laginha",
+    "latitude": 37.607837,
+    "longitude": -8.813621
+  },
+  {
+    "osmId": 208878328,
+    "name": "Praia do Cão",
+    "latitude": 37.610469,
+    "longitude": -8.812155
+  },
+  {
+    "osmId": 208879166,
+    "name": "Praia do Almograve Sul",
+    "latitude": 37.649876,
+    "longitude": -8.804014
+  },
+  {
+    "osmId": 208879519,
+    "name": "Praia do Cavalo",
+    "latitude": 37.681606,
+    "longitude": -8.795307
+  },
+  {
+    "osmId": 208883907,
+    "name": "Praia dos Aivados",
+    "latitude": 37.809802,
+    "longitude": -8.795828
+  },
+  {
+    "osmId": 208884107,
+    "name": "Praia do Banho",
+    "latitude": 37.852716,
+    "longitude": -8.795588
+  },
+  {
+    "osmId": 208884386,
+    "name": "Praia da Cerca Nova",
+    "latitude": 37.859065,
+    "longitude": -8.794222
+  },
+  {
+    "osmId": 208884486,
+    "name": "Praia naturista do Salto",
+    "latitude": 37.860349,
+    "longitude": -8.794361
+  },
+  {
+    "osmId": 208884629,
+    "name": null,
+    "latitude": 37.861709,
+    "longitude": -8.794239
+  },
+  {
+    "osmId": 208885387,
+    "name": "Praia do Cerro da Águia",
+    "latitude": 37.862467,
+    "longitude": -8.793836
+  },
+  {
+    "osmId": 208885923,
+    "name": "Praia de Porto Covinho",
+    "latitude": 37.863818,
+    "longitude": -8.793427
+  },
+  {
+    "osmId": 208886396,
+    "name": "Praia da Samoqueira",
+    "latitude": 37.86728,
+    "longitude": -8.793149
+  },
+  {
+    "osmId": 208888032,
+    "name": null,
+    "latitude": 37.890314,
+    "longitude": -8.796863
+  },
+  {
+    "osmId": 208888872,
+    "name": "Praia da Oliveirinha",
+    "latitude": 37.892555,
+    "longitude": -8.796893
+  },
+  {
+    "osmId": 208889174,
+    "name": "Praia de Morgavel",
+    "latitude": 37.907056,
+    "longitude": -8.799426
+  },
+  {
+    "osmId": 208956467,
+    "name": null,
+    "latitude": 37.799451,
+    "longitude": -8.799733
+  },
+  {
+    "osmId": 208958617,
+    "name": null,
+    "latitude": 38.155233,
+    "longitude": -8.786673
+  },
+  {
+    "osmId": 208958628,
+    "name": null,
+    "latitude": 38.191763,
+    "longitude": -8.778848
+  },
+  {
+    "osmId": 208958650,
+    "name": null,
+    "latitude": 38.21316,
+    "longitude": -8.776251
+  },
+  {
+    "osmId": 208958729,
+    "name": null,
+    "latitude": 38.239961,
+    "longitude": -8.775355
+  },
+  {
+    "osmId": 208958903,
+    "name": null,
+    "latitude": 38.274372,
+    "longitude": -8.777276
+  },
+  {
+    "osmId": 208958999,
+    "name": null,
+    "latitude": 38.299497,
+    "longitude": -8.780054
+  },
+  {
+    "osmId": 208965731,
+    "name": "Praia dos Coelhos",
+    "latitude": 38.481776,
+    "longitude": -8.96935
+  },
+  {
+    "osmId": 208966021,
+    "name": "Praia de Galapinhos",
+    "latitude": 38.483441,
+    "longitude": -8.967927
+  },
+  {
+    "osmId": 208966174,
+    "name": "Praia de Galápos",
+    "latitude": 38.484491,
+    "longitude": -8.964627
+  },
+  {
+    "osmId": 208967985,
+    "name": "Praia da Cova",
+    "latitude": 38.440962,
+    "longitude": -9.059402
+  },
+  {
+    "osmId": 208974060,
+    "name": "Praia dos Lagosteiros",
+    "latitude": 38.423618,
+    "longitude": -9.214614
+  },
+  {
+    "osmId": 208975476,
+    "name": "Praia da Pipa",
+    "latitude": 38.460251,
+    "longitude": -9.195102
+  },
+  {
+    "osmId": 209096478,
+    "name": "Praia do Coral",
+    "latitude": 41.682905,
+    "longitude": -8.845341
+  },
+  {
+    "osmId": 209245151,
+    "name": "Praia da Pelengana",
+    "latitude": 37.909557,
+    "longitude": -8.80032
+  },
+  {
+    "osmId": 209246032,
+    "name": "Praia do Canto Mosqueiro",
+    "latitude": 37.972113,
+    "longitude": -8.869485
+  },
+  {
+    "osmId": 209257290,
+    "name": null,
+    "latitude": 37.901206,
+    "longitude": -8.799018
+  },
+  {
+    "osmId": 209257876,
+    "name": null,
+    "latitude": 37.904749,
+    "longitude": -8.799056
+  },
+  {
+    "osmId": 209414322,
+    "name": "Praia dos Brejos",
+    "latitude": 38.318726,
+    "longitude": -8.783263
+  },
+  {
+    "osmId": 209414667,
+    "name": "Praia da Torre",
+    "latitude": 38.345265,
+    "longitude": -8.790132
+  },
+  {
+    "osmId": 212896662,
+    "name": "Praia da Cova-Gala",
+    "latitude": 40.123342,
+    "longitude": -8.864073
+  },
+  {
+    "osmId": 212896663,
+    "name": "Praia do Cabedelinho",
+    "latitude": 40.142989,
+    "longitude": -8.866586
+  },
+  {
+    "osmId": 212896665,
+    "name": "Praia do Cabedelo",
+    "latitude": 40.136178,
+    "longitude": -8.862881
+  },
+  {
+    "osmId": 212896666,
+    "name": "Praia do Hospital",
+    "latitude": 40.129728,
+    "longitude": -8.863414
+  },
+  {
+    "osmId": 212896667,
+    "name": "Praia do Forte",
+    "latitude": 40.146884,
+    "longitude": -8.867327
+  },
+  {
+    "osmId": 218009625,
+    "name": "Praia do Barranco das Canas",
+    "latitude": 37.119214,
+    "longitude": -8.564496
+  },
+  {
+    "osmId": 221058079,
+    "name": "Praia de São Jacinto",
+    "latitude": 40.676283,
+    "longitude": -8.746081
+  },
+  {
+    "osmId": 221123462,
+    "name": "Praia Fluvial de Real",
+    "latitude": 41.244203,
+    "longitude": -8.18229
+  },
+  {
+    "osmId": 221553167,
+    "name": "Praia da Baforeira",
+    "latitude": 38.692103,
+    "longitude": -9.366136
+  },
+  {
+    "osmId": 221553181,
+    "name": "Praia das Avencas",
+    "latitude": 38.689174,
+    "longitude": -9.361919
+  },
+  {
+    "osmId": 221881653,
+    "name": "Praia do CDS",
+    "latitude": 38.644848,
+    "longitude": -9.241978
+  },
+  {
+    "osmId": 222122951,
+    "name": "Praia da Mata",
+    "latitude": 38.625505,
+    "longitude": -9.224666
+  },
+  {
+    "osmId": 222122952,
+    "name": null,
+    "latitude": 38.665178,
+    "longitude": -9.255646
+  },
+  {
+    "osmId": 222122953,
+    "name": "Praia do Albatroz",
+    "latitude": 38.663882,
+    "longitude": -9.257967
+  },
+  {
+    "osmId": 222122954,
+    "name": "Nova Praia",
+    "latitude": 38.634034,
+    "longitude": -9.231854
+  },
+  {
+    "osmId": 222122955,
+    "name": "Praia da Cova do Vapor",
+    "latitude": 38.66174,
+    "longitude": -9.258717
+  },
+  {
+    "osmId": 222122956,
+    "name": "Praia de São João",
+    "latitude": 38.656458,
+    "longitude": -9.251911
+  },
+  {
+    "osmId": 222122957,
+    "name": "Praia do Norte",
+    "latitude": 38.650083,
+    "longitude": -9.245607
+  },
+  {
+    "osmId": 222122958,
+    "name": "Praia do Forte",
+    "latitude": 38.622758,
+    "longitude": -9.22258
+  },
+  {
+    "osmId": 222122959,
+    "name": "Praia de Santo António da Caparica",
+    "latitude": 38.647465,
+    "longitude": -9.243806
+  },
+  {
+    "osmId": 222123239,
+    "name": "Praia do Bico da Calha",
+    "latitude": 38.666229,
+    "longitude": -9.249625
+  },
+  {
+    "osmId": 222123841,
+    "name": "Praia do Tarquínio",
+    "latitude": 38.643164,
+    "longitude": -9.240317
+  },
+  {
+    "osmId": 222568860,
+    "name": "Praia do Queimado",
+    "latitude": 37.818939,
+    "longitude": -8.793095
+  },
+  {
+    "osmId": 222572205,
+    "name": null,
+    "latitude": 37.001969,
+    "longitude": -7.81467
+  },
+  {
+    "osmId": 222576671,
+    "name": "Praia da Armona-Ria",
+    "latitude": 37.02345,
+    "longitude": -7.804726
+  },
+  {
+    "osmId": 222576674,
+    "name": null,
+    "latitude": 37.02179,
+    "longitude": -7.806153
+  },
+  {
+    "osmId": 222678467,
+    "name": "Praia Cabana do Pescador",
+    "latitude": 38.610034,
+    "longitude": -9.214362
+  },
+  {
+    "osmId": 222678468,
+    "name": "Praia da Bela Vista",
+    "latitude": 38.595298,
+    "longitude": -9.207657
+  },
+  {
+    "osmId": 222678469,
+    "name": "Praia Azul",
+    "latitude": 38.582288,
+    "longitude": -9.202181
+  },
+  {
+    "osmId": 222678470,
+    "name": "Praia Nova Vaga",
+    "latitude": 38.598441,
+    "longitude": -9.208546
+  },
+  {
+    "osmId": 222678471,
+    "name": "Praia da Cornélia",
+    "latitude": 38.627729,
+    "longitude": -9.226573
+  },
+  {
+    "osmId": 222678472,
+    "name": "Praia da Sereia",
+    "latitude": 38.60138,
+    "longitude": -9.21
+  },
+  {
+    "osmId": 222678473,
+    "name": "Praia do Rei",
+    "latitude": 38.606441,
+    "longitude": -9.212417
+  },
+  {
+    "osmId": 222678474,
+    "name": "Praia da Saúde",
+    "latitude": 38.630159,
+    "longitude": -9.228348
+  },
+  {
+    "osmId": 222678475,
+    "name": "Praia da Rainha",
+    "latitude": 38.616386,
+    "longitude": -9.218217
+  },
+  {
+    "osmId": 222678476,
+    "name": "Praia da Riviera",
+    "latitude": 38.619495,
+    "longitude": -9.220264
+  },
+  {
+    "osmId": 222678477,
+    "name": "Praia do Castelo",
+    "latitude": 38.613182,
+    "longitude": -9.216343
+  },
+  {
+    "osmId": 222678478,
+    "name": "Fonte da Telha",
+    "latitude": 38.57198,
+    "longitude": -9.19676
+  },
+  {
+    "osmId": 222678480,
+    "name": "Praia do Infante",
+    "latitude": 38.600187,
+    "longitude": -9.209451
+  },
+  {
+    "osmId": 222679380,
+    "name": null,
+    "latitude": 38.530909,
+    "longitude": -9.184324
+  },
+  {
+    "osmId": 222679381,
+    "name": "Praia da Adiça (naturista)",
+    "latitude": 38.558656,
+    "longitude": -9.190534
+  },
+  {
+    "osmId": 223687800,
+    "name": "Praia do Portinho da Costa",
+    "latitude": 38.675184,
+    "longitude": -9.220154
+  },
+  {
+    "osmId": 225304583,
+    "name": "Praia Fluvial do Castelo",
+    "latitude": 41.06509,
+    "longitude": -8.26248
+  },
+  {
+    "osmId": 226326122,
+    "name": null,
+    "latitude": 41.354019,
+    "longitude": -8.757511
+  },
+  {
+    "osmId": 227951502,
+    "name": null,
+    "latitude": 39.750485,
+    "longitude": -9.035507
+  },
+  {
+    "osmId": 227954880,
+    "name": "Praia da Leirosa",
+    "latitude": 40.059255,
+    "longitude": -8.890238
+  },
+  {
+    "osmId": 227955256,
+    "name": "Praia da Costa de Lavos",
+    "latitude": 40.092252,
+    "longitude": -8.875555
+  },
+  {
+    "osmId": 227956348,
+    "name": "Praia da Tocha",
+    "latitude": 40.335525,
+    "longitude": -8.842764
+  },
+  {
+    "osmId": 227957602,
+    "name": "Praia de Quiaios",
+    "latitude": 40.220236,
+    "longitude": -8.891804
+  },
+  {
+    "osmId": 228131286,
+    "name": null,
+    "latitude": 40.199827,
+    "longitude": -8.427708
+  },
+  {
+    "osmId": 228371554,
+    "name": "Praia da Figueirinha",
+    "latitude": 38.484234,
+    "longitude": -8.947058
+  },
+  {
+    "osmId": 228371654,
+    "name": null,
+    "latitude": 38.485241,
+    "longitude": -8.941598
+  },
+  {
+    "osmId": 228449101,
+    "name": null,
+    "latitude": 38.676417,
+    "longitude": -9.328331
+  },
+  {
+    "osmId": 228584847,
+    "name": "Praia do Abano",
+    "latitude": 38.741489,
+    "longitude": -9.472533
+  },
+  {
+    "osmId": 230848166,
+    "name": "Praia da Gralha",
+    "latitude": 39.52596,
+    "longitude": -9.132117
+  },
+  {
+    "osmId": 232239487,
+    "name": "Praia da Vieirinha - Vale de Figueiros",
+    "latitude": 37.896147,
+    "longitude": -8.797391
+  },
+  {
+    "osmId": 232240426,
+    "name": "Praia do Buraco",
+    "latitude": 37.089433,
+    "longitude": -8.411204
+  },
+  {
+    "osmId": 232562946,
+    "name": "Praia de Gramido",
+    "latitude": 41.125588,
+    "longitude": -8.563024
+  },
+  {
+    "osmId": 232564176,
+    "name": "Praia de Zebreiros",
+    "latitude": 41.078745,
+    "longitude": -8.516943
+  },
+  {
+    "osmId": 232655636,
+    "name": "Praia da Torreira",
+    "latitude": 40.737046,
+    "longitude": -8.723238
+  },
+  {
+    "osmId": 232655663,
+    "name": null,
+    "latitude": 40.778574,
+    "longitude": -8.708077
+  },
+  {
+    "osmId": 233235193,
+    "name": null,
+    "latitude": 37.128417,
+    "longitude": -8.523629
+  },
+  {
+    "osmId": 233337689,
+    "name": "Lanchas",
+    "latitude": 40.152541,
+    "longitude": -7.68679
+  },
+  {
+    "osmId": 233337786,
+    "name": "Praia Fluvial do Ourondo",
+    "latitude": 40.151157,
+    "longitude": -7.685183
+  },
+  {
+    "osmId": 233432989,
+    "name": null,
+    "latitude": 37.931399,
+    "longitude": -8.81654
+  },
+  {
+    "osmId": 233433007,
+    "name": null,
+    "latitude": 37.933682,
+    "longitude": -8.822879
+  },
+  {
+    "osmId": 233433029,
+    "name": null,
+    "latitude": 37.935732,
+    "longitude": -8.829383
+  },
+  {
+    "osmId": 233784765,
+    "name": "Praia da Lomba",
+    "latitude": 41.069619,
+    "longitude": -8.412824
+  },
+  {
+    "osmId": 234173586,
+    "name": "Praia fluvial de Avô",
+    "latitude": 40.294017,
+    "longitude": -7.905723
+  },
+  {
+    "osmId": 237132370,
+    "name": "Praia da Bela Vista (parte naturista)",
+    "latitude": 38.590458,
+    "longitude": -9.205954
+  },
+  {
+    "osmId": 238195470,
+    "name": "Praia Fluvial Aurora",
+    "latitude": 41.274933,
+    "longitude": -8.072024
+  },
+  {
+    "osmId": 239309629,
+    "name": null,
+    "latitude": 39.354269,
+    "longitude": -9.383415
+  },
+  {
+    "osmId": 242848942,
+    "name": null,
+    "latitude": 38.454792,
+    "longitude": -8.843895
+  },
+  {
+    "osmId": 245225169,
+    "name": "Praia do Samouco",
+    "latitude": 38.728291,
+    "longitude": -9.011295
+  },
+  {
+    "osmId": 245225170,
+    "name": null,
+    "latitude": 38.734778,
+    "longitude": -9.008835
+  },
+  {
+    "osmId": 246545394,
+    "name": null,
+    "latitude": 38.507936,
+    "longitude": -9.182334
+  },
+  {
+    "osmId": 249890781,
+    "name": null,
+    "latitude": 41.391408,
+    "longitude": -8.005533
+  },
+  {
+    "osmId": 252621789,
+    "name": "Praia Grande de Pêra",
+    "latitude": 37.093923,
+    "longitude": -8.340672
+  },
+  {
+    "osmId": 253988846,
+    "name": "Praia de Mira",
+    "latitude": 40.451033,
+    "longitude": -8.80558
+  },
+  {
+    "osmId": 255048764,
+    "name": "Praia dos Moinhos",
+    "latitude": 38.748936,
+    "longitude": -8.971413
+  },
+  {
+    "osmId": 255048768,
+    "name": null,
+    "latitude": 38.74663,
+    "longitude": -8.977647
+  },
+  {
+    "osmId": 255804301,
+    "name": "Praia de Melres",
+    "latitude": 41.066386,
+    "longitude": -8.403792
+  },
+  {
+    "osmId": 259211193,
+    "name": "Praia de Armação de Pêra",
+    "latitude": 37.100188,
+    "longitude": -8.359572
+  },
+  {
+    "osmId": 261606273,
+    "name": "Praia de Loulé Velho",
+    "latitude": 37.054563,
+    "longitude": -8.075932
+  },
+  {
+    "osmId": 261919708,
+    "name": "Praia Fluvial da Senhora da Graça",
+    "latitude": 40.157103,
+    "longitude": -8.197014
+  },
+  {
+    "osmId": 264686665,
+    "name": null,
+    "latitude": 39.377414,
+    "longitude": -9.34056
+  },
+  {
+    "osmId": 270900412,
+    "name": null,
+    "latitude": 41.345304,
+    "longitude": -8.564261
+  },
+  {
+    "osmId": 277067422,
+    "name": null,
+    "latitude": 41.882643,
+    "longitude": -8.83184
+  },
+  {
+    "osmId": 280240701,
+    "name": "Praia Fluvial de Viana do Castelo",
+    "latitude": 41.695845,
+    "longitude": -8.814407
+  },
+  {
+    "osmId": 280240702,
+    "name": null,
+    "latitude": 41.696162,
+    "longitude": -8.81133
+  },
+  {
+    "osmId": 280241000,
+    "name": null,
+    "latitude": 41.696193,
+    "longitude": -8.809751
+  },
+  {
+    "osmId": 288904494,
+    "name": null,
+    "latitude": 37.082952,
+    "longitude": -8.667796
+  },
+  {
+    "osmId": 288904495,
+    "name": null,
+    "latitude": 37.083633,
+    "longitude": -8.667184
+  },
+  {
+    "osmId": 288904496,
+    "name": "Praia do Canavial",
+    "latitude": 37.083862,
+    "longitude": -8.679291
+  },
+  {
+    "osmId": 289202436,
+    "name": "Praia de Paramos",
+    "latitude": 40.973682,
+    "longitude": -8.650001
+  },
+  {
+    "osmId": 289202909,
+    "name": "Praia dos Pescadores",
+    "latitude": 40.951878,
+    "longitude": -8.657275
+  },
+  {
+    "osmId": 289203149,
+    "name": "Praia de Espinho",
+    "latitude": 41.015839,
+    "longitude": -8.646155
+  },
+  {
+    "osmId": 293151480,
+    "name": "Praia dos Tesos",
+    "latitude": 41.095886,
+    "longitude": -8.659179
+  },
+  {
+    "osmId": 293991327,
+    "name": "Praia de Madalena Sul",
+    "latitude": 41.099864,
+    "longitude": -8.660436
+  },
+  {
+    "osmId": 293993530,
+    "name": "Praia de Madalena Norte",
+    "latitude": 41.103725,
+    "longitude": -8.66199
+  },
+  {
+    "osmId": 293994750,
+    "name": "Praia de Marbelo",
+    "latitude": 41.107539,
+    "longitude": -8.663417
+  },
+  {
+    "osmId": 293996058,
+    "name": "Praia da Areia Branca",
+    "latitude": 41.052962,
+    "longitude": -8.656071
+  },
+  {
+    "osmId": 294005286,
+    "name": "Praia Sãozinha",
+    "latitude": 41.072606,
+    "longitude": -8.657985
+  },
+  {
+    "osmId": 294005292,
+    "name": "Praia do Senhor da Pedra",
+    "latitude": 41.068939,
+    "longitude": -8.657863
+  },
+  {
+    "osmId": 294434428,
+    "name": "Praia Poço da Cruz",
+    "latitude": 40.492017,
+    "longitude": -8.791947
+  },
+  {
+    "osmId": 294980838,
+    "name": "Praia Fluvial \"O Moinho\"",
+    "latitude": 40.22851,
+    "longitude": -7.221175
+  },
+  {
+    "osmId": 295172983,
+    "name": null,
+    "latitude": 41.542876,
+    "longitude": -8.792328
+  },
+  {
+    "osmId": 295408826,
+    "name": "Praia Fluvial da Louçainha",
+    "latitude": 40.026099,
+    "longitude": -8.304667
+  },
+  {
+    "osmId": 295444558,
+    "name": "Praia Fluvial de Alvoco das Várzeas",
+    "latitude": 40.300987,
+    "longitude": -7.836409
+  },
+  {
+    "osmId": 297540513,
+    "name": "Praia Fluvial da Tapada Grande",
+    "latitude": 37.67176,
+    "longitude": -7.505178
+  },
+  {
+    "osmId": 298821364,
+    "name": "Praia da Murtinheira",
+    "latitude": 40.205735,
+    "longitude": -8.899712
+  },
+  {
+    "osmId": 299974271,
+    "name": "Praia Fluvial de Cabril",
+    "latitude": 40.936105,
+    "longitude": -8.103592
+  },
+  {
+    "osmId": 301178688,
+    "name": "Praia Fluvial de Valhelhas",
+    "latitude": 40.4028,
+    "longitude": -7.40316
+  },
+  {
+    "osmId": 301851493,
+    "name": null,
+    "latitude": 40.565377,
+    "longitude": -8.769258
+  },
+  {
+    "osmId": 301852964,
+    "name": "Praia da Costa Nova",
+    "latitude": 40.620077,
+    "longitude": -8.752983
+  },
+  {
+    "osmId": 302698202,
+    "name": "Praia Fluvial da Loureira",
+    "latitude": 41.637821,
+    "longitude": -8.419746
+  },
+  {
+    "osmId": 303665313,
+    "name": "Praia do Paraíso",
+    "latitude": 37.096949,
+    "longitude": -8.475614
+  },
+  {
+    "osmId": 307076572,
+    "name": "Praia dos Buizinhos",
+    "latitude": 37.849674,
+    "longitude": -8.795586
+  },
+  {
+    "osmId": 308241715,
+    "name": null,
+    "latitude": 37.085573,
+    "longitude": -8.228386
+  },
+  {
+    "osmId": 309582065,
+    "name": "Praia da Fraternidade",
+    "latitude": 37.073568,
+    "longitude": -8.296799
+  },
+  {
+    "osmId": 310059753,
+    "name": "Praia Fluvial das Barreiras",
+    "latitude": 39.604232,
+    "longitude": -8.27792
+  },
+  {
+    "osmId": 310060191,
+    "name": "Praia Fluvial da Vila Nova",
+    "latitude": 39.574827,
+    "longitude": -8.265857
+  },
+  {
+    "osmId": 310208249,
+    "name": "Praia Fluvial da Castanheira",
+    "latitude": 39.675116,
+    "longitude": -8.230747
+  },
+  {
+    "osmId": 311839275,
+    "name": "Praia do Sissal",
+    "latitude": 37.838523,
+    "longitude": -8.790205
+  },
+  {
+    "osmId": 330164087,
+    "name": null,
+    "latitude": 41.045143,
+    "longitude": -8.273903
+  },
+  {
+    "osmId": 330914508,
+    "name": null,
+    "latitude": 40.102905,
+    "longitude": -8.871031
+  },
+  {
+    "osmId": 330914511,
+    "name": null,
+    "latitude": 40.113645,
+    "longitude": -8.866637
+  },
+  {
+    "osmId": 330915305,
+    "name": null,
+    "latitude": 40.075381,
+    "longitude": -8.88209
+  },
+  {
+    "osmId": 330946764,
+    "name": "Praia do Osso da Baleia",
+    "latitude": 40.003461,
+    "longitude": -8.91378
+  },
+  {
+    "osmId": 331965424,
+    "name": null,
+    "latitude": 41.309465,
+    "longitude": -8.719837
+  },
+  {
+    "osmId": 335585437,
+    "name": "Praia Fluvial da Valada",
+    "latitude": 39.081472,
+    "longitude": -8.758111
+  },
+  {
+    "osmId": 338424389,
+    "name": null,
+    "latitude": 40.613032,
+    "longitude": -7.748724
+  },
+  {
+    "osmId": 338598270,
+    "name": null,
+    "latitude": 40.205325,
+    "longitude": -8.356222
+  },
+  {
+    "osmId": 338635402,
+    "name": "Praia de Matosinhos",
+    "latitude": 41.176486,
+    "longitude": -8.69362
+  },
+  {
+    "osmId": 338635406,
+    "name": "Praia Internacional",
+    "latitude": 41.171469,
+    "longitude": -8.688674
+  },
+  {
+    "osmId": 339784144,
+    "name": "Praia de Pedras da Agudela",
+    "latitude": 41.241335,
+    "longitude": -8.726532
+  },
+  {
+    "osmId": 340980132,
+    "name": "Praia de Ofir",
+    "latitude": 41.518365,
+    "longitude": -8.787803
+  },
+  {
+    "osmId": 340980136,
+    "name": null,
+    "latitude": 41.527261,
+    "longitude": -8.790743
+  },
+  {
+    "osmId": 344746898,
+    "name": "Praia de Labruge",
+    "latitude": 41.272596,
+    "longitude": -8.727786
+  },
+  {
+    "osmId": 346376428,
+    "name": "Praia de Pedrogão - Sul",
+    "latitude": 39.9137,
+    "longitude": -8.955014
+  },
+  {
+    "osmId": 347330474,
+    "name": null,
+    "latitude": 37.646237,
+    "longitude": -7.651401
+  },
+  {
+    "osmId": 347330503,
+    "name": null,
+    "latitude": 37.647038,
+    "longitude": -7.651464
+  },
+  {
+    "osmId": 349169235,
+    "name": "Praia da Aguda",
+    "latitude": 41.046699,
+    "longitude": -8.654177
+  },
+  {
+    "osmId": 353632228,
+    "name": "Praia da Barrinha",
+    "latitude": 40.966064,
+    "longitude": -8.652133
+  },
+  {
+    "osmId": 353632229,
+    "name": "Praia da Barrinha",
+    "latitude": 40.960057,
+    "longitude": -8.654487
+  },
+  {
+    "osmId": 354951287,
+    "name": null,
+    "latitude": 41.088347,
+    "longitude": -8.520324
+  },
+  {
+    "osmId": 355335635,
+    "name": null,
+    "latitude": 40.629783,
+    "longitude": -8.744791
+  },
+  {
+    "osmId": 355536229,
+    "name": "Praia Fluvial de Docim",
+    "latitude": 41.449802,
+    "longitude": -8.144768
+  },
+  {
+    "osmId": 357516528,
+    "name": null,
+    "latitude": 39.880998,
+    "longitude": -8.964669
+  },
+  {
+    "osmId": 360633595,
+    "name": "Praia do Aterro",
+    "latitude": 41.21086,
+    "longitude": -8.71586
+  },
+  {
+    "osmId": 360889454,
+    "name": "Praia de Fuzelhas",
+    "latitude": 41.197231,
+    "longitude": -8.710485
+  },
+  {
+    "osmId": 360889455,
+    "name": "Praia dos Beijinhos",
+    "latitude": 41.195065,
+    "longitude": -8.709058
+  },
+  {
+    "osmId": 361264948,
+    "name": "Praia Fluvial",
+    "latitude": 41.747998,
+    "longitude": -8.391793
+  },
+  {
+    "osmId": 369745772,
+    "name": "Praia Fluvial do Alamal",
+    "latitude": 39.488311,
+    "longitude": -7.967659
+  },
+  {
+    "osmId": 370626244,
+    "name": "Praia do Castelo do Queijo",
+    "latitude": 41.167603,
+    "longitude": -8.690032
+  },
+  {
+    "osmId": 372291352,
+    "name": "Praia Fluvial de Janeiro de Baixo",
+    "latitude": 40.046876,
+    "longitude": -7.801303
+  },
+  {
+    "osmId": 374585861,
+    "name": null,
+    "latitude": 41.124696,
+    "longitude": -8.667414
+  },
+  {
+    "osmId": 374585863,
+    "name": "Praia Canidelo Norte",
+    "latitude": 41.119071,
+    "longitude": -8.66445
+  },
+  {
+    "osmId": 377934250,
+    "name": "Praia Velha",
+    "latitude": 40.955094,
+    "longitude": -8.656271
+  },
+  {
+    "osmId": 377934335,
+    "name": null,
+    "latitude": 40.948525,
+    "longitude": -8.657295
+  },
+  {
+    "osmId": 377934350,
+    "name": "Praia de Cortegaça",
+    "latitude": 40.940508,
+    "longitude": -8.659616
+  },
+  {
+    "osmId": 377934351,
+    "name": "Praia de Cortegaça",
+    "latitude": 40.945506,
+    "longitude": -8.658065
+  },
+  {
+    "osmId": 377934352,
+    "name": "Praia de Cortegaça",
+    "latitude": 40.935521,
+    "longitude": -8.659593
+  },
+  {
+    "osmId": 380028529,
+    "name": "Praia Fluvial de Pereira",
+    "latitude": 40.189176,
+    "longitude": -8.590142
+  },
+  {
+    "osmId": 380518890,
+    "name": "Praia Fluvial do Areinho",
+    "latitude": 40.952705,
+    "longitude": -8.176517
+  },
+  {
+    "osmId": 382705995,
+    "name": null,
+    "latitude": 37.738227,
+    "longitude": -8.801851
+  },
+  {
+    "osmId": 382705996,
+    "name": null,
+    "latitude": 37.739205,
+    "longitude": -8.802715
+  },
+  {
+    "osmId": 385516895,
+    "name": null,
+    "latitude": 40.200747,
+    "longitude": -8.366598
+  },
+  {
+    "osmId": 385516927,
+    "name": null,
+    "latitude": 40.199067,
+    "longitude": -8.369756
+  },
+  {
+    "osmId": 388326172,
+    "name": "Praia Fluvial de Pedorido",
+    "latitude": 41.048589,
+    "longitude": -8.376226
+  },
+  {
+    "osmId": 388347221,
+    "name": "Praia Fluvial do Reconquinho",
+    "latitude": 40.266653,
+    "longitude": -8.279243
+  },
+  {
+    "osmId": 388357281,
+    "name": null,
+    "latitude": 39.928768,
+    "longitude": -8.897547
+  },
+  {
+    "osmId": 391387989,
+    "name": "Praia do Giribeto",
+    "latitude": 38.874518,
+    "longitude": -9.444558
+  },
+  {
+    "osmId": 392999903,
+    "name": "Praia da Angra das Melancias",
+    "latitude": 37.659982,
+    "longitude": -8.802196
+  },
+  {
+    "osmId": 392999990,
+    "name": "Praia da Angra do Travesso",
+    "latitude": 37.661848,
+    "longitude": -8.801714
+  },
+  {
+    "osmId": 393000163,
+    "name": "Praia dos Picos",
+    "latitude": 37.665193,
+    "longitude": -8.800772
+  },
+  {
+    "osmId": 393004460,
+    "name": "Praia do Burdo",
+    "latitude": 37.759754,
+    "longitude": -8.806292
+  },
+  {
+    "osmId": 393006207,
+    "name": "Praia da Angra da Barrela",
+    "latitude": 37.770164,
+    "longitude": -8.804672
+  },
+  {
+    "osmId": 393006496,
+    "name": "Praia da Angra da Vaca",
+    "latitude": 37.764931,
+    "longitude": -8.806745
+  },
+  {
+    "osmId": 393008143,
+    "name": "Praia dos Nascedios",
+    "latitude": 37.791635,
+    "longitude": -8.802063
+  },
+  {
+    "osmId": 393008144,
+    "name": "Praia do Saltinho",
+    "latitude": 37.794222,
+    "longitude": -8.801726
+  },
+  {
+    "osmId": 393008274,
+    "name": "Praia do Malhão Norte",
+    "latitude": 37.786811,
+    "longitude": -8.80172
+  },
+  {
+    "osmId": 393042815,
+    "name": "Praia Santa",
+    "latitude": 37.061441,
+    "longitude": -8.83676
+  },
+  {
+    "osmId": 397135664,
+    "name": "Praia Fluvial da Paradinha",
+    "latitude": 40.934933,
+    "longitude": -8.174449
+  },
+  {
+    "osmId": 397531314,
+    "name": null,
+    "latitude": 37.841831,
+    "longitude": -8.639381
+  },
+  {
+    "osmId": 397531318,
+    "name": null,
+    "latitude": 37.84106,
+    "longitude": -8.642902
+  },
+  {
+    "osmId": 399127972,
+    "name": "Praia Fluvial de Coruche",
+    "latitude": 38.957542,
+    "longitude": -8.521731
+  },
+  {
+    "osmId": 400786561,
+    "name": "Praia Selvagem",
+    "latitude": 37.840238,
+    "longitude": -8.791542
+  },
+  {
+    "osmId": 403258269,
+    "name": "Praia Fluvial de Aldeia do Mato",
+    "latitude": 39.54526,
+    "longitude": -8.277414
+  },
+  {
+    "osmId": 405133500,
+    "name": "Praia da Saúde",
+    "latitude": 38.516745,
+    "longitude": -8.906037
+  },
+  {
+    "osmId": 410266749,
+    "name": "Praia do Carreiro do Mosteiro",
+    "latitude": 39.415122,
+    "longitude": -9.507278
+  },
+  {
+    "osmId": 410271046,
+    "name": null,
+    "latitude": 39.412553,
+    "longitude": -9.511034
+  },
+  {
+    "osmId": 410893949,
+    "name": null,
+    "latitude": 39.350589,
+    "longitude": -9.376878
+  },
+  {
+    "osmId": 411115936,
+    "name": null,
+    "latitude": 39.353733,
+    "longitude": -9.379969
+  },
+  {
+    "osmId": 411129223,
+    "name": null,
+    "latitude": 41.340607,
+    "longitude": -8.750625
+  },
+  {
+    "osmId": 419711372,
+    "name": "Praia Fluvial de Granja do Tedo",
+    "latitude": 41.064298,
+    "longitude": -7.614812
+  },
+  {
+    "osmId": 422044776,
+    "name": "Praia Fluvial de Cambas",
+    "latitude": 40.013094,
+    "longitude": -7.846879
+  },
+  {
+    "osmId": 424816086,
+    "name": "Praia do Vigão",
+    "latitude": 39.899715,
+    "longitude": -8.961349
+  },
+  {
+    "osmId": 425086481,
+    "name": "Praia Fluvial de Nandufe",
+    "latitude": 40.543243,
+    "longitude": -8.068304
+  },
+  {
+    "osmId": 425548212,
+    "name": null,
+    "latitude": 38.693014,
+    "longitude": -9.219138
+  },
+  {
+    "osmId": 429682729,
+    "name": "Praia da Tramagueira",
+    "latitude": 39.423154,
+    "longitude": -9.24348
+  },
+  {
+    "osmId": 429684204,
+    "name": "Praia do Rei Cortiço",
+    "latitude": 39.421183,
+    "longitude": -9.246034
+  },
+  {
+    "osmId": 429684208,
+    "name": "Praia Olho de Água",
+    "latitude": 39.420255,
+    "longitude": -9.247761
+  },
+  {
+    "osmId": 430526467,
+    "name": "Praia de Paramos",
+    "latitude": 40.979996,
+    "longitude": -8.649105
+  },
+  {
+    "osmId": 432737878,
+    "name": null,
+    "latitude": 38.743813,
+    "longitude": -8.987044
+  },
+  {
+    "osmId": 432987903,
+    "name": "Meia Praia",
+    "latitude": 37.119263,
+    "longitude": -8.637639
+  },
+  {
+    "osmId": 435723599,
+    "name": "Praia Fluvial de Castelo do Neiva",
+    "latitude": 41.613527,
+    "longitude": -8.809451
+  },
+  {
+    "osmId": 437288345,
+    "name": "Praia Pequena",
+    "latitude": 37.851834,
+    "longitude": -8.795633
+  },
+  {
+    "osmId": 437514296,
+    "name": "Praia da Foz",
+    "latitude": 37.885061,
+    "longitude": -8.795452
+  },
+  {
+    "osmId": 437587998,
+    "name": null,
+    "latitude": 37.099216,
+    "longitude": -8.37783
+  },
+  {
+    "osmId": 437724530,
+    "name": "Praia Fluvial de Alqueirão",
+    "latitude": 41.679219,
+    "longitude": -8.175975
+  },
+  {
+    "osmId": 437770247,
+    "name": "Praia Fluvial Moinho de Alva",
+    "latitude": 40.273965,
+    "longitude": -7.984409
+  },
+  {
+    "osmId": 437947207,
+    "name": "Praia da Engardaceira",
+    "latitude": 37.84621,
+    "longitude": -8.793111
+  },
+  {
+    "osmId": 440122674,
+    "name": null,
+    "latitude": 40.913485,
+    "longitude": -8.663297
+  },
+  {
+    "osmId": 440122675,
+    "name": null,
+    "latitude": 40.89676,
+    "longitude": -8.668681
+  },
+  {
+    "osmId": 440122676,
+    "name": null,
+    "latitude": 40.90534,
+    "longitude": -8.665542
+  },
+  {
+    "osmId": 440122677,
+    "name": null,
+    "latitude": 40.927565,
+    "longitude": -8.659751
+  },
+  {
+    "osmId": 440122680,
+    "name": "Praia de São Pedro de Maceda",
+    "latitude": 40.92064,
+    "longitude": -8.661253
+  },
+  {
+    "osmId": 440122681,
+    "name": "Praia do Furadouro",
+    "latitude": 40.875208,
+    "longitude": -8.676819
+  },
+  {
+    "osmId": 440351539,
+    "name": null,
+    "latitude": 38.644624,
+    "longitude": -9.101763
+  },
+  {
+    "osmId": 440351543,
+    "name": "Praia dos Barcos",
+    "latitude": 38.647286,
+    "longitude": -9.097319
+  },
+  {
+    "osmId": 440355732,
+    "name": null,
+    "latitude": 38.631631,
+    "longitude": -9.105996
+  },
+  {
+    "osmId": 440355736,
+    "name": null,
+    "latitude": 38.632543,
+    "longitude": -9.106382
+  },
+  {
+    "osmId": 440361983,
+    "name": null,
+    "latitude": 38.640432,
+    "longitude": -9.105959
+  },
+  {
+    "osmId": 440374214,
+    "name": null,
+    "latitude": 38.627594,
+    "longitude": -9.111121
+  },
+  {
+    "osmId": 440374218,
+    "name": null,
+    "latitude": 38.629266,
+    "longitude": -9.105132
+  },
+  {
+    "osmId": 442204810,
+    "name": null,
+    "latitude": 39.404979,
+    "longitude": -9.211896
+  },
+  {
+    "osmId": 442217667,
+    "name": "Chico Nega",
+    "latitude": 39.416685,
+    "longitude": -9.221491
+  },
+  {
+    "osmId": 443102845,
+    "name": null,
+    "latitude": 37.035187,
+    "longitude": -8.024354
+  },
+  {
+    "osmId": 443102849,
+    "name": null,
+    "latitude": 37.035168,
+    "longitude": -8.025975
+  },
+  {
+    "osmId": 443951386,
+    "name": null,
+    "latitude": 39.415135,
+    "longitude": -9.203741
+  },
+  {
+    "osmId": 443959206,
+    "name": null,
+    "latitude": 39.408291,
+    "longitude": -9.201857
+  },
+  {
+    "osmId": 443961458,
+    "name": null,
+    "latitude": 39.404864,
+    "longitude": -9.200762
+  },
+  {
+    "osmId": 444785502,
+    "name": "Praia da Luz",
+    "latitude": 41.153693,
+    "longitude": -8.67969
+  },
+  {
+    "osmId": 444788848,
+    "name": "Praia do Molhe",
+    "latitude": 41.157711,
+    "longitude": -8.683337
+  },
+  {
+    "osmId": 444796532,
+    "name": "Praia Fluvial de Ribeira de Abade",
+    "latitude": 41.136263,
+    "longitude": -8.571499
+  },
+  {
+    "osmId": 444796533,
+    "name": "Praia Fluvial de Arnelas",
+    "latitude": 41.083568,
+    "longitude": -8.522759
+  },
+  {
+    "osmId": 444799972,
+    "name": "Praia de Gondarém",
+    "latitude": 41.156172,
+    "longitude": -8.681731
+  },
+  {
+    "osmId": 444800958,
+    "name": null,
+    "latitude": 41.154754,
+    "longitude": -8.680402
+  },
+  {
+    "osmId": 446394949,
+    "name": null,
+    "latitude": 41.859775,
+    "longitude": -8.874401
+  },
+  {
+    "osmId": 446746772,
+    "name": null,
+    "latitude": 41.169599,
+    "longitude": -8.688936
+  },
+  {
+    "osmId": 446746773,
+    "name": "Praia de Leça",
+    "latitude": 41.189421,
+    "longitude": -8.706054
+  },
+  {
+    "osmId": 446746778,
+    "name": null,
+    "latitude": 41.19346,
+    "longitude": -8.707972
+  },
+  {
+    "osmId": 446746790,
+    "name": null,
+    "latitude": 41.203912,
+    "longitude": -8.714044
+  },
+  {
+    "osmId": 446749249,
+    "name": "Praia do Paraíso",
+    "latitude": 41.222508,
+    "longitude": -8.715967
+  },
+  {
+    "osmId": 446749251,
+    "name": null,
+    "latitude": 41.225632,
+    "longitude": -8.716968
+  },
+  {
+    "osmId": 447086660,
+    "name": "Praia do Facho",
+    "latitude": 41.22744,
+    "longitude": -8.720214
+  },
+  {
+    "osmId": 448747895,
+    "name": null,
+    "latitude": 41.143774,
+    "longitude": -8.579746
+  },
+  {
+    "osmId": 450408045,
+    "name": "Praia do Ouro",
+    "latitude": 38.442183,
+    "longitude": -9.108541
+  },
+  {
+    "osmId": 453722169,
+    "name": "Praia dos Rebolos",
+    "latitude": 37.068774,
+    "longitude": -8.782215
+  },
+  {
+    "osmId": 462865791,
+    "name": "Landre",
+    "latitude": 42.071825,
+    "longitude": -8.428589
+  },
+  {
+    "osmId": 465776072,
+    "name": "Praia de Benagil",
+    "latitude": 37.087351,
+    "longitude": -8.425864
+  },
+  {
+    "osmId": 470523247,
+    "name": "Praia da Ponta da Adega",
+    "latitude": 37.097147,
+    "longitude": -8.384048
+  },
+  {
+    "osmId": 470544217,
+    "name": "Praia do Vale Espinhaço",
+    "latitude": 37.08781,
+    "longitude": -8.440759
+  },
+  {
+    "osmId": 471184443,
+    "name": "Praia da Ilha da Barreta",
+    "latitude": 36.972267,
+    "longitude": -7.923369
+  },
+  {
+    "osmId": 474629654,
+    "name": "Praia Fluvial de Fresulfe",
+    "latitude": 41.896613,
+    "longitude": -6.937715
+  },
+  {
+    "osmId": 474645895,
+    "name": "Praia Fluvial",
+    "latitude": 37.161706,
+    "longitude": -8.48654
+  },
+  {
+    "osmId": 475469132,
+    "name": "Praia dos barcos",
+    "latitude": 39.376773,
+    "longitude": -9.340366
+  },
+  {
+    "osmId": 475503977,
+    "name": "Praínha",
+    "latitude": 39.373759,
+    "longitude": -9.338284
+  },
+  {
+    "osmId": 475503978,
+    "name": "Cantinho da Baía",
+    "latitude": 39.372242,
+    "longitude": -9.338657
+  },
+  {
+    "osmId": 478336040,
+    "name": "Praia Fluvial de Barcelinhos",
+    "latitude": 41.527467,
+    "longitude": -8.618841
+  },
+  {
+    "osmId": 478366329,
+    "name": null,
+    "latitude": 41.407341,
+    "longitude": -8.63421
+  },
+  {
+    "osmId": 479745970,
+    "name": "Praia das Fontaínhas",
+    "latitude": 38.687126,
+    "longitude": -9.301542
+  },
+  {
+    "osmId": 481006224,
+    "name": "Praia do Vale Covo",
+    "latitude": 37.093147,
+    "longitude": -8.459854
+  },
+  {
+    "osmId": 485148205,
+    "name": "Prainha do Salgado",
+    "latitude": 39.539089,
+    "longitude": -9.122025
+  },
+  {
+    "osmId": 487969876,
+    "name": "Praia do Portinho do Forno",
+    "latitude": 37.174365,
+    "longitude": -8.907809
+  },
+  {
+    "osmId": 489338568,
+    "name": "Praia de Carvalhido",
+    "latitude": 41.381661,
+    "longitude": -8.770388
+  },
+  {
+    "osmId": 489338569,
+    "name": "Praia de Fragosinho",
+    "latitude": 41.394721,
+    "longitude": -8.777803
+  },
+  {
+    "osmId": 490879098,
+    "name": "Praia do Lacém",
+    "latitude": 37.141966,
+    "longitude": -7.571321
+  },
+  {
+    "osmId": 490880503,
+    "name": null,
+    "latitude": 37.117368,
+    "longitude": -7.617496
+  },
+  {
+    "osmId": 490882066,
+    "name": null,
+    "latitude": 37.118929,
+    "longitude": -7.616337
+  },
+  {
+    "osmId": 503525679,
+    "name": "Praia das Pedras Muitas",
+    "latitude": 39.376058,
+    "longitude": -9.321612
+  },
+  {
+    "osmId": 503865025,
+    "name": null,
+    "latitude": 40.640975,
+    "longitude": -8.728229
+  },
+  {
+    "osmId": 503865032,
+    "name": null,
+    "latitude": 40.640214,
+    "longitude": -8.727476
+  },
+  {
+    "osmId": 504051594,
+    "name": null,
+    "latitude": 40.612886,
+    "longitude": -8.737698
+  },
+  {
+    "osmId": 504524306,
+    "name": "Praia da Angra da Cerva",
+    "latitude": 37.752664,
+    "longitude": -8.807409
+  },
+  {
+    "osmId": 504533757,
+    "name": "Praia da Baía de Porto Covo",
+    "latitude": 37.849681,
+    "longitude": -8.791498
+  },
+  {
+    "osmId": 504562243,
+    "name": "Praia Grande de Almograve",
+    "latitude": 37.65199,
+    "longitude": -8.802541
+  },
+  {
+    "osmId": 506903184,
+    "name": "Praia Fluvial de Lapa dos Dinheiros",
+    "latitude": 40.385216,
+    "longitude": -7.697014
+  },
+  {
+    "osmId": 507482882,
+    "name": "Praia Fluvial de Monsaraz",
+    "latitude": 38.434624,
+    "longitude": -7.350176
+  },
+  {
+    "osmId": 507483452,
+    "name": "Praia Fluvial de Mourão",
+    "latitude": 38.407397,
+    "longitude": -7.352809
+  },
+  {
+    "osmId": 508415850,
+    "name": "Praia dos Cavacos",
+    "latitude": 37.03626,
+    "longitude": -7.796241
+  },
+  {
+    "osmId": 508477833,
+    "name": null,
+    "latitude": 38.907175,
+    "longitude": -9.017194
+  },
+  {
+    "osmId": 510876773,
+    "name": "Praia fluvial de Sangemil",
+    "latitude": 40.526138,
+    "longitude": -7.967306
+  },
+  {
+    "osmId": 511356030,
+    "name": "Praia das Valeiras",
+    "latitude": 39.744483,
+    "longitude": -9.037984
+  },
+  {
+    "osmId": 512046127,
+    "name": null,
+    "latitude": 40.170288,
+    "longitude": -7.665146
+  },
+  {
+    "osmId": 512401664,
+    "name": null,
+    "latitude": 42.046458,
+    "longitude": -8.636677
+  },
+  {
+    "osmId": 517429596,
+    "name": "Praia do Rato",
+    "latitude": 37.11859,
+    "longitude": -7.625204
+  },
+  {
+    "osmId": 520810249,
+    "name": null,
+    "latitude": 38.469976,
+    "longitude": -8.867127
+  },
+  {
+    "osmId": 522084749,
+    "name": "Praia do Segundo Torrão",
+    "latitude": 38.671439,
+    "longitude": -9.243006
+  },
+  {
+    "osmId": 524057804,
+    "name": "Praia Fluvial de Espiunca",
+    "latitude": 40.993199,
+    "longitude": -8.212531
+  },
+  {
+    "osmId": 524103545,
+    "name": "Praia fluvial do Vau",
+    "latitude": 40.976661,
+    "longitude": -8.18936
+  },
+  {
+    "osmId": 526817985,
+    "name": null,
+    "latitude": 38.652258,
+    "longitude": -9.074149
+  },
+  {
+    "osmId": 527378044,
+    "name": "Praia Fluvial de Alburrica",
+    "latitude": 38.6559,
+    "longitude": -9.084343
+  },
+  {
+    "osmId": 527467735,
+    "name": "Praia do Clube Naval",
+    "latitude": 38.658882,
+    "longitude": -9.092031
+  },
+  {
+    "osmId": 527768043,
+    "name": "Praia de Copacabana",
+    "latitude": 38.641555,
+    "longitude": -9.064905
+  },
+  {
+    "osmId": 530345667,
+    "name": "Praia da Consolação",
+    "latitude": 39.337898,
+    "longitude": -9.363557
+  },
+  {
+    "osmId": 531006488,
+    "name": "Praia Vale de Frades",
+    "latitude": 39.274455,
+    "longitude": -9.335684
+  },
+  {
+    "osmId": 531685852,
+    "name": "Praia do Penedo Furado",
+    "latitude": 39.423639,
+    "longitude": -9.209226
+  },
+  {
+    "osmId": 531699721,
+    "name": null,
+    "latitude": 39.42694,
+    "longitude": -9.218053
+  },
+  {
+    "osmId": 531707678,
+    "name": "Praia do Chico Nega",
+    "latitude": 39.415086,
+    "longitude": -9.221012
+  },
+  {
+    "osmId": 531918708,
+    "name": "Praia da Torre",
+    "latitude": 38.675261,
+    "longitude": -9.322685
+  },
+  {
+    "osmId": 531929108,
+    "name": "Praia da Foz do Arelho-Mar",
+    "latitude": 39.431767,
+    "longitude": -9.230571
+  },
+  {
+    "osmId": 531989270,
+    "name": "Praia da Foz do Arelho-Lagoa",
+    "latitude": 39.429019,
+    "longitude": -9.224513
+  },
+  {
+    "osmId": 532002808,
+    "name": "Praia das Rolotes",
+    "latitude": 39.427685,
+    "longitude": -9.220273
+  },
+  {
+    "osmId": 532512559,
+    "name": "Praia Fluvial de Mirandela",
+    "latitude": 41.488013,
+    "longitude": -7.187479
+  },
+  {
+    "osmId": 532543477,
+    "name": "Praia Fluvial da Ponte Nova - Rabaçal",
+    "latitude": 41.865355,
+    "longitude": -7.119384
+  },
+  {
+    "osmId": 542627583,
+    "name": "Praia Além do Barco",
+    "latitude": 40.921702,
+    "longitude": -8.128885
+  },
+  {
+    "osmId": 542634348,
+    "name": "Praia Fluvial de Paço de Mato",
+    "latitude": 40.854181,
+    "longitude": -8.304948
+  },
+  {
+    "osmId": 542722331,
+    "name": "Praia Fluvial da Junqueira",
+    "latitude": 41.872302,
+    "longitude": -8.814389
+  },
+  {
+    "osmId": 543115338,
+    "name": null,
+    "latitude": 40.607072,
+    "longitude": -8.755665
+  },
+  {
+    "osmId": 543115339,
+    "name": null,
+    "latitude": 40.60428,
+    "longitude": -8.756219
+  },
+  {
+    "osmId": 544205149,
+    "name": "Praia da Conceição",
+    "latitude": 38.700082,
+    "longitude": -9.41647
+  },
+  {
+    "osmId": 544205152,
+    "name": "Praia da Duquesa",
+    "latitude": 38.700668,
+    "longitude": -9.414828
+  },
+  {
+    "osmId": 544252780,
+    "name": "Praia Francemar",
+    "latitude": 41.076708,
+    "longitude": -8.65739
+  },
+  {
+    "osmId": 544252781,
+    "name": "Praia Francelos",
+    "latitude": 41.07983,
+    "longitude": -8.657322
+  },
+  {
+    "osmId": 544252782,
+    "name": "Praia Dunas Mar",
+    "latitude": 41.083184,
+    "longitude": -8.656943
+  },
+  {
+    "osmId": 544252783,
+    "name": "Praia do Atlântico",
+    "latitude": 41.085067,
+    "longitude": -8.656939
+  },
+  {
+    "osmId": 544252784,
+    "name": "Praia Valadares Sul",
+    "latitude": 41.088009,
+    "longitude": -8.657054
+  },
+  {
+    "osmId": 544252785,
+    "name": "Praia Valadares Norte",
+    "latitude": 41.092421,
+    "longitude": -8.657942
+  },
+  {
+    "osmId": 546437303,
+    "name": "Praia Fluvial do Taboão",
+    "latitude": 41.918411,
+    "longitude": -8.569309
+  },
+  {
+    "osmId": 546633508,
+    "name": null,
+    "latitude": 41.527122,
+    "longitude": -8.626496
+  },
+  {
+    "osmId": 549029920,
+    "name": "Prainha",
+    "latitude": 37.084905,
+    "longitude": -8.730815
+  },
+  {
+    "osmId": 551538548,
+    "name": null,
+    "latitude": 41.026348,
+    "longitude": -8.240028
+  },
+  {
+    "osmId": 551944738,
+    "name": "Praia do Portinho da Areia Norte",
+    "latitude": 39.368972,
+    "longitude": -9.378151
+  },
+  {
+    "osmId": 552844399,
+    "name": "Praia de Santa Marta",
+    "latitude": 38.691522,
+    "longitude": -9.420812
+  },
+  {
+    "osmId": 555028996,
+    "name": "Praia do Cavalo",
+    "latitude": 38.801672,
+    "longitude": -9.486613
+  },
+  {
+    "osmId": 561491220,
+    "name": "Prainha do Abalo",
+    "latitude": 39.370279,
+    "longitude": -9.385621
+  },
+  {
+    "osmId": 564141456,
+    "name": null,
+    "latitude": 37.086565,
+    "longitude": -8.216681
+  },
+  {
+    "osmId": 564274793,
+    "name": null,
+    "latitude": 37.088332,
+    "longitude": -8.207676
+  },
+  {
+    "osmId": 569472375,
+    "name": "Praia Fluvial da Bogueira",
+    "latitude": 40.153968,
+    "longitude": -8.241368
+  },
+  {
+    "osmId": 569472474,
+    "name": "Praia Fluvial do Vimieiro",
+    "latitude": 40.276529,
+    "longitude": -8.197826
+  },
+  {
+    "osmId": 579817559,
+    "name": "Praia Fluvial do Bostelim",
+    "latitude": 39.723624,
+    "longitude": -8.108175
+  },
+  {
+    "osmId": 585674743,
+    "name": "Praia Fluvial do Troviscal",
+    "latitude": 39.860073,
+    "longitude": -8.00821
+  },
+  {
+    "osmId": 585674746,
+    "name": "Praia Fluvial do Troviscal",
+    "latitude": 39.859908,
+    "longitude": -8.008485
+  },
+  {
+    "osmId": 587923984,
+    "name": "Praia de Monte Gordo",
+    "latitude": 37.176682,
+    "longitude": -7.447351
+  },
+  {
+    "osmId": 588367516,
+    "name": "Praia Verdelago",
+    "latitude": 37.172407,
+    "longitude": -7.485948
+  },
+  {
+    "osmId": 590527191,
+    "name": "Monte Gordo",
+    "latitude": 37.176695,
+    "longitude": -7.447375
+  },
+  {
+    "osmId": 590801674,
+    "name": null,
+    "latitude": 39.315477,
+    "longitude": -9.350235
+  },
+  {
+    "osmId": 590802429,
+    "name": null,
+    "latitude": 39.30598,
+    "longitude": -9.345778
+  },
+  {
+    "osmId": 602675579,
+    "name": "Praia de Valmitão",
+    "latitude": 39.194263,
+    "longitude": -9.351265
+  },
+  {
+    "osmId": 604051046,
+    "name": null,
+    "latitude": 37.121797,
+    "longitude": -8.609001
+  },
+  {
+    "osmId": 606996959,
+    "name": "Praia do Alvor Nascente",
+    "latitude": 37.121559,
+    "longitude": -8.58998
+  },
+  {
+    "osmId": 606996960,
+    "name": "Praia do Alvor Poente",
+    "latitude": 37.122701,
+    "longitude": -8.597534
+  },
+  {
+    "osmId": 607027161,
+    "name": "Praia dos Careanos",
+    "latitude": 37.119051,
+    "longitude": -8.555377
+  },
+  {
+    "osmId": 607027167,
+    "name": "Praia do Alemão",
+    "latitude": 37.119778,
+    "longitude": -8.562213
+  },
+  {
+    "osmId": 607027170,
+    "name": "Praia do Vau",
+    "latitude": 37.119863,
+    "longitude": -8.559292
+  },
+  {
+    "osmId": 608392119,
+    "name": "Praia de Crestuma",
+    "latitude": 41.068968,
+    "longitude": -8.502768
+  },
+  {
+    "osmId": 608392218,
+    "name": "Praia de Zebreiros",
+    "latitude": 41.085707,
+    "longitude": -8.519831
+  },
+  {
+    "osmId": 613858795,
+    "name": "Praia Vela Areinho",
+    "latitude": 40.845999,
+    "longitude": -8.661572
+  },
+  {
+    "osmId": 619230818,
+    "name": null,
+    "latitude": 41.266131,
+    "longitude": -8.726979
+  },
+  {
+    "osmId": 619230832,
+    "name": null,
+    "latitude": 41.296068,
+    "longitude": -8.73575
+  },
+  {
+    "osmId": 619230833,
+    "name": "Praia dos Castros",
+    "latitude": 41.281012,
+    "longitude": -8.73045
+  },
+  {
+    "osmId": 619230834,
+    "name": null,
+    "latitude": 41.279667,
+    "longitude": -8.729403
+  },
+  {
+    "osmId": 619230839,
+    "name": null,
+    "latitude": 41.277557,
+    "longitude": -8.728721
+  },
+  {
+    "osmId": 621125242,
+    "name": "Praia dos Castelos",
+    "latitude": 37.098696,
+    "longitude": -8.481946
+  },
+  {
+    "osmId": 624666052,
+    "name": null,
+    "latitude": 39.768167,
+    "longitude": -9.029223
+  },
+  {
+    "osmId": 625761327,
+    "name": "Praia da Mutela",
+    "latitude": 38.673049,
+    "longitude": -9.149778
+  },
+  {
+    "osmId": 626615629,
+    "name": null,
+    "latitude": 41.035888,
+    "longitude": -7.003086
+  },
+  {
+    "osmId": 628062764,
+    "name": "Praia Fluvial de Foz do Sabor",
+    "latitude": 41.177329,
+    "longitude": -7.112036
+  },
+  {
+    "osmId": 630510872,
+    "name": null,
+    "latitude": 40.451234,
+    "longitude": -8.748867
+  },
+  {
+    "osmId": 637921784,
+    "name": "Praia Fluvial do Açude Pinto",
+    "latitude": 39.921115,
+    "longitude": -7.891509
+  },
+  {
+    "osmId": 653139415,
+    "name": "Praia Fluvial de São João do Monte",
+    "latitude": 40.596494,
+    "longitude": -8.236553
+  },
+  {
+    "osmId": 655494861,
+    "name": "Praia do Forte Novo",
+    "latitude": 37.061309,
+    "longitude": -8.088447
+  },
+  {
+    "osmId": 655688259,
+    "name": "Praia do Almargem",
+    "latitude": 37.059271,
+    "longitude": -8.08437
+  },
+  {
+    "osmId": 655688261,
+    "name": "Praia da Lagoa",
+    "latitude": 37.057651,
+    "longitude": -8.081173
+  },
+  {
+    "osmId": 655688262,
+    "name": "Praia do Ancão",
+    "latitude": 37.032438,
+    "longitude": -8.038002
+  },
+  {
+    "osmId": 655688263,
+    "name": "Praia de Vale do Lobo",
+    "latitude": 37.04869,
+    "longitude": -8.065718
+  },
+  {
+    "osmId": 655688264,
+    "name": "Praia do Garrão",
+    "latitude": 37.041329,
+    "longitude": -8.053124
+  },
+  {
+    "osmId": 655979564,
+    "name": "Praia Fluvial de Abrantes",
+    "latitude": 39.453552,
+    "longitude": -8.189292
+  },
+  {
+    "osmId": 675161585,
+    "name": "Praia da Falésia",
+    "latitude": 37.08044,
+    "longitude": -8.149166
+  },
+  {
+    "osmId": 677024792,
+    "name": "Praia da Falésia Açoteias",
+    "latitude": 37.08668,
+    "longitude": -8.169256
+  },
+  {
+    "osmId": 678825577,
+    "name": null,
+    "latitude": 38.481182,
+    "longitude": -8.969544
+  },
+  {
+    "osmId": 681502641,
+    "name": "Poço do Caldeiro",
+    "latitude": 40.273362,
+    "longitude": -7.727576
+  },
+  {
+    "osmId": 686315252,
+    "name": null,
+    "latitude": 41.682371,
+    "longitude": -8.186114
+  },
+  {
+    "osmId": 687847669,
+    "name": null,
+    "latitude": 40.994671,
+    "longitude": -8.64641
+  },
+  {
+    "osmId": 690775744,
+    "name": "Praia do Cantinho",
+    "latitude": 40.956886,
+    "longitude": -8.655738
+  },
+  {
+    "osmId": 691310692,
+    "name": null,
+    "latitude": 41.060002,
+    "longitude": -8.656754
+  },
+  {
+    "osmId": 691310725,
+    "name": "Praia da Granja",
+    "latitude": 41.040688,
+    "longitude": -8.650482
+  },
+  {
+    "osmId": 691310726,
+    "name": "Praia de São Félix da Marinha",
+    "latitude": 41.029111,
+    "longitude": -8.646472
+  },
+  {
+    "osmId": 691310727,
+    "name": "Praia de Bocamar",
+    "latitude": 41.032616,
+    "longitude": -8.646656
+  },
+  {
+    "osmId": 691310728,
+    "name": "Praia Granja",
+    "latitude": 41.036052,
+    "longitude": -8.648418
+  },
+  {
+    "osmId": 691310750,
+    "name": "Praia de Brito",
+    "latitude": 41.024708,
+    "longitude": -8.645284
+  },
+  {
+    "osmId": 691735987,
+    "name": "Praia de Miramar",
+    "latitude": 41.065818,
+    "longitude": -8.657085
+  },
+  {
+    "osmId": 691832469,
+    "name": "Praia da Aroeira",
+    "latitude": 38.786155,
+    "longitude": -9.49581
+  },
+  {
+    "osmId": 691832470,
+    "name": "Praia da Assentiz",
+    "latitude": 38.775496,
+    "longitude": -9.493712
+  },
+  {
+    "osmId": 691832647,
+    "name": "Praia do Caneiro",
+    "latitude": 38.795398,
+    "longitude": -9.489718
+  },
+  {
+    "osmId": 691995500,
+    "name": null,
+    "latitude": 41.129451,
+    "longitude": -8.668595
+  },
+  {
+    "osmId": 691995502,
+    "name": "Praia de Lavadores",
+    "latitude": 41.12831,
+    "longitude": -8.667894
+  },
+  {
+    "osmId": 691995523,
+    "name": "Praia de Salgueiros",
+    "latitude": 41.121039,
+    "longitude": -8.666277
+  },
+  {
+    "osmId": 691995530,
+    "name": "Praia Sereia da Costa Verde",
+    "latitude": 41.116755,
+    "longitude": -8.664062
+  },
+  {
+    "osmId": 691995531,
+    "name": "Praia Canide Sul",
+    "latitude": 41.114274,
+    "longitude": -8.664222
+  },
+  {
+    "osmId": 691995532,
+    "name": null,
+    "latitude": 41.111635,
+    "longitude": -8.663719
+  },
+  {
+    "osmId": 694044249,
+    "name": "Praia da Tranca",
+    "latitude": 38.41865,
+    "longitude": -9.187014
+  },
+  {
+    "osmId": 694242767,
+    "name": "Praia Fluvial de Alfaiates",
+    "latitude": 40.381647,
+    "longitude": -6.926233
+  },
+  {
+    "osmId": 694456168,
+    "name": "Praia Fluvial de Ponte da Barca",
+    "latitude": 41.809786,
+    "longitude": -8.416929
+  },
+  {
+    "osmId": 696692135,
+    "name": "Praia Fluvial da Ponte do Sótão",
+    "latitude": 40.140231,
+    "longitude": -8.148769
+  },
+  {
+    "osmId": 696854735,
+    "name": "Praia da Zambujeira do Mar",
+    "latitude": 37.523076,
+    "longitude": -8.78748
+  },
+  {
+    "osmId": 697742991,
+    "name": null,
+    "latitude": 42.052113,
+    "longitude": -8.56277
+  },
+  {
+    "osmId": 701150926,
+    "name": null,
+    "latitude": 41.481463,
+    "longitude": -8.341751
+  },
+  {
+    "osmId": 702657114,
+    "name": null,
+    "latitude": 39.316568,
+    "longitude": -9.351687
+  },
+  {
+    "osmId": 702761686,
+    "name": null,
+    "latitude": 39.292617,
+    "longitude": -9.340375
+  },
+  {
+    "osmId": 703111648,
+    "name": null,
+    "latitude": 39.29122,
+    "longitude": -9.340542
+  },
+  {
+    "osmId": 703831539,
+    "name": "Praia Fluvial do Patacão",
+    "latitude": 39.302271,
+    "longitude": -8.581058
+  },
+  {
+    "osmId": 704120422,
+    "name": "Praia Fluvial de Fernandaires",
+    "latitude": 39.734802,
+    "longitude": -8.209919
+  },
+  {
+    "osmId": 704946071,
+    "name": "Praia Fluvial de Mourão",
+    "latitude": 38.367605,
+    "longitude": -7.356019
+  },
+  {
+    "osmId": 707027273,
+    "name": null,
+    "latitude": 40.184911,
+    "longitude": -8.150443
+  },
+  {
+    "osmId": 708920403,
+    "name": "Praia da Rasca",
+    "latitude": 38.503722,
+    "longitude": -8.927169
+  },
+  {
+    "osmId": 710569745,
+    "name": null,
+    "latitude": 41.481861,
+    "longitude": -8.34242
+  },
+  {
+    "osmId": 712030016,
+    "name": "Praia de Porto Dinheiro",
+    "latitude": 39.217017,
+    "longitude": -9.343476
+  },
+  {
+    "osmId": 720895047,
+    "name": "Praia Fluvial de Alvito da Beira",
+    "latitude": 39.823822,
+    "longitude": -7.797731
+  },
+  {
+    "osmId": 720895113,
+    "name": null,
+    "latitude": 39.824154,
+    "longitude": -7.797853
+  },
+  {
+    "osmId": 722557664,
+    "name": "Praia Fluvial do Rio Homem",
+    "latitude": 41.720765,
+    "longitude": -8.311564
+  },
+  {
+    "osmId": 722779621,
+    "name": "Praia 19",
+    "latitude": 38.586087,
+    "longitude": -9.20414
+  },
+  {
+    "osmId": 722872169,
+    "name": null,
+    "latitude": 41.480691,
+    "longitude": -8.347201
+  },
+  {
+    "osmId": 722872170,
+    "name": null,
+    "latitude": 41.48022,
+    "longitude": -8.347976
+  },
+  {
+    "osmId": 722872171,
+    "name": null,
+    "latitude": 41.479501,
+    "longitude": -8.348271
+  },
+  {
+    "osmId": 733017138,
+    "name": "Praia Fluvial dos Moinhos",
+    "latitude": 41.654988,
+    "longitude": -8.399858
+  },
+  {
+    "osmId": 733096735,
+    "name": "Praia do Louriçal",
+    "latitude": 38.776718,
+    "longitude": -9.497003
+  },
+  {
+    "osmId": 738050715,
+    "name": null,
+    "latitude": 37.670063,
+    "longitude": -7.505428
+  },
+  {
+    "osmId": 738191429,
+    "name": null,
+    "latitude": 38.98574,
+    "longitude": -9.418929
+  },
+  {
+    "osmId": 738191432,
+    "name": "Praia de Alibabá",
+    "latitude": 38.984432,
+    "longitude": -9.419381
+  },
+  {
+    "osmId": 739595652,
+    "name": "Praia da Física",
+    "latitude": 39.138725,
+    "longitude": -9.379865
+  },
+  {
+    "osmId": 759819948,
+    "name": null,
+    "latitude": 41.146647,
+    "longitude": -7.252516
+  },
+  {
+    "osmId": 760816707,
+    "name": "Praia Fluvial de São Sebastião da Feira",
+    "latitude": 40.315255,
+    "longitude": -7.865836
+  },
+  {
+    "osmId": 764143772,
+    "name": "Praia da Maria Esguelha",
+    "latitude": 38.510763,
+    "longitude": -8.918385
+  },
+  {
+    "osmId": 764145146,
+    "name": "Praia da Comenda",
+    "latitude": 38.507113,
+    "longitude": -8.925784
+  },
+  {
+    "osmId": 764145147,
+    "name": "Praia da Rainha",
+    "latitude": 38.508431,
+    "longitude": -8.92244
+  },
+  {
+    "osmId": 765360643,
+    "name": "Praia do Caniçal",
+    "latitude": 39.280781,
+    "longitude": -9.336592
+  },
+  {
+    "osmId": 765360644,
+    "name": null,
+    "latitude": 39.277057,
+    "longitude": -9.336219
+  },
+  {
+    "osmId": 791069218,
+    "name": "Praia Fluvial do Trabule",
+    "latitude": 40.772481,
+    "longitude": -7.651973
+  },
+  {
+    "osmId": 809967692,
+    "name": "Praia dos Pilotos",
+    "latitude": 38.472803,
+    "longitude": -8.98417
+  },
+  {
+    "osmId": 810707335,
+    "name": null,
+    "latitude": 37.113968,
+    "longitude": -8.934413
+  },
+  {
+    "osmId": 810715094,
+    "name": "Praia João Vaz",
+    "latitude": 37.043951,
+    "longitude": -8.885063
+  },
+  {
+    "osmId": 818434677,
+    "name": "Praia Fluvial do Botão",
+    "latitude": 40.312809,
+    "longitude": -8.390622
+  },
+  {
+    "osmId": 821133685,
+    "name": "Praia Fluvial de Cinco Reis",
+    "latitude": 38.013119,
+    "longitude": -7.935725
+  },
+  {
+    "osmId": 823518293,
+    "name": null,
+    "latitude": 41.346506,
+    "longitude": -8.467875
+  },
+  {
+    "osmId": 825867399,
+    "name": null,
+    "latitude": 40.579811,
+    "longitude": -7.308119
+  },
+  {
+    "osmId": 825867400,
+    "name": null,
+    "latitude": 40.58051,
+    "longitude": -7.307912
+  },
+  {
+    "osmId": 827065025,
+    "name": "Praia fluvial da Senhora da Cabeça",
+    "latitude": 42.023392,
+    "longitude": -8.657244
+  },
+  {
+    "osmId": 828824087,
+    "name": "Praia de Vale Figueira",
+    "latitude": 37.237411,
+    "longitude": -8.875412
+  },
+  {
+    "osmId": 828926006,
+    "name": null,
+    "latitude": 40.267259,
+    "longitude": -7.989426
+  },
+  {
+    "osmId": 833376672,
+    "name": null,
+    "latitude": 41.585685,
+    "longitude": -8.22496
+  },
+  {
+    "osmId": 833376673,
+    "name": null,
+    "latitude": 41.585778,
+    "longitude": -8.224724
+  },
+  {
+    "osmId": 834799595,
+    "name": null,
+    "latitude": 40.334135,
+    "longitude": -7.830684
+  },
+  {
+    "osmId": 834799596,
+    "name": null,
+    "latitude": 40.334451,
+    "longitude": -7.830091
+  },
+  {
+    "osmId": 834801016,
+    "name": null,
+    "latitude": 40.324339,
+    "longitude": -7.848788
+  },
+  {
+    "osmId": 835609124,
+    "name": "Praia de Moreira",
+    "latitude": 41.055489,
+    "longitude": -8.400184
+  },
+  {
+    "osmId": 835609130,
+    "name": null,
+    "latitude": 41.093666,
+    "longitude": -8.522535
+  },
+  {
+    "osmId": 835609131,
+    "name": null,
+    "latitude": 41.11234,
+    "longitude": -8.538419
+  },
+  {
+    "osmId": 843815183,
+    "name": "Praia dos Alteirinhos (naturista)",
+    "latitude": 37.517386,
+    "longitude": -8.789765
+  },
+  {
+    "osmId": 845013155,
+    "name": null,
+    "latitude": 40.400556,
+    "longitude": -7.640383
+  },
+  {
+    "osmId": 845013156,
+    "name": null,
+    "latitude": 40.400695,
+    "longitude": -7.640321
+  },
+  {
+    "osmId": 845068548,
+    "name": "Poço do Lagar",
+    "latitude": 40.287778,
+    "longitude": -7.709608
+  },
+  {
+    "osmId": 845069325,
+    "name": "Praia Fluvial do Poço da Broca",
+    "latitude": 40.293345,
+    "longitude": -7.753652
+  },
+  {
+    "osmId": 848113486,
+    "name": "Praia Fluvial",
+    "latitude": 41.414671,
+    "longitude": -7.964279
+  },
+  {
+    "osmId": 849521505,
+    "name": "Praia Fluvial da Mendacha",
+    "latitude": 39.66444,
+    "longitude": -8.431458
+  },
+  {
+    "osmId": 876569604,
+    "name": "Pedra Branca",
+    "latitude": 38.978663,
+    "longitude": -9.421752
+  },
+  {
+    "osmId": 877270233,
+    "name": "Praia da Orelheira",
+    "latitude": 38.980819,
+    "longitude": -9.421871
+  },
+  {
+    "osmId": 880336422,
+    "name": "Praia de Fermil",
+    "latitude": 41.427524,
+    "longitude": -7.984712
+  },
+  {
+    "osmId": 880336424,
+    "name": "Praia de Fermil",
+    "latitude": 41.427703,
+    "longitude": -7.98456
+  },
+  {
+    "osmId": 880336426,
+    "name": "Praia de Fermil",
+    "latitude": 41.427548,
+    "longitude": -7.985368
+  },
+  {
+    "osmId": 880590090,
+    "name": "Praia do Sul",
+    "latitude": 38.954881,
+    "longitude": -9.416508
+  },
+  {
+    "osmId": 881368638,
+    "name": null,
+    "latitude": 41.391166,
+    "longitude": -8.005889
+  },
+  {
+    "osmId": 882019340,
+    "name": null,
+    "latitude": 38.943134,
+    "longitude": -9.41462
+  },
+  {
+    "osmId": 882019341,
+    "name": null,
+    "latitude": 38.943231,
+    "longitude": -9.414635
+  },
+  {
+    "osmId": 882564760,
+    "name": null,
+    "latitude": 38.941676,
+    "longitude": -9.414224
+  },
+  {
+    "osmId": 884424125,
+    "name": null,
+    "latitude": 41.197106,
+    "longitude": -8.132473
+  },
+  {
+    "osmId": 886715926,
+    "name": "Praia Fluvial de Caneiro",
+    "latitude": 41.491027,
+    "longitude": -7.963994
+  },
+  {
+    "osmId": 886719362,
+    "name": "Praia do Porto de Mós",
+    "latitude": 37.08482,
+    "longitude": -8.689937
+  },
+  {
+    "osmId": 894923806,
+    "name": "Praia fluvial de Meimoa",
+    "latitude": 40.225629,
+    "longitude": -7.188024
+  },
+  {
+    "osmId": 906948213,
+    "name": "Praia do Porto do Touro",
+    "latitude": 38.757925,
+    "longitude": -9.482216
+  },
+  {
+    "osmId": 907026511,
+    "name": "Praia Doce",
+    "latitude": 39.048057,
+    "longitude": -8.800809
+  },
+  {
+    "osmId": 922225754,
+    "name": "Praia da Amália",
+    "latitude": 37.482407,
+    "longitude": -8.794534
+  },
+  {
+    "osmId": 931191751,
+    "name": "Praia do Rebolim",
+    "latitude": 40.179892,
+    "longitude": -8.418087
+  },
+  {
+    "osmId": 935106661,
+    "name": "Praia do Portinho da Arrábida",
+    "latitude": 38.476953,
+    "longitude": -8.983596
+  },
+  {
+    "osmId": 952473849,
+    "name": "Praia Fluvial dos Olhos d'Água do Alviela",
+    "latitude": 39.444869,
+    "longitude": -8.710963
+  },
+  {
+    "osmId": 953312029,
+    "name": "Praia de Redonda",
+    "latitude": 41.380464,
+    "longitude": -8.769461
+  },
+  {
+    "osmId": 953312030,
+    "name": "Praia de Loulé",
+    "latitude": 41.379147,
+    "longitude": -8.768641
+  },
+  {
+    "osmId": 953322271,
+    "name": "Praia de Hotel",
+    "latitude": 41.391736,
+    "longitude": -8.774828
+  },
+  {
+    "osmId": 953322272,
+    "name": "Praia de Lagoa II",
+    "latitude": 41.390879,
+    "longitude": -8.774482
+  },
+  {
+    "osmId": 953322273,
+    "name": "Praia de Lada I",
+    "latitude": 41.389747,
+    "longitude": -8.774513
+  },
+  {
+    "osmId": 953322274,
+    "name": "Praia de Lada II",
+    "latitude": 41.388665,
+    "longitude": -8.77457
+  },
+  {
+    "osmId": 953322275,
+    "name": "Praia de Beijinhos",
+    "latitude": 41.387587,
+    "longitude": -8.774696
+  },
+  {
+    "osmId": 953322276,
+    "name": "Praia Verde",
+    "latitude": 41.386296,
+    "longitude": -8.77437
+  },
+  {
+    "osmId": 953322277,
+    "name": "Praia Azul",
+    "latitude": 41.385186,
+    "longitude": -8.773029
+  },
+  {
+    "osmId": 953322278,
+    "name": "Praia de Salgueira",
+    "latitude": 41.383428,
+    "longitude": -8.771294
+  },
+  {
+    "osmId": 953326136,
+    "name": "Praia de Pontes",
+    "latitude": 41.39359,
+    "longitude": -8.776777
+  },
+  {
+    "osmId": 953326137,
+    "name": "Praia de Lagoa I",
+    "latitude": 41.392713,
+    "longitude": -8.77588
+  },
+  {
+    "osmId": 953332443,
+    "name": "Praia de Fragosa",
+    "latitude": 41.397605,
+    "longitude": -8.778899
+  },
+  {
+    "osmId": 957426818,
+    "name": "Praia da Esteveira",
+    "latitude": 37.408054,
+    "longitude": -8.811674
+  },
+  {
+    "osmId": 957455879,
+    "name": "Praia Grande de Porto Côvo",
+    "latitude": 37.857211,
+    "longitude": -8.793608
+  },
+  {
+    "osmId": 963401098,
+    "name": "Praia do Peixe",
+    "latitude": 41.374706,
+    "longitude": -8.762597
+  },
+  {
+    "osmId": 964252291,
+    "name": "Praia da Barradinha",
+    "latitude": 37.394556,
+    "longitude": -8.818939
+  },
+  {
+    "osmId": 970994411,
+    "name": "Praia Fluvial de Fontes",
+    "latitude": 39.604971,
+    "longitude": -8.26364
+  },
+  {
+    "osmId": 971157106,
+    "name": "Praia Fluvial de Alverangel",
+    "latitude": 39.54896,
+    "longitude": -8.301952
+  },
+  {
+    "osmId": 971159771,
+    "name": "Praia Fluvial dos Montes",
+    "latitude": 39.630572,
+    "longitude": -8.252725
+  },
+  {
+    "osmId": 971702489,
+    "name": "Praia Fluvial do Rabaçal",
+    "latitude": 41.631722,
+    "longitude": -7.247598
+  },
+  {
+    "osmId": 971986160,
+    "name": "Praia de Algés",
+    "latitude": 38.69572,
+    "longitude": -9.230998
+  },
+  {
+    "osmId": 973541106,
+    "name": "Praia fluvial da Bairrada",
+    "latitude": 39.647919,
+    "longitude": -8.241341
+  },
+  {
+    "osmId": 974025515,
+    "name": null,
+    "latitude": 40.683659,
+    "longitude": -8.219362
+  },
+  {
+    "osmId": 974592997,
+    "name": "Praia Fluvial do Trízio",
+    "latitude": 39.730443,
+    "longitude": -8.231715
+  },
+  {
+    "osmId": 976206782,
+    "name": null,
+    "latitude": 39.669155,
+    "longitude": -8.231412
+  },
+  {
+    "osmId": 976251052,
+    "name": "Praia fluvial da Macieira",
+    "latitude": 39.63558,
+    "longitude": -8.195675
+  },
+  {
+    "osmId": 981160324,
+    "name": "Praia Fluvial da Folgosa",
+    "latitude": 40.887981,
+    "longitude": -7.90675
+  },
+  {
+    "osmId": 981206713,
+    "name": null,
+    "latitude": 39.733479,
+    "longitude": -8.208896
+  },
+  {
+    "osmId": 981456244,
+    "name": null,
+    "latitude": 40.154173,
+    "longitude": -8.112046
+  },
+  {
+    "osmId": 982177002,
+    "name": null,
+    "latitude": 41.067593,
+    "longitude": -8.300485
+  },
+  {
+    "osmId": 982348909,
+    "name": null,
+    "latitude": 37.656815,
+    "longitude": -8.801271
+  },
+  {
+    "osmId": 983145233,
+    "name": null,
+    "latitude": 38.746238,
+    "longitude": -9.096516
+  },
+  {
+    "osmId": 986473094,
+    "name": null,
+    "latitude": 37.086824,
+    "longitude": -8.676214
+  },
+  {
+    "osmId": 989678720,
+    "name": null,
+    "latitude": 37.292205,
+    "longitude": -8.467887
+  },
+  {
+    "osmId": 990841799,
+    "name": "Praia Fluvial dos Canais",
+    "latitude": 37.693574,
+    "longitude": -7.653964
+  },
+  {
+    "osmId": 991402698,
+    "name": null,
+    "latitude": 41.15915,
+    "longitude": -7.863638
+  },
+  {
+    "osmId": 991509806,
+    "name": null,
+    "latitude": 41.158217,
+    "longitude": -7.872774
+  },
+  {
+    "osmId": 991684249,
+    "name": null,
+    "latitude": 41.159029,
+    "longitude": -7.859923
+  },
+  {
+    "osmId": 991849343,
+    "name": null,
+    "latitude": 41.143899,
+    "longitude": -7.885479
+  },
+  {
+    "osmId": 992662383,
+    "name": null,
+    "latitude": 37.959868,
+    "longitude": -8.886815
+  },
+  {
+    "osmId": 993098189,
+    "name": null,
+    "latitude": 41.132227,
+    "longitude": -7.89825
+  },
+  {
+    "osmId": 993201596,
+    "name": null,
+    "latitude": 41.157918,
+    "longitude": -7.874527
+  },
+  {
+    "osmId": 993639393,
+    "name": null,
+    "latitude": 41.15608,
+    "longitude": -7.847268
+  },
+  {
+    "osmId": 995801131,
+    "name": "Praia fluvial da Vila da Ponte",
+    "latitude": 40.918413,
+    "longitude": -7.514358
+  },
+  {
+    "osmId": 998122257,
+    "name": null,
+    "latitude": 41.540218,
+    "longitude": -8.789367
+  },
+  {
+    "osmId": 999840738,
+    "name": null,
+    "latitude": 38.512931,
+    "longitude": -8.91079
+  },
+  {
+    "osmId": 1003918796,
+    "name": "Praia Fluvial de Quadrazais",
+    "latitude": 40.313004,
+    "longitude": -6.987509
+  },
+  {
+    "osmId": 1004010707,
+    "name": "Praia Fluvial do Meimão",
+    "latitude": 40.269302,
+    "longitude": -7.144178
+  },
+  {
+    "osmId": 1005292171,
+    "name": null,
+    "latitude": 38.37245,
+    "longitude": -8.799928
+  },
+  {
+    "osmId": 1005292172,
+    "name": "Praia da Gasolineira",
+    "latitude": 38.363259,
+    "longitude": -8.79609
+  },
+  {
+    "osmId": 1005327953,
+    "name": "Praia de Melides",
+    "latitude": 38.129144,
+    "longitude": -8.79344
+  },
+  {
+    "osmId": 1005327954,
+    "name": null,
+    "latitude": 38.122201,
+    "longitude": -8.795784
+  },
+  {
+    "osmId": 1005327955,
+    "name": "Praia da Vigia",
+    "latitude": 38.133529,
+    "longitude": -8.792344
+  },
+  {
+    "osmId": 1009348452,
+    "name": "Praia da Vieira (Norte)",
+    "latitude": 39.883347,
+    "longitude": -8.969211
+  },
+  {
+    "osmId": 1012592139,
+    "name": null,
+    "latitude": 41.24617,
+    "longitude": -8.725941
+  },
+  {
+    "osmId": 1014611907,
+    "name": null,
+    "latitude": 41.250208,
+    "longitude": -8.724837
+  },
+  {
+    "osmId": 1023897546,
+    "name": "Praia das Maçãs",
+    "latitude": 38.824914,
+    "longitude": -9.469916
+  },
+  {
+    "osmId": 1029698885,
+    "name": "Praia fluvial do Moinho Novo",
+    "latitude": 39.638654,
+    "longitude": -7.865128
+  },
+  {
+    "osmId": 1029850148,
+    "name": "praia fluvial da riveira da pracana",
+    "latitude": 39.634537,
+    "longitude": -7.8632
+  },
+  {
+    "osmId": 1036934473,
+    "name": null,
+    "latitude": 39.355015,
+    "longitude": -9.394393
+  },
+  {
+    "osmId": 1053717826,
+    "name": null,
+    "latitude": 40.88707,
+    "longitude": -7.894797
+  },
+  {
+    "osmId": 1054183851,
+    "name": "Praia Fluvial das Flores",
+    "latitude": 41.318249,
+    "longitude": -7.722931
+  },
+  {
+    "osmId": 1056515224,
+    "name": "Praia de Cabanas Velhas (Naturista)",
+    "latitude": 37.064806,
+    "longitude": -8.792951
+  },
+  {
+    "osmId": 1060552289,
+    "name": "Praia da Ilha do Pessegueiro",
+    "latitude": 37.832362,
+    "longitude": -8.791888
+  },
+  {
+    "osmId": 1065256372,
+    "name": "Praia fluvial de Messegães",
+    "latitude": 42.089415,
+    "longitude": -8.364239
+  },
+  {
+    "osmId": 1069051542,
+    "name": "Praia Fluvial do Carvalho",
+    "latitude": 41.577166,
+    "longitude": -8.129765
+  },
+  {
+    "osmId": 1069286046,
+    "name": "Meia Praia",
+    "latitude": 37.120719,
+    "longitude": -8.626936
+  },
+  {
+    "osmId": 1070775092,
+    "name": "Praia da Entrada da Barca",
+    "latitude": 37.550953,
+    "longitude": -8.791895
+  },
+  {
+    "osmId": 1072329772,
+    "name": "Praia da Marinha da Noeirinha",
+    "latitude": 40.646129,
+    "longitude": -8.657954
+  },
+  {
+    "osmId": 1072329773,
+    "name": "Praia da Marinha da Noeirinha",
+    "latitude": 40.645577,
+    "longitude": -8.657575
+  },
+  {
+    "osmId": 1072598755,
+    "name": "Praia da Angra da Barreta",
+    "latitude": 37.777883,
+    "longitude": -8.802764
+  },
+  {
+    "osmId": 1072712263,
+    "name": "Praia Fluvial de Azenhas d'El Rei",
+    "latitude": 38.546737,
+    "longitude": -7.304345
+  },
+  {
+    "osmId": 1072819120,
+    "name": null,
+    "latitude": 40.249389,
+    "longitude": -8.036009
+  },
+  {
+    "osmId": 1078658547,
+    "name": "Praia da Gaivota",
+    "latitude": 37.852368,
+    "longitude": -8.796082
+  },
+  {
+    "osmId": 1078677062,
+    "name": null,
+    "latitude": 37.853609,
+    "longitude": -8.795116
+  },
+  {
+    "osmId": 1081260393,
+    "name": "Ponte do Mouro",
+    "latitude": 42.073485,
+    "longitude": -8.394887
+  },
+  {
+    "osmId": 1081955583,
+    "name": "Praia Fluvial da Cabanelas",
+    "latitude": 41.569807,
+    "longitude": -8.493373
+  },
+  {
+    "osmId": 1081955584,
+    "name": "Praia Fluvial da Ponte do Bico",
+    "latitude": 41.605475,
+    "longitude": -8.430417
+  },
+  {
+    "osmId": 1081955585,
+    "name": "Praia Fluvial da Palmeira",
+    "latitude": 41.606495,
+    "longitude": -8.431086
+  },
+  {
+    "osmId": 1086548804,
+    "name": "Praia do Espingardeiro",
+    "latitude": 37.85506,
+    "longitude": -8.793962
+  },
+  {
+    "osmId": 1087297139,
+    "name": null,
+    "latitude": 41.404248,
+    "longitude": -8.780297
+  },
+  {
+    "osmId": 1092167631,
+    "name": "Praia da Gorda",
+    "latitude": 38.667438,
+    "longitude": -9.028001
+  },
+  {
+    "osmId": 1106872193,
+    "name": "Praia da Ponta Pequena",
+    "latitude": 37.073565,
+    "longitude": -8.285315
+  },
+  {
+    "osmId": 1107052996,
+    "name": "Praia do Bico",
+    "latitude": 40.729606,
+    "longitude": -8.65014
+  },
+  {
+    "osmId": 1110292485,
+    "name": null,
+    "latitude": 41.675265,
+    "longitude": -7.961499
+  },
+  {
+    "osmId": 1124233372,
+    "name": "Praia Fluvial de Fráguas",
+    "latitude": 40.837584,
+    "longitude": -7.76821
+  },
+  {
+    "osmId": 1124832362,
+    "name": "Praia Fluvial",
+    "latitude": 40.758374,
+    "longitude": -8.0584
+  },
+  {
+    "osmId": 1132707658,
+    "name": "Praia fluvial de Vale Madeira",
+    "latitude": 40.786482,
+    "longitude": -7.009267
+  },
+  {
+    "osmId": 1136476451,
+    "name": "Praia do Bom Sucesso",
+    "latitude": 39.425309,
+    "longitude": -9.233911
+  },
+  {
+    "osmId": 1140795547,
+    "name": "Presa das Bicas",
+    "latitude": 40.029742,
+    "longitude": -8.377068
+  },
+  {
+    "osmId": 1158399770,
+    "name": "Praia de Alpertuche",
+    "latitude": 38.467292,
+    "longitude": -8.990363
+  },
+  {
+    "osmId": 1162845381,
+    "name": "Praia de Redonda / Leixão",
+    "latitude": 41.377181,
+    "longitude": -8.768315
+  },
+  {
+    "osmId": 1164102022,
+    "name": "Praia Gerês Albufeira",
+    "latitude": 41.699396,
+    "longitude": -8.172154
+  },
+  {
+    "osmId": 1174944425,
+    "name": null,
+    "latitude": 41.8867,
+    "longitude": -8.665681
+  },
+  {
+    "osmId": 1174955717,
+    "name": null,
+    "latitude": 41.888742,
+    "longitude": -8.783744
+  },
+  {
+    "osmId": 1180580193,
+    "name": null,
+    "latitude": 38.515663,
+    "longitude": -8.907432
+  },
+  {
+    "osmId": 1186010628,
+    "name": null,
+    "latitude": 42.051353,
+    "longitude": -8.615426
+  },
+  {
+    "osmId": 1189015620,
+    "name": null,
+    "latitude": 37.855002,
+    "longitude": -8.794639
+  },
+  {
+    "osmId": 1190126574,
+    "name": "Praia da Arriba",
+    "latitude": 38.720109,
+    "longitude": -9.47913
+  },
+  {
+    "osmId": 1198524448,
+    "name": "Praia das Camarinhas",
+    "latitude": 38.462965,
+    "longitude": -8.879217
+  },
+  {
+    "osmId": 1200680891,
+    "name": "Pé do Negro",
+    "latitude": 41.83499,
+    "longitude": -8.589978
+  },
+  {
+    "osmId": 1205519987,
+    "name": "Praia Fluvial de Albergaria dos Fusos",
+    "latitude": 38.287867,
+    "longitude": -7.917817
+  },
+  {
+    "osmId": 1213939817,
+    "name": "Praia Fluvial de Bitetos",
+    "latitude": 41.071942,
+    "longitude": -8.259597
+  },
+  {
+    "osmId": 1215828310,
+    "name": "Praia Flubial",
+    "latitude": 41.645278,
+    "longitude": -6.349335
+  },
+  {
+    "osmId": 1216637567,
+    "name": "Praia Fluvial do Passadouro",
+    "latitude": 41.23579,
+    "longitude": -7.537129
+  },
+  {
+    "osmId": 1222795784,
+    "name": "Praia Fluvial de Milheirós de Poiares",
+    "latitude": 40.927868,
+    "longitude": -8.467271
+  },
+  {
+    "osmId": 1224542321,
+    "name": "Praia do Cabedelo",
+    "latitude": 41.140031,
+    "longitude": -8.669487
+  },
+  {
+    "osmId": 1224542386,
+    "name": null,
+    "latitude": 41.14087,
+    "longitude": -8.652396
+  },
+  {
+    "osmId": 1236137162,
+    "name": "Praia da Balbina",
+    "latitude": 37.075513,
+    "longitude": -8.305551
+  },
+  {
+    "osmId": 1239998556,
+    "name": "Praia do Amado",
+    "latitude": 37.164339,
+    "longitude": -8.903388
+  },
+  {
+    "osmId": 1239998563,
+    "name": "Praia Cordama Naturista",
+    "latitude": 37.126854,
+    "longitude": -8.925067
+  },
+  {
+    "osmId": 1239998570,
+    "name": "Praia da Barriga",
+    "latitude": 37.118858,
+    "longitude": -8.930705
+  },
+  {
+    "osmId": 1239998572,
+    "name": "Praia da Barriga",
+    "latitude": 37.118974,
+    "longitude": -8.929653
+  },
+  {
+    "osmId": 1240127219,
+    "name": "Praia da Muração",
+    "latitude": 37.154764,
+    "longitude": -8.908356
+  },
+  {
+    "osmId": 1240127231,
+    "name": "Praia do Mirouço",
+    "latitude": 37.146929,
+    "longitude": -8.915884
+  },
+  {
+    "osmId": 1240859874,
+    "name": "Praia Fluvial de Andrães (Relva)",
+    "latitude": 41.256039,
+    "longitude": -7.682405
+  },
+  {
+    "osmId": 1241619236,
+    "name": "Praia da Bordeira",
+    "latitude": 37.199504,
+    "longitude": -8.900906
+  },
+  {
+    "osmId": 1241717170,
+    "name": null,
+    "latitude": 37.209234,
+    "longitude": -8.894058
+  },
+  {
+    "osmId": 1241717181,
+    "name": null,
+    "latitude": 37.217422,
+    "longitude": -8.887937
+  },
+  {
+    "osmId": 1241777732,
+    "name": "Praia da Arrifana",
+    "latitude": 37.292058,
+    "longitude": -8.865464
+  },
+  {
+    "osmId": 1241777800,
+    "name": null,
+    "latitude": 37.213668,
+    "longitude": -8.89075
+  },
+  {
+    "osmId": 1241777808,
+    "name": null,
+    "latitude": 37.242035,
+    "longitude": -8.872296
+  },
+  {
+    "osmId": 1241777809,
+    "name": null,
+    "latitude": 37.242805,
+    "longitude": -8.872015
+  },
+  {
+    "osmId": 1241777810,
+    "name": "Praia de Vale Figueira",
+    "latitude": 37.247352,
+    "longitude": -8.869399
+  },
+  {
+    "osmId": 1242019126,
+    "name": "Praia da Amoreira",
+    "latitude": 37.350858,
+    "longitude": -8.844728
+  },
+  {
+    "osmId": 1242614517,
+    "name": "Praia do Medo da Fonte Santa",
+    "latitude": 37.324294,
+    "longitude": -8.869489
+  },
+  {
+    "osmId": 1242776850,
+    "name": "Praia da Carreagem",
+    "latitude": 37.362283,
+    "longitude": -8.839475
+  },
+  {
+    "osmId": 1242844058,
+    "name": "Praia de Vale dos Homens",
+    "latitude": 37.385319,
+    "longitude": -8.824572
+  },
+  {
+    "osmId": 1242990213,
+    "name": "Praia das Adegas",
+    "latitude": 37.43918,
+    "longitude": -8.800545
+  },
+  {
+    "osmId": 1242990216,
+    "name": "Praia de Odeceixe-Mar",
+    "latitude": 37.442144,
+    "longitude": -8.797848
+  },
+  {
+    "osmId": 1243320967,
+    "name": "Praia do Telheiro",
+    "latitude": 37.045636,
+    "longitude": -8.979094
+  },
+  {
+    "osmId": 1243482695,
+    "name": "Praia da Ponta Ruiva",
+    "latitude": 37.068772,
+    "longitude": -8.964573
+  },
+  {
+    "osmId": 1243513171,
+    "name": null,
+    "latitude": 37.027507,
+    "longitude": -8.981808
+  },
+  {
+    "osmId": 1243839258,
+    "name": "Praia do Zavial Naturista",
+    "latitude": 37.043959,
+    "longitude": -8.866545
+  },
+  {
+    "osmId": 1244215650,
+    "name": "Praia Andorinha",
+    "latitude": 37.056394,
+    "longitude": -8.850438
+  },
+  {
+    "osmId": 1244215651,
+    "name": null,
+    "latitude": 37.05726,
+    "longitude": -8.848322
+  },
+  {
+    "osmId": 1244215652,
+    "name": null,
+    "latitude": 37.055562,
+    "longitude": -8.852719
+  },
+  {
+    "osmId": 1244215656,
+    "name": null,
+    "latitude": 37.059629,
+    "longitude": -8.842395
+  },
+  {
+    "osmId": 1244215657,
+    "name": "Praia da Foia do Carro",
+    "latitude": 37.058393,
+    "longitude": -8.845472
+  },
+  {
+    "osmId": 1244531550,
+    "name": null,
+    "latitude": 37.098203,
+    "longitude": -8.947404
+  },
+  {
+    "osmId": 1244531551,
+    "name": "Praia do Castelejo",
+    "latitude": 37.100071,
+    "longitude": -8.947015
+  },
+  {
+    "osmId": 1244670399,
+    "name": "Praia de Almádena",
+    "latitude": 37.065572,
+    "longitude": -8.795579
+  },
+  {
+    "osmId": 1244670402,
+    "name": "Praia da Salema",
+    "latitude": 37.064971,
+    "longitude": -8.821625
+  },
+  {
+    "osmId": 1244670407,
+    "name": "Praia da Boca do Rio",
+    "latitude": 37.066364,
+    "longitude": -8.808916
+  },
+  {
+    "osmId": 1245077034,
+    "name": "Praia dos Pinheiros",
+    "latitude": 37.08434,
+    "longitude": -8.667265
+  },
+  {
+    "osmId": 1245113537,
+    "name": null,
+    "latitude": 41.689034,
+    "longitude": -8.371714
+  },
+  {
+    "osmId": 1245113538,
+    "name": null,
+    "latitude": 41.688718,
+    "longitude": -8.37213
+  },
+  {
+    "osmId": 1245391449,
+    "name": "Meia Praia",
+    "latitude": 37.109609,
+    "longitude": -8.655367
+  },
+  {
+    "osmId": 1245711159,
+    "name": "Praia do Submarino",
+    "latitude": 37.116502,
+    "longitude": -8.571263
+  },
+  {
+    "osmId": 1245711160,
+    "name": "Praia do Submarino",
+    "latitude": 37.116397,
+    "longitude": -8.571722
+  },
+  {
+    "osmId": 1245711162,
+    "name": "Praia RF",
+    "latitude": 37.116219,
+    "longitude": -8.574277
+  },
+  {
+    "osmId": 1245711165,
+    "name": null,
+    "latitude": 37.117078,
+    "longitude": -8.575344
+  },
+  {
+    "osmId": 1245711168,
+    "name": null,
+    "latitude": 37.117322,
+    "longitude": -8.575883
+  },
+  {
+    "osmId": 1245711193,
+    "name": "Praia dos Três Irmãos",
+    "latitude": 37.119713,
+    "longitude": -8.581893
+  },
+  {
+    "osmId": 1245934887,
+    "name": "Praia João de Arens",
+    "latitude": 37.116217,
+    "longitude": -8.56788
+  },
+  {
+    "osmId": 1245934920,
+    "name": "Praia do Submarino",
+    "latitude": 37.116585,
+    "longitude": -8.570437
+  },
+  {
+    "osmId": 1246032617,
+    "name": "Praia do Boião",
+    "latitude": 37.118386,
+    "longitude": -8.56607
+  },
+  {
+    "osmId": 1246032644,
+    "name": "Praia João de Arens",
+    "latitude": 37.115636,
+    "longitude": -8.567341
+  },
+  {
+    "osmId": 1246173354,
+    "name": "Praia dos Três Castelos",
+    "latitude": 37.117654,
+    "longitude": -8.547906
+  },
+  {
+    "osmId": 1246423276,
+    "name": null,
+    "latitude": 37.115041,
+    "longitude": -8.528531
+  },
+  {
+    "osmId": 1246703809,
+    "name": "Praia do Mato",
+    "latitude": 37.102211,
+    "longitude": -8.506231
+  },
+  {
+    "osmId": 1246703830,
+    "name": "Praia dos Caneiros",
+    "latitude": 37.104988,
+    "longitude": -8.514001
+  },
+  {
+    "osmId": 1247020899,
+    "name": "Praia de Vale Centianes",
+    "latitude": 37.091384,
+    "longitude": -8.455771
+  },
+  {
+    "osmId": 1247020903,
+    "name": "Praia do Vale Covo",
+    "latitude": 37.093313,
+    "longitude": -8.460129
+  },
+  {
+    "osmId": 1247825356,
+    "name": "Praia da Corredoura",
+    "latitude": 37.08752,
+    "longitude": -8.421607
+  },
+  {
+    "osmId": 1248930430,
+    "name": "Praia do Cão Raivoso",
+    "latitude": 37.08745,
+    "longitude": -8.418131
+  },
+  {
+    "osmId": 1249063477,
+    "name": "Praia da Marinha",
+    "latitude": 37.089642,
+    "longitude": -8.414159
+  },
+  {
+    "osmId": 1249300471,
+    "name": "Praia do Barranquinho",
+    "latitude": 37.089894,
+    "longitude": -8.405567
+  },
+  {
+    "osmId": 1249669592,
+    "name": "Praia do Pontal",
+    "latitude": 37.093443,
+    "longitude": -8.392541
+  },
+  {
+    "osmId": 1249669595,
+    "name": "Praia da Morena",
+    "latitude": 37.093053,
+    "longitude": -8.393998
+  },
+  {
+    "osmId": 1249669603,
+    "name": "Praia da Estaquinha",
+    "latitude": 37.090889,
+    "longitude": -8.401201
+  },
+  {
+    "osmId": 1249710119,
+    "name": "Praia da Albandeira",
+    "latitude": 37.091049,
+    "longitude": -8.399888
+  },
+  {
+    "osmId": 1249710120,
+    "name": "Praia da Albandeira",
+    "latitude": 37.090888,
+    "longitude": -8.400358
+  },
+  {
+    "osmId": 1249999772,
+    "name": "Praia da Senhora da Rocha",
+    "latitude": 37.097102,
+    "longitude": -8.385648
+  },
+  {
+    "osmId": 1249999787,
+    "name": "Praia do Barranco",
+    "latitude": 37.095394,
+    "longitude": -8.391568
+  },
+  {
+    "osmId": 1250076164,
+    "name": null,
+    "latitude": 37.100624,
+    "longitude": -8.374959
+  },
+  {
+    "osmId": 1250076174,
+    "name": null,
+    "latitude": 37.101448,
+    "longitude": -8.371729
+  },
+  {
+    "osmId": 1250076184,
+    "name": "Praia das Escaleiras",
+    "latitude": 37.097444,
+    "longitude": -8.383522
+  },
+  {
+    "osmId": 1250076188,
+    "name": null,
+    "latitude": 37.098062,
+    "longitude": -8.382532
+  },
+  {
+    "osmId": 1250548776,
+    "name": null,
+    "latitude": 37.101399,
+    "longitude": -8.37216
+  },
+  {
+    "osmId": 1250594381,
+    "name": "Praia do Chiringuito",
+    "latitude": 37.078995,
+    "longitude": -8.313542
+  },
+  {
+    "osmId": 1250910953,
+    "name": "Praia do Sao Lourenco",
+    "latitude": 37.077844,
+    "longitude": -8.311647
+  },
+  {
+    "osmId": 1250910956,
+    "name": "Praia dos Bés",
+    "latitude": 37.07827,
+    "longitude": -8.312479
+  },
+  {
+    "osmId": 1250910959,
+    "name": "Praia da Galé (leste)",
+    "latitude": 37.080016,
+    "longitude": -8.315348
+  },
+  {
+    "osmId": 1250910960,
+    "name": "Praia da Galé",
+    "latitude": 37.081841,
+    "longitude": -8.318332
+  },
+  {
+    "osmId": 1250926280,
+    "name": null,
+    "latitude": 37.07561,
+    "longitude": -8.307255
+  },
+  {
+    "osmId": 1250926293,
+    "name": "Praia Manuel Lourenço",
+    "latitude": 37.076409,
+    "longitude": -8.309226
+  },
+  {
+    "osmId": 1251789696,
+    "name": "Praia da Ponta Grande",
+    "latitude": 37.073297,
+    "longitude": -8.287443
+  },
+  {
+    "osmId": 1251789697,
+    "name": "Praia do Ninho de Andorinha",
+    "latitude": 37.073473,
+    "longitude": -8.286632
+  },
+  {
+    "osmId": 1251789705,
+    "name": "Praia das Salamitras",
+    "latitude": 37.073274,
+    "longitude": -8.289793
+  },
+  {
+    "osmId": 1251789728,
+    "name": "Praia da Coelha",
+    "latitude": 37.073684,
+    "longitude": -8.294141
+  },
+  {
+    "osmId": 1251789729,
+    "name": "Praia da Maré das Porcas",
+    "latitude": 37.073835,
+    "longitude": -8.295783
+  },
+  {
+    "osmId": 1252085894,
+    "name": "Praia dos Paradinha",
+    "latitude": 37.074524,
+    "longitude": -8.282056
+  },
+  {
+    "osmId": 1252085905,
+    "name": "Praia de São Rafael",
+    "latitude": 37.074783,
+    "longitude": -8.280342
+  },
+  {
+    "osmId": 1252085915,
+    "name": "Praia dos Piratas",
+    "latitude": 37.07385,
+    "longitude": -8.283768
+  },
+  {
+    "osmId": 1252085924,
+    "name": null,
+    "latitude": 37.073671,
+    "longitude": -8.284536
+  },
+  {
+    "osmId": 1252085925,
+    "name": null,
+    "latitude": 37.073731,
+    "longitude": -8.284653
+  },
+  {
+    "osmId": 1252144318,
+    "name": "Praia dos Arrifes",
+    "latitude": 37.075921,
+    "longitude": -8.277528
+  },
+  {
+    "osmId": 1252144328,
+    "name": "Praia da Viga",
+    "latitude": 37.075098,
+    "longitude": -8.278401
+  },
+  {
+    "osmId": 1252443719,
+    "name": null,
+    "latitude": 37.079226,
+    "longitude": -8.266801
+  },
+  {
+    "osmId": 1252443721,
+    "name": "Praia do Risco",
+    "latitude": 37.079659,
+    "longitude": -8.264317
+  },
+  {
+    "osmId": 1252495883,
+    "name": null,
+    "latitude": 37.073749,
+    "longitude": -8.28377
+  },
+  {
+    "osmId": 1252978463,
+    "name": "Praia Afurada Naturista",
+    "latitude": 37.102812,
+    "longitude": -8.507711
+  },
+  {
+    "osmId": 1252978464,
+    "name": "Praia da Afurada",
+    "latitude": 37.1034,
+    "longitude": -8.509231
+  },
+  {
+    "osmId": 1253692196,
+    "name": "Praia da Caldeira",
+    "latitude": 37.096044,
+    "longitude": -8.66724
+  },
+  {
+    "osmId": 1253692197,
+    "name": null,
+    "latitude": 37.096106,
+    "longitude": -8.667517
+  },
+  {
+    "osmId": 1254208003,
+    "name": "Praia do Martinhal",
+    "latitude": 37.018518,
+    "longitude": -8.925617
+  },
+  {
+    "osmId": 1254208004,
+    "name": "Praia dos Rebolinhos",
+    "latitude": 37.022221,
+    "longitude": -8.920294
+  },
+  {
+    "osmId": 1254991134,
+    "name": "Praia dos Olhos de Água",
+    "latitude": 37.089709,
+    "longitude": -8.190699
+  },
+  {
+    "osmId": 1255056880,
+    "name": "Praia do Tonel",
+    "latitude": 37.005714,
+    "longitude": -8.947897
+  },
+  {
+    "osmId": 1255794138,
+    "name": "Praia do Canal",
+    "latitude": 37.270564,
+    "longitude": -8.860261
+  },
+  {
+    "osmId": 1255794144,
+    "name": "Praia do Penedo",
+    "latitude": 37.252319,
+    "longitude": -8.866244
+  },
+  {
+    "osmId": 1256162807,
+    "name": null,
+    "latitude": 37.33695,
+    "longitude": -8.858353
+  },
+  {
+    "osmId": 1256654176,
+    "name": "Praia da Samouqueira",
+    "latitude": 37.398341,
+    "longitude": -8.816673
+  },
+  {
+    "osmId": 1257163940,
+    "name": "Azenhas do Guadiana",
+    "latitude": 37.646212,
+    "longitude": -7.652117
+  },
+  {
+    "osmId": 1276262791,
+    "name": null,
+    "latitude": 39.803491,
+    "longitude": -8.008942
+  },
+  {
+    "osmId": 1279041961,
+    "name": "Praia da Grota",
+    "latitude": 38.749892,
+    "longitude": -9.471473
+  },
+  {
+    "osmId": 1282209281,
+    "name": "Praia Fluvial da Nossa Senhora da Ribeira de Parada",
+    "latitude": 40.386988,
+    "longitude": -8.042173
+  },
+  {
+    "osmId": 1289718112,
+    "name": null,
+    "latitude": 41.484962,
+    "longitude": -8.779603
+  },
+  {
+    "osmId": 1289718115,
+    "name": "Praia da Apúlia",
+    "latitude": 41.482825,
+    "longitude": -8.777689
+  },
+  {
+    "osmId": 1290434653,
+    "name": null,
+    "latitude": 41.73552,
+    "longitude": -7.473155
+  },
+  {
+    "osmId": 1290434656,
+    "name": null,
+    "latitude": 41.734828,
+    "longitude": -7.470101
+  },
+  {
+    "osmId": 1301152785,
+    "name": null,
+    "latitude": 37.78303,
+    "longitude": -8.801717
+  },
+  {
+    "osmId": 1308456050,
+    "name": "Praia Fluvial de Andrães (Relva)",
+    "latitude": 41.255991,
+    "longitude": -7.682893
+  },
+  {
+    "osmId": 1308456054,
+    "name": "Praia Fluvial de Andrães (Areia)",
+    "latitude": 41.255752,
+    "longitude": -7.68271
+  },
+  {
+    "osmId": 1310895171,
+    "name": "Praia Fluvial de Alcofra",
+    "latitude": 40.628655,
+    "longitude": -8.194443
+  },
+  {
+    "osmId": 1311845772,
+    "name": "Praia de Alfarim",
+    "latitude": 38.495182,
+    "longitude": -9.183098
+  },
+  {
+    "osmId": 1314187356,
+    "name": "Praia fluvial",
+    "latitude": 39.23634,
+    "longitude": -8.670219
+  },
+  {
+    "osmId": 1314309506,
+    "name": null,
+    "latitude": 40.257946,
+    "longitude": -7.580746
+  },
+  {
+    "osmId": 1322900164,
+    "name": null,
+    "latitude": 37.090052,
+    "longitude": -8.187091
+  },
+  {
+    "osmId": 1322931016,
+    "name": null,
+    "latitude": 37.049898,
+    "longitude": -8.980785
+  },
+  {
+    "osmId": 1324074429,
+    "name": "Praia dos Tomates",
+    "latitude": 37.078372,
+    "longitude": -8.142019
+  },
+  {
+    "osmId": 1326145037,
+    "name": null,
+    "latitude": 37.118003,
+    "longitude": -8.577588
+  },
+  {
+    "osmId": 1326145038,
+    "name": null,
+    "latitude": 37.117964,
+    "longitude": -8.576956
+  },
+  {
+    "osmId": 1326145039,
+    "name": "Praia da Prainha",
+    "latitude": 37.118278,
+    "longitude": -8.578246
+  },
+  {
+    "osmId": 1327926836,
+    "name": "Praia da Cordoama",
+    "latitude": 37.1093,
+    "longitude": -8.937528
+  },
+  {
+    "osmId": 1328233392,
+    "name": "Praia da Zimbreirinha",
+    "latitude": 37.192942,
+    "longitude": -8.913909
+  },
+  {
+    "osmId": 1328449733,
+    "name": null,
+    "latitude": 37.171007,
+    "longitude": -8.903738
+  },
+  {
+    "osmId": 1328449734,
+    "name": null,
+    "latitude": 37.1711,
+    "longitude": -8.904012
+  },
+  {
+    "osmId": 1328449735,
+    "name": "Praia do Amado",
+    "latitude": 37.16932,
+    "longitude": -8.903121
+  },
+  {
+    "osmId": 1328895446,
+    "name": "Praia Grodo Mexilhão",
+    "latitude": 37.061813,
+    "longitude": -8.834376
+  },
+  {
+    "osmId": 1329493935,
+    "name": "Praia da Oura",
+    "latitude": 37.085311,
+    "longitude": -8.223371
+  },
+  {
+    "osmId": 1330110289,
+    "name": null,
+    "latitude": 41.690577,
+    "longitude": -8.173289
+  },
+  {
+    "osmId": 1336426842,
+    "name": null,
+    "latitude": 41.941017,
+    "longitude": -8.427784
+  },
+  {
+    "osmId": 1341368308,
+    "name": "Praia da Foz do Lizandro",
+    "latitude": 38.941999,
+    "longitude": -9.413628
+  },
+  {
+    "osmId": 1341611681,
+    "name": "Praia Grande do Rodízio",
+    "latitude": 38.813067,
+    "longitude": -9.478545
+  },
+  {
+    "osmId": 1341617128,
+    "name": "Praia Pequena do Rodízio",
+    "latitude": 38.819611,
+    "longitude": -9.474465
+  },
+  {
+    "osmId": 1341639347,
+    "name": "Praia do Magoito",
+    "latitude": 38.860534,
+    "longitude": -9.450931
+  },
+  {
+    "osmId": 1341639355,
+    "name": "Praia da Aguda",
+    "latitude": 38.851948,
+    "longitude": -9.455688
+  },
+  {
+    "osmId": 1341888086,
+    "name": "Praia da Samarra",
+    "latitude": 38.896793,
+    "longitude": -9.434953
+  },
+  {
+    "osmId": 1341888093,
+    "name": "Praia da Samarra",
+    "latitude": 38.896089,
+    "longitude": -9.434854
+  },
+  {
+    "osmId": 1341961667,
+    "name": "Praia da Vigia",
+    "latitude": 38.919146,
+    "longitude": -9.426392
+  },
+  {
+    "osmId": 1341971839,
+    "name": "Praia do Aquário",
+    "latitude": 41.162497,
+    "longitude": -8.685964
+  },
+  {
+    "osmId": 1342250779,
+    "name": "Praia do Sul",
+    "latitude": 38.957631,
+    "longitude": -9.416017
+  },
+  {
+    "osmId": 1342250797,
+    "name": "Praia de São Julião",
+    "latitude": 38.929513,
+    "longitude": -9.421004
+  },
+  {
+    "osmId": 1342511925,
+    "name": "Praia da Empa",
+    "latitude": 38.979691,
+    "longitude": -9.422308
+  },
+  {
+    "osmId": 1342511927,
+    "name": "Praia dos Tombadoiros",
+    "latitude": 38.979233,
+    "longitude": -9.422333
+  },
+  {
+    "osmId": 1342511929,
+    "name": "Praia dos Tombadoiros",
+    "latitude": 38.979071,
+    "longitude": -9.422155
+  },
+  {
+    "osmId": 1342511933,
+    "name": "Praia de São Sebastião",
+    "latitude": 38.972672,
+    "longitude": -9.420397
+  },
+  {
+    "osmId": 1342511934,
+    "name": "Praia do Norte",
+    "latitude": 38.967171,
+    "longitude": -9.420052
+  },
+  {
+    "osmId": 1342511938,
+    "name": "Praia dos Pescadores",
+    "latitude": 38.964317,
+    "longitude": -9.419021
+  },
+  {
+    "osmId": 1351185084,
+    "name": null,
+    "latitude": 37.002627,
+    "longitude": -7.986199
+  },
+  {
+    "osmId": 1355148467,
+    "name": null,
+    "latitude": 39.041999,
+    "longitude": -9.41676
+  },
+  {
+    "osmId": 1356263698,
+    "name": null,
+    "latitude": 40.70816,
+    "longitude": -8.360903
+  },
+  {
+    "osmId": 1357060196,
+    "name": null,
+    "latitude": 39.068686,
+    "longitude": -9.4186
+  },
+  {
+    "osmId": 1357090689,
+    "name": "Praia do Inatel",
+    "latitude": 37.08577,
+    "longitude": -8.245228
+  },
+  {
+    "osmId": 1361005622,
+    "name": "Porto de Barcas",
+    "latitude": 39.22525,
+    "longitude": -9.340555
+  },
+  {
+    "osmId": 1362706696,
+    "name": "Praia de Santa Rita Norte",
+    "latitude": 39.172331,
+    "longitude": -9.358172
+  },
+  {
+    "osmId": 1378184512,
+    "name": null,
+    "latitude": 41.570115,
+    "longitude": -8.797563
+  },
+  {
+    "osmId": 1378184513,
+    "name": null,
+    "latitude": 41.593547,
+    "longitude": -8.804545
+  },
+  {
+    "osmId": 1378184514,
+    "name": "Praia de S.Bartolomeu",
+    "latitude": 41.573346,
+    "longitude": -8.798921
+  },
+  {
+    "osmId": 1378184516,
+    "name": null,
+    "latitude": 41.551004,
+    "longitude": -8.792278
+  },
+  {
+    "osmId": 1378184517,
+    "name": "Praia Suave Mar (Norte)",
+    "latitude": 41.548118,
+    "longitude": -8.791958
+  },
+  {
+    "osmId": 1378184518,
+    "name": "Praia Suave Mar (Centro)",
+    "latitude": 41.546514,
+    "longitude": -8.792287
+  },
+  {
+    "osmId": 1378184520,
+    "name": "Praia Suave Mar (Sul)",
+    "latitude": 41.544888,
+    "longitude": -8.792514
+  },
+  {
+    "osmId": 1378297557,
+    "name": null,
+    "latitude": 41.615862,
+    "longitude": -8.811878
+  },
+  {
+    "osmId": 1378297560,
+    "name": null,
+    "latitude": 41.621655,
+    "longitude": -8.814416
+  },
+  {
+    "osmId": 1378297580,
+    "name": "Praia de Rio de Moinhos",
+    "latitude": 41.565654,
+    "longitude": -8.796649
+  },
+  {
+    "osmId": 1378297581,
+    "name": null,
+    "latitude": 41.559312,
+    "longitude": -8.795214
+  },
+  {
+    "osmId": 1378297582,
+    "name": "Praia de Cepães",
+    "latitude": 41.554071,
+    "longitude": -8.793328
+  },
+  {
+    "osmId": 1378407964,
+    "name": "Praia de Lordelo",
+    "latitude": 41.637011,
+    "longitude": -8.820946
+  },
+  {
+    "osmId": 1379142015,
+    "name": "Praia Fluvial de Alqueva",
+    "latitude": 38.213668,
+    "longitude": -7.521169
+  },
+  {
+    "osmId": 1383298602,
+    "name": null,
+    "latitude": 41.514757,
+    "longitude": -8.744057
+  },
+  {
+    "osmId": 1383808559,
+    "name": "Praia da Ramalha",
+    "latitude": 41.475232,
+    "longitude": -8.774956
+  },
+  {
+    "osmId": 1383850210,
+    "name": null,
+    "latitude": 41.48001,
+    "longitude": -8.776136
+  },
+  {
+    "osmId": 1383850221,
+    "name": null,
+    "latitude": 41.534931,
+    "longitude": -8.789693
+  },
+  {
+    "osmId": 1383850231,
+    "name": null,
+    "latitude": 41.514539,
+    "longitude": -8.786056
+  },
+  {
+    "osmId": 1383850233,
+    "name": null,
+    "latitude": 41.506864,
+    "longitude": -8.787157
+  },
+  {
+    "osmId": 1383850244,
+    "name": null,
+    "latitude": 41.490522,
+    "longitude": -8.782765
+  },
+  {
+    "osmId": 1383850245,
+    "name": "Praia das Pedrinhas",
+    "latitude": 41.495926,
+    "longitude": -8.785586
+  },
+  {
+    "osmId": 1383850246,
+    "name": "Praia das Pedrinhas",
+    "latitude": 41.500794,
+    "longitude": -8.787867
+  },
+  {
+    "osmId": 1384166636,
+    "name": "Praia do Cabedelo",
+    "latitude": 41.661849,
+    "longitude": -8.825128
+  },
+  {
+    "osmId": 1384298905,
+    "name": "Praia de Carreço",
+    "latitude": 41.736801,
+    "longitude": -8.874727
+  },
+  {
+    "osmId": 1388108871,
+    "name": "Praia do Cavalinho",
+    "latitude": 38.992873,
+    "longitude": -9.423916
+  },
+  {
+    "osmId": 1388768283,
+    "name": null,
+    "latitude": 39.061883,
+    "longitude": -9.415887
+  },
+  {
+    "osmId": 1390033042,
+    "name": "Praia Formosa",
+    "latitude": 39.131547,
+    "longitude": -9.3854
+  },
+  {
+    "osmId": 1390033044,
+    "name": "Praia das Amoeiras",
+    "latitude": 39.127434,
+    "longitude": -9.388417
+  },
+  {
+    "osmId": 1390531389,
+    "name": "Praia Fluvial do Areinho de Avintes",
+    "latitude": 41.121505,
+    "longitude": -8.556594
+  },
+  {
+    "osmId": 1390562183,
+    "name": null,
+    "latitude": 39.163247,
+    "longitude": -9.364405
+  },
+  {
+    "osmId": 1390562189,
+    "name": "Praia de Santa Rita Sul",
+    "latitude": 39.167494,
+    "longitude": -9.361055
+  },
+  {
+    "osmId": 1390929292,
+    "name": null,
+    "latitude": 40.86529,
+    "longitude": -8.27716
+  },
+  {
+    "osmId": 1391339453,
+    "name": "Praia Fluvial da Lagoa",
+    "latitude": 41.738354,
+    "longitude": -8.271196
+  },
+  {
+    "osmId": 1392193212,
+    "name": null,
+    "latitude": 41.192517,
+    "longitude": -8.707573
+  },
+  {
+    "osmId": 1403199941,
+    "name": "Praia do Penedo",
+    "latitude": 38.468339,
+    "longitude": -9.190836
+  },
+  {
+    "osmId": 1411966635,
+    "name": null,
+    "latitude": 39.194446,
+    "longitude": -9.183298
+  },
+  {
+    "osmId": 1413489000,
+    "name": null,
+    "latitude": 38.507962,
+    "longitude": -8.850322
+  },
+  {
+    "osmId": 1413489001,
+    "name": null,
+    "latitude": 38.506633,
+    "longitude": -8.848518
+  },
+  {
+    "osmId": 1413489002,
+    "name": "Praia da Graça",
+    "latitude": 38.503394,
+    "longitude": -8.844657
+  },
+  {
+    "osmId": 1416546201,
+    "name": null,
+    "latitude": 41.941484,
+    "longitude": -8.42381
+  },
+  {
+    "osmId": 1416546206,
+    "name": null,
+    "latitude": 41.941377,
+    "longitude": -8.42454
+  },
+  {
+    "osmId": 1416813303,
+    "name": null,
+    "latitude": 41.921133,
+    "longitude": -8.442214
+  },
+  {
+    "osmId": 1418180874,
+    "name": "Praia Fluvial da Ribeira e Meregeiro",
+    "latitude": 41.143122,
+    "longitude": -8.226898
+  },
+  {
+    "osmId": 1419286732,
+    "name": "Praia Fluvial de Vidago",
+    "latitude": 41.661956,
+    "longitude": -7.58595
+  },
+  {
+    "osmId": 1421663412,
+    "name": "Praia do Farol (ria)",
+    "latitude": 36.981104,
+    "longitude": -7.861517
+  },
+  {
+    "osmId": 1424947614,
+    "name": null,
+    "latitude": 42.047415,
+    "longitude": -8.389066
+  },
+  {
+    "osmId": 1427387681,
+    "name": "Praia Fluvial de Torneiros",
+    "latitude": 41.083817,
+    "longitude": -8.141242
+  },
+  {
+    "osmId": 1436926235,
+    "name": null,
+    "latitude": 41.618238,
+    "longitude": -7.792457
+  },
+  {
+    "osmId": 1443606692,
+    "name": null,
+    "latitude": 41.139714,
+    "longitude": -8.664075
+  },
+  {
+    "osmId": 1446529061,
+    "name": "Praia Fluvial de São Gião",
+    "latitude": 40.346973,
+    "longitude": -7.807682
+  },
+  {
+    "osmId": 1447229938,
+    "name": "Praia Fluvial Porto das Mulheres",
+    "latitude": 39.36073,
+    "longitude": -8.49044
+  },
+  {
+    "osmId": 1451042123,
+    "name": "Praia do Outão",
+    "latitude": 38.488124,
+    "longitude": -8.934553
+  },
+  {
+    "osmId": 1452670716,
+    "name": "Praia das Moitas",
+    "latitude": 38.70149,
+    "longitude": -9.412009
+  },
+  {
+    "osmId": 1452670718,
+    "name": null,
+    "latitude": 38.699424,
+    "longitude": -9.417048
+  },
+  {
+    "osmId": 1454276841,
+    "name": "Praia das Moitas",
+    "latitude": 38.701958,
+    "longitude": -9.409368
+  },
+  {
+    "osmId": 1454401457,
+    "name": "Praia da Poça",
+    "latitude": 38.701766,
+    "longitude": -9.391641
+  },
+  {
+    "osmId": 1454424731,
+    "name": "Praia da Azarujinha",
+    "latitude": 38.700601,
+    "longitude": -9.389241
+  },
+  {
+    "osmId": 1464577445,
+    "name": "Praia Fluvial da Ribeira de Carreiras",
+    "latitude": 37.616835,
+    "longitude": -7.683594
+  },
+  {
+    "osmId": 1467661462,
+    "name": null,
+    "latitude": 40.694799,
+    "longitude": -8.602199
+  },
+  {
+    "osmId": 1467852566,
+    "name": "Praia Fluvial de Álvaro",
+    "latitude": 39.977598,
+    "longitude": -7.960924
+  },
+  {
+    "osmId": 1473435565,
+    "name": "Praia de Castelo do Neiva",
+    "latitude": 41.629936,
+    "longitude": -8.820328
+  },
+  {
+    "osmId": 1473435566,
+    "name": "Praia de Castelo do Neiva",
+    "latitude": 41.624563,
+    "longitude": -8.816848
+  },
+  {
+    "osmId": 1474143708,
+    "name": "Praia Rodanho - zona de Naturista tolerado",
+    "latitude": 41.661576,
+    "longitude": -8.824339
+  },
+  {
+    "osmId": 1474192103,
+    "name": "Praia de Amorosa",
+    "latitude": 41.645787,
+    "longitude": -8.824285
+  },
+  {
+    "osmId": 1474542132,
+    "name": "Praia de Caminha",
+    "latitude": 41.864049,
+    "longitude": -8.864006
+  },
+  {
+    "osmId": 1474542134,
+    "name": "Praia de Moledo",
+    "latitude": 41.850926,
+    "longitude": -8.867521
+  },
+  {
+    "osmId": 1474807103,
+    "name": "Praia do Cabedelo",
+    "latitude": 41.676794,
+    "longitude": -8.831221
+  },
+  {
+    "osmId": 1474807104,
+    "name": "Praia do Cabedelo",
+    "latitude": 41.67296,
+    "longitude": -8.825739
+  },
+  {
+    "osmId": 1474807120,
+    "name": "Praia do Aquário",
+    "latitude": 41.683005,
+    "longitude": -8.83373
+  },
+  {
+    "osmId": 1474807121,
+    "name": "Praia do Aquário",
+    "latitude": 41.682375,
+    "longitude": -8.833376
+  },
+  {
+    "osmId": 1480615966,
+    "name": "Praia Fluvial de Fornelos",
+    "latitude": 41.2492,
+    "longitude": -7.811634
+  },
+  {
+    "osmId": 1490497402,
+    "name": null,
+    "latitude": 40.653949,
+    "longitude": -8.697362
+  },
+  {
+    "osmId": 1491203599,
+    "name": "Praia da Pedra da Agulha",
+    "latitude": 37.27495,
+    "longitude": -8.863148
+  },
+  {
+    "osmId": 1497785950,
+    "name": "Praia Vale do Olival",
+    "latitude": 37.101802,
+    "longitude": -8.370281
+  },
+  {
+    "osmId": 1499850407,
+    "name": null,
+    "latitude": 40.207747,
+    "longitude": -8.350266
+  },
+  {
+    "osmId": 1501060262,
+    "name": "Praia do Barril",
+    "latitude": 37.085207,
+    "longitude": -7.663338
+  },
+  {
+    "osmId": 1517196164,
+    "name": null,
+    "latitude": 41.01534,
+    "longitude": -8.269341
+  },
+  {
+    "osmId": 1532666208,
+    "name": "Praia do Monte Branco",
+    "latitude": 38.480365,
+    "longitude": -8.972289
+  },
+  {
+    "osmId": 1532666209,
+    "name": "Praia da Anicha",
+    "latitude": 38.48041,
+    "longitude": -8.970896
+  },
+  {
+    "osmId": 1539087987,
+    "name": null,
+    "latitude": 41.318609,
+    "longitude": -7.855202
+  },
+  {
+    "osmId": 1539783041,
+    "name": null,
+    "latitude": 38.667054,
+    "longitude": -9.073948
+  },
+  {
+    "osmId": 1539783061,
+    "name": null,
+    "latitude": 38.665937,
+    "longitude": -9.075146
+  },
+  {
+    "osmId": 1540027768,
+    "name": null,
+    "latitude": 38.662152,
+    "longitude": -9.088118
+  },
+  {
+    "osmId": 2657447612,
+    "name": "Praia Fluvial da Pampilhosa da Serra",
+    "latitude": 40.047092,
+    "longitude": -7.947834
+  },
+  {
+    "osmId": 2912663324,
+    "name": "Praia Fluvial São Simão",
+    "latitude": 41.693909,
+    "longitude": -8.770649
+  },
+  {
+    "osmId": 3371173907,
+    "name": "Praia Fluvial de Breia",
+    "latitude": 42.047389,
+    "longitude": -8.502451
+  },
+  {
+    "osmId": 3371184287,
+    "name": "Praia Fluvial de Pinheiros",
+    "latitude": 42.037465,
+    "longitude": -8.501984
+  },
+  {
+    "osmId": 3564738825,
+    "name": "Praia Fluvial de Segirei",
+    "latitude": 41.86591,
+    "longitude": -7.195011
+  },
+  {
+    "osmId": 3685867911,
+    "name": "Praia Fluvial da Talhada",
+    "latitude": 40.568718,
+    "longitude": -8.355551
+  },
+  {
+    "osmId": 3783830126,
+    "name": "Praia Torrão do Lameiro",
+    "latitude": 40.828798,
+    "longitude": -8.690598
+  },
+  {
+    "osmId": 3859586882,
+    "name": "Praia Duna Alta Naturista",
+    "latitude": 40.517315,
+    "longitude": -8.782593
+  },
+  {
+    "osmId": 3859586884,
+    "name": "Praia Naturistas da Costa Nova em Aveiro",
+    "latitude": 40.593187,
+    "longitude": -8.758036
+  },
+  {
+    "osmId": 3859586886,
+    "name": "Praia Rio Alto Naturista",
+    "latitude": 41.433143,
+    "longitude": -8.783747
+  },
+  {
+    "osmId": 3859586890,
+    "name": "Praia de Afife",
+    "latitude": 41.785024,
+    "longitude": -8.871524
+  },
+  {
+    "osmId": 4115117305,
+    "name": "Praia Fluvial do Pêgo Escuro",
+    "latitude": 40.15049,
+    "longitude": -8.111974
+  },
+  {
+    "osmId": 4288439887,
+    "name": "Praia Frincha Grande",
+    "latitude": 39.416683,
+    "longitude": -9.252334
+  },
+  {
+    "osmId": 4288440712,
+    "name": "Barroca da Adela",
+    "latitude": 39.412175,
+    "longitude": -9.258659
+  },
+  {
+    "osmId": 4288440726,
+    "name": "Cova do Covão",
+    "latitude": 39.409749,
+    "longitude": -9.26197
+  },
+  {
+    "osmId": 4297922107,
+    "name": "Praia 37",
+    "latitude": 41.003039,
+    "longitude": -8.646669
+  },
+  {
+    "osmId": 4913540720,
+    "name": null,
+    "latitude": 41.362169,
+    "longitude": -7.895722
+  },
+  {
+    "osmId": 4938682559,
+    "name": "Praia do Pico da Mota",
+    "latitude": 39.387563,
+    "longitude": -9.296989
+  },
+  {
+    "osmId": 5111038307,
+    "name": null,
+    "latitude": 38.434457,
+    "longitude": -7.349765
+  },
+  {
+    "osmId": 5117235785,
+    "name": null,
+    "latitude": 37.049157,
+    "longitude": -7.733875
+  },
+  {
+    "osmId": 5272943028,
+    "name": "Praia Fluvial de Casaldate",
+    "latitude": 41.914935,
+    "longitude": -8.534992
+  },
+  {
+    "osmId": 5596738176,
+    "name": "Praia fluvial da Azurreira",
+    "latitude": 40.852217,
+    "longitude": -8.653735
+  },
+  {
+    "osmId": 5802044628,
+    "name": "Praia Fluvial do Caldeirão",
+    "latitude": 39.644612,
+    "longitude": -8.409887
+  },
+  {
+    "osmId": 5885966920,
+    "name": "Praia Fluvial Cabreira",
+    "latitude": 40.140337,
+    "longitude": -8.072547
+  },
+  {
+    "osmId": 5941434960,
+    "name": "Praia Fluvial de Covelinhas",
+    "latitude": 41.051626,
+    "longitude": -7.97564
+  },
+  {
+    "osmId": 6013800649,
+    "name": "Praia Fluvial do Teixo ou das Dornas",
+    "latitude": 40.559236,
+    "longitude": -8.237549
+  },
+  {
+    "osmId": 6070249337,
+    "name": "Praia Fluvial da Várzea do Homem",
+    "latitude": 40.488923,
+    "longitude": -8.134431
+  },
+  {
+    "osmId": 6757020738,
+    "name": "Praia da Culatra",
+    "latitude": 37.003242,
+    "longitude": -7.802258
+  },
+  {
+    "osmId": 7279327415,
+    "name": "Praia da Estrela",
+    "latitude": 39.406365,
+    "longitude": -9.267182
+  },
+  {
+    "osmId": 7439877903,
+    "name": "Praia de Árvore",
+    "latitude": 41.330108,
+    "longitude": -8.739078
+  },
+  {
+    "osmId": 7710944166,
+    "name": null,
+    "latitude": 40.608495,
+    "longitude": -7.299684
+  },
+  {
+    "osmId": 7710944173,
+    "name": null,
+    "latitude": 40.579823,
+    "longitude": -7.308153
+  },
+  {
+    "osmId": 7710944182,
+    "name": null,
+    "latitude": 40.580354,
+    "longitude": -7.307909
+  },
+  {
+    "osmId": 7779606275,
+    "name": "Praia Fluvial de Oliveira",
+    "latitude": 41.585706,
+    "longitude": -8.224951
+  },
+  {
+    "osmId": 7809775942,
+    "name": null,
+    "latitude": 40.883171,
+    "longitude": -8.186813
+  },
+  {
+    "osmId": 7855064985,
+    "name": "Praia Fluvial de Paul",
+    "latitude": 40.211479,
+    "longitude": -7.631769
+  },
+  {
+    "osmId": 7865701117,
+    "name": null,
+    "latitude": 42.052219,
+    "longitude": -8.562869
+  },
+  {
+    "osmId": 7881988633,
+    "name": "Praia das Fidalgas",
+    "latitude": 40.014433,
+    "longitude": -8.044761
+  },
+  {
+    "osmId": 7881998587,
+    "name": "Praia Fluvial Natural de Amiosinho",
+    "latitude": 40.035871,
+    "longitude": -8.096639
+  },
+  {
+    "osmId": 7926447301,
+    "name": "Praia Fluvial do Sobreirinho",
+    "latitude": 39.654236,
+    "longitude": -8.410594
+  },
+  {
+    "osmId": 7969678405,
+    "name": "Prainha fluvial",
+    "latitude": 41.951052,
+    "longitude": -6.953089
+  },
+  {
+    "osmId": 7969754679,
+    "name": "Prainha fluvial",
+    "latitude": 41.898208,
+    "longitude": -6.85301
+  },
+  {
+    "osmId": 8162985905,
+    "name": "Praia do Matadouro",
+    "latitude": 38.97555,
+    "longitude": -9.420406
+  },
+  {
+    "osmId": 8211403118,
+    "name": "Praia Adão e Eva",
+    "latitude": 37.176213,
+    "longitude": -7.46607
+  },
+  {
+    "osmId": 8556848838,
+    "name": "Praia da Sesmaria",
+    "latitude": 38.124175,
+    "longitude": -8.795136
+  },
+  {
+    "osmId": 8584301154,
+    "name": "Praia fluvial dos Novos",
+    "latitude": 40.054991,
+    "longitude": -8.609813
+  },
+  {
+    "osmId": 8725496808,
+    "name": "Praia Fluvial de Vale de Gaios",
+    "latitude": 40.375302,
+    "longitude": -7.97629
+  },
+  {
+    "osmId": 8795678512,
+    "name": null,
+    "latitude": 37.01099,
+    "longitude": -7.931671
+  },
+  {
+    "osmId": 8909700163,
+    "name": null,
+    "latitude": 39.056602,
+    "longitude": -7.912477
+  },
+  {
+    "osmId": 9007934430,
+    "name": "Praia de Porto Dinheiro",
+    "latitude": 39.213987,
+    "longitude": -9.34431
+  },
+  {
+    "osmId": 9865886440,
+    "name": null,
+    "latitude": 41.368532,
+    "longitude": -7.80064
+  },
+  {
+    "osmId": 9867074363,
+    "name": null,
+    "latitude": 41.238731,
+    "longitude": -7.784364
+  },
+  {
+    "osmId": 9933712709,
+    "name": "Praia do Puço",
+    "latitude": 41.289016,
+    "longitude": -8.732591
+  },
+  {
+    "osmId": 9937619406,
+    "name": null,
+    "latitude": 40.888227,
+    "longitude": -7.92713
+  },
+  {
+    "osmId": 9963174164,
+    "name": "Praia Fluvial dos Moinhos- Sobral",
+    "latitude": 40.762203,
+    "longitude": -7.97295
+  },
+  {
+    "osmId": 9963198429,
+    "name": "Praia Fluvial do Sobral",
+    "latitude": 40.76503,
+    "longitude": -7.989877
+  },
+  {
+    "osmId": 9971984630,
+    "name": "Açude",
+    "latitude": 40.151774,
+    "longitude": -7.686349
+  },
+  {
+    "osmId": 10224558485,
+    "name": "Quinta Amoroso",
+    "latitude": 37.197106,
+    "longitude": -8.498926
+  },
+  {
+    "osmId": 10241815448,
+    "name": "Spot Mama Prada",
+    "latitude": 40.745019,
+    "longitude": -8.678093
+  },
+  {
+    "osmId": 10241980424,
+    "name": "Kitesurf und Wingsurfspot Costa Nova (Süd)",
+    "latitude": 40.606976,
+    "longitude": -8.7484
+  },
+  {
+    "osmId": 10579839719,
+    "name": "Praia Fluvial do Rio Beça",
+    "latitude": 41.562683,
+    "longitude": -7.819348
+  },
+  {
+    "osmId": 10594458235,
+    "name": "Praia Fluvial de Martim",
+    "latitude": 41.358529,
+    "longitude": -7.403185
+  },
+  {
+    "osmId": 10732467715,
+    "name": null,
+    "latitude": 40.622246,
+    "longitude": -8.737012
+  },
+  {
+    "osmId": 11066687473,
+    "name": "Praia da Estela",
+    "latitude": 41.454,
+    "longitude": -8.777998
+  },
+  {
+    "osmId": 11105958933,
+    "name": "Praia da Barranha",
+    "latitude": 41.43889,
+    "longitude": -8.780891
+  },
+  {
+    "osmId": 11167330665,
+    "name": "Praia Fluvial da Lagariça",
+    "latitude": 41.063586,
+    "longitude": -8.008411
+  },
+  {
+    "osmId": 11264704376,
+    "name": "Praia das Caxinas",
+    "latitude": 41.3565,
+    "longitude": -8.755421
+  },
+  {
+    "osmId": 11933916895,
+    "name": "Praia Fluvial dos Felinhos",
+    "latitude": 41.622595,
+    "longitude": -8.426251
+  },
+  {
+    "osmId": 11980798826,
+    "name": "Piscina Fluvial",
+    "latitude": 40.57079,
+    "longitude": -8.446557
+  },
+  {
+    "osmId": 12015870479,
+    "name": "Praia Fluvial do Lago",
+    "latitude": 38.201773,
+    "longitude": -7.484895
+  },
+  {
+    "osmId": 12070720137,
+    "name": "Praia das Primas",
+    "latitude": 37.168321,
+    "longitude": -7.503516
+  },
+  {
+    "osmId": 12112927599,
+    "name": "Praia Fluvial da Fraga do Rio",
+    "latitude": 41.165316,
+    "longitude": -8.024382
+  },
+  {
+    "osmId": 12115227338,
+    "name": "Praia da Pontinha",
+    "latitude": 41.197183,
+    "longitude": -8.132076
+  },
+  {
+    "osmId": 12150347084,
+    "name": null,
+    "latitude": 41.753009,
+    "longitude": -7.771063
+  },
+  {
+    "osmId": 12327275774,
+    "name": "Praia Fluvial de Congida",
+    "latitude": 41.075536,
+    "longitude": -6.77977
+  },
+  {
+    "osmId": 12542217656,
+    "name": "Praia Fluvial do Cortez",
+    "latitude": 40.650084,
+    "longitude": -8.300649
+  },
+  {
+    "osmId": 12634507701,
+    "name": "Praia de Vila Chã - Vila do Conde",
+    "latitude": 41.290055,
+    "longitude": -8.732885
+  },
+  {
+    "osmId": 12634507702,
+    "name": "Praia de Angeiras Norte",
+    "latitude": 41.267653,
+    "longitude": -8.726933
+  },
+  {
+    "osmId": 12741819609,
+    "name": "Praia Fluvial Porto Carrero",
+    "latitude": 41.612651,
+    "longitude": -8.427999
+  },
+  {
+    "osmId": 13034415905,
+    "name": "Praia Fluvial de Cavez",
+    "latitude": 41.516216,
+    "longitude": -7.889863
+  },
+  {
+    "osmId": 13043152853,
+    "name": "Praia Fluvial de Oriola",
+    "latitude": 38.314346,
+    "longitude": -7.861945
+  },
+  {
+    "osmId": 13072989889,
+    "name": "Praia Fluvial do Pintadinho",
+    "latitude": 39.097503,
+    "longitude": -8.145111
+  },
+  {
+    "osmId": 13073054404,
+    "name": "Praia Fluvial da Albufeira de Montargil",
+    "latitude": 39.089433,
+    "longitude": -8.161529
+  },
+  {
+    "osmId": 13356447829,
+    "name": "Praia Fluvial de Fontes",
+    "latitude": 39.605267,
+    "longitude": -8.263856
+  },
+  {
+    "osmId": 14018428456,
+    "name": null,
+    "latitude": 40.787091,
+    "longitude": -7.007174
+  },
+  {
+    "osmId": 14022677538,
+    "name": null,
+    "latitude": 40.967795,
+    "longitude": -7.533535
+  },
+  {
+    "osmId": 14022706799,
+    "name": null,
+    "latitude": 40.950085,
+    "longitude": -7.542078
+  },
+  {
+    "osmId": 14069135448,
+    "name": "Praia Fluvial de Garrafas",
+    "latitude": 41.662797,
+    "longitude": -8.397367
+  },
+  {
+    "osmId": 14073626133,
+    "name": "Praia da Barca",
+    "latitude": 41.701745,
+    "longitude": -8.035471
+  }
+]
