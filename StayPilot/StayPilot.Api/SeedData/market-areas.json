@@ -11181,6 +11181,48 @@
   {
     "country": "Portugal",
     "district": "Faro",
+    "municipality": "Loulé",
+    "town": "São Sebastião",
+    "zone": "Alfeição"
+  },
+  {
+    "country": "Portugal",
+    "district": "Faro",
+    "municipality": "Loulé",
+    "town": "São Sebastião",
+    "zone": "Centro Oeste da Cidade de Loulé"
+  },
+  {
+    "country": "Portugal",
+    "district": "Faro",
+    "municipality": "Loulé",
+    "town": "São Sebastião",
+    "zone": "Cerro de Cabeça de Câmara - Estação de Loulé"
+  },
+  {
+    "country": "Portugal",
+    "district": "Faro",
+    "municipality": "Loulé",
+    "town": "São Sebastião",
+    "zone": "Parragil - Varjota"
+  },
+  {
+    "country": "Portugal",
+    "district": "Faro",
+    "municipality": "Loulé",
+    "town": "São Sebastião",
+    "zone": "Vale Judeu"
+  },
+  {
+    "country": "Portugal",
+    "district": "Faro",
+    "municipality": "Loulé",
+    "town": "São Sebastião",
+    "zone": "Vale Telheiro"
+  },
+  {
+    "country": "Portugal",
+    "district": "Faro",
     "municipality": "Monchique",
     "town": "Alferce",
     "zone": null
@@ -23839,13 +23881,6 @@
     "district": "Setúbal",
     "municipality": "Setúbal",
     "town": "São Sebastião",
-    "zone": "Alfeição"
-  },
-  {
-    "country": "Portugal",
-    "district": "Setúbal",
-    "municipality": "Setúbal",
-    "town": "São Sebastião",
     "zone": "Arangues - Pinheirinhos"
   },
   {
@@ -23888,20 +23923,6 @@
     "district": "Setúbal",
     "municipality": "Setúbal",
     "town": "São Sebastião",
-    "zone": "Centro Oeste da Cidade de Loulé"
-  },
-  {
-    "country": "Portugal",
-    "district": "Setúbal",
-    "municipality": "Setúbal",
-    "town": "São Sebastião",
-    "zone": "Cerro de Cabeça de Câmara - Estação de Loulé"
-  },
-  {
-    "country": "Portugal",
-    "district": "Setúbal",
-    "municipality": "Setúbal",
-    "town": "São Sebastião",
     "zone": "Lanchoa - Tetra"
   },
   {
@@ -23930,13 +23951,6 @@
     "district": "Setúbal",
     "municipality": "Setúbal",
     "town": "São Sebastião",
-    "zone": "Parragil - Varjota"
-  },
-  {
-    "country": "Portugal",
-    "district": "Setúbal",
-    "municipality": "Setúbal",
-    "town": "São Sebastião",
     "zone": "Peixe Frito"
   },
   {
@@ -23952,20 +23966,6 @@
     "municipality": "Setúbal",
     "town": "São Sebastião",
     "zone": "Vale do Cobro"
-  },
-  {
-    "country": "Portugal",
-    "district": "Setúbal",
-    "municipality": "Setúbal",
-    "town": "São Sebastião",
-    "zone": "Vale Judeu"
-  },
-  {
-    "country": "Portugal",
-    "district": "Setúbal",
-    "municipality": "Setúbal",
-    "town": "São Sebastião",
-    "zone": "Vale Telheiro"
   },
   {
     "country": "Portugal",
