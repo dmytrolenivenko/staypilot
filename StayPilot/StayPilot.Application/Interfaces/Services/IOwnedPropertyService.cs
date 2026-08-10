@@ -14,7 +14,7 @@ namespace StayPilot.Application.Interfaces.Services
 
         Task<OwnedPropertyResponse?> UpdateOwnedPropertyAsync(int id, OwnedPropertyRequest request);
 
-        Task<OwnedPropertyAnalysisResponse> EstimateOwnedPropertyValue(int id, int months);
+        Task<OwnedPropertyAnalysisResponse> EstimateOwnedPropertyValue(int id, int radiusMeters, int months);
 
         Task<List<OwnedPropertyResponse>> GetAllOwnedPropertiesAsync();
 

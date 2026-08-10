@@ -23,6 +23,8 @@ export class ValuationComponent implements OnInit {
   properties = signal<OwnedPropertyResponse[]>([]);
   selectedId = signal<number | null>(null);
   months = signal(12);
+  // How far outside the property's own market area we still accept comparable listings.
+  radiusMeters = signal(2000);
 
   result = signal<OwnedPropertyAnalysisResponse | null>(null);
 
@@ -77,7 +79,7 @@ export class ValuationComponent implements OnInit {
     this.error.set(null);
     this.result.set(null);
 
-    this.service.estimate(id, this.months()).subscribe({
+    this.service.estimate(id, this.months(), this.radiusMeters()).subscribe({
       next: res => {
         this.result.set(res);
         this.estimating.set(false);

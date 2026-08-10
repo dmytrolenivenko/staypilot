@@ -71,10 +71,12 @@ namespace StayPilot.Api.Controllers
             return Ok(result);
         }
 
+        // radiusMeters has a default because a missing query string value would otherwise
+        // bind to 0, which silently shrinks the search circle to nothing.
         [HttpPost]
-        public async Task<ActionResult<OwnedPropertyAnalysisResponse>> EstimateEvaluationsOwnedpropertyAsync(int id, int months)
+        public async Task<ActionResult<OwnedPropertyAnalysisResponse>> EstimateEvaluationsOwnedpropertyAsync(int id, int months, int radiusMeters = 2000)
         {
-            var result = await _ownedPropertyService.EstimateOwnedPropertyValue(id, months);
+            var result = await _ownedPropertyService.EstimateOwnedPropertyValue(id, radiusMeters, months);
 
             return Ok(result);
         }

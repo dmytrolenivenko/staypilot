@@ -107,7 +107,7 @@ namespace StayPilot.Application.Services
             return Converter.MapToResponse(entity);
         }
 
-        public async Task<OwnedPropertyAnalysisResponse?> EstimateOwnedPropertyValue(int id, int months)
+        public async Task<OwnedPropertyAnalysisResponse?> EstimateOwnedPropertyValue(int id, int radiusMeters, int months)
         {
 
             var ownedPropertyRepo = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
@@ -119,7 +119,7 @@ namespace StayPilot.Application.Services
 
             var ownedProperty = Converter.MapToResponse(ownedPropertyRepo);
 
-            var similarPropertiesRepo = await _propertyListingRepository.GetComparablePropertyListingAsync(ownedProperty.MarketAreaId, ownedProperty.PropertyType,  ownedProperty.Typology, ownedProperty.AreaM2, months);
+            var similarPropertiesRepo = await _propertyListingRepository.GetComparablePropertyListingAsync(ownedProperty.MarketAreaId, ownedProperty.PropertyType,  ownedProperty.Typology, ownedProperty.AreaM2, ownedProperty.Latitude, ownedProperty.Longitude, radiusMeters, months);
 
             // No comparable listings -> we cannot estimate anything.
             if (similarPropertiesRepo.Count == 0)

@@ -46,7 +46,6 @@ namespace StayPilot.Application.Services
             return Converter.MapToResponse(property, listing);
         }
 
-
         /// <summary>
         /// Save a new property.
         /// If the same property already exists (same URL), we do not save it again.

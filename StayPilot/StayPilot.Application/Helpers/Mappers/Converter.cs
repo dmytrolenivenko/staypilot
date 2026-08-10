@@ -246,6 +246,8 @@ namespace StayPilot.Application.Helpers.Mappers
                 IsFurnished = entity.IsFurnished,
                 HasSeaView = entity.HasSeaView,
                 HasCityView = entity.HasCityView,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
                 EnergyCertificate = entity.EnergyCertificate,
                 Notes = entity.Notes,
                 DistanceToBeachMeters = entity.DistanceToBeachMeters,

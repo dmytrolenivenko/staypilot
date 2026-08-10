@@ -38,11 +38,13 @@ namespace StayPilot.Application.Interfaces.Repositories
         Task SaveChangesAsync();
 
         /// <summary>
-        /// Finds properties comparable to a given one: same market area, property type,
-        /// typology, and a similar size (within 20% of areaM2). Only counts as fresh if
-        /// its newest snapshot is not older than oldestAddUtc. Returns every match.
+        /// Finds properties comparable to a given one: same property type, a room layout
+        /// within one step, and either in the same market area or within radiusMeters of
+        /// the given lat/lon. Only counts as fresh if its newest snapshot is not older
+        /// than the cutoff. Returns at most 100, same market area first, then nearest.
+        /// Falls back to the market area alone when the property has no coordinates.
         /// </summary>
-        Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int months);
+        Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, decimal? latitude, decimal? longitude, int radiusMeters, int months);
 
         /// <summary>
         /// Gets every property listing across the whole dataset, with just its newest
