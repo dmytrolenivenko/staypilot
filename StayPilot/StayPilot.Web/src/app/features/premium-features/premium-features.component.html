@@ -6,10 +6,18 @@
     prices, not causation. Recalculate to refresh from the latest data.
   </p>
   <p class="hint">
+    Where a feature is worth wildly different amounts depending on the property &mdash; a sea view
+    on the beachfront against one that means a sliver on the horizon &mdash; the row also shows
+    what it reaches, and the conditions that figure holds under. Same model, different question:
+    the headline stays the market-wide average.
+  </p>
+  <p class="hint">
     Every number has a confidence range. Where that range crosses zero the data cannot tell
     whether the feature affects price at all &mdash; those rows say <em>no measurable effect</em>
     rather than showing a percentage, and sort to the bottom. Features whose ranges overlap
-    cannot be ranked against each other.
+    cannot be ranked against each other. &ldquo;Listings with it&rdquo; is how many of the fitted
+    listings actually carry the feature &mdash; the evidence behind that row, and why the rarer
+    ones have wider ranges.
   </p>
 
   <div class="toolbar">
@@ -50,7 +58,7 @@
               </th>
               <th>Confidence range</th>
               <th>Basis</th>
-              <th>Listings</th>
+              <th>Listings with it</th>
               <th>Last calculated</th>
             </tr>
           </thead>
@@ -62,6 +70,14 @@
                 @if (f.isMeasurable) {
                   <td [class.pos]="f.premiumPercent > 0" [class.neg]="f.premiumPercent < 0">
                     {{ f.premiumPercent > 0 ? '+' : '' }}{{ f.premiumPercent | number: '1.0-1' }}%
+                    <!-- The "up to" only ever appears with the conditions it holds under. Both
+                         numbers come from the same fit; they answer different questions. -->
+                    @if (f.maximumPercent !== null) {
+                      <span class="peak">
+                        up to +{{ f.maximumPercent | number: '1.0-1' }}%
+                        <span class="muted">{{ f.maximumBasis }}</span>
+                      </span>
+                    }
                   </td>
                   <td class="range">
                     {{ f.lowerBoundPercent > 0 ? '+' : '' }}{{ f.lowerBoundPercent | number: '1.0-1' }}%
@@ -78,7 +94,10 @@
                 }
 
                 <td class="muted basis">{{ basis(f) }}</td>
-                <td>{{ f.sampleSize | number }}</td>
+                <td [title]="evidenceHint(f)">
+                  {{ f.listingsWithFeature | number }}
+                  <span class="muted">of {{ f.sampleSize | number }}</span>
+                </td>
                 <td>{{ f.calculatedAtUtc | date: 'medium' }}</td>
               </tr>
             }

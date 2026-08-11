@@ -157,8 +157,10 @@
           @for (a of r.adjustments; track a.label) {
             <tr>
               <td>{{ a.label }}</td>
+              <!-- Sign goes outside the currency symbol: a needing-renovation property is the
+                   first row that can come back negative, and "€-6,800" reads as a typo. -->
               <td class="num" [class.pos]="a.amount > 0" [class.neg]="a.amount < 0">
-                {{ a.amount > 0 ? '+' : '' }}€{{ a.amount | number: '1.0-0' }}
+                {{ a.amount < 0 ? '-' : '+' }}&euro;{{ abs(a.amount) | number: '1.0-0' }}
               </td>
             </tr>
           }

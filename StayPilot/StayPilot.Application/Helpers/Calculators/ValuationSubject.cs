@@ -44,6 +44,13 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>Year built, or null when the source did not say.</summary>
         public int? ConstructionYear { get; set; }
 
+        /// <summary>
+        /// The energy certificate as a number so it can be priced per step: G is 0 through to
+        /// A+ at 8. Null when the certificate is missing or not a grade we recognise, which the
+        /// model flags rather than guessing at.
+        /// </summary>
+        public int? EnergyGradeScore { get; set; }
+
         /// <summary>Walking-line distance to the nearest beach, or null when unknown.</summary>
         public int? DistanceToBeachMeters { get; set; }
 
@@ -69,6 +76,34 @@ namespace StayPilot.Application.Helpers.Calculators
         public bool HasCityView { get; set; }
 
         /// <summary>
+        /// Turns an energy certificate letter into a position on the scale, so the model can
+        /// price one step rather than nine separate letters. B- sits between B and C, which is
+        /// what the Portuguese scale means by it.
+        ///
+        /// Anything unrecognised comes back null rather than being pushed to one end - a typo
+        /// scored as "G" would read as the worst possible rating instead of as missing.
+        /// </summary>
+        public static int? ScoreEnergyGrade(string? certificate)
+        {
+            if (string.IsNullOrWhiteSpace(certificate))
+                return null;
+
+            return certificate.Trim().ToUpperInvariant() switch
+            {
+                "A+" => 8,
+                "A" => 7,
+                "B" => 6,
+                "B-" => 5,
+                "C" => 4,
+                "D" => 3,
+                "E" => 2,
+                "F" => 1,
+                "G" => 0,
+                _ => null,
+            };
+        }
+
+        /// <summary>
         /// Reads a scraped comp. Note HasAirConditioning is deliberately not carried over:
         /// the column has thousands of trues and zero explicit falses, so "false" really means
         /// "the advert did not mention it" - modelling it would price the copywriting.
@@ -86,6 +121,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 BalconyCount = listing.BalconyCount,
                 Floor = listing.Floor,
                 ConstructionYear = listing.ConstructionYear,
+                EnergyGradeScore = ScoreEnergyGrade(listing.EnergyCertificate),
                 DistanceToBeachMeters = listing.DistanceToBeachMeters,
                 Latitude = listing.Latitude,
                 Longitude = listing.Longitude,
@@ -118,6 +154,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 BalconyCount = property.BalconyCount ?? 0,
                 Floor = property.Floor,
                 ConstructionYear = property.ConstructionYear,
+                EnergyGradeScore = ScoreEnergyGrade(property.EnergyCertificate),
                 DistanceToBeachMeters = property.DistanceToBeachMeters,
                 Latitude = property.Latitude,
                 Longitude = property.Longitude,

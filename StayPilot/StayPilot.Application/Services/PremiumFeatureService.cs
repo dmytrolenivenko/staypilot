@@ -65,6 +65,9 @@ namespace StayPilot.Application.Services
                     LowerBoundPercent = effect.LowerPercent,
                     UpperBoundPercent = effect.UpperPercent,
                     SampleSize = model.TrainingListings,
+                    ListingsWithFeature = effect.ListingsWithFeature,
+                    MaximumPercent = effect.MaximumPercent,
+                    MaximumBasis = effect.MaximumBasis,
                     Basis = effect.Basis,
                 };
 

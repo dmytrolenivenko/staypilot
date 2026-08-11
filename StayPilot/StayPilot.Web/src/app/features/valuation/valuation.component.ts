@@ -68,6 +68,11 @@ export class ValuationComponent implements OnInit {
     });
   }
 
+  // The template prints the sign itself, so it needs the size without it.
+  abs(value: number): number {
+    return Math.abs(value);
+  }
+
   estimate(): void {
     const id = this.selectedId();
     if (!id) {

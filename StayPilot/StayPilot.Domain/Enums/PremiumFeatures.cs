@@ -20,6 +20,24 @@ namespace StayPilot.Domain.Enums
         /// yes/no feature, so its premium is read as "per halving of the distance to the beach"
         /// - being 500m away instead of 1km. Callers showing this to a user must say so.
         /// </summary>
-        BeachProximity = 12
+        BeachProximity = 12,
+
+        /// <summary>
+        /// What one step up the energy certificate scale is worth (G -> F -> E ... -> A+).
+        /// Not a yes/no feature: the premium is per step.
+        /// </summary>
+        EnergyGrade = 13,
+
+        /// <summary>What one more bathroom is worth. Per bathroom, not yes/no.</summary>
+        ExtraBathroom = 14,
+
+        /// <summary>What being one storey higher up is worth. Per floor, not yes/no.</summary>
+        FloorLevel = 15,
+
+        /// <summary>A property the advert flags as needing renovation work. Yes/no.</summary>
+        NeedsRenovation = 16,
+
+        /// <summary>What one balcony is worth. Per balcony, not yes/no.</summary>
+        HasBalcony = 17
     }
 }

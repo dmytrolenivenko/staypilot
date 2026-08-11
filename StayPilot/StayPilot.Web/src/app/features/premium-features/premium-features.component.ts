@@ -74,6 +74,20 @@ export class PremiumFeaturesComponent implements OnInit {
     return row.basis ?? 'if present';
   }
 
+  // Spells out the "N of M" column, which is easy to misread as a sample the row was fitted on
+  // separately. It wasn't — every row comes out of the same fit; what differs is how many of
+  // those listings actually carried the feature.
+  evidenceHint(row: PremiumFeatureResponse): string {
+    const listings = row.listingsWithFeature.toLocaleString();
+    const total = row.sampleSize.toLocaleString();
+
+    if (this.isBeachProximity(row.feature)) {
+      return `${listings} of the ${total} fitted listings came with a usable distance to the beach.`;
+    }
+
+    return `${listings} of the ${total} fitted listings have this feature. Fewer means a wider confidence range.`;
+  }
+
   ngOnInit(): void {
     this.reload();
   }

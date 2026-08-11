@@ -264,6 +264,9 @@ namespace StayPilot.Application.Helpers.Mappers
                 LowerBoundPercent = entity.LowerBoundPercent,
                 UpperBoundPercent = entity.UpperBoundPercent,
                 SampleSize = entity.SampleSize,
+                ListingsWithFeature = entity.ListingsWithFeature,
+                MaximumPercent = entity.MaximumPercent,
+                MaximumBasis = entity.MaximumBasis,
                 Basis = entity.Basis,
                 // Measurable only when the whole confidence range sits on one side of zero.
                 IsMeasurable = entity.LowerBoundPercent > 0 || entity.UpperBoundPercent < 0,
