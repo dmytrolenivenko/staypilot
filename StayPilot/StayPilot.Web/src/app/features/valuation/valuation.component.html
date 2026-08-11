@@ -1,8 +1,10 @@
 <section class="panel">
   <h1>Valuation</h1>
   <p class="hint">
-    Estimate what one of your properties is worth today, from comparable listings.
-    Widen the window if there aren't enough recent comps.
+    Estimate what one of your properties is worth today. The estimate comes from a model fitted
+    on every listing collected &mdash; holding size, rooms, condition and distance to the beach
+    still &mdash; then corrected for what nearby listings actually ask. Asking prices, not sale
+    prices. Widen the window if there aren't enough recent comps to show below.
   </p>
 
   @if (loadingProps()) {
@@ -56,7 +58,10 @@
         <span class="headline-price">€{{ r.midPrice | number: '1.0-0' }}</span>
         <span class="headline-range">
           Range €{{ r.minPrice | number: '1.0-0' }} – €{{ r.maxPrice | number: '1.0-0' }}
-          · avg €{{ r.averagePrice | number: '1.0-0' }}
+        </span>
+        <span class="headline-note">
+          The range is the model's own typical error, not the spread of the comps &mdash; roughly
+          two estimates in three land inside it.
         </span>
       </div>
       <span
@@ -79,13 +84,24 @@
       </div>
       <div class="stat">
         <span class="stat-value">€{{ r.estimateBeforeAdjustments | number: '1.0-0' }}</span>
-        <span class="stat-label">Before adjustments</span>
+        <span class="stat-label">Comps alone (median × m²)</span>
       </div>
       <div class="stat">
         <span class="stat-value">€{{ r.minCompPricePerM2 | number: '1.0-0' }} – €{{ r.maxCompPricePerM2 | number: '1.0-0' }}</span>
         <span class="stat-label">Comp €/m² spread</span>
       </div>
     </div>
+
+    <!-- Confidence is about evidence NEAR this property, not how many comps the window found.
+         Without this note, "65 comparables" next to "Low confidence" reads as a bug. -->
+    @if (r.confidenceLevel !== 'High') {
+      <p class="hint">
+        Confidence reflects how much data sits near this property, not the number of comps listed
+        below. <strong>{{ r.confidenceLevel }}</strong> means there are few or no listings close
+        enough to lean on &mdash; check the property's coordinates are right, since every listing
+        collected so far is in the Algarve.
+      </p>
+    }
   </section>
 
   <!-- Equity — only when there's a purchase to compare against -->
@@ -126,8 +142,13 @@
   <!-- Adjustments -->
   @if (r.adjustments.length > 0) {
     <section class="panel">
-      <h2>Adjustments</h2>
-      <p class="hint">Feature-based tweaks applied on top of the raw market estimate.</p>
+      <h2>What the features contribute</h2>
+      <p class="hint">
+        How much of the estimate above each feature accounts for. These compound rather than add
+        up, so they will not sum to the total &mdash; and only features the data can actually
+        measure are listed. A sea view is counted at this property's own distance from the beach,
+        where it is worth far more near the water than inland.
+      </p>
       <table class="data-table">
         <thead>
           <tr><th>Adjustment</th><th class="num">Amount</th></tr>

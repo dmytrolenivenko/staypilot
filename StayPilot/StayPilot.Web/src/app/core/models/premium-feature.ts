@@ -3,5 +3,20 @@
 export interface PremiumFeatureResponse {
   feature: string;        // e.g. "HasSeaView"
   premiumPercent: number; // average price difference for having it, as a percentage
+  lowerBoundPercent: number; // bottom of the 95% confidence range
+  upperBoundPercent: number; // top of the 95% confidence range
+  // False when the confidence range includes zero, i.e. the data cannot tell whether this
+  // feature affects price at all. Show "no measurable effect", NOT the headline percentage —
+  // printing "-0.2%" for one of these reads as "it makes the flat cheaper", which is wrong.
+  isMeasurable: boolean;
+  sampleSize: number;    // how many listings the estimate was fitted on
+  // What the percentage is measured against, when "if present" would mislead — beach proximity
+  // is per halving of distance, and a sea view is worth far more on the beachfront than inland.
+  // Null for ordinary yes/no features.
+  basis: string | null;
   calculatedAtUtc: string; // ISO date-time
 }
+
+// "BeachProximity" is not a yes/no feature — its percentage is the gain per HALVING of the
+// distance to the beach, so it needs its own label wherever it is displayed.
+export const BEACH_PROXIMITY = 'BeachProximity';

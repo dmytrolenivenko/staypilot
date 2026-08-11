@@ -75,6 +75,8 @@ namespace StayPilot.Infrastructure.Repositories
             // Start with all properties. We add one filter below for each value the caller sent.
             var query = _context.PropertyListings.AsQueryable();
 
+            #region Filters
+
             if (!string.IsNullOrWhiteSpace(request.District))
             {
                 query = query.Where(x => x.MarketArea.District == request.District);
@@ -233,6 +235,8 @@ namespace StayPilot.Infrastructure.Repositories
             {
                 query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status == request.ListingStatus);
             }
+
+            #endregion
 
             // Count all matches BEFORE paging, so the caller knows the real total.
             var totalResults = await query.CountAsync();

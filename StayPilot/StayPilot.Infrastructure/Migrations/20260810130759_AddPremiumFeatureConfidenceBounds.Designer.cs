@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StayPilot.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using StayPilot.Infrastructure.Persistence;
 namespace StayPilot.Infrastructure.Migrations
 {
     [DbContext(typeof(StayPilotDbContext))]
-    partial class StayPilotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260810130759_AddPremiumFeatureConfidenceBounds")]
+    partial class AddPremiumFeatureConfidenceBounds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53072,9 +53075,6 @@ namespace StayPilot.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Basis")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CalculatedAtUtc")
                         .HasColumnType("datetime2");

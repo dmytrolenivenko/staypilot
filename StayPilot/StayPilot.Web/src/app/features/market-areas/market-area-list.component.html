@@ -1,16 +1,33 @@
 <section class="panel">
   <div class="panel-head">
     <h1>Market Areas</h1>
-    <span class="hint">n = {{ filteredAreas().length }} of {{ areas().length }}</span>
+    <span class="hint">
+      @if (totalRecords() === 0) {
+        no matches
+      } @else {
+        {{ firstRow() }}–{{ lastRow() }} of {{ totalRecords() }}
+      }
+    </span>
   </div>
 
-  <input
-    class="text-input"
-    type="text"
-    placeholder="Filter by district, municipality, town or zone..."
-    [ngModel]="filterText()"
-    (ngModelChange)="filterText.set($event)"
-  />
+  <div class="list-controls">
+    <input
+      class="text-input"
+      type="text"
+      placeholder="Filter by district, municipality, town or zone..."
+      [ngModel]="filterText()"
+      (ngModelChange)="changeFilter($event)"
+    />
+
+    <label class="page-size">
+      Rows
+      <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+        @for (size of pageSizes; track size) {
+          <option [ngValue]="size">{{ size }}</option>
+        }
+      </select>
+    </label>
+  </div>
 
   @if (loading()) {
     <p class="hint">Loading...</p>
@@ -30,7 +47,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (a of filteredAreas(); track a.id) {
+        @for (a of areas(); track a.id) {
           <tr>
             <td>{{ a.id }}</td>
             <td>{{ a.district }}</td>
@@ -43,5 +60,25 @@
         }
       </tbody>
     </table>
+
+    <!-- Paging: each button loads that page from the API. -->
+    @if (totalPages() > 1) {
+      <div class="pager">
+        <button type="button" class="page-btn" (click)="goToPage(1)" [disabled]="page() === 1">« First</button>
+        <button type="button" class="page-btn" (click)="goToPage(page() - 1)" [disabled]="page() === 1">‹ Prev</button>
+
+        @for (p of visiblePages(); track p) {
+          <button
+            type="button"
+            class="page-btn"
+            [class.active]="p === page()"
+            (click)="goToPage(p)"
+          >{{ p }}</button>
+        }
+
+        <button type="button" class="page-btn" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()">Next ›</button>
+        <button type="button" class="page-btn" (click)="goToPage(totalPages())" [disabled]="page() === totalPages()">Last »</button>
+      </div>
+    }
   }
 </section>

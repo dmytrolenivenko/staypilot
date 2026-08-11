@@ -1,3 +1,4 @@
+using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
@@ -18,12 +19,20 @@ namespace StayPilot.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<MarketAreaResponse>> GetAllMarketAreasAsync()
+        public async Task<MarketAreaListResponse> GetMarketAreasPageAsync(MarketAreaRequest request)
         {
-            var marketAreas = await _marketAreaRepo.GetAllMarketAreasAsync();
+            // Ask the database for this page of market areas and the total number of matches.
+            var (items, totalRecords) = await _marketAreaRepo.GetMarketAreasPageAsync(request);
 
-            // Turn each market area entity into the response we send back.
-            return marketAreas.Select(Converter.MapToResponse).ToList();
+            // Turn each market area entity into the response we send back,
+            // then add the paging info so the caller knows how many pages exist.
+            return new MarketAreaListResponse
+            {
+                Items = items.Select(Converter.MapToResponse).ToList(),
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalRecords = totalRecords
+            };
         }
 
         /// <inheritdoc/>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
 
@@ -20,12 +21,13 @@ namespace StayPilot.Api.Controllers
         }
 
         /// <summary>
-        /// Return all market areas.
+        /// Return one page of market areas, plus the total number of matches.
+        /// Optional search text narrows the list by district, municipality, town or zone.
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<MarketAreaResponse>>> GetAll()
+        public async Task<ActionResult<MarketAreaListResponse>> GetAll([FromQuery] MarketAreaRequest request)
         {
-            var response = await _service.GetAllMarketAreasAsync();
+            var response = await _service.GetMarketAreasPageAsync(request);
             return Ok(response);
         }
 
