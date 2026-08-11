@@ -25,11 +25,12 @@ export class OwnedPropertyService {
     return this.http.get<OwnedPropertyResponse[]>(`${this.baseUrl}/GetAllOwnedProperty`);
   }
 
-  // POST /api/OwnedProperty/EstimateEvaluationsOwnedproperty?id={id}&months={months}
-  // id + months are simple types, so the API binds them from the query string.
-  estimate(id: number, months: number): Observable<OwnedPropertyAnalysisResponse> {
+  // POST /api/OwnedProperty/EstimateEvaluationsOwnedproperty?id={id}&months={months}&radiusMeters={radiusMeters}
+  // All three are simple types, so the API binds them from the query string.
+  // radiusMeters is how far outside the property's own market area we still accept comps.
+  estimate(id: number, months: number, radiusMeters: number): Observable<OwnedPropertyAnalysisResponse> {
     return this.http.post<OwnedPropertyAnalysisResponse>(
-      `${this.baseUrl}/EstimateEvaluationsOwnedproperty?id=${id}&months=${months}`,
+      `${this.baseUrl}/EstimateEvaluationsOwnedproperty?id=${id}&months=${months}&radiusMeters=${radiusMeters}`,
       null
     );
   }

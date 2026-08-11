@@ -88,6 +88,12 @@ namespace StayPilot.Application.Contracts.Response
         /// <summary>Name of the nearest beach.</summary>
         public string? NearestBeachName { get; set; }
 
+        /// <summary>Latitude of the property. Needed to find the nearest beach.</summary>
+        public decimal? Latitude { get; set; }
+
+        /// <summary>Longitude of the property. Needed to find the nearest beach.</summary>
+        public decimal? Longitude { get; set; }
+
         /// <summary>Energy rating of the property (for example A, B, C).</summary>
         public string? EnergyCertificate { get; set; }
 

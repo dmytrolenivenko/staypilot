@@ -2,6 +2,7 @@
 using StayPilot.Domain.Entities;
 using StayPilot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using StayPilot.Application.Contracts.Request;
 
 namespace StayPilot.Infrastructure.Repositories
 {
@@ -23,6 +24,41 @@ namespace StayPilot.Infrastructure.Repositories
         public async Task<List<MarketArea>> GetAllMarketAreasAsync()
         {
             return await _context.MarketAreas.ToListAsync();
+        }
+
+        /// <summary>
+        /// Reads one page of market areas from the database, plus the total number of matches.
+        /// </summary>
+        public async Task<(List<MarketArea> Items, int TotalRecords)> GetMarketAreasPageAsync(MarketAreaRequest request)
+        {
+            var query = _context.MarketAreas.AsQueryable();
+
+            // Optional search: match any part of the name on any of the address levels.
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim();
+
+                query = query.Where(x =>
+                    EF.Functions.Like(x.District, $"%{search}%") ||
+                    EF.Functions.Like(x.Municipality, $"%{search}%") ||
+                    EF.Functions.Like(x.Town, $"%{search}%") ||
+                    (x.Zone != null && EF.Functions.Like(x.Zone, $"%{search}%")));
+            }
+
+            // Count before paging, so the caller knows how many pages exist.
+            var totalRecords = await query.CountAsync();
+
+            var items = await query
+                // Paging needs a stable order, otherwise the same row can show up on two pages.
+                .OrderBy(x => x.District)
+                .ThenBy(x => x.Municipality)
+                .ThenBy(x => x.Town)
+                .ThenBy(x => x.Id)
+                .Skip((request.PageNumber - 1) * request.PageSize) // jump over the earlier pages
+                .Take(request.PageSize)                            // take only this page
+                .ToListAsync();
+
+            return (items, totalRecords);
         }
 
         /// <summary>

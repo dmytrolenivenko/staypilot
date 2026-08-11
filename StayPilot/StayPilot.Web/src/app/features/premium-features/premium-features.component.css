@@ -23,3 +23,32 @@
   color: var(--error);
   font-weight: 600;
 }
+
+/* Rows the data cannot speak to. Dimmed rather than hidden - "we looked and found nothing"
+   is a real answer, and hiding them would make the list look cherry-picked. */
+.unmeasured {
+  opacity: 0.6;
+}
+
+.muted {
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+}
+
+.range {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Only beach proximity carries a basis note ("per halving of the distance to the beach");
+   everything else falls back to a short "if present". */
+.basis {
+  font-size: 0.9em;
+  line-height: 1.35;
+}
+
+/* The table gained columns, so let it scroll sideways on a narrow window instead of
+   squashing the numbers or pushing the page out. */
+.table-scroll {
+  overflow-x: auto;
+}

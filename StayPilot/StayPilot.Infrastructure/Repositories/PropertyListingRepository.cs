@@ -75,6 +75,8 @@ namespace StayPilot.Infrastructure.Repositories
             // Start with all properties. We add one filter below for each value the caller sent.
             var query = _context.PropertyListings.AsQueryable();
 
+            #region Filters
+
             if (!string.IsNullOrWhiteSpace(request.District))
             {
                 query = query.Where(x => x.MarketArea.District == request.District);
@@ -234,6 +236,8 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status == request.ListingStatus);
             }
 
+            #endregion
+
             // Count all matches BEFORE paging, so the caller knows the real total.
             var totalResults = await query.CountAsync();
 
@@ -280,36 +284,76 @@ namespace StayPilot.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Finds properties that can be compared to the given one: same market area,
-        /// same property type, same typology, and a similar size (within 20% of areaM2).
-        /// Only looks at how fresh the newest snapshot is (oldestAddUtc), nothing else
-        /// about it. Returns every match, there is no limit on how many.
+        /// Finds properties that can be compared to the given one: same property type,
+        /// a room layout within one step (a T2 is a fair comp for a T1), and either in the
+        /// same market area or within radiusMeters of the given lat/lon. Only keeps a
+        /// listing if its newest snapshot is not older than the cutoff.
+        /// Returns at most 100, best first: same market area, then nearest.
+        /// When the property has no coordinates it falls back to the market area alone.
         /// </summary>
-        public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int months)
+        public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, decimal? latitude, decimal? longitude, int radiusMeters, int months)
         {
             var query = _context.PropertyListings.AsQueryable();
-
-            // Same place.
-            query = query.Where(x => x.MarketAreaId == marketId);
 
             // Same kind of property (apartment, villa, and so on).
             query = query.Where(x => x.PropertyType == propertyType);
 
-            // Same room layout (T1, T2, and so on).
-            query = query.Where(x => x.Typology == typology);
+            // Same room layout +-1 (a T2 is a fair comp for a T1). Asking for the exact
+            // typology throws away nearly every nearby listing, and one bedroom either way
+            // barely moves the price per m2 - which is what the estimate is built on.
+            query = query.Where(x => x.Typology == typology || x.Typology == typology - 1 || x.Typology == typology + 1);
 
             // Only keep it if its newest snapshot is not older than the cutoff.
             query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Select(s => s.SnapshotDateUtc).FirstOrDefault() >= DateTime.UtcNow.AddMonths(- months));
 
-            // Instead of a hard +-20% size band (which starves to a handful of comps when the
-            // property's size is unusual for its typology), take the N closest in size. Same
-            // market / type / typology as above - only the SIZE match is relaxed - so the median
-            // has enough comps to be trustworthy whatever the property's size. ThenBy(Id) keeps
-            // the "top N" deterministic when several comps are equally close in size.
-            const int maxComps = 20;
+            // To avoid corrupted data, do not return tiny areasM2 (30 m2)
+            query = query.Where(x => x.AreaM2 > 30);
 
-            var items = await query
-                .OrderBy(x => Math.Abs(x.AreaM2 - areaM2))
+            const int maxComps = 100;
+
+            IOrderedQueryable<PropertyListing> ordered;
+
+            if (latitude.HasValue && longitude.HasValue)
+            {
+                // The database stores degrees but the caller asks in metres, so the radius
+                // has to be converted first. One degree of latitude is always about 111320 m.
+                // Degrees of longitude get shorter the further you are from the equator, so
+                // they are scaled by cos(latitude) - in the Algarve (37N) a degree of
+                // longitude is about 89 km, not 111 km.
+                const double metersPerDegree = 111_320;
+
+                var lat = latitude.Value;
+                var lon = longitude.Value;
+                var lonScale = (decimal)Math.Cos((double)lat * Math.PI / 180);
+                var radiusDegrees = (decimal)(radiusMeters / metersPerDegree);
+                var radiusDegreesSquared = radiusDegrees * radiusDegrees;
+
+                // Same market area, or close enough on the map. Distances are kept squared
+                // so there is no square root to take - it does not change the ordering.
+                query = query.Where(x => x.MarketAreaId == marketId
+                    || (x.Latitude - lat) * (x.Latitude - lat)
+                     + (x.Longitude - lon) * lonScale * (x.Longitude - lon) * lonScale <= radiusDegreesSquared);
+
+                // Own market area first, because a zone 800 m away can be a completely
+                // different market (a beachfront zone against an old town). Only then the
+                // nearest ones, so a comp next door beats one at the edge of the circle.
+                // This distance must stay identical to the one used in the filter above.
+                ordered = query
+                    .OrderByDescending(x => x.MarketAreaId == marketId)
+                    .ThenBy(x => (x.Latitude - lat) * (x.Latitude - lat)
+                               + (x.Longitude - lon) * lonScale * (x.Longitude - lon) * lonScale);
+            }
+            else
+            {
+                // No coordinates on the property, so a radius means nothing here. Fall back
+                // to the market area on its own, closest in size first.
+                query = query.Where(x => x.MarketAreaId == marketId);
+
+                ordered = query.OrderBy(x => Math.Abs(x.AreaM2 - areaM2));
+            }
+
+            // ThenBy(Id) keeps the "top N" deterministic when several comps tie.
+            var items = await ordered
                 .ThenBy(x => x.Id)
                 .Take(maxComps)
                 .Include(x => x.MarketArea)

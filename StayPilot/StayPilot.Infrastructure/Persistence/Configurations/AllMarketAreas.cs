@@ -4656,7 +4656,146 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             new MarketArea { Id = 4362, Country = "Portugal", District = "Viseu", Municipality = "Vouzela", Town = "Queirã", Zone = null },
             new MarketArea { Id = 4363, Country = "Portugal", District = "Viseu", Municipality = "Vouzela", Town = "São Miguel do Mato", Zone = null },
             new MarketArea { Id = 4364, Country = "Portugal", District = "Viseu", Municipality = "Vouzela", Town = "Ventosa", Zone = null },
-            new MarketArea { Id = 4365, Country = "Portugal", District = "Viseu", Municipality = "Vouzela", Town = "Vouzela", Zone = null }
+            new MarketArea { Id = 4365, Country = "Portugal", District = "Viseu", Municipality = "Vouzela", Town = "Vouzela", Zone = null },
+
+            // ── Municipality-level rows ──────────────────────────────────────────────
+            // Idealista does not always locate a listing to a parish: outside the dense
+            // coastal markets an ad is frequently placed only at "Beja" or "Odemira", and
+            // the multizone export these rows came from lists parishes and zones but never
+            // the municipality itself. Without a row here such a listing matches nothing and
+            // is discarded — 40% of municipalities were in that position.
+            //
+            // Town repeats the municipality name deliberately: it means "this municipality,
+            // parish unspecified". Coarser than a parish, but true — far better than filing
+            // the listing under whichever parish happens to sort first.
+            //
+            // Only municipalities with NO parish of the same name are listed, so these add
+            // no ambiguity: every name below was previously unknown as a Town.
+            // Aveiro
+            new MarketArea { Id = 4366, Country = "Portugal", District = "Aveiro", Municipality = "Albergaria-a-Velha", Town = "Albergaria-a-Velha", Zone = null },
+            new MarketArea { Id = 4367, Country = "Portugal", District = "Aveiro", Municipality = "Anadia", Town = "Anadia", Zone = null },
+            new MarketArea { Id = 4368, Country = "Portugal", District = "Aveiro", Municipality = "Arouca", Town = "Arouca", Zone = null },
+            new MarketArea { Id = 4369, Country = "Portugal", District = "Aveiro", Municipality = "Aveiro", Town = "Aveiro", Zone = null },
+            new MarketArea { Id = 4370, Country = "Portugal", District = "Aveiro", Municipality = "Castelo de Paiva", Town = "Castelo de Paiva", Zone = null },
+            new MarketArea { Id = 4371, Country = "Portugal", District = "Aveiro", Municipality = "Estarreja", Town = "Estarreja", Zone = null },
+            new MarketArea { Id = 4372, Country = "Portugal", District = "Aveiro", Municipality = "Oliveira de Azeméis", Town = "Oliveira de Azeméis", Zone = null },
+            new MarketArea { Id = 4373, Country = "Portugal", District = "Aveiro", Municipality = "Santa Maria da Feira", Town = "Santa Maria da Feira", Zone = null },
+            new MarketArea { Id = 4374, Country = "Portugal", District = "Aveiro", Municipality = "Vale de Cambra", Town = "Vale de Cambra", Zone = null },
+            new MarketArea { Id = 4375, Country = "Portugal", District = "Aveiro", Municipality = "Ílhavo", Town = "Ílhavo", Zone = null },
+            // Beja
+            new MarketArea { Id = 4376, Country = "Portugal", District = "Beja", Municipality = "Beja", Town = "Beja", Zone = null },
+            new MarketArea { Id = 4377, Country = "Portugal", District = "Beja", Municipality = "Castro Verde", Town = "Castro Verde", Zone = null },
+            new MarketArea { Id = 4378, Country = "Portugal", District = "Beja", Municipality = "Moura", Town = "Moura", Zone = null },
+            new MarketArea { Id = 4379, Country = "Portugal", District = "Beja", Municipality = "Odemira", Town = "Odemira", Zone = null },
+            // Braga
+            new MarketArea { Id = 4380, Country = "Portugal", District = "Braga", Municipality = "Amares", Town = "Amares", Zone = null },
+            new MarketArea { Id = 4381, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "Braga", Zone = null },
+            new MarketArea { Id = 4382, Country = "Portugal", District = "Braga", Municipality = "Celorico de Basto", Town = "Celorico de Basto", Zone = null },
+            new MarketArea { Id = 4383, Country = "Portugal", District = "Braga", Municipality = "Guimarães", Town = "Guimarães", Zone = null },
+            new MarketArea { Id = 4384, Country = "Portugal", District = "Braga", Municipality = "Póvoa de Lanhoso", Town = "Póvoa de Lanhoso", Zone = null },
+            new MarketArea { Id = 4385, Country = "Portugal", District = "Braga", Municipality = "Terras de Bouro", Town = "Terras de Bouro", Zone = null },
+            new MarketArea { Id = 4386, Country = "Portugal", District = "Braga", Municipality = "Vila Nova de Famalicão", Town = "Vila Nova de Famalicão", Zone = null },
+            new MarketArea { Id = 4387, Country = "Portugal", District = "Braga", Municipality = "Vizela", Town = "Vizela", Zone = null },
+            // Bragança
+            new MarketArea { Id = 4388, Country = "Portugal", District = "Bragança", Municipality = "Bragança", Town = "Bragança", Zone = null },
+            new MarketArea { Id = 4389, Country = "Portugal", District = "Bragança", Municipality = "Freixo Espada à Cinta", Town = "Freixo Espada à Cinta", Zone = null },
+            // Castelo Branco
+            new MarketArea { Id = 4390, Country = "Portugal", District = "Castelo Branco", Municipality = "Covilhã", Town = "Covilhã", Zone = null },
+            new MarketArea { Id = 4391, Country = "Portugal", District = "Castelo Branco", Municipality = "Fundão", Town = "Fundão", Zone = null },
+            new MarketArea { Id = 4392, Country = "Portugal", District = "Castelo Branco", Municipality = "Idanha-a-Nova", Town = "Idanha-a-Nova", Zone = null },
+            new MarketArea { Id = 4393, Country = "Portugal", District = "Castelo Branco", Municipality = "Proença-a-Nova", Town = "Proença-a-Nova", Zone = null },
+            // Coimbra
+            new MarketArea { Id = 4394, Country = "Portugal", District = "Coimbra", Municipality = "Coimbra", Town = "Coimbra", Zone = null },
+            new MarketArea { Id = 4395, Country = "Portugal", District = "Coimbra", Municipality = "Condeixa-a-Nova", Town = "Condeixa-a-Nova", Zone = null },
+            new MarketArea { Id = 4396, Country = "Portugal", District = "Coimbra", Municipality = "Figueira da Foz", Town = "Figueira da Foz", Zone = null },
+            new MarketArea { Id = 4397, Country = "Portugal", District = "Coimbra", Municipality = "Montemor-o-Velho", Town = "Montemor-o-Velho", Zone = null },
+            new MarketArea { Id = 4398, Country = "Portugal", District = "Coimbra", Municipality = "Oliveira do Hospital", Town = "Oliveira do Hospital", Zone = null },
+            new MarketArea { Id = 4399, Country = "Portugal", District = "Coimbra", Municipality = "Penela", Town = "Penela", Zone = null },
+            new MarketArea { Id = 4400, Country = "Portugal", District = "Coimbra", Municipality = "Vila Nova de Poiares", Town = "Vila Nova de Poiares", Zone = null },
+            // Faro
+            new MarketArea { Id = 4401, Country = "Portugal", District = "Faro", Municipality = "Albufeira", Town = "Albufeira", Zone = null },
+            new MarketArea { Id = 4402, Country = "Portugal", District = "Faro", Municipality = "Alcoutim", Town = "Alcoutim", Zone = null },
+            new MarketArea { Id = 4403, Country = "Portugal", District = "Faro", Municipality = "Lagoa (Algarve)", Town = "Lagoa (Algarve)", Zone = null },
+            new MarketArea { Id = 4404, Country = "Portugal", District = "Faro", Municipality = "Loulé", Town = "Loulé", Zone = null },
+            new MarketArea { Id = 4405, Country = "Portugal", District = "Faro", Municipality = "Vila do Bispo", Town = "Vila do Bispo", Zone = null },
+            // Guarda
+            new MarketArea { Id = 4406, Country = "Portugal", District = "Guarda", Municipality = "Celorico da Beira", Town = "Celorico da Beira", Zone = null },
+            new MarketArea { Id = 4407, Country = "Portugal", District = "Guarda", Municipality = "Manteigas", Town = "Manteigas", Zone = null },
+            new MarketArea { Id = 4408, Country = "Portugal", District = "Guarda", Municipality = "Trancoso", Town = "Trancoso", Zone = null },
+            // Leiria
+            new MarketArea { Id = 4409, Country = "Portugal", District = "Leiria", Municipality = "Alcobaça", Town = "Alcobaça", Zone = null },
+            new MarketArea { Id = 4410, Country = "Portugal", District = "Leiria", Municipality = "Bombarral", Town = "Bombarral", Zone = null },
+            new MarketArea { Id = 4411, Country = "Portugal", District = "Leiria", Municipality = "Caldas da Rainha", Town = "Caldas da Rainha", Zone = null },
+            new MarketArea { Id = 4412, Country = "Portugal", District = "Leiria", Municipality = "Figueiró dos Vinhos", Town = "Figueiró dos Vinhos", Zone = null },
+            new MarketArea { Id = 4413, Country = "Portugal", District = "Leiria", Municipality = "Leiria", Town = "Leiria", Zone = null },
+            new MarketArea { Id = 4414, Country = "Portugal", District = "Leiria", Municipality = "Óbidos", Town = "Óbidos", Zone = null },
+            // Lisboa
+            new MarketArea { Id = 4415, Country = "Portugal", District = "Lisboa", Municipality = "Amadora", Town = "Amadora", Zone = null },
+            new MarketArea { Id = 4416, Country = "Portugal", District = "Lisboa", Municipality = "Cadaval", Town = "Cadaval", Zone = null },
+            new MarketArea { Id = 4417, Country = "Portugal", District = "Lisboa", Municipality = "Cascais", Town = "Cascais", Zone = null },
+            new MarketArea { Id = 4418, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Lisboa", Zone = null },
+            new MarketArea { Id = 4419, Country = "Portugal", District = "Lisboa", Municipality = "Oeiras", Town = "Oeiras", Zone = null },
+            new MarketArea { Id = 4420, Country = "Portugal", District = "Lisboa", Municipality = "Torres Vedras", Town = "Torres Vedras", Zone = null },
+            // Portalegre
+            new MarketArea { Id = 4421, Country = "Portugal", District = "Portalegre", Municipality = "Arronches", Town = "Arronches", Zone = null },
+            new MarketArea { Id = 4422, Country = "Portugal", District = "Portalegre", Municipality = "Campo Maior", Town = "Campo Maior", Zone = null },
+            new MarketArea { Id = 4423, Country = "Portugal", District = "Portalegre", Municipality = "Castelo de Vide", Town = "Castelo de Vide", Zone = null },
+            new MarketArea { Id = 4424, Country = "Portugal", District = "Portalegre", Municipality = "Crato", Town = "Crato", Zone = null },
+            new MarketArea { Id = 4425, Country = "Portugal", District = "Portalegre", Municipality = "Elvas", Town = "Elvas", Zone = null },
+            new MarketArea { Id = 4426, Country = "Portugal", District = "Portalegre", Municipality = "Marvão", Town = "Marvão", Zone = null },
+            new MarketArea { Id = 4427, Country = "Portugal", District = "Portalegre", Municipality = "Nisa", Town = "Nisa", Zone = null },
+            new MarketArea { Id = 4428, Country = "Portugal", District = "Portalegre", Municipality = "Portalegre", Town = "Portalegre", Zone = null },
+            // Porto
+            new MarketArea { Id = 4429, Country = "Portugal", District = "Porto", Municipality = "Amarante", Town = "Amarante", Zone = null },
+            new MarketArea { Id = 4430, Country = "Portugal", District = "Porto", Municipality = "Baião", Town = "Baião", Zone = null },
+            new MarketArea { Id = 4431, Country = "Portugal", District = "Porto", Municipality = "Gondomar", Town = "Gondomar", Zone = null },
+            new MarketArea { Id = 4432, Country = "Portugal", District = "Porto", Municipality = "Lousada", Town = "Lousada", Zone = null },
+            new MarketArea { Id = 4433, Country = "Portugal", District = "Porto", Municipality = "Maia", Town = "Maia", Zone = null },
+            new MarketArea { Id = 4434, Country = "Portugal", District = "Porto", Municipality = "Marco de Canaveses", Town = "Marco de Canaveses", Zone = null },
+            new MarketArea { Id = 4435, Country = "Portugal", District = "Porto", Municipality = "Porto", Town = "Porto", Zone = null },
+            new MarketArea { Id = 4436, Country = "Portugal", District = "Porto", Municipality = "Santo Tirso", Town = "Santo Tirso", Zone = null },
+            new MarketArea { Id = 4437, Country = "Portugal", District = "Porto", Municipality = "Trofa", Town = "Trofa", Zone = null },
+            new MarketArea { Id = 4438, Country = "Portugal", District = "Porto", Municipality = "Vila Nova de Gaia", Town = "Vila Nova de Gaia", Zone = null },
+            // Santarém
+            new MarketArea { Id = 4439, Country = "Portugal", District = "Santarém", Municipality = "Abrantes", Town = "Abrantes", Zone = null },
+            new MarketArea { Id = 4440, Country = "Portugal", District = "Santarém", Municipality = "Cartaxo", Town = "Cartaxo", Zone = null },
+            new MarketArea { Id = 4441, Country = "Portugal", District = "Santarém", Municipality = "Entroncamento", Town = "Entroncamento", Zone = null },
+            new MarketArea { Id = 4442, Country = "Portugal", District = "Santarém", Municipality = "Ourém", Town = "Ourém", Zone = null },
+            new MarketArea { Id = 4443, Country = "Portugal", District = "Santarém", Municipality = "Santarém", Town = "Santarém", Zone = null },
+            new MarketArea { Id = 4444, Country = "Portugal", District = "Santarém", Municipality = "Tomar", Town = "Tomar", Zone = null },
+            new MarketArea { Id = 4445, Country = "Portugal", District = "Santarém", Municipality = "Torres Novas", Town = "Torres Novas", Zone = null },
+            // Setúbal
+            new MarketArea { Id = 4446, Country = "Portugal", District = "Setúbal", Municipality = "Alcácer do Sal", Town = "Alcácer do Sal", Zone = null },
+            new MarketArea { Id = 4447, Country = "Portugal", District = "Setúbal", Municipality = "Almada", Town = "Almada", Zone = null },
+            new MarketArea { Id = 4448, Country = "Portugal", District = "Setúbal", Municipality = "Barreiro", Town = "Barreiro", Zone = null },
+            new MarketArea { Id = 4449, Country = "Portugal", District = "Setúbal", Municipality = "Grândola", Town = "Grândola", Zone = null },
+            new MarketArea { Id = 4450, Country = "Portugal", District = "Setúbal", Municipality = "Montijo", Town = "Montijo", Zone = null },
+            new MarketArea { Id = 4451, Country = "Portugal", District = "Setúbal", Municipality = "Santiago do Cacém", Town = "Santiago do Cacém", Zone = null },
+            new MarketArea { Id = 4452, Country = "Portugal", District = "Setúbal", Municipality = "Sesimbra", Town = "Sesimbra", Zone = null },
+            // Viana do Castelo
+            new MarketArea { Id = 4453, Country = "Portugal", District = "Viana do Castelo", Municipality = "Arcos de Valdevez", Town = "Arcos de Valdevez", Zone = null },
+            new MarketArea { Id = 4454, Country = "Portugal", District = "Viana do Castelo", Municipality = "Caminha", Town = "Caminha", Zone = null },
+            new MarketArea { Id = 4455, Country = "Portugal", District = "Viana do Castelo", Municipality = "Melgaço", Town = "Melgaço", Zone = null },
+            new MarketArea { Id = 4456, Country = "Portugal", District = "Viana do Castelo", Municipality = "Ponte de Lima", Town = "Ponte de Lima", Zone = null },
+            new MarketArea { Id = 4457, Country = "Portugal", District = "Viana do Castelo", Municipality = "Valença", Town = "Valença", Zone = null },
+            new MarketArea { Id = 4458, Country = "Portugal", District = "Viana do Castelo", Municipality = "Viana do Castelo", Town = "Viana do Castelo", Zone = null },
+            // Vila Real
+            new MarketArea { Id = 4459, Country = "Portugal", District = "Vila Real", Municipality = "Chaves", Town = "Chaves", Zone = null },
+            new MarketArea { Id = 4460, Country = "Portugal", District = "Vila Real", Municipality = "Montalegre", Town = "Montalegre", Zone = null },
+            new MarketArea { Id = 4461, Country = "Portugal", District = "Vila Real", Municipality = "Ribeira de Pena", Town = "Ribeira de Pena", Zone = null },
+            new MarketArea { Id = 4462, Country = "Portugal", District = "Vila Real", Municipality = "Santa Marta de Penaguião", Town = "Santa Marta de Penaguião", Zone = null },
+            // Viseu
+            new MarketArea { Id = 4463, Country = "Portugal", District = "Viseu", Municipality = "Armamar", Town = "Armamar", Zone = null },
+            new MarketArea { Id = 4464, Country = "Portugal", District = "Viseu", Municipality = "Carregal do Sal", Town = "Carregal do Sal", Zone = null },
+            new MarketArea { Id = 4465, Country = "Portugal", District = "Viseu", Municipality = "Penalva do Castelo", Town = "Penalva do Castelo", Zone = null },
+            new MarketArea { Id = 4466, Country = "Portugal", District = "Viseu", Municipality = "São Pedro do Sul", Town = "São Pedro do Sul", Zone = null },
+            new MarketArea { Id = 4467, Country = "Portugal", District = "Viseu", Municipality = "Tondela", Town = "Tondela", Zone = null },
+            // Évora
+            new MarketArea { Id = 4468, Country = "Portugal", District = "Évora", Municipality = "Alandroal", Town = "Alandroal", Zone = null },
+            new MarketArea { Id = 4469, Country = "Portugal", District = "Évora", Municipality = "Borba", Town = "Borba", Zone = null },
+            new MarketArea { Id = 4470, Country = "Portugal", District = "Évora", Municipality = "Estremoz", Town = "Estremoz", Zone = null },
+            new MarketArea { Id = 4471, Country = "Portugal", District = "Évora", Municipality = "Montemor-o-Novo", Town = "Montemor-o-Novo", Zone = null },
+            new MarketArea { Id = 4472, Country = "Portugal", District = "Évora", Municipality = "Vila Viçosa", Town = "Vila Viçosa", Zone = null },
         };
     }
 }

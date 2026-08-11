@@ -3,6 +3,7 @@ using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
 using StayPilot.Domain.Entities;
 using StayPilot.Application.Helpers.Calculators;
+using StayPilot.Application.Helpers.Mappers;
 
 namespace StayPilot.Application.Services
 {
@@ -22,30 +23,30 @@ namespace StayPilot.Application.Services
             var added = await _premiumFeatureRepo.AddPremiumFeatureAsync(premiumFeature);
 
             await _premiumFeatureRepo.SaveChangesAsync();
-            
-            return new PremiumFeatureResponse
-            {
-                Feature = added.Feature,
-                PremiumPercent = added.PremiumPercent,
-                CalculatedAtUtc = added.CalculatedAtUtc
-            };
+
+            // Both here and below: map through Converter rather than copying fields by hand, so
+            // the confidence range cannot go missing from one path and not the other.
+            return Converter.MapToResponse(added);
         }
 
         public async Task<List<PremiumFeatureResponse>> GetAllPremiumFeatures()
         {
             var premiumFeatures = await _premiumFeatureRepo.GetAllPremiumFeaturesAsync();
 
-            return premiumFeatures.Select(x => new PremiumFeatureResponse
-            {
-                Feature = x.Feature,
-                PremiumPercent = x.PremiumPercent,
-                CalculatedAtUtc = x.CalculatedAtUtc
-            }).ToList();
+            return premiumFeatures.Select(x => Converter.MapToResponse(x)).ToList();
         }
 
         public async Task<List<PremiumFeature>> ReCalculatePremiumFeaturesValue()
         {
             var allListings = await _propertyListingRepo.GetAllListingsForFeaturePremiumCalculationAsync();
+
+            // Each premium now comes out of the valuation regression rather than being measured
+            // on its own. That matters: the regression holds size, typology, condition, market
+            // area and beach distance still while it reads one feature, so a pool premium is no
+            // longer contaminated by pools coming attached to bigger flats. It also reports a
+            // confidence range, which is the only way to tell "worth nothing" apart from
+            // "we cannot tell".
+            var model = ValuationModel.Fit(allListings);
 
             // Overwrite, not append: clear the previous results first so the table always
             // ends with exactly one up-to-date row per feature. (Older runs stacked a new
@@ -55,16 +56,16 @@ namespace StayPilot.Application.Services
 
             var allFeatures = new List<PremiumFeature>();
 
-            // Same list the Calculator itself uses internally - so adding or removing
-            // a tracked feature only ever means editing TrackedFeatures in Calculator.cs.
-            foreach (var feature in Calculator.TrackedFeatureList)
+            foreach (var effect in model.FeatureEffects)
             {
-                var valueInPercent = Calculator.CalculateFeaturePremiumPercent(allListings, feature);
-
                 var recalculatedFeature = new PremiumFeature
                 {
-                    Feature = feature,
-                    PremiumPercent = valueInPercent,
+                    Feature = effect.Feature,
+                    PremiumPercent = effect.Percent,
+                    LowerBoundPercent = effect.LowerPercent,
+                    UpperBoundPercent = effect.UpperPercent,
+                    SampleSize = model.TrainingListings,
+                    Basis = effect.Basis,
                 };
 
                 allFeatures.Add(recalculatedFeature);

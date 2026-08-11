@@ -1,4 +1,5 @@
-﻿using StayPilot.Application.Contracts.Response;
+﻿using StayPilot.Application.Contracts.Request;
+using StayPilot.Application.Contracts.Response;
 
 namespace StayPilot.Application.Interfaces.Services
 {
@@ -8,9 +9,10 @@ namespace StayPilot.Application.Interfaces.Services
     public interface IMarketAreaService
     {
         /// <summary>
-        /// Get every market area in the shape we send back.
+        /// Get one page of market areas in the shape we send back,
+        /// together with the paging info (page, size, total matches).
         /// </summary>
-        Task<List<MarketAreaResponse>> GetAllMarketAreasAsync();
+        Task<MarketAreaListResponse> GetMarketAreasPageAsync(MarketAreaRequest request);
 
         /// <summary>
         /// Get the next-level choices for the region picker.

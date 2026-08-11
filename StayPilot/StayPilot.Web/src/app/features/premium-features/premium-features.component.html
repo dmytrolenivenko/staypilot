@@ -1,8 +1,15 @@
 <section class="panel">
   <h1>Feature Impact</h1>
   <p class="hint">
-    Average price difference for each tracked feature, as a percentage. This is correlation
-    across current listings, not causation. Recalculate to refresh from the latest data.
+    What each feature is worth, measured by the valuation model while holding size, rooms,
+    condition, beach distance and location still. This is correlation across current asking
+    prices, not causation. Recalculate to refresh from the latest data.
+  </p>
+  <p class="hint">
+    Every number has a confidence range. Where that range crosses zero the data cannot tell
+    whether the feature affects price at all &mdash; those rows say <em>no measurable effect</em>
+    rather than showing a percentage, and sort to the bottom. Features whose ranges overlap
+    cannot be ranked against each other.
   </p>
 
   <div class="toolbar">
@@ -25,36 +32,59 @@
     @if (features().length === 0) {
       <p class="hint">No feature premiums yet. Hit "Recalculate" to compute them from current listings.</p>
     } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th (click)="sortBy('featureName')" style="cursor: pointer;">
-              Feature
-              @if (sortField() === 'featureName') {
-                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-              }
-            </th>
-            <th (click)="sortBy('premiumPercentage')" style="cursor: pointer;">
-              Impact
-              @if (sortField() === 'premiumPercentage') {
-                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-              }
-            </th>
-            <th>Last calculated</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (f of sortedFeatures(); track f.feature) {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td>{{ f.feature }}</td>
-              <td [class.pos]="f.premiumPercent > 0" [class.neg]="f.premiumPercent < 0">
-                {{ f.premiumPercent > 0 ? '+' : '' }}{{ f.premiumPercent | number: '1.0-1' }}%
-              </td>
-              <td>{{ f.calculatedAtUtc | date: 'medium' }}</td>
+              <th (click)="sortBy('featureName')" style="cursor: pointer;">
+                Feature
+                @if (sortField() === 'featureName') {
+                  {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+                }
+              </th>
+              <th (click)="sortBy('premiumPercentage')" style="cursor: pointer;">
+                Impact
+                @if (sortField() === 'premiumPercentage') {
+                  {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+                }
+              </th>
+              <th>Confidence range</th>
+              <th>Basis</th>
+              <th>Listings</th>
+              <th>Last calculated</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (f of sortedFeatures(); track f.feature) {
+              <tr [class.unmeasured]="!f.isMeasurable">
+                <td>{{ label(f.feature) }}</td>
+
+                @if (f.isMeasurable) {
+                  <td [class.pos]="f.premiumPercent > 0" [class.neg]="f.premiumPercent < 0">
+                    {{ f.premiumPercent > 0 ? '+' : '' }}{{ f.premiumPercent | number: '1.0-1' }}%
+                  </td>
+                  <td class="range">
+                    {{ f.lowerBoundPercent > 0 ? '+' : '' }}{{ f.lowerBoundPercent | number: '1.0-1' }}%
+                    to
+                    {{ f.upperBoundPercent > 0 ? '+' : '' }}{{ f.upperBoundPercent | number: '1.0-1' }}%
+                  </td>
+                } @else {
+                  <td class="muted">no measurable effect</td>
+                  <td class="range muted">
+                    {{ f.lowerBoundPercent | number: '1.0-1' }}% to
+                    {{ f.upperBoundPercent > 0 ? '+' : '' }}{{ f.upperBoundPercent | number: '1.0-1' }}%
+                    &mdash; includes zero
+                  </td>
+                }
+
+                <td class="muted basis">{{ basis(f) }}</td>
+                <td>{{ f.sampleSize | number }}</td>
+                <td>{{ f.calculatedAtUtc | date: 'medium' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
   </section>
 }

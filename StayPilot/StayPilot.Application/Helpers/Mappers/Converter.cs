@@ -246,6 +246,8 @@ namespace StayPilot.Application.Helpers.Mappers
                 IsFurnished = entity.IsFurnished,
                 HasSeaView = entity.HasSeaView,
                 HasCityView = entity.HasCityView,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
                 EnergyCertificate = entity.EnergyCertificate,
                 Notes = entity.Notes,
                 DistanceToBeachMeters = entity.DistanceToBeachMeters,
@@ -259,6 +261,12 @@ namespace StayPilot.Application.Helpers.Mappers
             {
                 Feature = entity.Feature,
                 PremiumPercent = entity.PremiumPercent,
+                LowerBoundPercent = entity.LowerBoundPercent,
+                UpperBoundPercent = entity.UpperBoundPercent,
+                SampleSize = entity.SampleSize,
+                Basis = entity.Basis,
+                // Measurable only when the whole confidence range sits on one side of zero.
+                IsMeasurable = entity.LowerBoundPercent > 0 || entity.UpperBoundPercent < 0,
                 CalculatedAtUtc = entity.CalculatedAtUtc,
             };
 

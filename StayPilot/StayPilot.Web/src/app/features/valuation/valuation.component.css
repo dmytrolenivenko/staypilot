@@ -70,6 +70,15 @@
   color: var(--text-muted);
 }
 
+/* Explains what the range above actually measures. Kept narrow so it reads as a footnote to
+   the headline rather than competing with it. */
+.headline-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  max-width: 34rem;
+  line-height: 1.4;
+}
+
 .badge-high {
   background: rgba(30, 130, 76, 0.15);
   color: var(--success);
