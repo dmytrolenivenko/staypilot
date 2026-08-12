@@ -3,7 +3,7 @@ namespace StayPilot.Application.Helpers.Calculators
     /// <summary>
     /// The result of fitting a least-squares line (well, hyperplane) through the data.
     /// </summary>
-    public class LeastSquaresFit
+    internal class LeastSquaresFit
     {
         /// <summary>One number per input column: how much that column moves the answer.</summary>
         public double[] Coefficients { get; set; } = Array.Empty<double>();
@@ -31,20 +31,15 @@ namespace StayPilot.Application.Helpers.Calculators
     }
 
     /// <summary>
-    /// Ordinary least squares, written out by hand. This is the only real maths in the project,
-    /// kept in its own file so <see cref="ValuationModel"/> can read as "what we price on"
-    /// rather than "how to invert a matrix".
-    ///
-    /// No NuGet maths library on purpose - the whole thing is one normal-equations solve, and
-    /// the project deliberately keeps its dependency list short.
+    /// Ordinary least squares, by hand. Kept in its own file so <see cref="ValuationModel"/>
+    /// reads as "what we price on", not "how to invert a matrix". No maths library: the whole
+    /// thing is one normal-equations solve.
     /// </summary>
-    public static class LeastSquares
+    internal static class LeastSquares
     {
         /// <summary>
-        /// Tiny value added to the matrix diagonal before inverting. Guards against a column
-        /// that carries no information at all (for example a dummy that is zero for every row),
-        /// which would otherwise make the matrix impossible to invert. Far too small to bias
-        /// any real coefficient.
+        /// Added to the matrix diagonal before inverting, so an all-zero column can't make it
+        /// uninvertible. Far too small to bias a real coefficient.
         /// </summary>
         private const double DiagonalGuard = 1e-7;
 

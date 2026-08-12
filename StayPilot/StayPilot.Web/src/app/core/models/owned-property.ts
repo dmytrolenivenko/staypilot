@@ -92,6 +92,14 @@ export interface ValuationComp {
 export interface ValuationAdjustment {
   label: string;
   amount: number;
+
+  // What the amount was measured against, for the per-unit features — "3 vs 1.8 typical".
+  // Null for plain yes/no features, where having it is the whole story.
+  detail?: string | null;
+
+  // False when the feature's confidence range straddles zero. The amount is still part of
+  // the estimate, it just isn't a finding — shown greyed rather than dropped.
+  isMeasurable: boolean;
 }
 
 // Purchase-vs-now block. Only meaningful when the property has a purchase price/date.

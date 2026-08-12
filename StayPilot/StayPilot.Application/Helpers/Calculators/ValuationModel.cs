@@ -20,27 +20,15 @@ namespace StayPilot.Application.Helpers.Calculators
         public decimal UpperPercent { get; set; }
 
         /// <summary>
-        /// How many of the fitted listings actually carry this feature - the evidence behind
-        /// this row, as opposed to the size of the fit. A sea view measured on 2,000 listings
-        /// out of 14,000 is a very different claim from a garage measured on 9,000, and showing
-        /// the training total against both made them look equally well-evidenced.
-        ///
-        /// For <see cref="PremiumFeatures.BeachProximity"/> there is no "has it" - this counts
-        /// the listings with a usable beach distance, which is what the term was read from.
+        /// How many fitted listings carry this feature - the evidence behind this row, not the
+        /// size of the fit. For BeachProximity: listings with a usable beach distance.
         /// </summary>
         public int ListingsWithFeature { get; set; }
 
         /// <summary>
-        /// The best this feature is worth under the conditions that favour it most, when
-        /// <see cref="Percent"/> is an average over conditions that differ enormously. Null for
-        /// features whose worth does not depend on anything - most of them.
-        ///
-        /// Only the sea view has one today: the model carries a SeaView x distance term, so the
-        /// headline ~9% is the average across every distance, including "sea view" adverts 5km
-        /// inland where it means a sliver on the horizon. On the beachfront the same fit says
-        /// far more. Both numbers come out of the same regression - this is not a nicer estimate,
-        /// it is a different question, which is why <see cref="MaximumBasis"/> is mandatory
-        /// alongside it.
+        /// What the feature is worth under the conditions that favour it most, when
+        /// <see cref="Percent"/> averages over conditions that differ a lot. Sea view only
+        /// today; null for the rest. <see cref="MaximumBasis"/> is mandatory alongside it.
         /// </summary>
         public decimal? MaximumPercent { get; set; }
 
@@ -59,13 +47,8 @@ namespace StayPilot.Application.Helpers.Calculators
         public bool IsMeasurable => LowerPercent > 0 || UpperPercent < 0;
 
         /// <summary>
-        /// What <see cref="Percent"/> is measured against, when a bare "if present" would
-        /// mislead. Null for ordinary features.
-        ///
-        /// This exists because two of the values are not flat premiums. Beach proximity is per
-        /// halving of distance, and a sea view is worth far more on the beachfront than inland -
-        /// its headline figure is the average across all distances, which on its own reads as
-        /// "a sea view is worth less than a garage" when at 100m it is worth double.
+        /// What <see cref="Percent"/> is measured against, when "if present" would mislead -
+        /// beach proximity is per halving of distance. Null for ordinary features.
         /// </summary>
         public string? Basis { get; set; }
     }
@@ -88,24 +71,16 @@ namespace StayPilot.Application.Helpers.Calculators
     }
 
     /// <summary>
-    /// Prices a property from the listings we have collected.
+    /// Prices a property from the collected listings, in two stages: a hedonic regression on
+    /// ln(price per m²), then a neighbourhood correction from the nearest listings' errors -
+    /// which is where most of the accuracy lives.
     ///
-    /// Two stages. First a hedonic regression on ln(price per m²): what the property IS - its
-    /// size, rooms, condition, features, distance to the beach, plus a per-market-area level.
-    /// Then a neighbourhood correction: the regression's leftover error is not random, it is
-    /// geographic (one street is simply dearer than the next), so we shift the prediction by
-    /// the median error of the nearest handful of known listings. That second stage is where
-    /// most of the accuracy lives - MarketArea alone lumps whole towns together.
+    /// 5-fold backtest: ~13% median error, vs ~18.5% for comp median alone.
+    /// Caveat: these are ASKING prices, so it predicts what a seller asks, not what a buyer pays.
     ///
-    /// Measured by 5-fold backtest over the collected listings: median absolute error ~13%,
-    /// with ~41% of predictions inside 10%. For comparison, the same data priced by comp median
-    /// alone (which is what this replaced) scores ~18.5%, and the old per-feature premium layer
-    /// improved on that by 0.1 points.
-    ///
-    /// One honest limit: listings are ASKING prices. This predicts what a seller will ask, not
-    /// what a buyer will pay - no amount of modelling can extract the latter from this data.
+    /// Internal on purpose: <see cref="PremiumFeaturesCalculator"/> is the way in.
     /// </summary>
-    public class ValuationModel
+    internal class ValuationModel
     {
         /// <summary>A market area needs at least this many listings to get its own price level.</summary>
         private const int MinimumListingsPerArea = 15;
@@ -121,10 +96,8 @@ namespace StayPilot.Application.Helpers.Calculators
         private const int MinimumTrainingListings = 100;
 
         /// <summary>
-        /// Past this distance a "nearest listing" is not a neighbour and its error says nothing
-        /// about this street. Without this bound a property with a broken coordinate (a missing
-        /// minus sign on the longitude puts Portugal in the Mediterranean) silently borrows the
-        /// correction from listings a thousand kilometres away.
+        /// Past this, a "nearest listing" isn't a neighbour. Also stops a broken coordinate
+        /// borrowing the correction from a thousand km away.
         /// </summary>
         private const double MaximumNeighbourMeters = 25_000;
 
@@ -136,10 +109,8 @@ namespace StayPilot.Application.Helpers.Calculators
         private const int ImplausibleBeachMeters = 50_000;
 
         /// <summary>
-        /// The distance the sea view's "up to" figure is quoted at. 100m is beachfront in
-        /// practice and sits inside the collected data, so the number is read off the fitted
-        /// curve rather than extrapolated past the end of it. Quoting it at 50m would give a
-        /// bigger headline from thinner evidence, which is the trade this constant refuses.
+        /// Where the sea view's "up to" figure is quoted. 100m is beachfront and sits inside
+        /// the data, so it's read off the curve rather than extrapolated past the end of it.
         /// </summary>
         private const int BeachfrontMeters = 100;
 
@@ -183,6 +154,8 @@ namespace StayPilot.Application.Helpers.Calculators
         private readonly double _averageLogBeachMeters;
         private readonly double _averageConstructionYear;
         private readonly double _averageEnergyGrade;
+        private readonly double _averageBathrooms;
+        private readonly double _averageBalconies;
         private readonly double _medianFloor;
         private readonly double _medianBeachMeters;
         private readonly double[] _coefficients;
@@ -201,20 +174,33 @@ namespace StayPilot.Application.Helpers.Calculators
         public double RSquared { get; }
 
         /// <summary>
-        /// Typical size of the regression's own error, on the log scale - so multiplying a
-        /// prediction by e^±this gives a roughly two-thirds-likely range. Deliberately measured
-        /// from the fit rather than hardcoded, so it tracks the data instead of drifting away
-        /// from it. It ignores the improvement the neighbourhood correction brings, which makes
-        /// the range it produces a little wide - erring toward honest rather than flattering.
+        /// The regression's typical error on the log scale: e^±this is a ~two-thirds range.
+        /// Measured from the fit, and ignores the neighbourhood correction - so it errs wide.
         /// </summary>
         public double PredictionSpread { get; }
 
         /// <summary>
-        /// Does this property have that feature? Single source of truth for the mapping between
-        /// a <see cref="PremiumFeatures"/> value and the property field behind it, so callers
-        /// pricing a feature and the model measuring it can never disagree.
-        /// Returns false for <see cref="PremiumFeatures.BeachProximity"/> and anything else that
-        /// is not a yes/no feature.
+        /// The typical property, in the same terms the per-unit features are measured in -
+        /// what "three bathrooms" gets compared against. Floor and beach use medians because
+        /// both are skewed.
+        /// </summary>
+        public double MarketAverageBathrooms => _averageBathrooms;
+
+        /// <inheritdoc cref="MarketAverageBathrooms"/>
+        public double MarketAverageBalconies => _averageBalconies;
+
+        /// <inheritdoc cref="MarketAverageBathrooms"/>
+        public double MarketAverageEnergyGrade => _averageEnergyGrade;
+
+        /// <inheritdoc cref="MarketAverageBathrooms"/>
+        public double MarketMedianFloor => _medianFloor;
+
+        /// <inheritdoc cref="MarketAverageBathrooms"/>
+        public double MarketMedianBeachMeters => _medianBeachMeters;
+
+        /// <summary>
+        /// Does this property have that feature? One source of truth for feature -> field, so
+        /// pricing and measuring can't disagree. False for anything that isn't yes/no.
         /// </summary>
         public static bool HasFeature(ValuationSubject subject, PremiumFeatures feature)
         {
@@ -270,15 +256,9 @@ namespace StayPilot.Application.Helpers.Calculators
 
             var subjects = training.Select(x => x.Subject).ToList();
 
-            // Skip(1) drops one level from each dummy set - the baseline that the others are
-            // measured against. Without it the set adds up to the intercept: every listing
-            // scores 1 in exactly one column, so "all the dummies" and "the intercept" become
-            // the same column and the fit has no unique answer (it can add any amount to one
-            // and subtract it from the other). That produces enormous cancelling coefficients
-            // rather than an obvious failure, so it has to be prevented, not detected.
-            //
-            // Areas need this as much as typology does: thin areas fall outside the dummy set
-            // and would otherwise be the only thing keeping it from summing to one.
+            // Skip(1) drops one level per dummy set - the baseline the rest are measured
+            // against. Keep them all and the set equals the intercept, so the fit has no
+            // unique answer - and it fails silently, as huge cancelling coefficients.
             _areaColumns = subjects
                 .GroupBy(x => x.MarketAreaId)
                 .Where(g => g.Count() >= MinimumListingsPerArea)
@@ -314,6 +294,13 @@ namespace StayPilot.Application.Helpers.Calculators
                 .Select(x => (double)x.EnergyGradeScore!.Value)
                 .DefaultIfEmpty(4)
                 .Average();
+
+            // Bathrooms and balconies go into the fit raw rather than centred, so the model
+            // itself never needed their averages. A valuation does: what three bathrooms are
+            // worth is what they are worth ABOVE what the market usually has, and crediting all
+            // three against zero would pay every property a premium for being ordinary.
+            _averageBathrooms = subjects.Average(x => (double)x.Bathrooms);
+            _averageBalconies = subjects.Average(x => (double)x.BalconyCount);
 
             var rows = subjects.Select(BuildRow).ToList();
             var targets = training.Select(x => x.LogPricePerM2).ToList();
@@ -502,11 +489,8 @@ namespace StayPilot.Application.Helpers.Calculators
                 Basis = "per halving of the distance to the beach",
             });
 
-            // The measured-not-described features. Every one of these is read off a structured
-            // field the source recorded, never off the advert's prose - wording tracks the price
-            // bracket a property is marketed in, so a premium read from it would be measuring
-            // the copywriting. Four of the five were already fitted columns and simply had
-            // nowhere to be reported.
+            // All read off structured fields, never the advert's prose - wording tracks the
+            // price bracket, so a premium read from it would measure the copywriting.
             effects.Add(ScalarEffect(fit, PremiumFeatures.EnergyGrade, EnergyGradeColumn,
                 subjects.Count(x => x.EnergyGradeScore.HasValue),
                 "per grade step up the scale (G to A+)"));
@@ -551,10 +535,8 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// Attaches the beachfront figure to the sea view row - what the same fit says a sea view
-        /// is worth at <see cref="BeachfrontMeters"/>, which is where the feature is actually
-        /// bought and sold. The market-wide average buries that under every "sea view" advert
-        /// kilometres inland.
+        /// What the same fit says a sea view is worth at <see cref="BeachfrontMeters"/> - the
+        /// market average buries that under every "sea view" advert kilometres inland.
         /// </summary>
         private void ApplyBeachfrontMaximum(FeatureEffect effect)
         {
@@ -577,12 +559,9 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// What a sea view is worth for a property the given distance from the beach.
-        ///
-        /// The model carries a SeaView x ln(distance) term, so this is not one number: a view
-        /// from the beachfront is worth several times one from 5km inland, where "sea view"
-        /// usually means a sliver on the horizon. The headline percentage is the value at the
-        /// typical distance, which is why it can look smaller than a garage - at 100m it is not.
+        /// What a sea view is worth at a given distance from the beach. The model carries a
+        /// SeaView x ln(distance) term, so beachfront is worth several times inland - which is
+        /// why the headline figure can look smaller than a garage.
         /// </summary>
         public decimal SeaViewPercentAt(int beachMeters)
         {
@@ -627,12 +606,8 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// Turns a log-scale coefficient into a percentage change.
-        ///
-        /// Clamped before the exponential: a degenerate fit can throw out a coefficient of 700,
-        /// and e^700 overflows a decimal - which used to surface as an OverflowException from
-        /// deep inside the fit rather than as a bad number. ±5 spans ×0.007 to ×148, far outside
-        /// anything a real feature could be worth, so clamping never touches a genuine result.
+        /// Log-scale coefficient to a percentage change. Clamped to ±5 first: a degenerate fit
+        /// can produce e^700, which overflows decimal. ±5 is far outside any real premium.
         /// </summary>
         private static decimal ToPercent(double logCoefficient)
         {

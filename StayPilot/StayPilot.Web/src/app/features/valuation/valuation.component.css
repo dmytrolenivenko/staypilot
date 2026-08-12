@@ -135,3 +135,15 @@
   color: var(--error);
   font-weight: 600;
 }
+
+/* Rows the data cannot speak to. Dimmed rather than hidden - the amount is still part of the
+   estimate, so dropping it would leave the breakdown quietly not adding up. Same treatment as
+   the Feature Impact screen, on purpose: one visual language for "we looked and found nothing". */
+.unmeasured {
+  opacity: 0.6;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-style: italic;
+}

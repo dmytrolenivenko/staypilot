@@ -18,17 +18,6 @@ namespace StayPilot.Application.Services
             _propertyListingRepo = propertyListingRepo;
         }
 
-        public async Task<PremiumFeatureResponse> AddPremiumFeatureAsync(PremiumFeature premiumFeature)
-        {
-            var added = await _premiumFeatureRepo.AddPremiumFeatureAsync(premiumFeature);
-
-            await _premiumFeatureRepo.SaveChangesAsync();
-
-            // Both here and below: map through Converter rather than copying fields by hand, so
-            // the confidence range cannot go missing from one path and not the other.
-            return Converter.MapToResponse(added);
-        }
-
         public async Task<List<PremiumFeatureResponse>> GetAllPremiumFeatures()
         {
             var premiumFeatures = await _premiumFeatureRepo.GetAllPremiumFeaturesAsync();
@@ -40,23 +29,17 @@ namespace StayPilot.Application.Services
         {
             var allListings = await _propertyListingRepo.GetAllListingsForFeaturePremiumCalculationAsync();
 
-            // Each premium now comes out of the valuation regression rather than being measured
-            // on its own. That matters: the regression holds size, typology, condition, market
-            // area and beach distance still while it reads one feature, so a pool premium is no
-            // longer contaminated by pools coming attached to bigger flats. It also reports a
-            // confidence range, which is the only way to tell "worth nothing" apart from
-            // "we cannot tell".
-            var model = ValuationModel.Fit(allListings);
+            // One regression reads every feature at once, holding size, typology, condition
+            // and location still - so a pool premium isn't really "pools come on bigger flats".
+            var calculator = PremiumFeaturesCalculator.Fit(allListings);
 
-            // Overwrite, not append: clear the previous results first so the table always
-            // ends with exactly one up-to-date row per feature. (Older runs stacked a new
-            // row every time, which is why the same feature showed many timestamps.)
+            // Overwrite, not append: exactly one current row per feature.
             var previous = await _premiumFeatureRepo.GetAllPremiumFeaturesAsync();
             _premiumFeatureRepo.RemovePremiumFeatures(previous);
 
             var allFeatures = new List<PremiumFeature>();
 
-            foreach (var effect in model.FeatureEffects)
+            foreach (var effect in calculator.FeatureEffects)
             {
                 var recalculatedFeature = new PremiumFeature
                 {
@@ -64,7 +47,7 @@ namespace StayPilot.Application.Services
                     PremiumPercent = effect.Percent,
                     LowerBoundPercent = effect.LowerPercent,
                     UpperBoundPercent = effect.UpperPercent,
-                    SampleSize = model.TrainingListings,
+                    SampleSize = calculator.TrainingListings,
                     ListingsWithFeature = effect.ListingsWithFeature,
                     MaximumPercent = effect.MaximumPercent,
                     MaximumBasis = effect.MaximumBasis,
