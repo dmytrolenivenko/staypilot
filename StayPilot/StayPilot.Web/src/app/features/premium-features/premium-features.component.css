@@ -35,6 +35,21 @@
   font-style: italic;
 }
 
+/* The "up to" figure sits under the average, deliberately smaller and in normal weight: it is
+   the same fit read under the best conditions, not a better estimate, and typesetting it as the
+   headline would be the number people quote back at us. */
+.peak {
+  display: block;
+  font-size: 0.85em;
+  font-weight: 400;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.peak .muted {
+  font-size: 0.95em;
+}
+
 .range {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;

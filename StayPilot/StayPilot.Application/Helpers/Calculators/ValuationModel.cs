@@ -20,6 +20,38 @@ namespace StayPilot.Application.Helpers.Calculators
         public decimal UpperPercent { get; set; }
 
         /// <summary>
+        /// How many of the fitted listings actually carry this feature - the evidence behind
+        /// this row, as opposed to the size of the fit. A sea view measured on 2,000 listings
+        /// out of 14,000 is a very different claim from a garage measured on 9,000, and showing
+        /// the training total against both made them look equally well-evidenced.
+        ///
+        /// For <see cref="PremiumFeatures.BeachProximity"/> there is no "has it" - this counts
+        /// the listings with a usable beach distance, which is what the term was read from.
+        /// </summary>
+        public int ListingsWithFeature { get; set; }
+
+        /// <summary>
+        /// The best this feature is worth under the conditions that favour it most, when
+        /// <see cref="Percent"/> is an average over conditions that differ enormously. Null for
+        /// features whose worth does not depend on anything - most of them.
+        ///
+        /// Only the sea view has one today: the model carries a SeaView x distance term, so the
+        /// headline ~9% is the average across every distance, including "sea view" adverts 5km
+        /// inland where it means a sliver on the horizon. On the beachfront the same fit says
+        /// far more. Both numbers come out of the same regression - this is not a nicer estimate,
+        /// it is a different question, which is why <see cref="MaximumBasis"/> is mandatory
+        /// alongside it.
+        /// </summary>
+        public decimal? MaximumPercent { get; set; }
+
+        /// <summary>
+        /// The conditions <see cref="MaximumPercent"/> applies under, for example "within 100m of
+        /// the beach". Never null when <see cref="MaximumPercent"/> is set - an "up to" figure
+        /// with no stated conditions is a marketing claim, not a measurement.
+        /// </summary>
+        public string? MaximumBasis { get; set; }
+
+        /// <summary>
         /// False when the confidence range straddles zero - meaning the data cannot tell us
         /// whether this feature is worth anything at all. Showing "-0.2%" for one of these
         /// reads as "it makes the flat cheaper", which is not what it means.
@@ -104,6 +136,14 @@ namespace StayPilot.Application.Helpers.Calculators
         private const int ImplausibleBeachMeters = 50_000;
 
         /// <summary>
+        /// The distance the sea view's "up to" figure is quoted at. 100m is beachfront in
+        /// practice and sits inside the collected data, so the number is read off the fitted
+        /// curve rather than extrapolated past the end of it. Quoting it at 50m would give a
+        /// bigger headline from thinner evidence, which is the trade this constant refuses.
+        /// </summary>
+        private const int BeachfrontMeters = 100;
+
+        /// <summary>
         /// The yes/no features we report on, in the order they occupy model columns.
         /// HasAirConditioning is absent on purpose: the data has thousands of trues and not one
         /// explicit false, so it encodes "the advert mentioned AC", not "the flat has AC".
@@ -122,6 +162,17 @@ namespace StayPilot.Application.Helpers.Calculators
             (PremiumFeatures.IsRenovated, x => x.Condition == PropertyCondition.Renovated),
         };
 
+        // Where each non-dummy column sits, named rather than counted out at each use site.
+        // BuildRow lays them down in exactly this order; the two must move together, and
+        // naming them is what makes that checkable instead of a game of off-by-one.
+        private static int NeedsRenovationColumn => 1 + BooleanFeatures.Length;   // column 0 is the intercept
+        private static int BathroomsColumn => NeedsRenovationColumn + 3;
+        private static int BalconyColumn => NeedsRenovationColumn + 4;
+        private static int BeachColumn => NeedsRenovationColumn + 5;
+        private static int SeaViewBeachColumn => NeedsRenovationColumn + 6;
+        private static int FloorColumn => NeedsRenovationColumn + 7;
+        private static int EnergyGradeColumn => NeedsRenovationColumn + 11;
+
         // Fitted shape. Every one of these is needed to rebuild an identical row at predict
         // time - the column layout must match exactly what was fitted, or coefficients get
         // applied to the wrong thing.
@@ -131,6 +182,7 @@ namespace StayPilot.Application.Helpers.Calculators
         private readonly double _averageLogArea;
         private readonly double _averageLogBeachMeters;
         private readonly double _averageConstructionYear;
+        private readonly double _averageEnergyGrade;
         private readonly double _medianFloor;
         private readonly double _medianBeachMeters;
         private readonly double[] _coefficients;
@@ -166,6 +218,13 @@ namespace StayPilot.Application.Helpers.Calculators
         /// </summary>
         public static bool HasFeature(ValuationSubject subject, PremiumFeatures feature)
         {
+            // Needing renovation is a plain yes/no like the rest, but it lives in its own column
+            // rather than in BooleanFeatures, so it has to be read separately. It is the only
+            // one of the newer features that works this way - a grade step, a bathroom and a
+            // floor are quantities, and "does this property have a floor" is not a question.
+            if (feature == PremiumFeatures.NeedsRenovation)
+                return subject.Condition == PropertyCondition.NeedsRenovation;
+
             var match = BooleanFeatures.FirstOrDefault(x => x.Feature == feature);
 
             return match.Read is not null && match.Read(subject);
@@ -249,13 +308,20 @@ namespace StayPilot.Application.Helpers.Calculators
                 .DefaultIfEmpty(2000)
                 .Average();
 
+            // Same centring reason as the others: without it the intercept would mean "a flat
+            // rated G", the worst grade on the scale, rather than a typical one.
+            _averageEnergyGrade = subjects.Where(x => x.EnergyGradeScore.HasValue)
+                .Select(x => (double)x.EnergyGradeScore!.Value)
+                .DefaultIfEmpty(4)
+                .Average();
+
             var rows = subjects.Select(BuildRow).ToList();
             var targets = training.Select(x => x.LogPricePerM2).ToList();
 
             var fit = LeastSquares.Fit(rows, targets);
             _coefficients = fit.Coefficients;
 
-            FeatureEffects = BuildFeatureEffects(fit);
+            FeatureEffects = BuildFeatureEffects(fit, subjects);
 
             // The residual surface: where the regression is wrong, and where geographically.
             _residuals = new List<(double, double, double)>();
@@ -357,6 +423,12 @@ namespace StayPilot.Application.Helpers.Calculators
             row.Add((subject.ConstructionYear ?? _averageConstructionYear) - _averageConstructionYear);
             row.Add(subject.ConstructionYear.HasValue ? 0 : 1);
 
+            // Energy rating, and a flag for the ~7% that do not state one. Without the flag a
+            // missing certificate would be priced as an average rating, and the two are not the
+            // same claim - properties that omit it are not typical, they are quieter about it.
+            row.Add((subject.EnergyGradeScore ?? _averageEnergyGrade) - _averageEnergyGrade);
+            row.Add(subject.EnergyGradeScore.HasValue ? 0 : 1);
+
             foreach (var typology in _typologyColumns)
             {
                 row.Add(subject.Typology == typology ? 1 : 0);
@@ -380,7 +452,7 @@ namespace StayPilot.Application.Helpers.Calculators
         /// convert straight across; beach proximity is rescaled to "per halving of distance",
         /// because a percentage for a continuous measurement otherwise means nothing.
         /// </summary>
-        private List<FeatureEffect> BuildFeatureEffects(LeastSquaresFit fit)
+        private List<FeatureEffect> BuildFeatureEffects(LeastSquaresFit fit, List<ValuationSubject> subjects)
         {
             var effects = new List<FeatureEffect>();
 
@@ -389,32 +461,34 @@ namespace StayPilot.Application.Helpers.Calculators
                 var column = 1 + i;                                     // column 0 is the intercept
                 var coefficient = fit.Coefficients[column];
                 var margin = fit.ConfidenceMargin(column);
+                var read = BooleanFeatures[i].Read;
+                var feature = BooleanFeatures[i].Feature;
 
-                effects.Add(new FeatureEffect
+                var effect = new FeatureEffect
                 {
-                    Feature = BooleanFeatures[i].Feature,
+                    Feature = feature,
                     Percent = ToPercent(coefficient),
                     LowerPercent = ToPercent(coefficient - margin),
                     UpperPercent = ToPercent(coefficient + margin),
-                    // Deliberately null for every yes/no feature, including the sea view. The
-                    // sea view's worth does vary with distance to the beach, and the valuation
-                    // uses that (see SeaViewPercentAt) - but the Feature Impact screen reports
-                    // one market-wide average per feature, and spelling out the distance curve
-                    // there turns a summary into a lecture. It belongs on a valuation, where
-                    // there is an actual property with an actual distance.
+                    ListingsWithFeature = subjects.Count(read),
+                    // Deliberately null for every yes/no feature. The sea view's worth does vary
+                    // with distance, but that is carried by MaximumPercent below rather than by
+                    // redefining what the headline percentage means - the headline stays "the
+                    // average across the market", the same as every other row.
                     Basis = null,
-                });
-            }
+                };
 
-            // Beach distance sits five columns after the boolean block: needs-renovation,
-            // log area, log area squared, bathrooms, balconies, then log beach distance.
-            var beachColumn = 1 + BooleanFeatures.Length + 5;
+                if (feature == PremiumFeatures.HasSeaView)
+                    ApplyBeachfrontMaximum(effect);
+
+                effects.Add(effect);
+            }
 
             // The coefficient is per unit of ln(metres) and negative (further out is cheaper).
             // Halving the distance changes ln by -ln(2), so the gain is -coefficient * ln(2).
             var halving = Math.Log(2);
-            var beachGain = -fit.Coefficients[beachColumn] * halving;
-            var beachMargin = fit.ConfidenceMargin(beachColumn) * halving;
+            var beachGain = -fit.Coefficients[BeachColumn] * halving;
+            var beachMargin = fit.ConfidenceMargin(BeachColumn) * halving;
 
             effects.Add(new FeatureEffect
             {
@@ -422,10 +496,84 @@ namespace StayPilot.Application.Helpers.Calculators
                 Percent = ToPercent(beachGain),
                 LowerPercent = ToPercent(beachGain - beachMargin),
                 UpperPercent = ToPercent(beachGain + beachMargin),
+                // The listings that actually told us something about distance. The rest were
+                // filled in with the median, so counting them would inflate the evidence.
+                ListingsWithFeature = subjects.Count(HasRecordedBeachDistance),
                 Basis = "per halving of the distance to the beach",
             });
 
+            // The measured-not-described features. Every one of these is read off a structured
+            // field the source recorded, never off the advert's prose - wording tracks the price
+            // bracket a property is marketed in, so a premium read from it would be measuring
+            // the copywriting. Four of the five were already fitted columns and simply had
+            // nowhere to be reported.
+            effects.Add(ScalarEffect(fit, PremiumFeatures.EnergyGrade, EnergyGradeColumn,
+                subjects.Count(x => x.EnergyGradeScore.HasValue),
+                "per grade step up the scale (G to A+)"));
+
+            effects.Add(ScalarEffect(fit, PremiumFeatures.ExtraBathroom, BathroomsColumn,
+                subjects.Count(x => x.Bathrooms > 0), "per bathroom"));
+
+            effects.Add(ScalarEffect(fit, PremiumFeatures.FloorLevel, FloorColumn,
+                subjects.Count(x => x.Floor.HasValue), "per floor up"));
+
+            effects.Add(ScalarEffect(fit, PremiumFeatures.HasBalcony, BalconyColumn,
+                subjects.Count(x => x.BalconyCount > 0), "per balcony"));
+
+            // The one ordinary yes/no of the five - it needs no basis note, and it has been a
+            // fitted column all along (see BuildRow) without an enum member to report it under.
+            effects.Add(ScalarEffect(fit, PremiumFeatures.NeedsRenovation, NeedsRenovationColumn,
+                subjects.Count(x => x.Condition == PropertyCondition.NeedsRenovation), basis: null));
+
             return effects;
+        }
+
+        /// <summary>
+        /// Reads one column back as a reportable effect. Used for the features whose premium is
+        /// per unit of something (a grade step, a bathroom, a floor) rather than "if present",
+        /// which is why <paramref name="basis"/> is a parameter and not an afterthought.
+        /// </summary>
+        private static FeatureEffect ScalarEffect(
+            LeastSquaresFit fit, PremiumFeatures feature, int column, int listingsWithFeature, string? basis)
+        {
+            var coefficient = fit.Coefficients[column];
+            var margin = fit.ConfidenceMargin(column);
+
+            return new FeatureEffect
+            {
+                Feature = feature,
+                Percent = ToPercent(coefficient),
+                LowerPercent = ToPercent(coefficient - margin),
+                UpperPercent = ToPercent(coefficient + margin),
+                ListingsWithFeature = listingsWithFeature,
+                Basis = basis,
+            };
+        }
+
+        /// <summary>
+        /// Attaches the beachfront figure to the sea view row - what the same fit says a sea view
+        /// is worth at <see cref="BeachfrontMeters"/>, which is where the feature is actually
+        /// bought and sold. The market-wide average buries that under every "sea view" advert
+        /// kilometres inland.
+        /// </summary>
+        private void ApplyBeachfrontMaximum(FeatureEffect effect)
+        {
+            // Nothing to quote when the fit could not find a sea view premium at all. Hanging an
+            // "up to 30%" off a row whose confidence range straddles zero dresses noise up as a
+            // ceiling, and it is the one version of this that would be indefensible.
+            if (!effect.IsMeasurable)
+                return;
+
+            var beachfront = SeaViewPercentAt(BeachfrontMeters);
+
+            // If the curve does not actually climb toward the water then the average already is
+            // the best case, and restating it under a bolder label would be saying more than the
+            // data does.
+            if (beachfront <= effect.Percent)
+                return;
+
+            effect.MaximumPercent = beachfront;
+            effect.MaximumBasis = $"within {BeachfrontMeters}m of the beach";
         }
 
         /// <summary>
@@ -439,7 +587,7 @@ namespace StayPilot.Application.Helpers.Calculators
         public decimal SeaViewPercentAt(int beachMeters)
         {
             var seaViewColumn = 1 + Array.FindIndex(BooleanFeatures, x => x.Feature == PremiumFeatures.HasSeaView);
-            var interactionColumn = 1 + BooleanFeatures.Length + 6;
+            var interactionColumn = SeaViewBeachColumn;
 
             // Same sanity rule the prediction uses, so a broken coordinate cannot turn into a
             // wild sea-view figure here either.
@@ -459,14 +607,23 @@ namespace StayPilot.Application.Helpers.Calculators
         /// </summary>
         private double BeachMetersOf(ValuationSubject subject)
         {
-            var recorded = subject.DistanceToBeachMeters;
-
             // Treat nonsense the same as missing: fall back to the typical listing rather than
             // believing a number that came from a broken coordinate.
-            if (recorded is null || recorded <= 0 || recorded > ImplausibleBeachMeters)
+            if (!HasRecordedBeachDistance(subject))
                 return Math.Max(50, _medianBeachMeters);
 
-            return Math.Max(50, recorded.Value);
+            return Math.Max(50, subject.DistanceToBeachMeters!.Value);
+        }
+
+        /// <summary>
+        /// Did this listing come with a believable distance to the beach? False for missing,
+        /// zero-or-negative, and impossibly large values - all of which get the median instead.
+        /// </summary>
+        private static bool HasRecordedBeachDistance(ValuationSubject subject)
+        {
+            var recorded = subject.DistanceToBeachMeters;
+
+            return recorded is > 0 and <= ImplausibleBeachMeters;
         }
 
         /// <summary>

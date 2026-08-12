@@ -101,6 +101,176 @@ namespace StayPilot.UnitTests
         }
 
         [Fact]
+        public void FeatureEffects_ListingsWithFeature_CountsOnlyTheListingsThatActuallyHaveIt()
+        {
+            // The screen used to print the training total against every row, so a sea view read
+            // off a third of the market looked as well-evidenced as a garage read off half of it.
+            var listings = BuildMarket(400, garageWorth: 1.10, noiseScale: 0);
+
+            var model = ValuationModel.Fit(listings);
+
+            // BuildMarket gives every other listing a garage and every third one a sea view.
+            Assert.Equal(200, model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.HasGarage).ListingsWithFeature);
+            Assert.Equal(134, model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.HasSeaView).ListingsWithFeature);
+
+            // Nothing in this market has a pool, and the count has to say so rather than
+            // reporting the 400 listings the fit ran on.
+            Assert.Equal(0, model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.HasSwimmingPool).ListingsWithFeature);
+        }
+
+        [Fact]
+        public void FeatureEffects_BeachProximity_CountsOnlyListingsWithAUsableDistance()
+        {
+            // Beach distance is not a yes/no feature, so its count is "how many listings actually
+            // told us a distance". The missing and the broken ones were filled in with the median
+            // - counting them would claim evidence that is not there.
+            var listings = BuildMarket(400, garageWorth: 1.0, noiseScale: 0, beachHalvingWorth: 1.05);
+
+            foreach (var listing in listings.Take(10))
+            {
+                listing.DistanceToBeachMeters = null;
+            }
+
+            foreach (var listing in listings.Skip(10).Take(5))
+            {
+                listing.DistanceToBeachMeters = 1_353_393;      // the broken-longitude distance
+            }
+
+            var model = ValuationModel.Fit(listings);
+            var beach = model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.BeachProximity);
+
+            Assert.Equal(385, beach.ListingsWithFeature);
+            Assert.Equal(400, model.TrainingListings);
+        }
+
+        [Fact]
+        public void FeatureEffects_SeaView_AlsoReportsWhatItReachesOnTheBeachfront()
+        {
+            // The headline sea view figure averages beachfront views in with adverts 5km inland,
+            // which is why it lands near a garage. The row has to carry the beachfront number too,
+            // and say what conditions it holds under.
+            var listings = BuildMarket(600, garageWorth: 1.0, noiseScale: 0, seaViewAt100mWorth: 1.25, seaViewDecaysWithDistance: true);
+
+            var model = ValuationModel.Fit(listings);
+            var seaView = model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.HasSeaView);
+
+            Assert.NotNull(seaView.MaximumPercent);
+            Assert.True(seaView.MaximumPercent > seaView.Percent,
+                $"the beachfront figure has to beat the average; got {seaView.MaximumPercent}% vs {seaView.Percent}%");
+
+            // An "up to" with no stated conditions is a marketing claim, not a measurement.
+            Assert.NotNull(seaView.MaximumBasis);
+            Assert.Contains("beach", seaView.MaximumBasis);
+
+            // It is the same fitted curve, read at the waterfront - not a second, rosier model.
+            Assert.Equal(model.SeaViewPercentAt(100), seaView.MaximumPercent!.Value, precision: 2);
+        }
+
+        [Fact]
+        public void FeatureEffects_SeaViewTheDataCannotMeasure_HasNoUpToFigure()
+        {
+            // No sea view premium in this market at all. Hanging an "up to" off a row whose
+            // confidence range straddles zero would dress noise up as a ceiling.
+            var listings = BuildMarket(400, garageWorth: 1.10, noiseScale: 0.25);
+
+            var model = ValuationModel.Fit(listings);
+            var seaView = model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.HasSeaView);
+
+            Assert.False(seaView.IsMeasurable, $"expected 'cannot tell', got {seaView.Percent}%");
+            Assert.Null(seaView.MaximumPercent);
+            Assert.Null(seaView.MaximumBasis);
+        }
+
+        [Fact]
+        public void FeatureEffects_FeatureWorthTheSameEverywhere_HasNoUpToFigure()
+        {
+            // A garage is a garage. Only features whose worth genuinely varies with the property
+            // get a second number; giving every row one would make "up to" meaningless.
+            var listings = BuildMarket(400, garageWorth: 1.10, noiseScale: 0);
+
+            var model = ValuationModel.Fit(listings);
+            var garage = model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.HasGarage);
+
+            Assert.True(garage.IsMeasurable);
+            Assert.Null(garage.MaximumPercent);
+        }
+
+        [Fact]
+        public void FeatureEffects_EnergyGradeWorthFivePercentPerStep_ReportsRoughlyFivePercent()
+        {
+            // The energy grade is read off a column the model only just gained, so this doubles
+            // as the check that the column is where BuildRow puts it: point EnergyGradeColumn at
+            // the wrong index and this recovers somebody else's coefficient, not 5%.
+            var listings = BuildMarket(600, garageWorth: 1.0, noiseScale: 0, energyStepWorth: 1.05);
+
+            var model = ValuationModel.Fit(listings);
+            var energy = model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.EnergyGrade);
+
+            Assert.InRange(energy.Percent, 4m, 6m);
+            Assert.True(energy.IsMeasurable);
+
+            // A percentage per step means nothing unless the row says "per step".
+            Assert.NotNull(energy.Basis);
+        }
+
+        [Fact]
+        public void FeatureEffects_BathroomWorthEightPercent_ReportsRoughlyEightPercent()
+        {
+            // Same column-index check for the scalar block's other end.
+            var listings = BuildMarket(600, garageWorth: 1.0, noiseScale: 0, bathroomWorth: 1.08);
+
+            var model = ValuationModel.Fit(listings);
+            var bathroom = model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.ExtraBathroom);
+
+            Assert.InRange(bathroom.Percent, 7m, 9m);
+            Assert.Equal("per bathroom", bathroom.Basis);
+        }
+
+        [Fact]
+        public void FeatureEffects_MeasuredFeatures_AreAllReportedWithTheRightKindOfBasis()
+        {
+            var listings = BuildMarket(600, garageWorth: 1.10, noiseScale: 0);
+
+            var model = ValuationModel.Fit(listings);
+
+            // Every feature whose premium is per unit of something has to say so; a bare
+            // percentage on "per floor up" reads as "a flat with floors", which is every flat.
+            foreach (var feature in new[]
+                     {
+                         PremiumFeatures.EnergyGrade, PremiumFeatures.ExtraBathroom,
+                         PremiumFeatures.FloorLevel, PremiumFeatures.HasBalcony,
+                     })
+            {
+                Assert.NotNull(model.FeatureEffects.Single(x => x.Feature == feature).Basis);
+            }
+
+            // Needing renovation is an ordinary yes/no, so it falls back to "if present".
+            Assert.Null(model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.NeedsRenovation).Basis);
+        }
+
+        [Fact]
+        public void FeatureEffects_EnergyGradeNotStated_IsNotScoredAsAnAverageRating()
+        {
+            // A listing with no certificate is not a listing with a middling one. The model
+            // carries a "not stated" flag for exactly this, and without it the missing 7% would
+            // drag the grade's coefficient toward zero.
+            var listings = BuildMarket(600, garageWorth: 1.0, noiseScale: 0, energyStepWorth: 1.05);
+
+            foreach (var listing in listings.Take(60))
+            {
+                listing.EnergyCertificate = null;
+            }
+
+            var model = ValuationModel.Fit(listings);
+            var energy = model.FeatureEffects.Single(x => x.Feature == PremiumFeatures.EnergyGrade);
+
+            Assert.InRange(energy.Percent, 4m, 6m);
+
+            // The count is the evidence, so the 60 without a certificate must not be in it.
+            Assert.Equal(540, energy.ListingsWithFeature);
+        }
+
+        [Fact]
         public void SeaViewPercentAt_IsWorthMoreNearTheBeachThanInland()
         {
             // A sea view from the beachfront and a sea view from 5km inland are not the same
@@ -285,6 +455,33 @@ namespace StayPilot.UnitTests
             Assert.False(ValuationModel.HasFeature(subject, PremiumFeatures.BeachProximity));
         }
 
+        [Fact]
+        public void HasFeature_NeedsRenovation_IsReadLikeAnyOtherYesNoFeature()
+        {
+            // Without this the valuation's "what the features contribute" list silently skipped
+            // needing renovation, so a property in poor condition was priced down by the model
+            // but never told why.
+            var poor = BuildSubject(hasGarage: false, beachMeters: 500);
+            poor.Condition = PropertyCondition.NeedsRenovation;
+
+            var fine = BuildSubject(hasGarage: false, beachMeters: 500);
+            fine.Condition = PropertyCondition.Good;
+
+            Assert.True(ValuationModel.HasFeature(poor, PremiumFeatures.NeedsRenovation));
+            Assert.False(ValuationModel.HasFeature(fine, PremiumFeatures.NeedsRenovation));
+
+            // The quantities stay out of it - "does this property have a floor" is not a question.
+            Assert.False(ValuationModel.HasFeature(poor, PremiumFeatures.FloorLevel));
+            Assert.False(ValuationModel.HasFeature(poor, PremiumFeatures.EnergyGrade));
+            Assert.False(ValuationModel.HasFeature(poor, PremiumFeatures.ExtraBathroom));
+        }
+
+        /// <summary>The letter for a position on the energy scale: 0 is G, 7 is A.</summary>
+        private static string EnergyLetter(int score) => score switch
+        {
+            0 => "G", 1 => "F", 2 => "E", 3 => "D", 4 => "C", 5 => "B-", 6 => "B", _ => "A",
+        };
+
         /// <summary>
         /// A property to price, matching the market <see cref="BuildMarket"/> builds.
         /// </summary>
@@ -326,9 +523,19 @@ namespace StayPilot.UnitTests
             double noiseScale,
             double beachHalvingWorth = 1.0,
             double seaViewAt100mWorth = 1.0,
-            bool seaViewDecaysWithDistance = false)
+            bool seaViewDecaysWithDistance = false,
+            double energyStepWorth = 1.0,
+            double bathroomWorth = 1.0)
         {
             var random = new Random(20260810);
+
+            // A second, independent stream for the attributes that are drawn rather than cycled.
+            // Drawing them from `random` would shift the noise sequence and quietly move every
+            // other test's numbers; keeping it separate leaves those byte-identical. Drawn, not
+            // cycled, because i%3 and i%9 patterns line up exactly with the sea view and would
+            // make two columns indistinguishable.
+            var attributes = new Random(4242);
+
             var listings = new List<PropertyListing>();
 
             for (var i = 0; i < count; i++)
@@ -337,6 +544,11 @@ namespace StayPilot.UnitTests
                 var areaM2 = 60 + i % 40;
                 var beachMeters = 100 + i % 24 * 300;
                 var hasSeaView = i % 3 == 0;
+
+                var bathrooms = 1 + attributes.Next(3);
+                var balconies = attributes.Next(2);
+                var energyScore = attributes.Next(8);           // 0 = G through 7 = A
+                var needsRenovation = attributes.Next(30) == 0;
 
                 var halvingsFromOneKm = Math.Log(1000.0 / beachMeters) / Math.Log(2);
 
@@ -357,6 +569,8 @@ namespace StayPilot.UnitTests
                     * (hasGarage ? garageWorth : 1.0)
                     * seaViewMultiplier
                     * Math.Pow(beachHalvingWorth, halvingsFromOneKm)
+                    * Math.Pow(energyStepWorth, energyScore)
+                    * Math.Pow(bathroomWorth, bathrooms)
                     * Math.Exp(noiseScale * (random.NextDouble() - 0.5));
 
                 listings.Add(new PropertyListing
@@ -366,10 +580,11 @@ namespace StayPilot.UnitTests
                     MarketAreaId = 1,
                     PropertyType = PropertyType.Apartment,
                     Typology = Typology.T2,
-                    Condition = PropertyCondition.Good,
+                    Condition = needsRenovation ? PropertyCondition.NeedsRenovation : PropertyCondition.Good,
                     AreaM2 = areaM2,
-                    Bathrooms = 1,
-                    BalconyCount = 1,
+                    Bathrooms = bathrooms,
+                    BalconyCount = balconies,
+                    EnergyCertificate = EnergyLetter(energyScore),
                     Floor = i % 5,
                     ConstructionYear = 1990 + i % 30,
                     DistanceToBeachMeters = beachMeters,
