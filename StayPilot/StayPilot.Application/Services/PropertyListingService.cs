@@ -46,25 +46,103 @@ namespace StayPilot.Application.Services
             return Converter.MapToResponse(property, listing);
         }
 
+        public async Task<BulkAddPropertyListingResponse> BulkAddPropertyListingAsync(BulkAddPropertyListingRequest request)
+        {
+            // Load all market areas and all beaches once. We use these lists below.
+            var marketAreasRepo = await _marketAreaRepo.GetAllMarketAreasAsync();
+            var beachesRepo = await _beachMarkerRepo.GetAllBeachMarkersAsync();
+            var existingListingsRepo = (await _propertyListingRepo.GetBulkPropertyListingByUrlAsync(request.Items.Select(x => x.SourceUrl).ToList()) ?? new List<PropertyListing>()).ToDictionary(x => x.SourceUrl);
+
+            int batchSize = 100; // Adjust this value based on your needs and system capabilities
+            int totalProcessed = 0;
+
+            var response = new BulkAddPropertyListingResponse
+            {
+                TotalReceived = request.Items.Count,
+                TotalAdded = 0,
+                SnapShotUpdated = 0,
+                Unchanged = 0,
+                FailedListings = new Dictionary<string, string>()
+            };
+
+            while (totalProcessed < request.Items.Count)
+            {
+                var batch = request.Items.Skip(totalProcessed).Take(batchSize).ToList();
+
+                // Counted locally first, and only merged into the response once this batch's
+                // SaveChangesAsync actually succeeds - otherwise the counts would claim rows
+                // were saved when the whole batch got rolled back.
+                int batchAdded = 0, batchSnapshotUpdated = 0, batchUnchanged = 0;
+                var batchFailed = new Dictionary<string, string>();
+
+                foreach (var propertyListing in batch)
+                {
+                    try
+                    {
+                        var result = await AddPropertyListingAsync(propertyListing, marketAreasRepo, beachesRepo, existingListingsRepo);
+                        if (result.IsNew)
+                        {
+                            batchAdded++;
+                        }
+                        else if (result.IsSnapshotUpdated)
+                        {
+                            batchSnapshotUpdated++;
+                        }
+                        else
+                        {
+                            batchUnchanged++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        batchFailed[propertyListing.SourceUrl] = ex.Message;
+                    }
+                }
+
+                totalProcessed += batchSize;
+
+                try
+                {
+                    await _propertyListingRepo.SaveChangesAsync();
+
+                    response.TotalAdded += batchAdded;
+                    response.SnapShotUpdated += batchSnapshotUpdated;
+                    response.Unchanged += batchUnchanged;
+                    foreach (var failed in batchFailed)
+                    {
+                        response.FailedListings[failed.Key] = failed.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // The whole batch shares one SaveChangesAsync call, so a single bad row (e.g. a
+                    // constraint violation) rolls back everyone else in this batch too. Report every
+                    // item we attempted here as failed instead of letting the exception crash the request.
+                    foreach (var propertyListing in batch)
+                    {
+                        response.FailedListings[propertyListing.SourceUrl] = ex.Message;
+                    }
+                }
+            }
+
+            return response;
+        }
+
         /// <summary>
         /// Save a new property.
         /// If the same property already exists (same URL), we do not save it again.
         /// We also set its market area and its closest beach.
         /// </summary>
-        public async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing)
+        public async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing, List<MarketArea> marketAreasRepo, List<BeachMarker> beachesRepo, Dictionary<string, PropertyListing> existingListingsRepo)
         {
-            // Load all market areas and all beaches once. We use these lists below.
-            var marketAreasRepo = await _marketAreaRepo.GetAllMarketAreasAsync();
-            var beachesRepo = await _beachMarkerRepo.GetAllBeachMarkersAsync();
-
             // Is this property already saved? We check by its URL.
-            var propertyExist = await _propertyListingRepo.GetPropertyListingByUrlAsync(propertyListing.SourceUrl);
+            var propertyExist = existingListingsRepo.GetValueOrDefault(propertyListing.SourceUrl);
             var samePrice = false;
 
             // If property exist, let's check if the price changed
             if (propertyExist is not null)
             {
-                var lastListing = await _listingSnapshotRepo.GetListingSnapshotByPropertyIdAsync(propertyExist.Id);
+                var lastListing = propertyExist.ListingSnapshots.OrderByDescending(x => x.SnapshotDateUtc).FirstOrDefault();
 
                 // lastListing can be null if the existing property has no snapshot yet.
                 // Treat "no previous snapshot" as "price changed" so we add one below.
@@ -83,8 +161,14 @@ namespace StayPilot.Application.Services
                 var newListingSnapshot = Converter.MapToEntity(propertyListing.ListingSnapshot);
                 newListingSnapshot.PropertyListing = propertyExist;
                 await _listingSnapshotRepo.AddListingSnapshotAsync(newListingSnapshot);
-                await _propertyListingRepo.SaveChangesAsync();
-                return Converter.MapToResponse(propertyExist, newListingSnapshot);
+
+                // Keep the in-memory snapshot list current so a duplicate SourceUrl later in the
+                // same request sees this price instead of the stale one loaded from the database.
+                propertyExist.ListingSnapshots.Add(newListingSnapshot);
+
+                var response = Converter.MapToResponse(propertyExist, newListingSnapshot);
+                response.IsSnapshotUpdated = true;
+                return response;
             }
 
             // Build the entity from the request.
@@ -121,9 +205,16 @@ namespace StayPilot.Application.Services
             // Save property + snapshot together, then commit to the database.
             await _propertyListingRepo.AddPropertyListingAsync(property);
             await _listingSnapshotRepo.AddListingSnapshotAsync(listingSnapshot);
-            await _propertyListingRepo.SaveChangesAsync();
 
-            return Converter.MapToResponse(property, listingSnapshot);
+            property.ListingSnapshots.Add(listingSnapshot);
+
+            // Register it as "existing" right away so a duplicate SourceUrl later in the same
+            // request updates this one instead of trying to insert the same URL twice.
+            existingListingsRepo[propertyListing.SourceUrl] = property;
+
+            var newPropertyResponse = Converter.MapToResponse(property, listingSnapshot);
+            newPropertyResponse.IsNew = true;
+            return newPropertyResponse;
         }
 
         /// <summary>
@@ -153,5 +244,6 @@ namespace StayPilot.Application.Services
 
             return response;
         }
+
     }
 }

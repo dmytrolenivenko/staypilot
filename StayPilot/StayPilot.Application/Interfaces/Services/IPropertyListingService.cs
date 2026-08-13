@@ -14,11 +14,16 @@ namespace StayPilot.Application.Interfaces.Services
         /// </summary>
         Task<PropertyListingResponse?> GetPropertyListingByIdAsync(int propertyId);
 
+        /// <summary> 
+        /// Bulk add property listings that is going to use Add listing property 
+        /// </summary>
+        Task<BulkAddPropertyListingResponse> BulkAddPropertyListingAsync(BulkAddPropertyListingRequest request);
+
         /// <summary>
         /// Save a new property. If it already exists (same URL), the existing one is returned.
         /// Also sets its market area and its closest beach.
         /// </summary>
-        Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing);
+        Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing, List<MarketArea> marketAreasRepo, List<BeachMarker> beachesRepo, Dictionary<string, PropertyListing> existingListingsRepo);
 
         /// <summary>
         /// Search properties with filters, one page at a time.

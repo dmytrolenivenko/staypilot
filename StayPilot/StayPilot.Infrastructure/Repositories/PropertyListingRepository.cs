@@ -40,12 +40,13 @@ namespace StayPilot.Infrastructure.Repositories
         /// Reads one property by its source URL, with its market area and its snapshots.
         /// Used to check if a property is already saved. Returns null if not found.
         /// </summary>
-        public async Task<PropertyListing?> GetPropertyListingByUrlAsync(string url)
+        public async Task<List<PropertyListing>?> GetBulkPropertyListingByUrlAsync(List<string> urls)
         {
             return await _context.PropertyListings
                 .Include (x => x.MarketArea)
                 .Include (x => x.ListingSnapshots)
-                .FirstOrDefaultAsync(x => x.SourceUrl == url);
+                .Where(x => urls.Contains(x.SourceUrl))
+                .ToListAsync();
         }
 
         /// <summary>

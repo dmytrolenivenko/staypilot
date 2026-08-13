@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
 using StayPilot.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StayPilot.Api.Controllers
 {
@@ -24,6 +25,7 @@ namespace StayPilot.Api.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Api.Write")]
         [HttpPost]
         public async Task<ActionResult<List<PremiumFeature>>> ReCalculatePremiumFeaturesValue()
         {

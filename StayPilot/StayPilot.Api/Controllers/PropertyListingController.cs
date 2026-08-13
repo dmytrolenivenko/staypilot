@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StayPilot.Api.Controllers
 
@@ -25,12 +26,13 @@ namespace StayPilot.Api.Controllers
         /// Save a new property.
         /// Returns the saved property and a link to read it by its Id.
         /// </summary>
+        [Authorize(Roles = "Api.Write")]
         [HttpPost]
-        public async Task<ActionResult<PropertyListingResponse>> AddPropertyListing(PropertyListingRequest request)
+        public async Task<ActionResult<BulkAddPropertyListingResponse>> BulkAddPropertyListing(BulkAddPropertyListingRequest request)
         {
-            var result = await _service.AddPropertyListingAsync(request);
+            var result = await _service.BulkAddPropertyListingAsync(request);
 
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            return Ok(result);
         }
 
         /// <summary>

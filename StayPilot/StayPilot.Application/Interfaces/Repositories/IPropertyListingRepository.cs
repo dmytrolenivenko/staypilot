@@ -19,7 +19,8 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// Get one property by its source URL. Used to check if it is already saved.
         /// Returns null if it does not exist.
         /// </summary>
-        Task<PropertyListing?> GetPropertyListingByUrlAsync(string url);
+        Task<List<PropertyListing>?> GetBulkPropertyListingByUrlAsync(List<string> urls);
+
 
         /// <summary>
         /// Add a new property. Call SaveChangesAsync to commit it.
