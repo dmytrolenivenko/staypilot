@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StayPilot.Api.Controllers
 {
@@ -22,6 +23,7 @@ namespace StayPilot.Api.Controllers
         /// <summary>
         /// Save a new snapshot (price, status, date) for an existing property listing.
         /// </summary>
+        [Authorize(Roles = "Api.Write")]
         [HttpPost]
         public async Task<ActionResult<ListingSnapshotResponse>> CreateListingSnapshotAsync(ListingSnapshotRequest request)
         {

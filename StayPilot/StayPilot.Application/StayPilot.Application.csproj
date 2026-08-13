@@ -14,4 +14,9 @@
     <ProjectReference Include="..\StayPilot.Domain\StayPilot.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The valuation machinery is internal; the tests still need to reach it directly. -->
+    <InternalsVisibleTo Include="StayPilot.UnitTests" />
+  </ItemGroup>
+
 </Project>

@@ -145,18 +145,26 @@
       <h2>What the features contribute</h2>
       <p class="hint">
         How much of the estimate above each feature accounts for. These compound rather than add
-        up, so they will not sum to the total &mdash; and only features the data can actually
-        measure are listed. A sea view is counted at this property's own distance from the beach,
-        where it is worth far more near the water than inland.
+        up, so they will not sum to the total. A sea view is counted at this property's own
+        distance from the beach, where it is worth far more near the water than inland.
+      </p>
+      <p class="hint">
+        The counted features &mdash; bathrooms, balconies, floor, energy grade, distance to the
+        beach &mdash; are measured against the typical property in this market, not against zero,
+        so &ldquo;Measured against&rdquo; is what the amount is a premium (or a discount)
+        <em>over</em>. An ordinary property gets no row for them at all. Greyed rows are features
+        whose confidence range crosses zero: the amount is still part of the estimate, the data
+        just cannot confirm the feature is worth anything.
       </p>
       <table class="data-table">
         <thead>
-          <tr><th>Adjustment</th><th class="num">Amount</th></tr>
+          <tr><th>Adjustment</th><th>Measured against</th><th class="num">Amount</th></tr>
         </thead>
         <tbody>
           @for (a of r.adjustments; track a.label) {
-            <tr>
+            <tr [class.unmeasured]="!a.isMeasurable">
               <td>{{ a.label }}</td>
+              <td class="muted">{{ a.detail ?? '—' }}</td>
               <!-- Sign goes outside the currency symbol: a needing-renovation property is the
                    first row that can come back negative, and "€-6,800" reads as a typo. -->
               <td class="num" [class.pos]="a.amount > 0" [class.neg]="a.amount < 0">

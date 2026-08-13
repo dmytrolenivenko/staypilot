@@ -5,6 +5,7 @@ using StayPilot.Application.Services;
 using StayPilot.Infrastructure.Repositories;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
+using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,10 @@ builder.Services.AddEndpointsApiExplorer();
 
 // Build the Swagger page that shows and tests the API.
 builder.Services.AddSwaggerGen();
+
+// Add authentication using Azure AD. The appsettings.json file contains the Azure AD settings.
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd");
+builder.Services.AddAuthorization();
 
 // Connect to the SQL Server database. The connection string is read from the config.
 builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -73,6 +78,9 @@ app.UseSwaggerUI();
 
 // Send HTTP requests to HTTPS.
 app.UseHttpsRedirection();
+
+// Check the user is authenticated (logged in).
+app.UseAuthentication();
 
 // Check the user is allowed to call the endpoint.
 app.UseAuthorization();

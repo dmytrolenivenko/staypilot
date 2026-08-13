@@ -1,5 +1,6 @@
 ﻿using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
+using StayPilot.Application.Contracts.Response.SubResponse;
 using StayPilot.Domain.Entities;
 
 namespace StayPilot.Application.Helpers.Mappers
@@ -274,6 +275,24 @@ namespace StayPilot.Application.Helpers.Mappers
             };
 
             return response;
+        }
+
+        /// <summary>
+        /// One comparable listing for the valuation screen: is it really comparable, and how
+        /// stale is it.
+        /// </summary>
+        public static ValuationComp MapToComp(PropertyListing listing)
+        {
+            var snapshot = listing.ListingSnapshots.First();
+
+            return new ValuationComp
+            {
+                AreaM2 = listing.AreaM2,
+                PricePerM2 = snapshot.PricePerM2,
+                DistanceToBeachMeters = listing.DistanceToBeachMeters,
+                Typology = listing.Typology,
+                SnapshotDateUtc = snapshot.SnapshotDateUtc,
+            };
         }
     }
 }

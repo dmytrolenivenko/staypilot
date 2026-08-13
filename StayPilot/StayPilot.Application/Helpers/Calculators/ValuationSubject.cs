@@ -5,15 +5,10 @@ using StayPilot.Domain.Enums;
 namespace StayPilot.Application.Helpers.Calculators
 {
     /// <summary>
-    /// A property described in the exact terms the valuation model prices on, and nothing more.
-    ///
-    /// It exists so the model can treat a scraped comp and one of the user's own apartments as
-    /// the same kind of thing. Without it, every part of the model would need two versions -
-    /// one reading <see cref="PropertyListing"/> (non-null bools, non-null Condition) and one
-    /// reading <see cref="OwnedPropertyResponse"/> (nullable everything) - and the two would
-    /// eventually disagree about what "no garage" means.
+    /// A property in the exact terms the model prices on, so a scraped comp and one of the
+    /// user's own flats are the same kind of thing to it.
     /// </summary>
-    public class ValuationSubject
+    internal class ValuationSubject
     {
         /// <summary>Which market area the property sits in. Drives the location baseline.</summary>
         public int MarketAreaId { get; set; }
@@ -76,12 +71,9 @@ namespace StayPilot.Application.Helpers.Calculators
         public bool HasCityView { get; set; }
 
         /// <summary>
-        /// Turns an energy certificate letter into a position on the scale, so the model can
-        /// price one step rather than nine separate letters. B- sits between B and C, which is
-        /// what the Portuguese scale means by it.
-        ///
-        /// Anything unrecognised comes back null rather than being pushed to one end - a typo
-        /// scored as "G" would read as the worst possible rating instead of as missing.
+        /// Certificate letter to a position on the scale, so the model prices one step rather
+        /// than nine letters. Unrecognised comes back null, not "G" - a typo is missing data,
+        /// not the worst possible rating.
         /// </summary>
         public static int? ScoreEnergyGrade(string? certificate)
         {
@@ -100,6 +92,26 @@ namespace StayPilot.Application.Helpers.Calculators
                 "F" => 1,
                 "G" => 0,
                 _ => null,
+            };
+        }
+
+        /// <summary>
+        /// The letter behind a score - the inverse of <see cref="ScoreEnergyGrade"/>, kept
+        /// beside it so the two can't drift. Off-scale values clamp to the ends.
+        /// </summary>
+        public static string GradeLetter(int score)
+        {
+            return Math.Clamp(score, 0, 8) switch
+            {
+                8 => "A+",
+                7 => "A",
+                6 => "B",
+                5 => "B-",
+                4 => "C",
+                3 => "D",
+                2 => "E",
+                1 => "F",
+                _ => "G",
             };
         }
 

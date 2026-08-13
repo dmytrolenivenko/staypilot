@@ -105,5 +105,11 @@ namespace StayPilot.Application.Contracts.Response
 
         /// <summary>Latest price snapshot. Can be null if there is none.</summary>
         public ListingSnapshotResponse? ListingSnapshot { get; set; }
+
+        /// <summary>Flag if the property listing was added successfully.</summary>
+        public bool IsNew { get; set; } = false;
+
+        /// <summary>Flag if the property snapshot was updated successfully.</summary>
+        public bool IsSnapshotUpdated { get; set; } = false;
     }
 }

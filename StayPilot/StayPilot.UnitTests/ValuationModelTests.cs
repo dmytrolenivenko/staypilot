@@ -317,6 +317,47 @@ namespace StayPilot.UnitTests
         }
 
         [Fact]
+        public void MarketAverages_DescribeTheListingsTheModelWasFittedOn()
+        {
+            // These exist so a valuation can say what "three bathrooms" is worth ABOVE the
+            // typical property. If any of them came back zero the breakdown would measure
+            // against nothing and pay every property a premium for being ordinary - so the
+            // assertion that matters here is that they describe the market, not that they exist.
+            var listings = BuildMarket(400, garageWorth: 1.10, noiseScale: 0);
+
+            var model = ValuationModel.Fit(listings);
+
+            // BuildMarket draws 1-3 bathrooms and 0-1 balconies.
+            Assert.InRange(model.MarketAverageBathrooms, 1.5, 2.5);
+            Assert.InRange(model.MarketAverageBalconies, 0.2, 0.8);
+
+            // Beach distances run 100m to 7.0km, so the median sits well inside that.
+            Assert.InRange(model.MarketMedianBeachMeters, 100, 7000);
+
+            // The energy scale is 0 (G) to 8 (A+); the drawn grades average near its middle.
+            Assert.InRange(model.MarketAverageEnergyGrade, 1.0, 7.0);
+        }
+
+        [Fact]
+        public void MarketAverages_AreMeasuredOnlyOnListingsThatStatedTheValue()
+        {
+            // The floor median must not be dragged toward zero by the listings that never said
+            // which floor they were on. A "typical floor" of 0 would make every third-floor flat
+            // look three storeys above the market and quietly inflate its valuation.
+            var listings = BuildMarket(400, garageWorth: 1.10, noiseScale: 0);
+
+            foreach (var listing in listings.Take(200))
+            {
+                listing.Floor = null;
+            }
+
+            var model = ValuationModel.Fit(listings);
+
+            Assert.True(model.MarketMedianFloor > 0,
+                $"expected the median floor to ignore the unstated ones, got {model.MarketMedianFloor}");
+        }
+
+        [Fact]
         public void PredictPricePerM2_PropertyMatchingTheMarket_LandsNearTheTruePrice()
         {
             var listings = BuildMarket(400, garageWorth: 1.10, noiseScale: 0);
