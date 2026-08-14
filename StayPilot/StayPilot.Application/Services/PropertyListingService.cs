@@ -12,6 +12,10 @@ namespace StayPilot.Application.Services
 {
     public class PropertyListingService : IPropertyListingService
     {
+        // One SaveChangesAsync per this many rows. Small enough that a database error only
+        // rolls back a slice of the upload, big enough to avoid a round trip per listing.
+        private const int BatchSize = 100;
+
         private readonly IPropertyListingRepository _propertyListingRepo;
         private readonly IMarketAreaRepository _marketAreaRepo;
         private readonly IBeachMarkerRepository _beachMarkerRepo;
@@ -46,81 +50,86 @@ namespace StayPilot.Application.Services
             return Converter.MapToResponse(property, listing);
         }
 
+        /// <summary>
+        /// Save many listings in one call.
+        /// Every listing is checked first. Only the ones that pass are sent to the database,
+        /// the rest come back in FailedListings with the reason and are never saved.
+        /// </summary>
         public async Task<BulkAddPropertyListingResponse> BulkAddPropertyListingAsync(BulkAddPropertyListingRequest request)
         {
-            // Load all market areas and all beaches once. We use these lists below.
-            var marketAreasRepo = await _marketAreaRepo.GetAllMarketAreasAsync();
-            var beachesRepo = await _beachMarkerRepo.GetAllBeachMarkersAsync();
-            var existingListingsRepo = (await _propertyListingRepo.GetBulkPropertyListingByUrlAsync(request.Items.Select(x => x.SourceUrl).ToList()) ?? new List<PropertyListing>()).ToDictionary(x => x.SourceUrl);
+            // Read the lookup tables once for the whole call. They are whole-table reads, so
+            // reading them per listing is what made this slow.
+            var marketAreas = await _marketAreaRepo.GetAllMarketAreasAsync();
+            var beaches = await _beachMarkerRepo.GetAllBeachMarkersAsync();
 
-            int batchSize = 100; // Adjust this value based on your needs and system capabilities
-            int totalProcessed = 0;
+            // The listings we already have, so we can tell a new one from a price change.
+            var urls = request.Items.Select(x => x.SourceUrl).ToList();
+            var alreadySaved = await _propertyListingRepo.GetBulkPropertyListingByUrlAsync(urls) ?? new List<PropertyListing>();
+            var existingByUrl = alreadySaved.ToDictionary(x => x.SourceUrl);
 
             var response = new BulkAddPropertyListingResponse
             {
                 TotalReceived = request.Items.Count,
-                TotalAdded = 0,
-                SnapShotUpdated = 0,
-                Unchanged = 0,
                 FailedListings = new Dictionary<string, string>()
             };
 
-            while (totalProcessed < request.Items.Count)
+            // Save in small batches, so one database error only costs us that batch.
+            foreach (var batch in request.Items.Chunk(BatchSize))
             {
-                var batch = request.Items.Skip(totalProcessed).Take(batchSize).ToList();
+                // The listings we built rows for. Kept so we can report them all if the save fails.
+                var readyToSave = new List<PropertyListingRequest>();
 
-                // Counted locally first, and only merged into the response once this batch's
-                // SaveChangesAsync actually succeeds - otherwise the counts would claim rows
-                // were saved when the whole batch got rolled back.
-                int batchAdded = 0, batchSnapshotUpdated = 0, batchUnchanged = 0;
-                var batchFailed = new Dictionary<string, string>();
+                // Counted here first, and only added to the response once the save works.
+                // Otherwise the counts would claim rows were saved when the batch got rolled back.
+                var added = 0;
+                var snapshotUpdated = 0;
+                var unchanged = 0;
 
-                foreach (var propertyListing in batch)
+                foreach (var item in batch)
                 {
-                    try
+                    var error = ValidateAndSetMarketArea(item, marketAreas, existingByUrl);
+
+                    // Something is wrong with this listing. Report it and leave it out of the save.
+                    if (error is not null)
                     {
-                        var result = await AddPropertyListingAsync(propertyListing, marketAreasRepo, beachesRepo, existingListingsRepo);
-                        if (result.IsNew)
-                        {
-                            batchAdded++;
-                        }
-                        else if (result.IsSnapshotUpdated)
-                        {
-                            batchSnapshotUpdated++;
-                        }
-                        else
-                        {
-                            batchUnchanged++;
-                        }
+                        response.FailedListings[item.SourceUrl] = error;
+                        continue;
                     }
-                    catch (Exception ex)
+
+                    var result = await AddPropertyListingAsync(item, marketAreas, beaches, existingByUrl);
+
+                    readyToSave.Add(item);
+
+                    if (result.IsNew)
                     {
-                        batchFailed[propertyListing.SourceUrl] = ex.Message;
+                        added++;
+                    }
+                    else if (result.IsSnapshotUpdated)
+                    {
+                        snapshotUpdated++;
+                    }
+                    else
+                    {
+                        unchanged++;
                     }
                 }
-
-                totalProcessed += batchSize;
 
                 try
                 {
+                    // One save for the whole batch, so it either all lands or none of it does.
                     await _propertyListingRepo.SaveChangesAsync();
 
-                    response.TotalAdded += batchAdded;
-                    response.SnapShotUpdated += batchSnapshotUpdated;
-                    response.Unchanged += batchUnchanged;
-                    foreach (var failed in batchFailed)
-                    {
-                        response.FailedListings[failed.Key] = failed.Value;
-                    }
+                    response.TotalAdded += added;
+                    response.SnapShotUpdated += snapshotUpdated;
+                    response.Unchanged += unchanged;
                 }
                 catch (Exception ex)
                 {
-                    // The whole batch shares one SaveChangesAsync call, so a single bad row (e.g. a
-                    // constraint violation) rolls back everyone else in this batch too. Report every
-                    // item we attempted here as failed instead of letting the exception crash the request.
-                    foreach (var propertyListing in batch)
+                    // Nothing from this batch landed. Report all of it instead of letting the
+                    // exception kill the whole request.
+                    foreach (var item in readyToSave)
                     {
-                        response.FailedListings[propertyListing.SourceUrl] = ex.Message;
+                        response.FailedListings[item.SourceUrl] = ex.Message;
                     }
                 }
             }
@@ -129,14 +138,53 @@ namespace StayPilot.Application.Services
         }
 
         /// <summary>
-        /// Save a new property.
-        /// If the same property already exists (same URL), we do not save it again.
-        /// We also set its market area and its closest beach.
+        /// Check one incoming listing before we try to save it, and fill in its market area Id
+        /// when the caller did not send one.
+        /// Returns null when the listing is good to go, or the reason to report when it is not.
         /// </summary>
-        public async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing, List<MarketArea> marketAreasRepo, List<BeachMarker> beachesRepo, Dictionary<string, PropertyListing> existingListingsRepo)
+        private static string? ValidateAndSetMarketArea(PropertyListingRequest propertyListing, List<MarketArea> marketAreas, Dictionary<string, PropertyListing> existingByUrl)
+        {
+            // A listing we already have only ever gets a new snapshot, so it needs nothing else.
+            if (existingByUrl.ContainsKey(propertyListing.SourceUrl))
+            {
+                return null;
+            }
+
+            if (propertyListing.Latitude is null || propertyListing.Longitude is null)
+            {
+                return "Latitude and Longitude are required.";
+            }
+
+            try
+            {
+                // Use the market area the caller sent, or find it from the address. We keep it on
+                // the request so the save step does not have to look it up all over again.
+                propertyListing.MarketAreaId ??= Calculator.GetMarketId(marketAreas, propertyListing.Country, propertyListing.District, propertyListing.Municipality, propertyListing.Town, propertyListing.Zone);
+
+                if (marketAreas.All(x => x.Id != propertyListing.MarketAreaId))
+                {
+                    return "No market area matches this address.";
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                // GetMarketId throws when the address matches nothing. Here that is a listing we
+                // reject, not a crash.
+                return ex.Message;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Build the rows for one listing and hand them to the repositories.
+        /// Nothing is written until SaveChangesAsync runs.
+        /// Only call this with a listing that passed ValidateAndSetMarketArea.
+        /// </summary>
+        private async Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing, List<MarketArea> marketAreas, List<BeachMarker> beaches, Dictionary<string, PropertyListing> existingByUrl)
         {
             // Is this property already saved? We check by its URL.
-            var propertyExist = existingListingsRepo.GetValueOrDefault(propertyListing.SourceUrl);
+            var propertyExist = existingByUrl.GetValueOrDefault(propertyListing.SourceUrl);
             var samePrice = false;
 
             // If property exist, let's check if the price changed
@@ -174,23 +222,17 @@ namespace StayPilot.Application.Services
             // Build the entity from the request.
             var property = Converter.MapToEntity(propertyListing);
 
-            // Use the market area sent by the caller, or find it from the address.
-            property.MarketAreaId = propertyListing.MarketAreaId ?? Calculator.GetMarketId(marketAreasRepo, propertyListing.Country, propertyListing.District, propertyListing.Municipality, propertyListing.Town, propertyListing.Zone);
-            property.MarketArea = marketAreasRepo.FirstOrDefault(x => x.Id == property.MarketAreaId) ?? throw new InvalidOperationException("MarketArea can not be null");
-
-            // Location is required. Stop if it is missing.
-            if (propertyListing.Latitude == null || propertyListing.Longitude == null)
-            {
-                throw new InvalidOperationException("Latitude and Longitude must be provided for the property listing.");
-            }
+            // ValidateAndSetMarketArea already resolved and checked this.
+            property.MarketAreaId = propertyListing.MarketAreaId!.Value;
+            property.MarketArea = marketAreas.First(x => x.Id == property.MarketAreaId);
 
             // Find the nearest beach to this property.
-            var closesBeach = Calculator.GetTheClosestBeach(beachesRepo, propertyListing.Latitude, propertyListing.Longitude);
+            var closesBeach = Calculator.GetTheClosestBeach(beaches, propertyListing.Latitude, propertyListing.Longitude);
 
             // If we found a beach, save its name and how far it is (in meters).
             if (closesBeach is not null)
             {
-                var distanceToBeachMeters = Calculator.CalculateDistanceMeters((double)propertyListing.Latitude.Value, (double)propertyListing.Longitude.Value, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
+                var distanceToBeachMeters = Calculator.CalculateDistanceMeters((double)propertyListing.Latitude!.Value, (double)propertyListing.Longitude!.Value, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
 
                 property.NearestBeachName = closesBeach.Name;
                 property.NearestBeachMarkerId = closesBeach.Id;
@@ -210,7 +252,7 @@ namespace StayPilot.Application.Services
 
             // Register it as "existing" right away so a duplicate SourceUrl later in the same
             // request updates this one instead of trying to insert the same URL twice.
-            existingListingsRepo[propertyListing.SourceUrl] = property;
+            existingByUrl[propertyListing.SourceUrl] = property;
 
             var newPropertyResponse = Converter.MapToResponse(property, listingSnapshot);
             newPropertyResponse.IsNew = true;
@@ -244,6 +286,5 @@ namespace StayPilot.Application.Services
 
             return response;
         }
-
     }
 }

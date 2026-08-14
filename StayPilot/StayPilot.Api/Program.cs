@@ -28,7 +28,9 @@ builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration,
 builder.Services.AddAuthorization();
 
 // Connect to the SQL Server database. The connection string is read from the config.
-builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Retry on transient errors - Azure SQL is serverless and pauses when idle, so the first
+// call after a quiet spell can time out while it wakes up.
+builder.Services.AddDbContext<StayPilotDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sql => sql.EnableRetryOnFailure()));
 
 // Register the services (the business logic classes) so they can be injected.
 builder.Services.AddScoped<IPropertyListingService, PropertyListingService>();

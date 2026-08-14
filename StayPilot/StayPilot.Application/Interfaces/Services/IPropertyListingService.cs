@@ -1,6 +1,5 @@
 ﻿using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
-using StayPilot.Domain.Entities;
 
 namespace StayPilot.Application.Interfaces.Services
 {
@@ -14,16 +13,12 @@ namespace StayPilot.Application.Interfaces.Services
         /// </summary>
         Task<PropertyListingResponse?> GetPropertyListingByIdAsync(int propertyId);
 
-        /// <summary> 
-        /// Bulk add property listings that is going to use Add listing property 
+        /// <summary>
+        /// Save many listings in one call.
+        /// Every listing is checked first, and only the ones that pass are saved. The rest come
+        /// back in FailedListings with the reason, and never reach the database.
         /// </summary>
         Task<BulkAddPropertyListingResponse> BulkAddPropertyListingAsync(BulkAddPropertyListingRequest request);
-
-        /// <summary>
-        /// Save a new property. If it already exists (same URL), the existing one is returned.
-        /// Also sets its market area and its closest beach.
-        /// </summary>
-        Task<PropertyListingResponse> AddPropertyListingAsync(PropertyListingRequest propertyListing, List<MarketArea> marketAreasRepo, List<BeachMarker> beachesRepo, Dictionary<string, PropertyListing> existingListingsRepo);
 
         /// <summary>
         /// Search properties with filters, one page at a time.
