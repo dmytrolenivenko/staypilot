@@ -16,9 +16,12 @@ namespace StayPilot.Domain.Enums
         IsRenovated = 11,
 
         /// <summary>
-        /// How much closer to the beach is worth. Unlike everything else here this is not a
-        /// yes/no feature, so its premium is read as "per halving of the distance to the beach"
-        /// - being 500m away instead of 1km. Callers showing this to a user must say so.
+        /// RETIRED - replaced by <see cref="CloseToBeach"/>. Its premium was read "per halving of
+        /// the distance to the beach", which was correct and unreadable: nobody could tell what
+        /// it meant for their own flat without doing logarithms.
+        ///
+        /// Kept only so rows written before the switch still read back. Nothing produces it any
+        /// more, and the first recalculation clears the last of them.
         /// </summary>
         BeachProximity = 12,
 
@@ -38,6 +41,17 @@ namespace StayPilot.Domain.Enums
         NeedsRenovation = 16,
 
         /// <summary>What one balcony is worth. Per balcony, not yes/no.</summary>
-        HasBalcony = 17
+        HasBalcony = 17,
+
+        /// <summary>
+        /// Within walking distance of the sea - 500m or less, per
+        /// <c>ValuationSubject.CloseToBeachMeters</c>. A plain yes/no like a garage: either the
+        /// flat is close to the beach or it is not.
+        ///
+        /// Note this is the reported premium only. The price estimate itself still uses the
+        /// exact distance on a smooth curve, so nothing is rounded off where the € figure is
+        /// decided - see <c>ValuationModel.BuildRow</c>.
+        /// </summary>
+        CloseToBeach = 18
     }
 }

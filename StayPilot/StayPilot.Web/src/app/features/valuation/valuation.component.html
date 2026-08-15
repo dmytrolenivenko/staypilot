@@ -144,17 +144,17 @@
     <section class="panel">
       <h2>What the features contribute</h2>
       <p class="hint">
-        How much of the estimate above each feature accounts for. These compound rather than add
-        up, so they will not sum to the total. A sea view is counted at this property's own
-        distance from the beach, where it is worth far more near the water than inland.
+        What each feature this property has is worth, at the premiums measured on the Feature
+        Impact screen. These compound rather than add up, so they will not sum to the total.
       </p>
       <p class="hint">
         The counted features &mdash; bathrooms, balconies, floor, energy grade, distance to the
         beach &mdash; are measured against the typical property in this market, not against zero,
-        so &ldquo;Measured against&rdquo; is what the amount is a premium (or a discount)
-        <em>over</em>. An ordinary property gets no row for them at all. Greyed rows are features
-        whose confidence range crosses zero: the amount is still part of the estimate, the data
-        just cannot confirm the feature is worth anything.
+        so &ldquo;Measured against&rdquo; is what the amount is a premium <em>over</em>. A property
+        at or below typical gets no row for them at all, and nothing is ever shown as a discount:
+        the estimate already prices what the property does not have. Greyed rows are features
+        whose confidence range crosses zero &mdash; the data cannot confirm they are worth
+        anything, so they are shown at nothing.
       </p>
       <table class="data-table">
         <thead>
@@ -165,10 +165,10 @@
             <tr [class.unmeasured]="!a.isMeasurable">
               <td>{{ a.label }}</td>
               <td class="muted">{{ a.detail ?? '—' }}</td>
-              <!-- Sign goes outside the currency symbol: a needing-renovation property is the
-                   first row that can come back negative, and "€-6,800" reads as a typo. -->
-              <td class="num" [class.pos]="a.amount > 0" [class.neg]="a.amount < 0">
-                {{ a.amount < 0 ? '-' : '+' }}&euro;{{ abs(a.amount) | number: '1.0-0' }}
+              <!-- Never negative: a feature is worth something or nothing, so a row that
+                   measured out at nothing reads "€0" rather than as a charge. -->
+              <td class="num" [class.pos]="a.amount > 0">
+                {{ a.amount > 0 ? '+' : '' }}&euro;{{ a.amount | number: '1.0-0' }}
               </td>
             </tr>
           }

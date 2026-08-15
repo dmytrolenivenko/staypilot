@@ -1,7 +1,9 @@
 ﻿using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.SubResponse;
+using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Domain.Entities;
+using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Helpers.Mappers
 {
@@ -178,6 +180,8 @@ namespace StayPilot.Application.Helpers.Mappers
             if (request.IsFurnished is not null) entity.IsFurnished = request.IsFurnished.Value;
             if (request.HasSeaView is not null) entity.HasSeaView = request.HasSeaView.Value;
             if (request.HasCityView is not null) entity.HasCityView = request.HasCityView.Value;
+            if (request.Latitude is not null) entity.Latitude = request.Latitude;
+            if (request.Longitude is not null) entity.Longitude = request.Longitude;
             if (request.EnergyCertificate is not null) entity.EnergyCertificate = request.EnergyCertificate;
             if (request.Notes is not null) entity.Notes = request.Notes;
             if (request.PurchasePrice is not null) entity.PurchasePrice = request.PurchasePrice.Value;
@@ -271,10 +275,30 @@ namespace StayPilot.Application.Helpers.Mappers
                 Basis = entity.Basis,
                 // Measurable only when the whole confidence range sits on one side of zero.
                 IsMeasurable = entity.LowerBoundPercent > 0 || entity.UpperBoundPercent < 0,
+
                 CalculatedAtUtc = entity.CalculatedAtUtc,
             };
 
             return response;
+        }
+
+        /// <summary>
+        /// A stored premium row read back as a feature effect, so a valuation can price a
+        /// property from the percentages already measured instead of measuring them again.
+        /// </summary>
+        public static FeatureEffect MapToFeatureEffect(PremiumFeature entity)
+        {
+            return new FeatureEffect
+            {
+                Feature = entity.Feature,
+                Percent = entity.PremiumPercent,
+                LowerPercent = entity.LowerBoundPercent,
+                UpperPercent = entity.UpperBoundPercent,
+                ListingsWithFeature = entity.ListingsWithFeature,
+                MaximumPercent = entity.MaximumPercent,
+                MaximumBasis = entity.MaximumBasis,
+                Basis = entity.Basis,
+            };
         }
 
         /// <summary>

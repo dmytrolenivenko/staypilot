@@ -1,9 +1,10 @@
 ﻿namespace StayPilot.Application.Contracts.Response.SubResponse
 {
     /// <summary>
-    /// One line of the "why is it worth this" breakdown: the part of the estimate owed to a
-    /// single feature. The amounts sum into the headline price rather than sitting beside it,
-    /// so anything that is not actually part of the estimate does not belong here.
+    /// One line of the "why is it worth this" breakdown: what one feature THIS property has is
+    /// worth, priced from the premiums already measured. Only features the property actually has
+    /// get a line, and never a negative one - so the lines explain where the value sits, they do
+    /// not add up to the headline price.
     /// </summary>
     public class ValuationAdjustment
     {

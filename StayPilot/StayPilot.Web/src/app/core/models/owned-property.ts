@@ -71,6 +71,8 @@ export interface OwnedPropertyResponse {
   distanceToBeachMeters?: number | null;
   nearestBeachMarkerId?: number | null;
   nearestBeachName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   energyCertificate?: string | null;
   notes?: string | null;
 }

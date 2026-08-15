@@ -54,7 +54,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BeachMarkers");
+                    b.ToTable("BeachMarkers", (string)null);
 
                     b.HasData(
                         new
@@ -11477,7 +11477,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasIndex("PropertyListingId", "SnapshotDateUtc");
 
-                    b.ToTable("ListingSnapshots");
+                    b.ToTable("ListingSnapshots", (string)null);
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.MarketArea", b =>
@@ -11521,7 +11521,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MarketAreas");
+                    b.ToTable("MarketAreas", (string)null);
 
                     b.HasData(
                         new
@@ -53062,7 +53062,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasIndex("NearestBeachMarkerId");
 
-                    b.ToTable("OwnedProperties");
+                    b.ToTable("OwnedProperties", (string)null);
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.PremiumFeature", b =>
@@ -53110,7 +53110,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PremiumFeatures");
+                    b.ToTable("PremiumFeatures", (string)null);
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.PropertyListing", b =>
@@ -53233,7 +53233,7 @@ namespace StayPilot.Infrastructure.Migrations
                     b.HasIndex("SourceUrl")
                         .IsUnique();
 
-                    b.ToTable("PropertyListings");
+                    b.ToTable("PropertyListings", (string)null);
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.ListingSnapshot", b =>

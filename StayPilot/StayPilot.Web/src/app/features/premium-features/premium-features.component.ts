@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { PremiumFeatureService } from '../../core/services/premium-feature.service';
-import { BEACH_PROXIMITY, PremiumFeatureResponse } from '../../core/models/premium-feature';
+import { PremiumFeatureResponse } from '../../core/models/premium-feature';
 
 // We are going to sort these fields
 type SortField = 'featureName' | 'premiumPercentage' | 'sampleSize';
@@ -59,33 +59,27 @@ export class PremiumFeaturesComponent implements OnInit {
 
   constructor(private readonly service: PremiumFeatureService) {}
 
-  // Beach proximity is a distance, not a yes/no feature, so its percentage means something
-  // different from every other row and has to say so.
-  isBeachProximity(feature: string): boolean {
-    return feature === BEACH_PROXIMITY;
-  }
-
+  // "HasSeaView" -> "Sea View", "CloseToBeach" -> "Close To Beach". One rule for every row:
+  // the beach used to need a label of its own because its percentage meant something different
+  // from all the others ("per halving of the distance"). Now it is a plain yes/no like a garage.
   label(feature: string): string {
-    return this.isBeachProximity(feature) ? 'Closer to the beach' : feature;
+    return feature.replace(/^(Has|Is)/, '').replace(/([a-z])([A-Z])/g, '$1 $2');
   }
 
-  // The server explains any feature whose percentage is not a plain "if present" premium.
+  // The server explains any feature whose percentage is not a plain "if present" premium —
+  // "per bathroom", "within 500m of the beach".
   basis(row: PremiumFeatureResponse): string {
     return row.basis ?? 'if present';
   }
 
   // Spells out the "N of M" column, which is easy to misread as a sample the row was fitted on
-  // separately. It wasn't — every row comes out of the same fit; what differs is how many of
-  // those listings actually carried the feature.
+  // separately. It wasn't — every row comes out of the same comparison; what differs is how many
+  // listings actually carried the feature AND had something to be compared against.
   evidenceHint(row: PremiumFeatureResponse): string {
     const listings = row.listingsWithFeature.toLocaleString();
     const total = row.sampleSize.toLocaleString();
 
-    if (this.isBeachProximity(row.feature)) {
-      return `${listings} of the ${total} fitted listings came with a usable distance to the beach.`;
-    }
-
-    return `${listings} of the ${total} fitted listings have this feature. Fewer means a wider confidence range.`;
+    return `${listings} of the ${total} compared listings have this feature. Fewer means a wider confidence range.`;
   }
 
   ngOnInit(): void {

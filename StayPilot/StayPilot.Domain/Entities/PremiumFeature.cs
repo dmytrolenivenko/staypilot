@@ -19,10 +19,8 @@ namespace StayPilot.Domain.Entities
 
         /// <summary>
         /// Average price difference for having this feature, as a percentage
-        /// (for example 12.5 means +12.5%).
-        ///
-        /// For <see cref="PremiumFeatures.BeachProximity"/> this is not a yes/no premium - it is
-        /// the gain per halving of the distance to the beach.
+        /// (for example 12.5 means +12.5%). See <see cref="Basis"/> for what it is measured
+        /// against when "if present" would mislead.
         /// </summary>
         public decimal PremiumPercent { get; set; }
 
@@ -40,12 +38,10 @@ namespace StayPilot.Domain.Entities
         public int SampleSize { get; set; }
 
         /// <summary>
-        /// How many of those listings actually carry this feature. This is the evidence behind
-        /// the number - <see cref="SampleSize"/> is the same for every feature, so on its own it
-        /// made a sea view read on 2,000 listings look as well-measured as a garage read on 9,000.
-        ///
-        /// For <see cref="PremiumFeatures.BeachProximity"/> there is no "has it": this counts the
-        /// listings that came with a usable distance to the beach.
+        /// How many of those listings carry this feature AND had a comparable flat to be measured
+        /// against. This is the evidence behind the number - <see cref="SampleSize"/> is the same
+        /// for every feature, so on its own it made a sea view read on 1,200 listings look as
+        /// well-measured as a bathroom read on 4,800.
         /// </summary>
         public int ListingsWithFeature { get; set; }
 
@@ -54,13 +50,15 @@ namespace StayPilot.Domain.Entities
         /// <see cref="PremiumPercent"/> averages over conditions that differ enormously. Null for
         /// features whose worth does not depend on anything else - most of them.
         ///
-        /// Only the sea view has one today. Its headline figure averages beachfront views in with
-        /// "sea view" adverts kilometres inland; this is the same fit read at the waterfront.
+        /// Two have one. A sea view's headline averages beachfront views in with "sea view"
+        /// adverts kilometres inland; this is the same fit read at the waterfront. A lift is
+        /// worth roughly twice as much from the third floor up as it is on the ground, which one
+        /// flat number hid entirely.
         /// </summary>
         public decimal? MaximumPercent { get; set; }
 
         /// <summary>
-        /// The conditions <see cref="MaximumPercent"/> holds under, for example "within 100m of
+        /// The conditions <see cref="MaximumPercent"/> holds under, for example "within 500m of
         /// the beach". Never null when <see cref="MaximumPercent"/> is set - an "up to" with no
         /// stated conditions is a marketing claim rather than a measurement.
         /// </summary>
@@ -68,8 +66,8 @@ namespace StayPilot.Domain.Entities
 
         /// <summary>
         /// What <see cref="PremiumPercent"/> is measured against, when "if present" would
-        /// mislead - beach proximity is per halving of distance, and a sea view is worth far
-        /// more on the beachfront than inland. Null for ordinary yes/no features.
+        /// mislead - "per bathroom", "within 500m of the beach". Null for ordinary yes/no
+        /// features, which is most of them.
         /// </summary>
         public string? Basis { get; set; }
 

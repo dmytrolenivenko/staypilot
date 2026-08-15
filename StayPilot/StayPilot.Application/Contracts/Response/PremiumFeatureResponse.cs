@@ -11,9 +11,9 @@ namespace StayPilot.Application.Contracts.Response
         public PremiumFeatures Feature { get; set; }
 
         /// <summary>
-        /// Average price difference for having this feature, as a percentage. For
-        /// "BeachProximity" it is the gain per halving of the distance to the beach, not a
-        /// yes/no premium - clients must label that one differently.
+        /// Average price difference for having this feature, as a percentage. Read it together
+        /// with <see cref="Basis"/>, which says what it is measured against when "if present"
+        /// would mislead - "per bathroom", "within 500m of the beach".
         /// </summary>
         public decimal PremiumPercent { get; set; }
 
@@ -34,26 +34,25 @@ namespace StayPilot.Application.Contracts.Response
         public int SampleSize { get; set; }
 
         /// <summary>
-        /// How many of those listings actually carry this feature - the real evidence behind the
-        /// percentage. Clients should show this alongside <see cref="SampleSize"/> ("2,134 of
-        /// 14,207"): the fit size is identical on every row, so alone it says nothing about how
-        /// well any one feature is measured. For "BeachProximity" it is the count of listings
-        /// with a usable distance to the beach.
+        /// How many of those listings carry this feature AND had a comparable flat to be measured
+        /// against - the real evidence behind the percentage. Clients should show this alongside
+        /// <see cref="SampleSize"/> ("2,134 of 20,499"): the comparison size is identical on every
+        /// row, so alone it says nothing about how well any one feature is measured.
         /// </summary>
         public int ListingsWithFeature { get; set; }
 
         /// <summary>
         /// The best this feature is worth under the conditions that favour it most - clients show
         /// it as "up to X%". Null for features whose worth does not vary, which is most of them;
-        /// only the sea view has one today, because its headline figure averages beachfront views
-        /// in with "sea view" adverts kilometres inland.
+        /// today the sea view (worth far more from the sand than from a sliver of horizon) and
+        /// the lift (worth roughly twice as much from the third floor up) both carry one.
         ///
         /// Never display this without <see cref="MaximumBasis"/> next to it.
         /// </summary>
         public decimal? MaximumPercent { get; set; }
 
         /// <summary>
-        /// The conditions <see cref="MaximumPercent"/> holds under, for example "within 100m of
+        /// The conditions <see cref="MaximumPercent"/> holds under, for example "within 500m of
         /// the beach". Never null when <see cref="MaximumPercent"/> is set.
         /// </summary>
         public string? MaximumBasis { get; set; }

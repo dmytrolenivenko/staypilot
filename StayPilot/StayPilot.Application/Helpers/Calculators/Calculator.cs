@@ -8,7 +8,7 @@ namespace StayPilot.Application.Helpers.Calculators
     /// <summary>
     /// General-purpose maths: text matching, market areas, beaches, distance, statistics.
     /// Valuations and premium features do NOT belong here - see
-    /// <see cref="PremiumFeaturesCalculator"/> and <see cref="OwnedPropertyValuationCalculator"/>.
+    /// <see cref="PropertyValuation"/> and <see cref="FeaturePremiumCalculator"/>.
     /// </summary>
     public class Calculator
     {

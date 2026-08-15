@@ -29,9 +29,11 @@ namespace StayPilot.Application.Services
         {
             var allListings = await _propertyListingRepo.GetAllListingsForFeaturePremiumCalculationAsync();
 
-            // One regression reads every feature at once, holding size, typology, condition
-            // and location still - so a pool premium isn't really "pools come on bigger flats".
-            var calculator = PremiumFeaturesCalculator.Fit(allListings);
+            // Every feature is measured by comparing listings in the SAME market area that are
+            // alike in every other way and differ only in that feature. The regression this
+            // replaced had to hold everything still from one set of coefficients, which is how
+            // it ended up reporting a balcony as making a flat cheaper.
+            var calculator = FeaturePremiumCalculator.Fit(allListings);
 
             // Overwrite, not append: exactly one current row per feature.
             var previous = await _premiumFeatureRepo.GetAllPremiumFeaturesAsync();

@@ -15,17 +15,21 @@ namespace StayPilot.Application.Services
         private readonly IMarketAreaRepository _marketAreaRepository;
         private readonly IBeachMarkerRepository _beachMarkerRepository;
         private readonly IPropertyListingRepository _propertyListingRepository;
+        private readonly IPremiumFeatureRepository _premiumFeatureRepository;
 
-        // No IPremiumFeatureRepository here any more: the valuation reads its feature values
-        // straight off the fitted model rather than from the stored PremiumFeature rows. Those
-        // rows exist to show the Feature Impact screen; reading them here would have let a stale
-        // recalculation quietly change someone's valuation.
-        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository)
+        // The stored PremiumFeature rows are back: the breakdown quotes the percentages already
+        // measured, so a second bathroom cannot read as +4% on the Feature Impact screen and
+        // -13% here. The model still prices the property; it just no longer also says what the
+        // features are worth. The cost is that a valuation reflects the last recalculation rather
+        // than a fresh one - which is the trade we want, because two different answers for the
+        // same feature is worse than one answer that is a recalculation behind.
+        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository, IPremiumFeatureRepository premiumFeatureRepository)
         {
             _ownedPropertyRepository = ownedPropertyRepository;
             _marketAreaRepository = marketAreaRepository;
             _beachMarkerRepository = beachMarkerRepository;
             _propertyListingRepository = propertyListingRepository;
+            _premiumFeatureRepository = premiumFeatureRepository;
         }
 
         public async Task<OwnedPropertyResponse> AddOwnedPropertyAsync(OwnedPropertyRequest request)
@@ -97,6 +101,29 @@ namespace StayPilot.Application.Services
 
             Converter.ApplyUpdates(entity, request);
 
+            var marketAreaRepo = await _marketAreaRepository.GetAllMarketAreasAsync();
+
+            // Same as Add: the address parts decide the market area. Without this, an edit
+            // kept whatever location the property was created with, however the user
+            // changed the District/Municipality/Town/Zone pickers.
+            entity.MarketAreaId = Calculator.GetMarketId(marketAreaRepo, request.Country, request.District, request.Municipality, request.Town, request.Zone);
+
+            var beachMarkerRepo = await _beachMarkerRepository.GetAllBeachMarkersAsync();
+
+            // Read the coordinates off the entity, not the request: an update that leaves
+            // them out still recomputes the beach from the ones already saved.
+            var closestBeach = Calculator.GetTheClosestBeach(beachMarkerRepo, entity.Latitude, entity.Longitude);
+
+            if (closestBeach is not null && entity.Latitude is not null && entity.Longitude is not null)
+            {
+                entity.NearestBeachMarker = closestBeach;
+                entity.NearestBeachName = closestBeach.Name;
+
+                entity.DistanceToBeachMeters = (int)Math.Round(Calculator.CalculateDistanceMeters(
+                    (double)closestBeach.Latitude, (double)closestBeach.Longitude,
+                    (double)entity.Latitude.Value, (double)entity.Longitude.Value));
+            }
+
             entity.UpdatedAtUtc = DateTime.UtcNow;
 
             await _ownedPropertyRepository.SaveChangesAsync();
@@ -128,17 +155,19 @@ namespace StayPilot.Application.Services
                 };
             }
 
+            // The breakdown is priced from the last recalculation, not from the model that is
+            // about to price the property. Empty until ReCalculatePremiumFeaturesValue has run
+            // once, which is the same state the Feature Impact screen shows.
+            var premiumFeatureRepo = await _premiumFeatureRepository.GetAllPremiumFeaturesAsync();
+
+            var featureEffects = premiumFeatureRepo.Select(x => Converter.MapToFeatureEffect(x)).ToList();
+
             // Headline price from the fitted model, not the median comp: it holds size,
             // typology, condition and location still, then corrects for the neighbourhood.
+            // One call does the lot - price, range, confidence, equity and the breakdown.
             var allListings = await _propertyListingRepository.GetAllListingsForFeaturePremiumCalculationAsync();
-            var premiumFeatures = PremiumFeaturesCalculator.Fit(allListings);
 
-            var prediction = premiumFeatures.PredictPricePerM2(ownedProperty);
-
-            var estimatedPrice = prediction.PricePerM2 * ownedProperty.AreaM2;
-
-            var (minPrice, maxPrice) = OwnedPropertyValuationCalculator.PriceRange(
-                estimatedPrice, premiumFeatures.PredictionSpread);
+            var estimate = PropertyValuation.Fit(allListings).Estimate(ownedProperty, featureEffects);
 
             // What the raw neighbours ask, unadjusted - shown beside the model's answer.
             var sortedCompPricesPerM2 = similarPropertiesRepo
@@ -151,12 +180,12 @@ namespace StayPilot.Application.Services
 
             return new OwnedPropertyAnalysisResponse
             {
-                MinPrice = minPrice,
-                MidPrice = estimatedPrice,
-                MaxPrice = maxPrice,
+                MinPrice = estimate.MinPrice,
+                MidPrice = estimate.MidPrice,
+                MaxPrice = estimate.MaxPrice,
                 AveragePrice = averageCompPricePerM2 * ownedProperty.AreaM2,
 
-                ConfidenceLevel = OwnedPropertyValuationCalculator.DetermineConfidence(prediction),
+                ConfidenceLevel = estimate.Confidence,
                 CompsCount = similarPropertiesRepo.Count,
 
                 MarketRatePerM2 = medianCompPricePerM2,
@@ -167,12 +196,11 @@ namespace StayPilot.Application.Services
                 MaxCompPricePerM2 = Calculator.Percentile(sortedCompPricesPerM2, 0.75),
                 AverageCompPricePerM2 = averageCompPricePerM2,
 
-                Adjustments = premiumFeatures.BuildAdjustments(ownedProperty, estimatedPrice),
+                Adjustments = estimate.Adjustments,
 
                 Comps = similarPropertiesRepo.Select(Converter.MapToComp).ToList(),
 
-                Equity = OwnedPropertyValuationCalculator.BuildEquity(
-                    ownedProperty.PurchasePrice, ownedProperty.PurchaseDate, estimatedPrice),
+                Equity = estimate.Equity,
             };
         }
 

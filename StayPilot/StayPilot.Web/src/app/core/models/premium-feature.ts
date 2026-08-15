@@ -10,25 +10,20 @@ export interface PremiumFeatureResponse {
   // printing "-0.2%" for one of these reads as "it makes the flat cheaper", which is wrong.
   isMeasurable: boolean;
   sampleSize: number;    // how many listings the estimate was fitted on
-  // How many of those listings actually HAVE this feature — the real evidence behind the
-  // percentage. Show it next to sampleSize: the fit size is identical on every row, so on its
-  // own it made a sea view read on 2k listings look as solid as a garage read on 9k.
-  // For "BeachProximity" it is the count of listings with a usable distance to the beach.
+  // How many of those listings actually HAVE this feature AND had a comparable flat to be
+  // measured against — the real evidence behind the percentage. Show it next to sampleSize:
+  // the comparison size is identical on every row, so on its own it made a sea view read on
+  // 1.2k listings look as solid as a bathroom read on 4.8k.
   listingsWithFeature: number;
   // The best this feature is worth under the conditions that favour it most — shown as "up to
-  // X%". Null for features whose worth doesn't vary, which is most of them; only the sea view
-  // has one today, since its headline averages beachfront views in with "sea view" adverts
-  // kilometres inland. NEVER show it without maximumBasis: an "up to" with no stated conditions
-  // is a marketing claim, not a measurement.
+  // X%". Null for features whose worth doesn't vary, which is most of them; today the sea view
+  // (worth far more from the sand than from a sliver of horizon) and the lift (worth roughly
+  // twice as much from the third floor up) both carry one. NEVER show it without maximumBasis:
+  // an "up to" with no stated conditions is a marketing claim, not a measurement.
   maximumPercent: number | null;
-  maximumBasis: string | null; // e.g. "within 100m of the beach"
-  // What the percentage is measured against, when "if present" would mislead — beach proximity
-  // is per halving of distance, and a sea view is worth far more on the beachfront than inland.
-  // Null for ordinary yes/no features.
+  maximumBasis: string | null; // e.g. "within 500m of the beach"
+  // What the percentage is measured against, when "if present" would mislead — "per bathroom",
+  // "within 500m of the beach". Null for ordinary yes/no features.
   basis: string | null;
   calculatedAtUtc: string; // ISO date-time
 }
-
-// "BeachProximity" is not a yes/no feature — its percentage is the gain per HALVING of the
-// distance to the beach, so it needs its own label wherever it is displayed.
-export const BEACH_PROXIMITY = 'BeachProximity';
