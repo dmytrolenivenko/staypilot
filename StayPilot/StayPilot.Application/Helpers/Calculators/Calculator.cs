@@ -46,8 +46,10 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>
         /// Find which market area a property belongs to, using its address.
         /// We try an exact match first. If that fails, we try easier matches.
+        /// Returns null when the address matches nothing, so the caller can report it as an
+        /// error on its own response instead of catching an exception.
         /// </summary>
-        public static int GetMarketId(List<MarketArea> marketAreas, string countryRaw, string districtRaw, string municipalityRaw, string townRaw, string zoneRaw = "")
+        public static int? GetMarketId(List<MarketArea> marketAreas, string countryRaw, string districtRaw, string municipalityRaw, string townRaw, string zoneRaw = "")
         {
             // Clean each address part so we can compare it safely (see NormalizeText).
             var country = NormalizeText(countryRaw);
@@ -87,11 +89,20 @@ namespace StayPilot.Application.Helpers.Calculators
                 .ThenBy(x => x.Id)
                 .FirstOrDefault();
 
-            // Still nothing -> we cannot place this property. Stop with an error.
-            if (marketArea == null)
-                throw new InvalidOperationException("Market area not found.");
+            // Still nothing -> we cannot place this property. The caller turns that into an error.
+            return marketArea?.Id;
+        }
 
-            return marketArea.Id;
+        /// <summary>
+        /// The address parts as one readable line, for the error we show when none of them
+        /// match a market area. Blank parts are left out.
+        /// </summary>
+        public static string DescribeAddress(string? country, string? district, string? municipality, string? town, string? zone)
+        {
+            var parts = new[] { country, district, municipality, town, zone }
+                .Where(x => !string.IsNullOrWhiteSpace(x));
+
+            return string.Join(", ", parts);
         }
 
         /// <summary>

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import {
   OwnedPropertyAnalysisResponse,
   OwnedPropertyRequest,
@@ -21,8 +21,12 @@ export class OwnedPropertyService {
   }
 
   // GET /api/OwnedProperty/GetAllOwnedProperty
+  // The API wraps every list in a response object so it can carry errors, so unwrap "items"
+  // here and keep handing the components the plain array they already expect.
   getAll(): Observable<OwnedPropertyResponse[]> {
-    return this.http.get<OwnedPropertyResponse[]>(`${this.baseUrl}/GetAllOwnedProperty`);
+    return this.http
+      .get<{ items: OwnedPropertyResponse[] }>(`${this.baseUrl}/GetAllOwnedProperty`)
+      .pipe(map(response => response.items));
   }
 
   // POST /api/OwnedProperty/EstimateEvaluationsOwnedproperty?id={id}&months={months}&radiusMeters={radiusMeters}
@@ -46,7 +50,10 @@ export class OwnedPropertyService {
   }
 
   // DELETE /api/OwnedProperty/DeleteOwnedProperty/{id}
+  // Answers with a JSON response now (it can carry an error), not the bare name as text.
   delete(id: number): Observable<string> {
-    return this.http.delete(`${this.baseUrl}/DeleteOwnedProperty/${id}`, { responseType: 'text' });
+    return this.http
+      .delete<{ name?: string }>(`${this.baseUrl}/DeleteOwnedProperty/${id}`)
+      .pipe(map(response => response.name ?? ''));
   }
 }

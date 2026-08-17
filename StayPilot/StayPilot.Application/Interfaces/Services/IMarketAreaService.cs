@@ -18,6 +18,6 @@ namespace StayPilot.Application.Interfaces.Services
         /// Get the next-level choices for the region picker.
         /// Each filter you pass narrows the result (district, then municipality, then town).
         /// </summary>
-        Task<List<string>> GetMarketAreaOptionsAsync(string? district, string? municipality, string? town);
+        Task<MarketAreaOptionsResponse> GetMarketAreaOptionsAsync(string? district, string? municipality, string? town);
     }
 }

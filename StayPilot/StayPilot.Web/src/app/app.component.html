@@ -13,7 +13,7 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
 
       <span class="nav-group-label">Data</span>
-      <a routerLink="/market-areas" routerLinkActive="active">Market Areas</a>
+      <a routerLink="/market-areas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Market Areas</a>
       <a routerLink="/listings/lookup" routerLinkActive="active">Listing Lookup</a>
       <a routerLink="/listings/new" routerLinkActive="active">Add Listing</a>
       <a routerLink="/listing-browser" routerLinkActive="active">Listing Browser</a>
@@ -21,6 +21,7 @@
       <a routerLink="/my-properties" routerLinkActive="active">My Properties</a>
 
       <span class="nav-group-label">Analysis</span>
+      <a routerLink="/market-areas/leaderboard" routerLinkActive="active">Leaderboard</a>
       <a routerLink="/feature-impact" routerLinkActive="active">Feature Impact</a>
       <a routerLink="/valuation" routerLinkActive="active">Valuation</a>
       <a routerLink="/build-cost" routerLinkActive="active">Build Cost</a>

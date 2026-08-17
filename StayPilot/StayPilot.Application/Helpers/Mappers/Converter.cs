@@ -318,5 +318,37 @@ namespace StayPilot.Application.Helpers.Mappers
                 SnapshotDateUtc = snapshot.SnapshotDateUtc,
             };
         }
+
+        /// <summary>
+        /// One place's price numbers, in the shape we send back.
+        /// </summary>
+        public static MarketAreaStatsResponse MapToResponse(MarketAreaStats stats)
+        {
+            return new MarketAreaStatsResponse
+            {
+                Level = stats.Level,
+                District = stats.District,
+                Municipality = stats.Municipality,
+                Town = stats.Town,
+                DisplayName = BuildPlaceName(stats),
+                ListingCount = stats.ListingCount,
+                MedianPricePerM2 = stats.MedianPricePerM2,
+                CalculatedAtUtc = stats.CalculatedAtUtc,
+            };
+        }
+
+        /// <summary>
+        /// The place written out for a human, with its parent in brackets so two places sharing
+        /// a name stay apart: "Odivelas (Beja)" is not "Odivelas (Lisboa)".
+        /// </summary>
+        private static string BuildPlaceName(MarketAreaStats stats)
+        {
+            return stats.Level switch
+            {
+                AreaLevel.District => stats.District,
+                AreaLevel.Municipality => $"{stats.Municipality} ({stats.District})",
+                _ => $"{stats.Town} ({stats.Municipality})"
+            };
+        }
     }
 }

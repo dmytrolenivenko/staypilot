@@ -140,15 +140,17 @@ namespace StayPilot.UnitTests
         }
 
         [Fact]
-        public void GetMarketId_NothingMatches_Throws()
+        public void GetMarketId_NothingMatches_ReturnsNull()
         {
             var areas = new List<MarketArea>
             {
                 new() { Id = 10, Country = "Portugal", District = "Faro", Municipality = "Loulé", Town = "Quarteira", Zone = "Vilamoura" }
             };
 
-            Assert.Throws<InvalidOperationException>(
-                () => Calculator.GetMarketId(areas, "Spain", "Madrid", "Madrid", "Madrid"));
+            var id = Calculator.GetMarketId(areas, "Spain", "Madrid", "Madrid", "Madrid");
+
+            // An address we cannot place is the caller's error to report, not an exception.
+            Assert.Null(id);
         }
 
     }

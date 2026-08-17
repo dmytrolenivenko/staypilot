@@ -1,6 +1,7 @@
 
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
@@ -41,8 +42,12 @@ namespace StayPilot.Application.Services
             // No snapshot for this property -> tell the caller with an error.
             if (snapshot == null)
             {
-                throw new KeyNotFoundException($"Snapshot with Property ID {propertyListingId} not found.");
+                var notFound = new ListingSnapshotResponse();
+                notFound.AddError(ErrorCode.SnapshotNotFound, propertyListingId.ToString());
+
+                return notFound;
             }
+
             return Helpers.Mappers.Converter.MapToResponse(snapshot);
         }
 

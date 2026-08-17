@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
@@ -23,8 +24,9 @@ namespace StayPilot.Api.Controllers
         }
 
         /// <summary>
-        /// Save a new property.
-        /// Returns the saved property and a link to read it by its Id.
+        /// Save many properties in one call.
+        /// Always answers 200: a bulk upload where some listings were saved and others were
+        /// rejected is not a failed request. Read TotalAdded and Errors to see what happened.
         /// </summary>
         [Authorize(Roles = "Api.Write")]
         [HttpPost]
@@ -44,11 +46,7 @@ namespace StayPilot.Api.Controllers
         {
             var result = await _service.GetPropertyListingByIdAsync(id);
 
-            if (result == null)
-            {
-                return NotFound();
-            }
-            return Ok(result);
+            return this.ToActionResult(result);
         }
 
         /// <summary>
@@ -61,7 +59,7 @@ namespace StayPilot.Api.Controllers
         {
             var result = await _service.FilterPropertyListingAsync(request);
 
-            return Ok(result);
+            return this.ToActionResult(result);
         }
     }
 }

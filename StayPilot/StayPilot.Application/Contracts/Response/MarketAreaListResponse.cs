@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using StayPilot.Application.Contracts.Response.Base;
 
 namespace StayPilot.Application.Contracts.Response
 {
@@ -7,7 +8,7 @@ namespace StayPilot.Application.Contracts.Response
     /// It carries one page of market areas plus the paging info,
     /// so the caller can work out how many pages exist.
     /// </summary>
-    public class MarketAreaListResponse
+    public class MarketAreaListResponse : ResponseBase
     {
         /// <summary>The market areas found for this page.</summary>
         public List<MarketAreaResponse> Items { get; set; } = new();

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { PremiumFeatureResponse } from '../models/premium-feature';
 import { environment } from '../../../environments/environment';
 
@@ -12,8 +12,11 @@ export class PremiumFeatureService {
   constructor(private readonly http: HttpClient) {}
 
   // GET /api/PremiumFeature/GetAllPremiumFeatures
+  // The API wraps the list in a response object so it can carry errors; unwrap "items" here.
   getAll(): Observable<PremiumFeatureResponse[]> {
-    return this.http.get<PremiumFeatureResponse[]>(`${this.baseUrl}/GetAllPremiumFeatures`);
+    return this.http
+      .get<{ items: PremiumFeatureResponse[] }>(`${this.baseUrl}/GetAllPremiumFeatures`)
+      .pipe(map(response => response.items));
   }
 
   // POST /api/PremiumFeature/ReCalculatePremiumFeaturesValue

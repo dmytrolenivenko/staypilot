@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
-using StayPilot.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 
 namespace StayPilot.Api.Controllers
@@ -17,21 +17,28 @@ namespace StayPilot.Api.Controllers
             _premiumFeatureService = premiumFeatureService;
         }
 
+        /// <summary>
+        /// What each feature is worth, as of the last recalculation.
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<PremiumFeatureResponse>>> GetAllPremiumFeatures()
+        public async Task<ActionResult<PremiumFeatureListResponse>> GetAllPremiumFeatures()
         {
             var result = await _premiumFeatureService.GetAllPremiumFeatures();
 
-            return Ok(result);
+            return this.ToActionResult(result);
         }
 
+        /// <summary>
+        /// Measure every feature again from the listings we hold.
+        /// Returns 400 Bad Request when there is too little data to measure anything.
+        /// </summary>
         [Authorize(Roles = "Api.Write")]
         [HttpPost]
-        public async Task<ActionResult<List<PremiumFeature>>> ReCalculatePremiumFeaturesValue()
+        public async Task<ActionResult<PremiumFeatureListResponse>> ReCalculatePremiumFeaturesValue()
         {
             var result = await _premiumFeatureService.ReCalculatePremiumFeaturesValue();
 
-            return Ok(result);
+            return this.ToActionResult(result);
         }
     }
 }

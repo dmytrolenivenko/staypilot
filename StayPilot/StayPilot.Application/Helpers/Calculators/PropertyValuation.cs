@@ -70,6 +70,21 @@ namespace StayPilot.Application.Helpers.Calculators
             return new PropertyValuation(ValuationModel.Fit(listings));
         }
 
+        /// <summary>
+        /// The same fit, but null instead of an exception when there are not enough usable
+        /// listings. Services use this one: too little data is an answer for the caller, not a
+        /// crash. <paramref name="usableListings"/> is how many we found, for the error message.
+        /// </summary>
+        public static PropertyValuation? TryFit(IEnumerable<PropertyListing> listings, out int usableListings)
+        {
+            var model = ValuationModel.TryFit(listings, out usableListings);
+
+            return model is null ? null : new PropertyValuation(model);
+        }
+
+        /// <summary>The fewest usable listings a fit needs.</summary>
+        public static int MinimumListings => ValuationModel.MinimumListings;
+
         /// <summary>How many listings the fit learned from.</summary>
         public int TrainingListings => _model.TrainingListings;
 
@@ -602,14 +617,27 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <exception cref="InvalidOperationException">Not enough usable listings to fit.</exception>
         public static ValuationModel Fit(IEnumerable<PropertyListing> listings)
         {
+            var model = TryFit(listings, out var usableListings);
+
+            return model ?? throw new InvalidOperationException(
+                $"Need at least {MinimumTrainingListings} usable listings to fit a valuation model, found {usableListings}.");
+        }
+
+        /// <summary>
+        /// The fitted model, or null when there are not enough usable listings for one.
+        /// <paramref name="usableListings"/> is how many survived the quality filter.
+        /// </summary>
+        public static ValuationModel? TryFit(IEnumerable<PropertyListing> listings, out int usableListings)
+        {
             var training = ListingQuality.UsableSubjects(listings);
 
-            if (training.Count < MinimumTrainingListings)
-                throw new InvalidOperationException(
-                    $"Need at least {MinimumTrainingListings} usable listings to fit a valuation model, found {training.Count}.");
+            usableListings = training.Count;
 
-            return new ValuationModel(training);
+            return training.Count < MinimumTrainingListings ? null : new ValuationModel(training);
         }
+
+        /// <summary>The fewest usable listings a fit needs.</summary>
+        public static int MinimumListings => MinimumTrainingListings;
 
         private ValuationModel(List<(ValuationSubject Subject, double LogPricePerM2)> training)
         {

@@ -1,4 +1,5 @@
 ﻿
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Contracts.Response
@@ -8,7 +9,7 @@ namespace StayPilot.Application.Contracts.Response
     /// It holds the property details, its market area, its location,
     /// the nearest beach, and the latest price snapshot.
     /// </summary>
-    public class PropertyListingResponse
+    public class PropertyListingResponse : ResponseBase
     {
         /// <summary>Id of the property.</summary>
         public int Id { get; set; }

@@ -15,7 +15,7 @@ namespace StayPilot.Application.Interfaces.Services
 
         /// <summary>
         /// Get the snapshot of one property by the property Id.
-        /// Throws if the property has no snapshot.
+        /// Comes back carrying SnapshotNotFound when the property has no snapshot.
         /// </summary>
         Task<ListingSnapshotResponse> GetListingSnapshotByPropertyIdAsync(int propertyListingId);
     }

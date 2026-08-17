@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
@@ -14,10 +16,12 @@ namespace StayPilot.Api.Controllers
     public class MarketAreaController : ControllerBase
     {
         private readonly IMarketAreaService _service;
+        private readonly IMarketAreaStatsService _statsService;
 
-        public MarketAreaController(IMarketAreaService service)
+        public MarketAreaController(IMarketAreaService service, IMarketAreaStatsService statsService)
         {
             _service = service;
+            _statsService = statsService;
         }
 
         /// <summary>
@@ -28,7 +32,8 @@ namespace StayPilot.Api.Controllers
         public async Task<ActionResult<MarketAreaListResponse>> GetAll([FromQuery] MarketAreaRequest request)
         {
             var response = await _service.GetMarketAreasPageAsync(request);
-            return Ok(response);
+
+            return this.ToActionResult(response);
         }
 
         /// <summary>
@@ -36,10 +41,37 @@ namespace StayPilot.Api.Controllers
         /// The parts you send narrow the list. Example: send a district to get its towns.
         /// </summary>
         [HttpGet("options")]
-        public async Task<ActionResult<List<string>>> GetOptions([FromQuery] string? district, [FromQuery] string? municipality, [FromQuery] string? town)
+        public async Task<ActionResult<MarketAreaOptionsResponse>> GetOptions([FromQuery] string? district, [FromQuery] string? municipality, [FromQuery] string? town)
         {
-            var options = await _service.GetMarketAreaOptionsAsync(district, municipality, town);
-            return Ok(options);
+            var response = await _service.GetMarketAreaOptionsAsync(district, municipality, town);
+
+            return this.ToActionResult(response);
+        }
+
+        /// <summary>
+        /// Return the places ranked by price for each square meter, priciest first by default.
+        /// Reads numbers worked out earlier, so it is a plain table read - call
+        /// RecalculateMarketAreaStats after an import to refresh them.
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<MarketAreaLeaderboardResponse>> GetLeaderboard([FromQuery] MarketAreaLeaderboardRequest request)
+        {
+            var response = await _statsService.GetLeaderboardAsync(request);
+
+            return this.ToActionResult(response);
+        }
+
+        /// <summary>
+        /// Work the price numbers out again from every listing we hold, replacing the whole
+        /// stats table. Run it after importing listings.
+        /// </summary>
+        [Authorize(Roles = "Api.Write")]
+        [HttpPost]
+        public async Task<ActionResult<RecalculateMarketAreaStatsResponse>> RecalculateMarketAreaStats()
+        {
+            var response = await _statsService.RecalculateMarketAreaStatsAsync();
+
+            return this.ToActionResult(response);
         }
     }
 }

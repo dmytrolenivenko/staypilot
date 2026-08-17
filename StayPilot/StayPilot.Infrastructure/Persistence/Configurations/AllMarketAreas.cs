@@ -213,11 +213,16 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             new MarketArea { Id = 179, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Ponte de Vagos", Zone = null },
             new MarketArea { Id = 180, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santa Catarina", Zone = null },
             new MarketArea { Id = 181, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo André de Vagos", Zone = null },
-            new MarketArea { Id = 182, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo António", Zone = "Amoreiras - Rato" },
-            new MarketArea { Id = 183, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo António", Zone = "Av. da Liberdade - Marquês de Pombal" },
-            new MarketArea { Id = 184, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo António", Zone = "Campo de Santana - Santa Marta" },
-            new MarketArea { Id = 185, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo António", Zone = "Praça da Alegria" },
-            new MarketArea { Id = 186, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo António", Zone = "Príncipe Real" },
+            // These five are Lisboa's Santo António, not Vagos's. Idealista publishes a town
+            // called "Santo António" in both, and the seed build attached Lisboa's zones to the
+            // Vagos one (runbook §5.3). Proved by the listings' own coordinates: they sit at
+            // 38.72, -9.15 - central Lisboa - while Vagos is at 40.55, -8.68, some 200km away.
+            // Ids kept so the 199 listings already pointing here stay pointing at the same rows.
+            new MarketArea { Id = 182, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Santo António", Zone = "Amoreiras - Rato" },
+            new MarketArea { Id = 183, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Santo António", Zone = "Av. da Liberdade - Marquês de Pombal" },
+            new MarketArea { Id = 184, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Santo António", Zone = "Campo de Santana - Santa Marta" },
+            new MarketArea { Id = 185, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Santo António", Zone = "Praça da Alegria" },
+            new MarketArea { Id = 186, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Santo António", Zone = "Príncipe Real" },
             new MarketArea { Id = 187, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Sosa", Zone = null },
             new MarketArea { Id = 188, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Vagos", Zone = null },
             // Aveiro / Vale de Cambra
@@ -2334,9 +2339,12 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             new MarketArea { Id = 2166, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Abiul", Zone = null },
             new MarketArea { Id = 2167, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Albergaria dos Doze", Zone = null },
             new MarketArea { Id = 2168, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Almagreira", Zone = null },
-            new MarketArea { Id = 2169, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Carnide", Zone = "Bairro Novo" },
-            new MarketArea { Id = 2170, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Carnide", Zone = "Centro Histórico - Quinta da Luz" },
-            new MarketArea { Id = 2171, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Carnide", Zone = "Telheiras" },
+            // Same collision as Santo António above: Carnide is a town in Pombal AND a freguesia
+            // of Lisboa, and these three zones are Lisboa's. Telheiras gives it away. The three
+            // listings sitting here are at 38.77, -9.19 - Lisboa, not Pombal.
+            new MarketArea { Id = 2169, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Carnide", Zone = "Bairro Novo" },
+            new MarketArea { Id = 2170, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Carnide", Zone = "Centro Histórico - Quinta da Luz" },
+            new MarketArea { Id = 2171, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "Carnide", Zone = "Telheiras" },
             new MarketArea { Id = 2172, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Carriço", Zone = null },
             new MarketArea { Id = 2173, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Guia", Zone = null },
             new MarketArea { Id = 2174, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Ilha", Zone = null },
@@ -4796,6 +4804,18 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             new MarketArea { Id = 4470, Country = "Portugal", District = "Évora", Municipality = "Estremoz", Town = "Estremoz", Zone = null },
             new MarketArea { Id = 4471, Country = "Portugal", District = "Évora", Municipality = "Montemor-o-Novo", Town = "Montemor-o-Novo", Zone = null },
             new MarketArea { Id = 4472, Country = "Portugal", District = "Évora", Municipality = "Vila Viçosa", Town = "Vila Viçosa", Zone = null },
+
+            // Both of these towns are real, and both lost their only row when their misfiled
+            // zones went back to Lisboa (see Santo António and Carnide above). Added back with no
+            // zone so the places still exist.
+            //
+            // Not cosmetic: Calculator.GetMarketId falls back to matching on the municipality
+            // alone when no town matches, so without these a future Vagos or Pombal crawl would
+            // not fail loudly - it would quietly file those listings under some other town of the
+            // same municipality. Ids continue from the end rather than being slotted in place, so
+            // nothing already saved moves.
+            new MarketArea { Id = 4473, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo António", Zone = null },
+            new MarketArea { Id = 4474, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Carnide", Zone = null },
         };
     }
 }

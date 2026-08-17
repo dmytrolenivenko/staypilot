@@ -1,5 +1,6 @@
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Domain.Entities;
 using System.Globalization;
 using System.Text;
@@ -31,19 +32,21 @@ namespace StayPilot.Application.Services
 
         /// <summary>
         /// Get one property by its Id.
-        /// Returns null if the property does not exist.
         /// </summary>
-        public async Task<PropertyListingResponse?> GetPropertyListingByIdAsync(int propertyId)
+        public async Task<PropertyListingResponse> GetPropertyListingByIdAsync(int propertyId)
         {
             // Read the property and its snapshot (price, photos, etc.) from the database.
             var property = await _propertyListingRepo.GetPropertyListingByIdAsync(propertyId);
 
             var listing = await _listingSnapshotRepo.GetListingSnapshotByPropertyIdAsync(propertyId);
 
-            // No property with this Id -> nothing to return.
+            // No property with this Id -> say so, instead of handing back an empty one.
             if (property == null)
             {
-                return null;
+                var notFound = new PropertyListingResponse();
+                notFound.AddError(ErrorCode.PropertyListingNotFound, propertyId.ToString());
+
+                return notFound;
             }
 
             // Change the database data into the shape we send back to the caller.
@@ -53,7 +56,7 @@ namespace StayPilot.Application.Services
         /// <summary>
         /// Save many listings in one call.
         /// Every listing is checked first. Only the ones that pass are sent to the database,
-        /// the rest come back in FailedListings with the reason and are never saved.
+        /// the rest come back in Errors with the reason and are never saved.
         /// </summary>
         public async Task<BulkAddPropertyListingResponse> BulkAddPropertyListingAsync(BulkAddPropertyListingRequest request)
         {
@@ -69,8 +72,7 @@ namespace StayPilot.Application.Services
 
             var response = new BulkAddPropertyListingResponse
             {
-                TotalReceived = request.Items.Count,
-                FailedListings = new Dictionary<string, string>()
+                TotalReceived = request.Items.Count
             };
 
             // Save in small batches, so one database error only costs us that batch.
@@ -92,7 +94,7 @@ namespace StayPilot.Application.Services
                     // Something is wrong with this listing. Report it and leave it out of the save.
                     if (error is not null)
                     {
-                        response.FailedListings[item.SourceUrl] = error;
+                        response.AddError(error);
                         continue;
                     }
 
@@ -126,10 +128,12 @@ namespace StayPilot.Application.Services
                 catch (Exception ex)
                 {
                     // Nothing from this batch landed. Report all of it instead of letting the
-                    // exception kill the whole request.
+                    // exception kill the whole request. This catch stays on purpose: only the
+                    // database can tell us a row it already accepted cannot be written, and the
+                    // batches after this one still deserve their chance to save.
                     foreach (var item in readyToSave)
                     {
-                        response.FailedListings[item.SourceUrl] = ex.Message;
+                        response.AddError(ErrorCode.ListingNotSaved, item.SourceUrl, ex.Message);
                     }
                 }
             }
@@ -140,9 +144,9 @@ namespace StayPilot.Application.Services
         /// <summary>
         /// Check one incoming listing before we try to save it, and fill in its market area Id
         /// when the caller did not send one.
-        /// Returns null when the listing is good to go, or the reason to report when it is not.
+        /// Returns null when the listing is good to go, or the error to report when it is not.
         /// </summary>
-        private static string? ValidateAndSetMarketArea(PropertyListingRequest propertyListing, List<MarketArea> marketAreas, Dictionary<string, PropertyListing> existingByUrl)
+        private static Error? ValidateAndSetMarketArea(PropertyListingRequest propertyListing, List<MarketArea> marketAreas, Dictionary<string, PropertyListing> existingByUrl)
         {
             // A listing we already have only ever gets a new snapshot, so it needs nothing else.
             if (existingByUrl.ContainsKey(propertyListing.SourceUrl))
@@ -152,25 +156,20 @@ namespace StayPilot.Application.Services
 
             if (propertyListing.Latitude is null || propertyListing.Longitude is null)
             {
-                return "Latitude and Longitude are required.";
+                return new Error(ErrorCode.ListingLocationRequired, propertyListing.SourceUrl);
             }
 
-            try
-            {
-                // Use the market area the caller sent, or find it from the address. We keep it on
-                // the request so the save step does not have to look it up all over again.
-                propertyListing.MarketAreaId ??= Calculator.GetMarketId(marketAreas, propertyListing.Country, propertyListing.District, propertyListing.Municipality, propertyListing.Town, propertyListing.Zone);
+            // Use the market area the caller sent, or find it from the address. We keep it on
+            // the request so the save step does not have to look it up all over again.
+            // GetMarketId gives back null when the address matches nothing, and a null Id fails
+            // the check below like any other Id we do not have.
+            propertyListing.MarketAreaId ??= Calculator.GetMarketId(marketAreas, propertyListing.Country, propertyListing.District, propertyListing.Municipality, propertyListing.Town, propertyListing.Zone);
 
-                if (marketAreas.All(x => x.Id != propertyListing.MarketAreaId))
-                {
-                    return "No market area matches this address.";
-                }
-            }
-            catch (InvalidOperationException ex)
+            if (marketAreas.All(x => x.Id != propertyListing.MarketAreaId))
             {
-                // GetMarketId throws when the address matches nothing. Here that is a listing we
-                // reject, not a crash.
-                return ex.Message;
+                var address = Calculator.DescribeAddress(propertyListing.Country, propertyListing.District, propertyListing.Municipality, propertyListing.Town, propertyListing.Zone);
+
+                return new Error(ErrorCode.ListingMarketAreaNotFound, propertyListing.SourceUrl, address);
             }
 
             return null;

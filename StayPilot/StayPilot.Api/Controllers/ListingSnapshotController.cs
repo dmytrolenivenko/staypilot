@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
@@ -29,18 +30,19 @@ namespace StayPilot.Api.Controllers
         {
             var result = await _service.CreateListingSnapshotAsync(request);
 
-            return Ok(result);
+            return this.ToActionResult(result);
         }
 
         /// <summary>
         /// Return the snapshot of one property, by the property's Id.
+        /// Returns 404 Not Found if the property has no snapshot.
         /// </summary>
         [HttpGet("{propertyListingId}")]
         public async Task<ActionResult<ListingSnapshotResponse>> GetListingSnapshotByPropertyIdAsync(int propertyListingId)
         {
             var result = await _service.GetListingSnapshotByPropertyIdAsync(propertyListingId);
 
-            return Ok(result);
+            return this.ToActionResult(result);
         }
     }
 }

@@ -36,9 +36,11 @@ namespace StayPilot.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<string>> GetMarketAreaOptionsAsync(string? district, string? municipality, string? town)
+        public async Task<MarketAreaOptionsResponse> GetMarketAreaOptionsAsync(string? district, string? municipality, string? town)
         {
-            return await _marketAreaRepo.GetMarketAreaOptionsAsync(district, municipality, town);
+            var options = await _marketAreaRepo.GetMarketAreaOptionsAsync(district, municipality, town);
+
+            return new MarketAreaOptionsResponse { Items = options };
         }
     }
 }

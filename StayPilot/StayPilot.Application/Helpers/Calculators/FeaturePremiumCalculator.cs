@@ -163,14 +163,29 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <exception cref="InvalidOperationException">Not enough usable listings.</exception>
         public static FeaturePremiumCalculator Fit(IEnumerable<PropertyListing> listings)
         {
+            var calculator = TryFit(listings, out var usableListings);
+
+            return calculator ?? throw new InvalidOperationException(
+                $"Need at least {MinimumTrainingListings} usable listings to measure feature premiums, found {usableListings}.");
+        }
+
+        /// <summary>
+        /// The same fit, but null instead of an exception when there is not enough to measure.
+        /// Services use this one: too little data is an answer for the caller, not a crash.
+        /// <paramref name="usableListings"/> is how many listings survived the quality filter,
+        /// so the caller can put the real number in its error.
+        /// </summary>
+        public static FeaturePremiumCalculator? TryFit(IEnumerable<PropertyListing> listings, out int usableListings)
+        {
             var training = ListingQuality.UsableSubjects(listings);
 
-            if (training.Count < MinimumTrainingListings)
-                throw new InvalidOperationException(
-                    $"Need at least {MinimumTrainingListings} usable listings to measure feature premiums, found {training.Count}.");
+            usableListings = training.Count;
 
-            return new FeaturePremiumCalculator(training);
+            return training.Count < MinimumTrainingListings ? null : new FeaturePremiumCalculator(training);
         }
+
+        /// <summary>The fewest usable listings a fit needs.</summary>
+        public static int MinimumListings => MinimumTrainingListings;
 
         /// <summary>
         /// Every feature the Feature Impact screen shows, in column order. Air conditioning is
@@ -314,14 +329,12 @@ namespace StayPilot.Application.Helpers.Calculators
             if (rows.Count <= Columns)
                 return null;
 
-            try
-            {
-                return LeastSquares.Fit(rows, targets);
-            }
-            catch (ArgumentException)
-            {
+            // The rest of what LeastSquares.Fit refuses to fit, asked up front rather than
+            // caught after the fact: one target per row, and more rows than the row is wide.
+            if (rows.Count != targets.Count || rows.Count <= rows[0].Length)
                 return null;
-            }
+
+            return LeastSquares.Fit(rows, targets);
         }
 
         /// <summary>

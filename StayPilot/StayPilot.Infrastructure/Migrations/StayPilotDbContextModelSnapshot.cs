@@ -54,7 +54,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BeachMarkers", (string)null);
+                    b.ToTable("BeachMarkers");
 
                     b.HasData(
                         new
@@ -11477,7 +11477,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasIndex("PropertyListingId", "SnapshotDateUtc");
 
-                    b.ToTable("ListingSnapshots", (string)null);
+                    b.ToTable("ListingSnapshots");
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.MarketArea", b =>
@@ -11521,7 +11521,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MarketAreas", (string)null);
+                    b.ToTable("MarketAreas");
 
                     b.HasData(
                         new
@@ -13180,8 +13180,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 182,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Aveiro",
-                            Municipality = "Vagos",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Santo António",
                             Zone = "Amoreiras - Rato"
                         },
@@ -13190,8 +13190,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 183,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Aveiro",
-                            Municipality = "Vagos",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Santo António",
                             Zone = "Av. da Liberdade - Marquês de Pombal"
                         },
@@ -13200,8 +13200,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 184,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Aveiro",
-                            Municipality = "Vagos",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Santo António",
                             Zone = "Campo de Santana - Santa Marta"
                         },
@@ -13210,8 +13210,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 185,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Aveiro",
-                            Municipality = "Vagos",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Santo António",
                             Zone = "Praça da Alegria"
                         },
@@ -13220,8 +13220,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 186,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Aveiro",
-                            Municipality = "Vagos",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Santo António",
                             Zone = "Príncipe Real"
                         },
@@ -31540,8 +31540,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 2169,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Leiria",
-                            Municipality = "Pombal",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Carnide",
                             Zone = "Bairro Novo"
                         },
@@ -31550,8 +31550,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 2170,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Leiria",
-                            Municipality = "Pombal",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Carnide",
                             Zone = "Centro Histórico - Quinta da Luz"
                         },
@@ -31560,8 +31560,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 2171,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Leiria",
-                            Municipality = "Pombal",
+                            District = "Lisboa",
+                            Municipality = "Lisboa",
                             Town = "Carnide",
                             Zone = "Telheiras"
                         },
@@ -52941,7 +52941,70 @@ namespace StayPilot.Infrastructure.Migrations
                             District = "Évora",
                             Municipality = "Vila Viçosa",
                             Town = "Vila Viçosa"
+                        },
+                        new
+                        {
+                            Id = 4473,
+                            Country = "Portugal",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            District = "Aveiro",
+                            Municipality = "Vagos",
+                            Town = "Santo António"
+                        },
+                        new
+                        {
+                            Id = 4474,
+                            Country = "Portugal",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            District = "Leiria",
+                            Municipality = "Pombal",
+                            Town = "Carnide"
                         });
+                });
+
+            modelBuilder.Entity("StayPilot.Domain.Entities.MarketAreaStats", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CalculatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("District")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .UseCollation("Latin1_General_CI_AI");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("ListingCount")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("MedianPricePerM2")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Municipality")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .UseCollation("Latin1_General_CI_AI");
+
+                    b.Property<string>("Town")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .UseCollation("Latin1_General_CI_AI");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level", "District", "Municipality", "Town")
+                        .IsUnique();
+
+                    b.ToTable("MarketAreaStats");
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.OwnedProperty", b =>
@@ -53062,7 +53125,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasIndex("NearestBeachMarkerId");
 
-                    b.ToTable("OwnedProperties", (string)null);
+                    b.ToTable("OwnedProperties");
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.PremiumFeature", b =>
@@ -53110,7 +53173,7 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PremiumFeatures", (string)null);
+                    b.ToTable("PremiumFeatures");
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.PropertyListing", b =>
@@ -53233,7 +53296,7 @@ namespace StayPilot.Infrastructure.Migrations
                     b.HasIndex("SourceUrl")
                         .IsUnique();
 
-                    b.ToTable("PropertyListings", (string)null);
+                    b.ToTable("PropertyListings");
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.ListingSnapshot", b =>
