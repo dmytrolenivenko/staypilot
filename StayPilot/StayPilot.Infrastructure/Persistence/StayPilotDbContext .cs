@@ -29,6 +29,9 @@ namespace StayPilot.Infrastructure.Persistence
         ///<summary>The premium feature table holds the features that can influence the base price</summary>
         public DbSet<PremiumFeature> PremiumFeatures => Set<PremiumFeature>();
 
+        /// <summary>The market area stats table: price numbers per district, municipality and town.</summary>
+        public DbSet<MarketAreaStats> MarketAreaStats => Set<MarketAreaStats>();
+
         /// <summary>
         /// Builds the database shape: tables, keys, indexes, and number precision.
         /// EF calls this once when it first needs the model.
