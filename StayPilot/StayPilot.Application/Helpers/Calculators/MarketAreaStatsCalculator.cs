@@ -4,7 +4,7 @@ using StayPilot.Domain.Enums;
 namespace StayPilot.Application.Helpers.Calculators
 {
     /// <summary>
-    /// Turns a pile of listings into one price row per place.
+    /// Turns a pile of listings into one row of numbers per place.
     ///
     /// The whole idea in one line: every listing is counted three times, once into its town,
     /// once into its municipality, once into its district. A flat in Guia raises the Guia row,
@@ -15,19 +15,63 @@ namespace StayPilot.Application.Helpers.Calculators
     /// district figure harder than one with 12. Which is what you want.
     ///
     /// Zones are skipped on purpose: see <see cref="AreaLevel"/>.
+    ///
+    /// It runs in three plain steps, one method each:
+    ///   1. <see cref="CollectByPlace"/> - drop every listing into its three buckets.
+    ///   2. <see cref="BuildRow"/>       - turn one bucket into one saved row.
+    ///   3. <see cref="BuildTypologyRows"/> - and its per-typology children.
     /// </summary>
     public static class MarketAreaStatsCalculator
     {
+        /// <summary>
+        /// How far below the model's estimate a listing has to be asking before we call it a
+        /// deal. Ten percent because the model's own median error is 10.4% - anything smaller
+        /// than its error is noise, and counting it would fill the deals column with rounding.
+        /// </summary>
+        private const decimal BargainDiscountPercent = 10m;
+
+        /// <summary>
+        /// The fewest listings needed before a median is worth saving for one of the smaller
+        /// splits (a single typology, the project stock). The parent row has no such limit -
+        /// it saves whatever it found and the reader decides, see the repository.
+        /// </summary>
+        private const int MinimumForSplit = 3;
+
         /// <summary>
         /// Works out the stats for every place found in these listings.
         /// Listings with no price, no area or no market area are ignored - they cannot be placed.
         /// </summary>
         public static List<MarketAreaStats> Calculate(IEnumerable<PropertyListing> listings)
         {
+            var allListings = listings.ToList();
+
+            // The valuation model, used only to count the deals. Null when there are too few
+            // listings to fit one, in which case every deals count stays at zero rather than
+            // being guessed at.
+            var usableListings = 0;
+            var valuationModel = ValuationModel.TryFit(allListings, out usableListings);
+
+            var placesFound = CollectByPlace(allListings, valuationModel);
+
+            var rows = new List<MarketAreaStats>();
             var calculatedAtUtc = DateTime.UtcNow;
 
-            // One bucket per place: the place is the key, every €/m² we saw there is the value.
-            var pricesByPlace = new Dictionary<PlaceKey, List<decimal>>();
+            foreach (var place in placesFound.Keys)
+            {
+                rows.Add(BuildRow(place, placesFound[place], calculatedAtUtc));
+            }
+
+            return rows;
+        }
+
+        /// <summary>
+        /// Step 1. Walks the listings once and drops each one into its district bucket, its
+        /// municipality bucket and its town bucket.
+        /// </summary>
+        private static Dictionary<PlaceKey, PlaceListings> CollectByPlace(
+            List<PropertyListing> listings, ValuationModel? valuationModel)
+        {
+            var placesFound = new Dictionary<PlaceKey, PlaceListings>();
 
             foreach (var listing in listings)
             {
@@ -36,92 +80,217 @@ namespace StayPilot.Application.Helpers.Calculators
                     continue;
                 }
 
-                var pricePerM2 = LatestPricePerM2(listing);
+                var snapshot = NewestSnapshot(listing);
 
-                if (pricePerM2 is null)
+                if (snapshot is null || snapshot.PricePerM2 <= 0 || listing.AreaM2 <= 0)
                 {
                     continue;
                 }
 
+                var isBargain = IsPricedBelowEstimate(listing, snapshot, valuationModel);
                 var area = listing.MarketArea;
 
-                // Here is the rolling up. The same price goes into three buckets.
-                AddPrice(pricesByPlace, new PlaceKey(AreaLevel.District, area.District, string.Empty, string.Empty), pricePerM2.Value);
-                AddPrice(pricesByPlace, new PlaceKey(AreaLevel.Municipality, area.District, area.Municipality, string.Empty), pricePerM2.Value);
-                AddPrice(pricesByPlace, new PlaceKey(AreaLevel.Town, area.District, area.Municipality, area.Town), pricePerM2.Value);
+                // Here is the rolling up. The same listing goes into three buckets.
+                AddToPlace(placesFound, new PlaceKey(AreaLevel.District, area.District, string.Empty, string.Empty), listing, snapshot, isBargain);
+                AddToPlace(placesFound, new PlaceKey(AreaLevel.Municipality, area.District, area.Municipality, string.Empty), listing, snapshot, isBargain);
+                AddToPlace(placesFound, new PlaceKey(AreaLevel.Town, area.District, area.Municipality, area.Town), listing, snapshot, isBargain);
             }
 
-            var rows = new List<MarketAreaStats>();
-
-            foreach (var (place, prices) in pricesByPlace)
-            {
-                prices.Sort();
-
-                rows.Add(new MarketAreaStats
-                {
-                    Level = place.Level,
-                    District = place.District,
-                    Municipality = place.Municipality,
-                    Town = place.Town,
-                    ListingCount = prices.Count,
-                    MedianPricePerM2 = decimal.Round(Median(prices), 2),
-                    CalculatedAtUtc = calculatedAtUtc
-                });
-            }
-
-            return rows;
+            return placesFound;
         }
 
         /// <summary>
-        /// The newest price for each square meter on this listing, or null when it has none we
-        /// can use. A price of zero means the source did not give us one.
+        /// Step 2. Turns one place's collected listings into the row we save.
         /// </summary>
-        private static decimal? LatestPricePerM2(PropertyListing listing)
+        private static MarketAreaStats BuildRow(PlaceKey place, PlaceListings collected, DateTime calculatedAtUtc)
         {
-            var newest = listing.ListingSnapshots
-                .OrderByDescending(x => x.SnapshotDateUtc)
-                .FirstOrDefault();
+            var row = new MarketAreaStats
+            {
+                Level = place.Level,
+                District = place.District,
+                Municipality = place.Municipality,
+                Town = place.Town,
+                ListingCount = collected.PricesPerM2.Count,
+                MedianPricePerM2 = Median(collected.PricesPerM2),
+                MedianAreaM2 = Median(collected.Areas),
+                BelowEstimateCount = collected.BargainCount,
+                CentroidLatitude = collected.AverageLatitude(),
+                CentroidLongitude = collected.AverageLongitude(),
+                ProjectCount = collected.ProjectPricesPerM2.Count,
+                ProjectMedianPricePerM2 = MedianOrNull(collected.ProjectPricesPerM2),
+                MoveInCount = collected.MoveInPricesPerM2.Count,
+                MoveInMedianPricePerM2 = MedianOrNull(collected.MoveInPricesPerM2),
+                CalculatedAtUtc = calculatedAtUtc
+            };
 
-            if (newest is null || newest.PricePerM2 <= 0)
+            row.TypologyStats = BuildTypologyRows(collected);
+
+            return row;
+        }
+
+        /// <summary>
+        /// Step 3. One child row per typology this place has enough listings of.
+        /// </summary>
+        private static List<MarketAreaTypologyStats> BuildTypologyRows(PlaceListings collected)
+        {
+            var typologyRows = new List<MarketAreaTypologyStats>();
+
+            foreach (var typology in collected.ByTypology.Keys)
+            {
+                var forTypology = collected.ByTypology[typology];
+
+                // A "median T2 price" taken from one advert is that advert, and a budget screen
+                // reading it would send you shopping on a single listing.
+                if (forTypology.Prices.Count < MinimumForSplit)
+                {
+                    continue;
+                }
+
+                typologyRows.Add(new MarketAreaTypologyStats
+                {
+                    Typology = typology,
+                    ListingCount = forTypology.Prices.Count,
+                    MedianPrice = Median(forTypology.Prices),
+                    MedianAreaM2 = Median(forTypology.Areas),
+                    MedianPricePerM2 = Median(forTypology.PricesPerM2)
+                });
+            }
+
+            return typologyRows;
+        }
+
+        /// <summary>
+        /// True when the listing is asking clearly less than the model thinks it is worth.
+        /// False whenever we cannot tell - no model, or the model has no view on this property.
+        /// </summary>
+        private static bool IsPricedBelowEstimate(
+            PropertyListing listing, ListingSnapshot snapshot, ValuationModel? valuationModel)
+        {
+            if (valuationModel is null)
+            {
+                return false;
+            }
+
+            var prediction = valuationModel.PredictPricePerM2(ValuationSubject.FromListing(listing));
+
+            if (prediction.PricePerM2 <= 0)
+            {
+                return false;
+            }
+
+            var discountPercent = (prediction.PricePerM2 - snapshot.PricePerM2) / prediction.PricePerM2 * 100m;
+
+            return discountPercent >= BargainDiscountPercent;
+        }
+
+        /// <summary>
+        /// True when the listing looks like a renovation project.
+        ///
+        /// The advert's own "needs renovation" is not enough on its own: it is set on about 1.4%
+        /// of listings, so most places would have two or three and no measurable discount. A poor
+        /// energy certificate covers roughly ten times as many and is the more objective signal -
+        /// a grade is measured, "needs work" is whatever the agent felt like typing.
+        /// </summary>
+        private static bool IsProject(PropertyListing listing)
+        {
+            if (listing.Condition == PropertyCondition.NeedsRenovation)
+            {
+                return true;
+            }
+
+            return EnergyGradeLetter(listing.EnergyCertificate) is 'D' or 'E' or 'F' or 'G';
+        }
+
+        /// <summary>
+        /// True when the listing is ready to move into, which is what a project is discounted
+        /// against. Anything neither project nor move-in (an unknown condition with no
+        /// certificate) counts for neither, so the comparison stays between two clear groups.
+        /// </summary>
+        private static bool IsMoveInReady(PropertyListing listing)
+        {
+            if (IsProject(listing))
+            {
+                return false;
+            }
+
+            return listing.Condition is PropertyCondition.Good
+                or PropertyCondition.Renovated
+                or PropertyCondition.NewBuild;
+        }
+
+        /// <summary>
+        /// The grade letter off a certificate, so "A+", "A" and "B-" read as A, A and B.
+        /// Null when the certificate is missing or is not a grade we recognise.
+        /// </summary>
+        private static char? EnergyGradeLetter(string? energyCertificate)
+        {
+            if (string.IsNullOrWhiteSpace(energyCertificate))
             {
                 return null;
             }
 
-            return newest.PricePerM2;
+            var letter = char.ToUpperInvariant(energyCertificate.Trim()[0]);
+
+            return letter is >= 'A' and <= 'G' ? letter : null;
         }
 
         /// <summary>
-        /// Drops the price into its bucket, making the bucket if it is the first one.
+        /// The newest snapshot on this listing, or null when it has none.
+        /// </summary>
+        private static ListingSnapshot? NewestSnapshot(PropertyListing listing)
+        {
+            return listing.ListingSnapshots
+                .OrderByDescending(x => x.SnapshotDateUtc)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Adds one listing to one place's bucket, making the bucket if it is the first one.
         /// Places with a blank name are skipped: an empty name is missing data, not a place.
         /// </summary>
-        private static void AddPrice(Dictionary<PlaceKey, List<decimal>> pricesByPlace, PlaceKey place, decimal pricePerM2)
+        private static void AddToPlace(
+            Dictionary<PlaceKey, PlaceListings> placesFound,
+            PlaceKey place,
+            PropertyListing listing,
+            ListingSnapshot snapshot,
+            bool isBargain)
         {
             if (place.HasBlankName)
             {
                 return;
             }
 
-            if (!pricesByPlace.TryGetValue(place, out var prices))
+            if (!placesFound.TryGetValue(place, out var collected))
             {
-                prices = new List<decimal>();
-                pricesByPlace[place] = prices;
+                collected = new PlaceListings();
+                placesFound[place] = collected;
             }
 
-            prices.Add(pricePerM2);
+            collected.Add(listing, snapshot, isBargain);
         }
 
         /// <summary>
-        /// The middle value of an already sorted list.
-        /// The middle and not the average, so one very expensive villa cannot drag a whole town up.
+        /// The middle value of a list. Sorts the list in place first.
+        /// The middle and not the average, so one very expensive villa cannot drag a town up.
         /// </summary>
-        private static decimal Median(List<decimal> sortedPrices)
+        private static decimal Median(List<decimal> values)
         {
-            var middle = sortedPrices.Count / 2;
+            values.Sort();
+
+            var middle = values.Count / 2;
 
             // An even count has no single middle value, so split the two in the middle.
-            return sortedPrices.Count % 2 == 1
-                ? sortedPrices[middle]
-                : (sortedPrices[middle - 1] + sortedPrices[middle]) / 2m;
+            return values.Count % 2 == 1
+                ? decimal.Round(values[middle], 2)
+                : decimal.Round((values[middle - 1] + values[middle]) / 2m, 2);
+        }
+
+        /// <summary>
+        /// <see cref="Median"/>, but null when there is too little to take a median from.
+        /// </summary>
+        private static decimal? MedianOrNull(List<decimal> values)
+        {
+            return values.Count < MinimumForSplit ? null : Median(values);
         }
 
         /// <summary>
@@ -140,6 +309,94 @@ namespace StayPilot.Application.Helpers.Calculators
                 AreaLevel.Municipality => string.IsNullOrWhiteSpace(District) || string.IsNullOrWhiteSpace(Municipality),
                 _ => string.IsNullOrWhiteSpace(District) || string.IsNullOrWhiteSpace(Municipality) || string.IsNullOrWhiteSpace(Town)
             };
+        }
+
+        /// <summary>
+        /// Everything collected for one place while walking the listings. Plain lists on purpose:
+        /// the medians need the values kept, not running totals, and a list you can look at in
+        /// the debugger beats a clever accumulator.
+        /// </summary>
+        private class PlaceListings
+        {
+            public List<decimal> PricesPerM2 { get; } = new();
+
+            public List<decimal> Areas { get; } = new();
+
+            /// <summary>Listings asking clearly under the model's estimate.</summary>
+            public int BargainCount { get; private set; }
+
+            /// <summary>Price for each square meter of the stock that needs work.</summary>
+            public List<decimal> ProjectPricesPerM2 { get; } = new();
+
+            /// <summary>Price for each square meter of the stock that does not.</summary>
+            public List<decimal> MoveInPricesPerM2 { get; } = new();
+
+            public Dictionary<Typology, TypologyListings> ByTypology { get; } = new();
+
+            private readonly List<decimal> _latitudes = new();
+            private readonly List<decimal> _longitudes = new();
+
+            public void Add(PropertyListing listing, ListingSnapshot snapshot, bool isBargain)
+            {
+                PricesPerM2.Add(snapshot.PricePerM2);
+                Areas.Add(listing.AreaM2);
+
+                if (isBargain)
+                {
+                    BargainCount++;
+                }
+
+                if (IsProject(listing))
+                {
+                    ProjectPricesPerM2.Add(snapshot.PricePerM2);
+                }
+                else if (IsMoveInReady(listing))
+                {
+                    MoveInPricesPerM2.Add(snapshot.PricePerM2);
+                }
+
+                if (listing.Latitude.HasValue && listing.Longitude.HasValue)
+                {
+                    _latitudes.Add(listing.Latitude.Value);
+                    _longitudes.Add(listing.Longitude.Value);
+                }
+
+                if (!ByTypology.TryGetValue(listing.Typology, out var forTypology))
+                {
+                    forTypology = new TypologyListings();
+                    ByTypology[listing.Typology] = forTypology;
+                }
+
+                forTypology.Prices.Add(snapshot.Price);
+                forTypology.PricesPerM2.Add(snapshot.PricePerM2);
+                forTypology.Areas.Add(listing.AreaM2);
+            }
+
+            /// <summary>
+            /// Middle point of the listings that carry coordinates, or null when none do.
+            /// </summary>
+            public decimal? AverageLatitude()
+            {
+                return _latitudes.Count == 0 ? null : decimal.Round(_latitudes.Average(), 6);
+            }
+
+            /// <inheritdoc cref="AverageLatitude"/>
+            public decimal? AverageLongitude()
+            {
+                return _longitudes.Count == 0 ? null : decimal.Round(_longitudes.Average(), 6);
+            }
+        }
+
+        /// <summary>
+        /// The same, for one typology inside one place.
+        /// </summary>
+        private class TypologyListings
+        {
+            public List<decimal> Prices { get; } = new();
+
+            public List<decimal> PricesPerM2 { get; } = new();
+
+            public List<decimal> Areas { get; } = new();
         }
     }
 }

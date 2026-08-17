@@ -449,9 +449,17 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             new MarketArea { Id = 392, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "Ruílhe", Zone = null },
             new MarketArea { Id = 393, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "Santa Lucrécia de Algeriz e Navarra", Zone = null },
             new MarketArea { Id = 394, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "São José de São Lázaro e São João do Souto", Zone = null },
-            new MarketArea { Id = 395, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "São Vicente", Zone = "Graça" },
-            new MarketArea { Id = 396, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "São Vicente", Zone = "Santa Engrácia" },
-            new MarketArea { Id = 397, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "São Vicente", Zone = "São Vicente de Fora" },
+            // Third collision of the same kind (see Santo António and Carnide): São Vicente is a
+            // freguesia of Braga AND of Lisboa, and these zones are Lisboa's - Graça, Santa
+            // Engrácia and São Vicente de Fora are all Lisboa. The 78 listings sitting here are
+            // at 38.71, -9.13, which is 319km from Braga.
+            //
+            // Found by comparing each place's listings against its district rather than by
+            // reading the names: "Braga has a São Vicente" is true and was why this one was
+            // missed the first time round.
+            new MarketArea { Id = 395, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "São Vicente", Zone = "Graça" },
+            new MarketArea { Id = 396, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "São Vicente", Zone = "Santa Engrácia" },
+            new MarketArea { Id = 397, Country = "Portugal", District = "Lisboa", Municipality = "Lisboa", Town = "São Vicente", Zone = "São Vicente de Fora" },
             new MarketArea { Id = 398, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "São Victor", Zone = null },
             new MarketArea { Id = 399, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "Sequeira", Zone = null },
             new MarketArea { Id = 400, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "Sobreposta", Zone = null },
@@ -4816,6 +4824,7 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             // nothing already saved moves.
             new MarketArea { Id = 4473, Country = "Portugal", District = "Aveiro", Municipality = "Vagos", Town = "Santo António", Zone = null },
             new MarketArea { Id = 4474, Country = "Portugal", District = "Leiria", Municipality = "Pombal", Town = "Carnide", Zone = null },
+            new MarketArea { Id = 4475, Country = "Portugal", District = "Braga", Municipality = "Braga", Town = "São Vicente", Zone = null },
         };
     }
 }

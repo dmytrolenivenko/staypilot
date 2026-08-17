@@ -20,6 +20,10 @@
   width: 5rem;
 }
 
+.cost-input {
+  width: 6rem;
+}
+
 /* Clickable, sortable column headers. Same behaviour as the listing browser. */
 .data-table th.sortable {
   cursor: pointer;
@@ -40,14 +44,43 @@
   width: 2rem;
 }
 
-/* Thinly evidenced rows: shown, but visibly weaker than the rest so a place ranked on three
-   adverts never reads with the same weight as one ranked on nine hundred. */
+/* Measured against estimated. The dotted underline on the cost is the reminder that this one
+   column is a guess you typed, not something read off the market. */
+.measured {
+  font-weight: 600;
+}
+
+.estimated {
+  border-bottom: 1px dotted var(--text-muted);
+  color: var(--text-muted);
+}
+
+.verdict {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 0.65rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.verdict.good {
+  color: #2e7d32;
+}
+
+.verdict.even {
+  color: var(--text-muted);
+}
+
+.verdict.bad {
+  color: #b3261e;
+}
+
+/* Thinly evidenced rows: shown, but visibly weaker than the rest. */
 tr.thin {
   opacity: 0.62;
 }
 
-.thin-tag,
-.thin-key {
+.thin-tag {
   margin-left: 0.4rem;
   padding: 0.05rem 0.35rem;
   border: 1px solid var(--text-muted);
@@ -57,10 +90,6 @@ tr.thin {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   white-space: nowrap;
-}
-
-.thin-key {
-  margin-left: 0;
 }
 
 .muted {

@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './features/home/home.component';
 import { MarketAreaListComponent } from './features/market-areas/market-area-list.component';
 import { MarketAreaLeaderboardComponent } from './features/market-areas/market-area-leaderboard.component';
+import { MarketAreaBudgetComponent } from './features/market-areas/market-area-budget.component';
+import { MarketAreaNeighboursComponent } from './features/market-areas/market-area-neighbours.component';
+import { MarketAreaRenovationComponent } from './features/market-areas/market-area-renovation.component';
 import { ListingLookupComponent } from './features/listings/listing-lookup.component';
 import { ListingCreateComponent } from './features/listings/listing-create.component';
 import { ListingBrowserComponent } from './features/listings/listing-browser.component';
@@ -21,6 +24,9 @@ export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'market-areas', component: MarketAreaListComponent },
   { path: 'market-areas/leaderboard', component: MarketAreaLeaderboardComponent },
+  { path: 'market-areas/budget', component: MarketAreaBudgetComponent },
+  { path: 'market-areas/neighbours', component: MarketAreaNeighboursComponent },
+  { path: 'market-areas/renovation', component: MarketAreaRenovationComponent },
   { path: 'listings/lookup', component: ListingLookupComponent },
   { path: 'listings/new', component: ListingCreateComponent },
   { path: 'listing-browser', component: ListingBrowserComponent },

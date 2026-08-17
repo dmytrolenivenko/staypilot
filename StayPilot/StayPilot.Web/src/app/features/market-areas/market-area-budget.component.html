@@ -1,0 +1,96 @@
+<section class="panel">
+  <div class="panel-head">
+    <h1>What your money buys</h1>
+    <span class="hint">{{ sortedAreas().length }} places within reach</span>
+  </div>
+
+  <p class="hint">
+    The other way round from every property portal: instead of filtering places by price, put in
+    what you have and see <strong>what it actually gets you</strong> in each one. Same money, very
+    different homes.
+  </p>
+  <p class="hint">
+    &ldquo;Best fit&rdquo; is the most rooms a place usually sells for your budget, judged on what
+    that typology <em>typically</em> costs there &mdash; not on the cheapest advert in it. One
+    bargain T3 in Cascais does not make Cascais a place where €300,000 buys a T3. Places where the
+    budget reaches nothing are left out rather than shown empty.
+  </p>
+  <p class="hint">
+    The three number columns will not multiply out, and that is correct: each is its own middle
+    value taken separately, and the middle price is not the middle size times the middle rate. Read
+    each as &ldquo;typically about this&rdquo;, not as one worked example.
+  </p>
+
+  <div class="toolbar">
+    <label class="control">
+      Budget €
+      <input
+        class="budget-input"
+        type="number"
+        min="1000"
+        step="10000"
+        [ngModel]="budget()"
+        (ngModelChange)="changeBudget($event)"
+      />
+    </label>
+
+    <label class="control">
+      Level
+      <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+        @for (option of levels; track option) {
+          <option [ngValue]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="control">
+      Min listings
+      <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+    </label>
+
+    @if (calculatedAtUtc()) {
+      <span class="hint">Worked out {{ calculatedAtUtc() | date:'medium' }}</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="hint">Loading...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (sortedAreas().length === 0) {
+    <p class="hint">
+      Nothing is within €{{ budget() | number:'1.0-0' }} at {{ level() }} level. Raise the budget,
+      try a wider level, or lower Min listings.
+    </p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
+          <th class="sortable" (click)="toggleSort('typology')">Best fit{{ arrow('typology') }}</th>
+          <th class="num sortable" (click)="toggleSort('area')">Median m²{{ arrow('area') }}</th>
+          <th class="num sortable" (click)="toggleSort('price')">Typical price{{ arrow('price') }}</th>
+          <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+          <th class="num">Listings</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (area of sortedAreas(); track area.displayName; let i = $index) {
+          <tr>
+            <td class="rank">{{ i + 1 }}</td>
+            <td>{{ area.displayName }}</td>
+            <td><span class="typology">{{ area.bestTypology }}</span></td>
+            <td class="num">{{ area.medianAreaM2 | number:'1.0-0' }}</td>
+            <td class="num">{{ area.medianPrice | number:'1.0-0' }}</td>
+            <td class="num">{{ area.medianPricePerM2 | number:'1.0-0' }}</td>
+            <td class="num">
+              {{ area.typologyListingCount }}
+              <span class="muted">of {{ area.listingCount }}</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

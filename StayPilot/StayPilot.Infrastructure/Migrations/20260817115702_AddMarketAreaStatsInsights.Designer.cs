@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StayPilot.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using StayPilot.Infrastructure.Persistence;
 namespace StayPilot.Infrastructure.Migrations
 {
     [DbContext(typeof(StayPilotDbContext))]
-    partial class StayPilotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260817115702_AddMarketAreaStatsInsights")]
+    partial class AddMarketAreaStatsInsights
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -15108,8 +15111,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 395,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Lisboa",
-                            Municipality = "Lisboa",
+                            District = "Braga",
+                            Municipality = "Braga",
                             Town = "São Vicente",
                             Zone = "Graça"
                         },
@@ -15118,8 +15121,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 396,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Lisboa",
-                            Municipality = "Lisboa",
+                            District = "Braga",
+                            Municipality = "Braga",
                             Town = "São Vicente",
                             Zone = "Santa Engrácia"
                         },
@@ -15128,8 +15131,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 397,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Lisboa",
-                            Municipality = "Lisboa",
+                            District = "Braga",
+                            Municipality = "Braga",
                             Town = "São Vicente",
                             Zone = "São Vicente de Fora"
                         },
@@ -52959,15 +52962,6 @@ namespace StayPilot.Infrastructure.Migrations
                             District = "Leiria",
                             Municipality = "Pombal",
                             Town = "Carnide"
-                        },
-                        new
-                        {
-                            Id = 4475,
-                            Country = "Portugal",
-                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Braga",
-                            Municipality = "Braga",
-                            Town = "São Vicente"
                         });
                 });
 

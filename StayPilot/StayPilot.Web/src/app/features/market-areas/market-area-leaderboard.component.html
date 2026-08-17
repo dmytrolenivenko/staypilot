@@ -17,7 +17,10 @@
   </p>
   <p class="hint">
     Click any column to sort; click it again to flip. <strong>€/m²</strong> switches between the
-    most expensive and the best value places.
+    most expensive and the best value places. <strong>Deals</strong> is how many listings are
+    asking at least 10% below what the valuation model thinks they are worth &mdash; under-priced,
+    not cheap. A whole town being inexpensive is not a bargain; one flat below its own worth is.
+    It sorts on the share, not the count, because 40 out of 2,000 is worse hunting than 8 out of 40.
   </p>
   <p class="hint">
     &ldquo;Listings&rdquo; is the evidence behind the price. Rows marked
@@ -67,7 +70,11 @@
           <th class="rank">#</th>
           <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
           <th class="num sortable" (click)="toggleSort('listings')">Listings{{ arrow('listings') }}</th>
+          <th class="num sortable" (click)="toggleSort('area')">Median m²{{ arrow('area') }}</th>
           <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+          <th class="num sortable" (click)="toggleSort('deals')" title="Listings asking at least 10% below the model's estimate">
+            Deals{{ arrow('deals') }}
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -81,7 +88,12 @@
               }
             </td>
             <td class="num">{{ area.listingCount }}</td>
+            <td class="num">{{ area.medianAreaM2 | number:'1.0-0' }}</td>
             <td class="num">{{ area.medianPricePerM2 | number:'1.0-0' }}</td>
+            <td class="num">
+              {{ area.belowEstimateCount }}
+              <span class="muted">({{ dealPercent(area) | number:'1.0-0' }}%)</span>
+            </td>
           </tr>
         }
       </tbody>

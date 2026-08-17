@@ -333,8 +333,50 @@ namespace StayPilot.Application.Helpers.Mappers
                 DisplayName = BuildPlaceName(stats),
                 ListingCount = stats.ListingCount,
                 MedianPricePerM2 = stats.MedianPricePerM2,
+                MedianAreaM2 = stats.MedianAreaM2,
+                BelowEstimateCount = stats.BelowEstimateCount,
+                ProjectCount = stats.ProjectCount,
+                ProjectMedianPricePerM2 = stats.ProjectMedianPricePerM2,
+                MoveInCount = stats.MoveInCount,
+                MoveInMedianPricePerM2 = stats.MoveInMedianPricePerM2,
+
+                // Only a discount when we measured both sides. One side alone tells you nothing
+                // about the gap, and a zero here would read as "no discount" instead of "unknown".
+                RenovationDiscountPerM2 = stats.MoveInMedianPricePerM2 is null || stats.ProjectMedianPricePerM2 is null
+                    ? null
+                    : stats.MoveInMedianPricePerM2 - stats.ProjectMedianPricePerM2,
+
                 CalculatedAtUtc = stats.CalculatedAtUtc,
             };
+        }
+
+        /// <summary>
+        /// The best a budget reaches in one place, from that place's typology rows.
+        /// </summary>
+        public static MarketAreaBudgetItemResponse MapToBudgetItem(MarketAreaStats stats, MarketAreaTypologyStats affordable)
+        {
+            return new MarketAreaBudgetItemResponse
+            {
+                DisplayName = BuildPlaceName(stats),
+                District = stats.District,
+                Municipality = stats.Municipality,
+                Town = stats.Town,
+                BestTypology = affordable.Typology,
+                MedianPrice = affordable.MedianPrice,
+                MedianAreaM2 = affordable.MedianAreaM2,
+                MedianPricePerM2 = affordable.MedianPricePerM2,
+                TypologyListingCount = affordable.ListingCount,
+                ListingCount = stats.ListingCount,
+            };
+        }
+
+        /// <summary>
+        /// The place written out for a human, without the parent in brackets. Used where the
+        /// parent is already obvious from the row, like both halves of a neighbour pair.
+        /// </summary>
+        public static string PlaceName(MarketAreaStats stats)
+        {
+            return BuildPlaceName(stats);
         }
 
         /// <summary>

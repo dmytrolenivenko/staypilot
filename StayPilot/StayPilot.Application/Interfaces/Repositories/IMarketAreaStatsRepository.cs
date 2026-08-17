@@ -24,6 +24,13 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// </param>
         Task<List<MarketAreaStats>> GetLeaderboardAsync(AreaLevel level, int minListings);
 
+        /// <summary>
+        /// The same rows with their typology children loaded, for answering what a budget buys.
+        /// Separate from <see cref="GetLeaderboardAsync"/> so the ordinary leaderboard read does
+        /// not drag several thousand child rows along for nothing.
+        /// </summary>
+        Task<List<MarketAreaStats>> GetWithTypologiesAsync(AreaLevel level, int minListings);
+
         /// <summary>Adds the freshly worked out rows. Call SaveChanges after.</summary>
         Task AddMarketAreaStatsAsync(IEnumerable<MarketAreaStats> stats);
 

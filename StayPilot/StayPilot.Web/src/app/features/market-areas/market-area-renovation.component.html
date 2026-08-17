@@ -1,0 +1,106 @@
+<section class="panel">
+  <div class="panel-head">
+    <h1>Renovation upside</h1>
+    <span class="hint">{{ sortedAreas().length }} places measured &middot; {{ level() }}</span>
+  </div>
+
+  <p class="hint">
+    Where the market pays you enough for taking the work on. The other screens find value; this is
+    the one that tells you where to <strong>create</strong> it.
+  </p>
+  <p class="hint">
+    <strong>Discount</strong> is measured: what stock needing work actually sells for per m²
+    against finished stock in the same place, from real adverts. Renovation stock means the advert
+    says it needs work <em>or</em> its energy certificate is D or worse &mdash; the certificate
+    carries most of it, because &ldquo;needs renovation&rdquo; is set on barely 1% of listings and
+    a grade is measured rather than typed by an agent.
+  </p>
+  <p class="hint">
+    <strong>Cost</strong> is an estimate, and yours to set. The two are kept in separate columns and
+    never merged into a single score, because one is measured and the other is a guess &mdash; when
+    the guess is wrong you need to be able to see it.
+  </p>
+
+  <div class="toolbar">
+    <label class="control">
+      Level
+      <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+        @for (option of levels; track option) {
+          <option [ngValue]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="control">
+      Renovation €/m²
+      <input
+        class="cost-input"
+        type="number"
+        min="0"
+        step="50"
+        [ngModel]="renovationCostPerM2()"
+        (ngModelChange)="changeRenovationCost($event)"
+      />
+    </label>
+
+    <label class="control">
+      Min listings
+      <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+    </label>
+
+    @if (calculatedAtUtc()) {
+      <span class="hint">Worked out {{ calculatedAtUtc() | date:'medium' }}</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="hint">Loading...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (sortedAreas().length === 0) {
+    <p class="hint">
+      No place at {{ level() }} level has both enough project stock and enough finished stock to
+      compare. Lower Min listings, or try a wider level &mdash; renovation stock is thin
+      everywhere, which is exactly why the energy certificate is used to find it.
+    </p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
+          <th class="num sortable" (click)="toggleSort('projects')">Projects{{ arrow('projects') }}</th>
+          <th class="num">Needs work €/m²</th>
+          <th class="num">Finished €/m²</th>
+          <th class="num sortable" (click)="toggleSort('discount')">Discount{{ arrow('discount') }}</th>
+          <th class="num">Cost</th>
+          <th class="num sortable" (click)="toggleSort('margin')">Margin{{ arrow('margin') }}</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (area of sortedAreas(); track area.displayName; let i = $index) {
+          <tr [class.thin]="isThin(area)">
+            <td class="rank">{{ i + 1 }}</td>
+            <td>
+              {{ area.displayName }}
+              @if (isThin(area)) {
+                <span class="thin-tag" title="Fewer than 10 project listings — read with suspicion">thin</span>
+              }
+            </td>
+            <td class="num">
+              {{ area.projectCount }}
+              <span class="muted">of {{ area.listingCount }}</span>
+            </td>
+            <td class="num">{{ area.projectMedianPricePerM2 | number:'1.0-0' }}</td>
+            <td class="num">{{ area.moveInMedianPricePerM2 | number:'1.0-0' }}</td>
+            <td class="num measured">{{ area.renovationDiscountPerM2 | number:'1.0-0' }}</td>
+            <td class="num estimated">−{{ renovationCostPerM2() | number:'1.0-0' }}</td>
+            <td class="num">{{ margin(area) | number:'1.0-0' }}</td>
+            <td><span class="verdict" [class]="verdictClass(area)">{{ verdict(area) }}</span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

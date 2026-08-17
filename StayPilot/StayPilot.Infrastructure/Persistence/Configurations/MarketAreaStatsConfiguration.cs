@@ -24,6 +24,22 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
 
             // Money: same shape as the price columns on ListingSnapshot.
             builder.Property(x => x.MedianPricePerM2).HasPrecision(18, 2);
+            builder.Property(x => x.ProjectMedianPricePerM2).HasPrecision(18, 2);
+            builder.Property(x => x.MoveInMedianPricePerM2).HasPrecision(18, 2);
+
+            // Floor area: same shape as PropertyListing.AreaM2.
+            builder.Property(x => x.MedianAreaM2).HasPrecision(10, 2);
+
+            // Coordinates: same accuracy as every other lat/long in the database.
+            builder.Property(x => x.CentroidLatitude).HasPrecision(9, 6);
+            builder.Property(x => x.CentroidLongitude).HasPrecision(9, 6);
+
+            // Wiping a place's row takes its typology rows with it, so a recalculation cannot
+            // leave last run's T2 numbers hanging off nothing.
+            builder.HasMany(x => x.TypologyStats)
+                .WithOne(x => x.MarketAreaStats)
+                .HasForeignKey(x => x.MarketAreaStatsId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Store the level as its name ("Municipality") and not its number, so reordering
             // the enum later cannot silently repoint rows that are already saved.

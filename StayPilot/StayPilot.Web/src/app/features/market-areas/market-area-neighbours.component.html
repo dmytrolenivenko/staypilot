@@ -1,0 +1,93 @@
+<section class="panel">
+  <div class="panel-head">
+    <h1>Neighbour gaps</h1>
+    <span class="hint">{{ gaps().length }} pairs &middot; {{ level() }}</span>
+  </div>
+
+  <p class="hint">
+    Pairs of places close enough to be a real choice, priced far enough apart to be worth the move.
+    Biggest gap first. This is where the money actually is: a border you cannot see on a price list.
+  </p>
+  <p class="hint">
+    Distances are measured between the <strong>middle point of each place's listings</strong>, not
+    between real borders &mdash; we hold no boundaries. So read 3 km as roughly how far you would
+    move, not as an exact figure. Two places can also sit close on the map and still be separated
+    by water or a motorway, which no distance here knows about.
+  </p>
+
+  <div class="toolbar">
+    <label class="control">
+      Level
+      <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+        @for (option of levels; track option) {
+          <option [ngValue]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="control">
+      Within km
+      <input type="number" min="1" max="500" [ngModel]="maxDistanceKm()" (ngModelChange)="changeMaxDistance($event)" />
+    </label>
+
+    <label class="control">
+      Min gap %
+      <input type="number" min="1" max="100" [ngModel]="minGapPercent()" (ngModelChange)="changeMinGap($event)" />
+    </label>
+
+    <label class="control">
+      Min listings
+      <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+    </label>
+
+    @if (calculatedAtUtc()) {
+      <span class="hint">Worked out {{ calculatedAtUtc() | date:'medium' }}</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="hint">Loading...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (gaps().length === 0) {
+    <p class="hint">
+      No pairs within {{ maxDistanceKm() }} km differ by {{ minGapPercent() }}% or more. Widen the
+      distance, lower the gap, or try Town level where neighbours sit closer together.
+    </p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th>Pay more in</th>
+          <th class="num">€/m²</th>
+          <th>Pay less in</th>
+          <th class="num">€/m²</th>
+          <th class="num">Apart</th>
+          <th class="num">You save</th>
+          <th class="num">Gap</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (gap of gaps(); track gap.expensivePlace + gap.cheaperPlace; let i = $index) {
+          <tr>
+            <td class="rank">{{ i + 1 }}</td>
+            <td>
+              {{ gap.expensivePlace }}
+              <span class="muted">n={{ gap.expensiveListingCount }}</span>
+            </td>
+            <td class="num">{{ gap.expensivePricePerM2 | number:'1.0-0' }}</td>
+            <td>
+              {{ gap.cheaperPlace }}
+              <span class="muted">n={{ gap.cheaperListingCount }}</span>
+            </td>
+            <td class="num">{{ gap.cheaperPricePerM2 | number:'1.0-0' }}</td>
+            <td class="num">{{ gap.distanceKm | number:'1.1-1' }} km</td>
+            <td class="num">{{ saving(gap) | number:'1.0-0' }}/m²</td>
+            <td class="num gap">−{{ gap.gapPercent | number:'1.0-0' }}%</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

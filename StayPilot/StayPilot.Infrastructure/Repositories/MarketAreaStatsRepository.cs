@@ -37,6 +37,16 @@ namespace StayPilot.Infrastructure.Repositories
         }
 
         /// <inheritdoc/>
+        public async Task<List<MarketAreaStats>> GetWithTypologiesAsync(AreaLevel level, int minListings)
+        {
+            return await _context.MarketAreaStats
+                .Where(x => x.Level == level && x.ListingCount >= minListings)
+                .Include(x => x.TypologyStats)
+                .OrderByDescending(x => x.MedianPricePerM2)
+                .ToListAsync();
+        }
+
+        /// <inheritdoc/>
         public async Task AddMarketAreaStatsAsync(IEnumerable<MarketAreaStats> stats)
         {
             await _context.MarketAreaStats.AddRangeAsync(stats);

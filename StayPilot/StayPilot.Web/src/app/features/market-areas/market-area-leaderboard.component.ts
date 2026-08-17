@@ -5,8 +5,14 @@ import { MarketAreaStatsService } from '../../core/services/market-area-stats.se
 import { AreaLevel, MarketAreaStatsResponse } from '../../core/models/market-area-stats';
 
 // The columns you can sort by. Client-side only — the API never sees these.
-type SortColumn = 'place' | 'listings' | 'pricePerM2';
+type SortColumn = 'place' | 'listings' | 'pricePerM2' | 'area' | 'deals';
 type SortDirection = 'asc' | 'desc';
+
+// What share of a place's listings are asking below the model's estimate, 0-100.
+// A share rather than a count: 40 deals out of 2,000 is a worse hunting ground than 8 out of 40.
+function dealShare(area: MarketAreaStatsResponse): number {
+  return area.listingCount === 0 ? 0 : (area.belowEstimateCount / area.listingCount) * 100;
+}
 
 // Below this many listings a median is worth reading with suspicion, so the row is marked.
 // Not hidden: hiding them is what made the cheapest place on the board (Beja, 1,937) far from
@@ -66,6 +72,16 @@ export class MarketAreaLeaderboardComponent implements OnInit {
         case 'pricePerM2':
           result = a.medianPricePerM2 - b.medianPricePerM2;
           break;
+
+        case 'area':
+          result = a.medianAreaM2 - b.medianAreaM2;
+          break;
+
+        case 'deals':
+          // On the share, not the count: 40 deals out of 2,000 listings is a worse hunting
+          // ground than 8 out of 40, and sorting on the raw count just re-sorts by size.
+          result = dealShare(a) - dealShare(b);
+          break;
       }
 
       return direction === 'desc' ? -result : result;
@@ -85,10 +101,21 @@ export class MarketAreaLeaderboardComponent implements OnInit {
       case 'place':
         return descending ? 'Z to A' : 'A to Z';
 
+      case 'area':
+        return descending ? 'Biggest homes' : 'Smallest homes';
+
+      case 'deals':
+        return descending ? 'Most under-priced' : 'Fewest under-priced';
+
       default:
         return descending ? 'Most expensive' : 'Best value';
     }
   });
+
+  // The share of a place's listings asking below the model's estimate, for the Deals column.
+  dealPercent(area: MarketAreaStatsResponse): number {
+    return dealShare(area);
+  }
 
   constructor(private readonly service: MarketAreaStatsService) {}
 

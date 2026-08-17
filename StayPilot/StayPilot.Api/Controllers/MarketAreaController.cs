@@ -62,6 +62,30 @@ namespace StayPilot.Api.Controllers
         }
 
         /// <summary>
+        /// Return what a budget buys in each place: the most rooms it reaches and how much space
+        /// that usually is. Places where the budget reaches nothing are left out.
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<MarketAreaBudgetResponse>> GetBudgetRanking([FromQuery] MarketAreaBudgetRequest request)
+        {
+            var response = await _statsService.GetBudgetRankingAsync(request);
+
+            return this.ToActionResult(response);
+        }
+
+        /// <summary>
+        /// Return pairs of nearby places with a big price gap between them - where moving a few
+        /// kilometres changes what a square meter costs.
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<MarketAreaNeighbourGapResponse>> GetNeighbourGaps([FromQuery] MarketAreaNeighbourGapRequest request)
+        {
+            var response = await _statsService.GetNeighbourGapsAsync(request);
+
+            return this.ToActionResult(response);
+        }
+
+        /// <summary>
         /// Work the price numbers out again from every listing we hold, replacing the whole
         /// stats table. Run it after importing listings.
         /// </summary>
