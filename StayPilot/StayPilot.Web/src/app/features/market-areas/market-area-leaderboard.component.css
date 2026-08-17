@@ -1,0 +1,64 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.control input[type='number'] {
+  margin: 0;
+  width: 5rem;
+}
+
+/* Clickable, sortable column headers. Same behaviour as the listing browser. */
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.data-table th.sortable:hover {
+  color: var(--text);
+}
+
+.num {
+  text-align: right;
+}
+
+.rank {
+  color: var(--text-muted);
+  width: 2rem;
+}
+
+/* Thinly evidenced rows: shown, but visibly weaker than the rest so a place ranked on three
+   adverts never reads with the same weight as one ranked on nine hundred. */
+tr.thin {
+  opacity: 0.62;
+}
+
+.thin-tag,
+.thin-key {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--text-muted);
+  border-radius: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.thin-key {
+  margin-left: 0;
+}

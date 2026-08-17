@@ -64,6 +64,13 @@ namespace StayPilot.Application.Contracts.Response.Base
         [Display(Description = "The market area with id '{0}' was not found.")]
         MarketAreaIdNotFound = -101,
 
+        /// <summary>
+        /// A stats recalculation found nothing it could use. {0} is how many listings were read:
+        /// zero means no listings at all, a number means none of them had a price and a place.
+        /// </summary>
+        [Display(Description = "Not enough listings to work out market area stats. Listings read: {0}.")]
+        NotEnoughListingsForStats = -102,
+
         // ---------- Property listings ----------
 
         [NotFound]

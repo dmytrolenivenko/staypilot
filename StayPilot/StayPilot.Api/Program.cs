@@ -38,6 +38,7 @@ builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
 builder.Services.AddScoped<IListingSnapshotService, ListingSnapshotService>();
 builder.Services.AddScoped<IOwnedPropertyService, OwnedPropertyService>();
 builder.Services.AddScoped<IPremiumFeatureService, PremiumFeatureService>();
+builder.Services.AddScoped<IMarketAreaStatsService, MarketAreaStatsService>();
 
 // Register the repositories (the classes that read and write the database).
 builder.Services.AddScoped<IPropertyListingRepository, PropertyListingRepository>();
@@ -46,6 +47,7 @@ builder.Services.AddScoped<IBeachMarkerRepository, BeachMarkerRepository>();
 builder.Services.AddScoped<IListingSnapshotRepository, ListingSnapshotRepository>();
 builder.Services.AddScoped<IOwnedPropertyRepository, OwnedPropertyRepository>();
 builder.Services.AddScoped<IPremiumFeatureRepository, PremiumFeatureRepository>();
+builder.Services.AddScoped<IMarketAreaStatsRepository, MarketAreaStatsRepository>();
 
 
 // Turn on ProblemDetails: send errors back in a standard shape.

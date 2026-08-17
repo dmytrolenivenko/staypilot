@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './features/home/home.component';
 import { MarketAreaListComponent } from './features/market-areas/market-area-list.component';
+import { MarketAreaLeaderboardComponent } from './features/market-areas/market-area-leaderboard.component';
 import { ListingLookupComponent } from './features/listings/listing-lookup.component';
 import { ListingCreateComponent } from './features/listings/listing-create.component';
 import { ListingBrowserComponent } from './features/listings/listing-browser.component';
@@ -19,6 +20,7 @@ function comingSoon(info: ComingSoonInfo) {
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'market-areas', component: MarketAreaListComponent },
+  { path: 'market-areas/leaderboard', component: MarketAreaLeaderboardComponent },
   { path: 'listings/lookup', component: ListingLookupComponent },
   { path: 'listings/new', component: ListingCreateComponent },
   { path: 'listing-browser', component: ListingBrowserComponent },

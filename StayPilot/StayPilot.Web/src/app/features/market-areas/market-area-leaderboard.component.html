@@ -1,0 +1,90 @@
+<section class="panel">
+  <div class="panel-head">
+    <h1>Leaderboard</h1>
+    <span class="hint">
+      {{ headline() }} &middot; {{ level() }} &middot; {{ sortedAreas().length }} places
+      @if (thinCount() > 0) {
+        &middot; {{ thinCount() }} thinly evidenced
+      }
+    </span>
+  </div>
+
+  <p class="hint">
+    Places ranked on the <strong>middle price for each square meter</strong>, not the middle
+    asking price &mdash; an area full of small flats would otherwise look cheap just for being
+    small. The middle value rather than the average, so one very expensive villa cannot carry a
+    whole town.
+  </p>
+  <p class="hint">
+    Click any column to sort; click it again to flip. <strong>€/m²</strong> switches between the
+    most expensive and the best value places.
+  </p>
+  <p class="hint">
+    &ldquo;Listings&rdquo; is the evidence behind the price. Rows marked
+    <span class="thin-key">thin</span> rest on fewer than 15 adverts &mdash; still true, but a
+    lead rather than a finding, so read them with suspicion before acting. Raise
+    <strong>Min listings</strong> to drop them entirely. The numbers are worked out on the
+    server, so they are only as fresh as the last recalculation.
+  </p>
+
+  <div class="toolbar">
+    <label class="control">
+      Level
+      <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+        @for (option of levels; track option) {
+          <option [ngValue]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="control">
+      Min listings
+      <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+    </label>
+
+    <button type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
+      {{ recalculating() ? 'Recalculating...' : 'Recalculate' }}
+    </button>
+
+    @if (calculatedAtUtc()) {
+      <span class="hint">Worked out {{ calculatedAtUtc() | date:'medium' }}</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="hint">Loading...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (sortedAreas().length === 0) {
+    <p class="hint">
+      No place has {{ minListings() }} listings or more at {{ level() }} level. Import more
+      listings, lower the minimum, or recalculate if you have imported since the last run.
+    </p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
+          <th class="num sortable" (click)="toggleSort('listings')">Listings{{ arrow('listings') }}</th>
+          <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (area of sortedAreas(); track area.displayName; let i = $index) {
+          <tr [class.thin]="isThin(area)">
+            <td class="rank">{{ i + 1 }}</td>
+            <td>
+              {{ area.displayName }}
+              @if (isThin(area)) {
+                <span class="thin-tag" title="Fewer than 15 listings — read with suspicion">thin</span>
+              }
+            </td>
+            <td class="num">{{ area.listingCount }}</td>
+            <td class="num">{{ area.medianPricePerM2 | number:'1.0-0' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
