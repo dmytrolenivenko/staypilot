@@ -9,14 +9,15 @@ namespace StayPilot.Application.Interfaces.Services
     public interface IPropertyListingService
     {
         /// <summary>
-        /// Get one property by its Id. Returns null if it does not exist.
+        /// Get one property by its Id.
+        /// Comes back carrying PropertyListingNotFound when there is no such property.
         /// </summary>
-        Task<PropertyListingResponse?> GetPropertyListingByIdAsync(int propertyId);
+        Task<PropertyListingResponse> GetPropertyListingByIdAsync(int propertyId);
 
         /// <summary>
         /// Save many listings in one call.
         /// Every listing is checked first, and only the ones that pass are saved. The rest come
-        /// back in FailedListings with the reason, and never reach the database.
+        /// back in Errors with the reason, and never reach the database.
         /// </summary>
         Task<BulkAddPropertyListingResponse> BulkAddPropertyListingAsync(BulkAddPropertyListingRequest request);
 

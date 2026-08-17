@@ -1,12 +1,22 @@
 using StayPilot.Application.Contracts.Response;
-using StayPilot.Domain.Entities;
 
 namespace StayPilot.Application.Interfaces.Services
 {
+    /// <summary>
+    /// Handles what each feature (sea view, pool, lift...) is worth market-wide.
+    /// </summary>
     public interface IPremiumFeatureService
     {
-        Task<List<PremiumFeatureResponse>> GetAllPremiumFeatures();
+        /// <summary>
+        /// The values from the last recalculation. Empty when it has never run.
+        /// </summary>
+        Task<PremiumFeatureListResponse> GetAllPremiumFeatures();
 
-        Task<List<PremiumFeature>> ReCalculatePremiumFeaturesValue();
+        /// <summary>
+        /// Measure every feature again from the listings we hold, and store the result.
+        /// Comes back carrying NotEnoughListingsToFitModel when there is too little data to
+        /// measure anything, and the stored values are left untouched.
+        /// </summary>
+        Task<PremiumFeatureListResponse> ReCalculatePremiumFeaturesValue();
     }
 }

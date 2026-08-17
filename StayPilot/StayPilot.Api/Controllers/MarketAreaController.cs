@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Interfaces.Services;
@@ -28,7 +29,8 @@ namespace StayPilot.Api.Controllers
         public async Task<ActionResult<MarketAreaListResponse>> GetAll([FromQuery] MarketAreaRequest request)
         {
             var response = await _service.GetMarketAreasPageAsync(request);
-            return Ok(response);
+
+            return this.ToActionResult(response);
         }
 
         /// <summary>
@@ -36,10 +38,11 @@ namespace StayPilot.Api.Controllers
         /// The parts you send narrow the list. Example: send a district to get its towns.
         /// </summary>
         [HttpGet("options")]
-        public async Task<ActionResult<List<string>>> GetOptions([FromQuery] string? district, [FromQuery] string? municipality, [FromQuery] string? town)
+        public async Task<ActionResult<MarketAreaOptionsResponse>> GetOptions([FromQuery] string? district, [FromQuery] string? municipality, [FromQuery] string? town)
         {
-            var options = await _service.GetMarketAreaOptionsAsync(district, municipality, town);
-            return Ok(options);
+            var response = await _service.GetMarketAreaOptionsAsync(district, municipality, town);
+
+            return this.ToActionResult(response);
         }
     }
 }

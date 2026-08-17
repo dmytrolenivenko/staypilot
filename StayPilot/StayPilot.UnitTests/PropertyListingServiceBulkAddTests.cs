@@ -1,4 +1,5 @@
 using StayPilot.Application.Contracts.Request;
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Services;
 using StayPilot.Domain.Entities;
@@ -96,7 +97,7 @@ namespace StayPilot.UnitTests
             Assert.Equal(2, propertyRepo.Saved.Count);
             Assert.Equal(2, response.TotalAdded);
             Assert.Equal(0, response.Unchanged);
-            Assert.Empty(response.FailedListings);
+            Assert.True(response.Succeeded);
         }
 
         [Fact]
@@ -137,8 +138,61 @@ namespace StayPilot.UnitTests
 
             Assert.Equal(0, response.TotalAdded);
             Assert.Equal(0, response.Unchanged);
-            Assert.Single(response.FailedListings);
-            Assert.Contains("https://example.com/listing-1", response.FailedListings.Keys);
+
+            var error = Assert.Single(response.Errors!);
+            Assert.Equal((int)ErrorCode.ListingNotSaved, error.ErrorCode);
+
+            // The url has to survive into the message - it is all the caller has to tell its
+            // listings apart now that they are not the keys of a dictionary.
+            Assert.Contains("https://example.com/listing-1", error.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task BulkAdd_ListingWithoutCoordinates_IsReportedAndNeverSaved()
+        {
+            var propertyRepo = new FakePropertyListingRepo(new List<PropertyListing>());
+            var service = new PropertyListingService(propertyRepo, new FakeMarketAreaRepo(new List<MarketArea> { MarketArea }), new FakeBeachMarkerRepo(), new FakeListingSnapshotRepo());
+
+            var noLocation = NewListingRequest("https://example.com/listing-1", 100_000m);
+            noLocation.Latitude = null;
+            noLocation.Longitude = null;
+
+            var request = new BulkAddPropertyListingRequest { Items = new List<PropertyListingRequest> { noLocation } };
+
+            var response = await service.BulkAddPropertyListingAsync(request);
+
+            Assert.Empty(propertyRepo.Saved);
+            Assert.Equal(0, response.TotalAdded);
+
+            var error = Assert.Single(response.Errors!);
+            Assert.Equal((int)ErrorCode.ListingLocationRequired, error.ErrorCode);
+        }
+
+        [Fact]
+        public async Task BulkAdd_AddressMatchesNoMarketArea_IsReportedAndNeverSaved()
+        {
+            var propertyRepo = new FakePropertyListingRepo(new List<PropertyListing>());
+            var service = new PropertyListingService(propertyRepo, new FakeMarketAreaRepo(new List<MarketArea> { MarketArea }), new FakeBeachMarkerRepo(), new FakeListingSnapshotRepo());
+
+            var elsewhere = NewListingRequest("https://example.com/listing-1", 100_000m);
+            elsewhere.MarketAreaId = null;
+            elsewhere.Country = "Spain";
+            elsewhere.District = "Madrid";
+            elsewhere.Municipality = "Madrid";
+            elsewhere.Town = "Madrid";
+
+            var request = new BulkAddPropertyListingRequest { Items = new List<PropertyListingRequest> { elsewhere } };
+
+            var response = await service.BulkAddPropertyListingAsync(request);
+
+            Assert.Empty(propertyRepo.Saved);
+
+            var error = Assert.Single(response.Errors!);
+            Assert.Equal((int)ErrorCode.ListingMarketAreaNotFound, error.ErrorCode);
+
+            // Both the listing and the address it could not be placed at.
+            Assert.Contains("https://example.com/listing-1", error.ErrorMessage);
+            Assert.Contains("Madrid", error.ErrorMessage);
         }
     }
 }

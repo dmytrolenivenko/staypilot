@@ -1,4 +1,5 @@
-﻿using StayPilot.Domain.Enums;
+﻿using StayPilot.Application.Contracts.Response.Base;
+using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Contracts.Response
 {
@@ -7,7 +8,7 @@ namespace StayPilot.Application.Contracts.Response
     /// A snapshot is the price and state of a property at one moment in time.
     /// It is sent back inside a property listing response.
     /// </summary>
-    public class ListingSnapshotResponse
+    public class ListingSnapshotResponse : ResponseBase
     {
         /// <summary>Id of this snapshot.</summary>
         public int Id { get; set; }

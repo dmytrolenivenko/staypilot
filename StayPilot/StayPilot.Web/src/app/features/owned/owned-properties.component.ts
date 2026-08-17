@@ -431,16 +431,23 @@ export class OwnedPropertiesComponent implements OnInit {
         this.loadAll();
       },
       error: err => {
-        // Show what the API actually said. It replies with ProblemDetails: a plain
-        // "detail" for our own errors, or an "errors" map for [Required]/[Range]
-        // model validation. Falling straight to the generic text hid the real reason.
+        // Show what the API actually said. Two shapes arrive here, both under "errors":
+        // ours is a list of { errorCode, errorMessage }, while ASP.NET's [Required]/[Range]
+        // model validation sends a map of field -> messages.
         const problem = err.error;
-        const firstValidationMessage = problem?.errors
-          ? (Object.values(problem.errors)[0] as string[])?.[0]
+
+        const apiMessage = Array.isArray(problem?.errors)
+          ? problem.errors[0]?.errorMessage
           : null;
 
+        const validationMessage =
+          problem?.errors && !Array.isArray(problem.errors)
+            ? (Object.values(problem.errors)[0] as string[])?.[0]
+            : null;
+
         this.error.set(
-          firstValidationMessage ??
+          apiMessage ??
+            validationMessage ??
             problem?.detail ??
             'Could not save the property. Check the required fields.'
         );

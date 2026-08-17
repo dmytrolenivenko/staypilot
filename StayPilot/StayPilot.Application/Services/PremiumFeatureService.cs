@@ -1,4 +1,5 @@
-﻿using StayPilot.Application.Contracts.Response;
+using StayPilot.Application.Contracts.Response;
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
 using StayPilot.Domain.Entities;
@@ -18,28 +19,40 @@ namespace StayPilot.Application.Services
             _propertyListingRepo = propertyListingRepo;
         }
 
-        public async Task<List<PremiumFeatureResponse>> GetAllPremiumFeatures()
+        /// <inheritdoc/>
+        public async Task<PremiumFeatureListResponse> GetAllPremiumFeatures()
         {
             var premiumFeatures = await _premiumFeatureRepo.GetAllPremiumFeaturesAsync();
 
-            return premiumFeatures.Select(x => Converter.MapToResponse(x)).ToList();
+            return new PremiumFeatureListResponse
+            {
+                Items = premiumFeatures.Select(x => Converter.MapToResponse(x)).ToList()
+            };
         }
 
-        public async Task<List<PremiumFeature>> ReCalculatePremiumFeaturesValue()
+        /// <inheritdoc/>
+        public async Task<PremiumFeatureListResponse> ReCalculatePremiumFeaturesValue()
         {
+            var response = new PremiumFeatureListResponse();
+
             var allListings = await _propertyListingRepo.GetAllListingsForFeaturePremiumCalculationAsync();
 
-            // Every feature is measured by comparing listings in the SAME market area that are
-            // alike in every other way and differ only in that feature. The regression this
-            // replaced had to hold everything still from one set of coefficients, which is how
-            // it ended up reporting a balcony as making a flat cheaper.
-            var calculator = FeaturePremiumCalculator.Fit(allListings);
+            // One regression reads every feature at once, holding size, typology, condition
+            // and location still - so a pool premium isn't really "pools come on bigger flats".
+            var calculator = FeaturePremiumCalculator.TryFit(allListings, out var usableListings);
+
+            // Too little data to measure anything. That is an answer for the caller, not a crash,
+            // and the stored values are left exactly as they were.
+            if (calculator is null)
+            {
+                response.AddError(ErrorCode.NotEnoughListingsToFitModel, usableListings.ToString(), FeaturePremiumCalculator.MinimumListings.ToString());
+
+                return response;
+            }
 
             // Overwrite, not append: exactly one current row per feature.
             var previous = await _premiumFeatureRepo.GetAllPremiumFeaturesAsync();
             _premiumFeatureRepo.RemovePremiumFeatures(previous);
-
-            var allFeatures = new List<PremiumFeature>();
 
             foreach (var effect in calculator.FeatureEffects)
             {
@@ -56,14 +69,14 @@ namespace StayPilot.Application.Services
                     Basis = effect.Basis,
                 };
 
-                allFeatures.Add(recalculatedFeature);
-
                 await _premiumFeatureRepo.AddPremiumFeatureAsync(recalculatedFeature);
+
+                response.Items.Add(Converter.MapToResponse(recalculatedFeature));
             }
 
             await _premiumFeatureRepo.SaveChangesAsync();
 
-            return allFeatures;
+            return response;
         }
     }
 }

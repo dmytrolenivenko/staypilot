@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Infrastructure.Persistence;
 using StayPilot.Application.Services;
 using StayPilot.Infrastructure.Repositories;
@@ -53,24 +53,18 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-// Catch any unhandled error and turn it into a clean error response.
+// The last resort. Everything a caller can actually do something about is already an error on
+// the response, so anything that reaches here is a real failure on our side: always a 500, and
+// always the same shape as every other error we send, with the trace id to find it in the logs.
 app.UseExceptionHandler(exceptionHandlerApp =>
 {
     exceptionHandlerApp.Run(async context =>
     {
-        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        // Pick the HTTP status: bad request for a known input error, else 500.
-        context.Response.StatusCode = exception switch
-        {
-            InvalidOperationException => StatusCodes.Status400BadRequest,
-            _ => StatusCodes.Status500InternalServerError,
-        };
-        await Results.Problem(
-            
-            title: exception?.Message ?? "An unexpected error occurred.",
-            statusCode: context.Response.StatusCode
-            ).ExecuteAsync(context);
+        var error = new Error(ErrorCode.Unexpected, context.TraceIdentifier);
+
+        await context.Response.WriteAsJsonAsync(new { errors = new[] { error } });
     });
 });
 

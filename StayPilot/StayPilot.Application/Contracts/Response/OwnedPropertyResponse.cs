@@ -1,10 +1,11 @@
 ﻿
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace StayPilot.Application.Contracts.Response
 {
-    public class OwnedPropertyResponse
+    public class OwnedPropertyResponse : ResponseBase
     {
         // Fix: Id was missing, so a caller (and Converter.MapToResponse, which
         // already tries to set it) had no way to say which row this is about.

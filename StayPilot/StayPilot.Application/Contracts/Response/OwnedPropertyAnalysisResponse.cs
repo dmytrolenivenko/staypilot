@@ -1,9 +1,10 @@
 ﻿using StayPilot.Domain.Enums;
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Application.Contracts.Response.SubResponse;
 
 namespace StayPilot.Application.Contracts.Response
 {
-    public class OwnedPropertyAnalysisResponse
+    public class OwnedPropertyAnalysisResponse : ResponseBase
     {
         // headline (you already have these)
         public decimal MinPrice { get; set; }   // low end of the range

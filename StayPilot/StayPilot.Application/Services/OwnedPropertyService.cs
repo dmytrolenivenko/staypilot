@@ -1,6 +1,7 @@
 ﻿
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
+using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
@@ -39,9 +40,20 @@ namespace StayPilot.Application.Services
 
             var ownedPropertyEntity = Converter.MapToEntity(request);
 
-            ownedPropertyEntity.MarketAreaId = Calculator.GetMarketId(marketAreaRepo, request.Country, request.District, request.Municipality, request.Town, request.Zone);
+            var marketAreaId = Calculator.GetMarketId(marketAreaRepo, request.Country, request.District, request.Municipality, request.Town, request.Zone);
 
-            ownedPropertyEntity.MarketArea = marketAreaRepo.FirstOrDefault(x => x.Id == ownedPropertyEntity.MarketAreaId) ?? throw new InvalidOperationException("MarketArea can not be null");
+            // No market area for this address -> we cannot place the property, so we save nothing.
+            if (marketAreaId is null)
+            {
+                var noMarketArea = new OwnedPropertyResponse();
+                noMarketArea.AddError(ErrorCode.MarketAreaNotFound, Calculator.DescribeAddress(request.Country, request.District, request.Municipality, request.Town, request.Zone));
+
+                return noMarketArea;
+            }
+
+            // GetMarketId only ever gives back an Id from the list we just passed it.
+            ownedPropertyEntity.MarketAreaId = marketAreaId.Value;
+            ownedPropertyEntity.MarketArea = marketAreaRepo.First(x => x.Id == marketAreaId.Value);
 
             var closestBeach = Calculator.GetTheClosestBeach(beackMarkerRepo, request.Latitude, request.Longitude);
 
@@ -65,31 +77,46 @@ namespace StayPilot.Application.Services
             return Converter.MapToResponse(ownedPropertyEntity);
         }
 
-        public async Task<OwnedPropertyResponse?> GetOwnedPropertyAsync(int id)
+        public async Task<OwnedPropertyResponse> GetOwnedPropertyAsync(int id)
         {
-            // Now it just reads the row by Id, and returns null when there is no such row.
+            // Reads the row by Id. There may not be one.
             var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
 
-            return entity is null ? null : Converter.MapToResponse(entity);
+            if (entity is null)
+            {
+                var notFound = new OwnedPropertyResponse();
+                notFound.AddError(ErrorCode.OwnedPropertyNotFound, id.ToString());
+
+                return notFound;
+            }
+
+            return Converter.MapToResponse(entity);
         }
 
-        public async Task<string?> DeleteOwnedPropertyAsync(int id)
+        public async Task<DeleteOwnedPropertyResponse> DeleteOwnedPropertyAsync(int id)
         {
-            // Fix: this used to take a string Id and always throw NotImplementedException.
+            var response = new DeleteOwnedPropertyResponse { Id = id };
+
             // The repository already checks if the row exists (it returns null if not).
             var deletedName = await _ownedPropertyRepository.DeleteOwnedPropertyAsync(id);
 
             if (deletedName is null)
-                return null;
+            {
+                response.AddError(ErrorCode.OwnedPropertyNotFound, id.ToString());
+
+                return response;
+            }
 
             // Fix: Remove() (inside the repository) only stages the delete.
             // We still need to save, or nothing happens in the database.
             await _ownedPropertyRepository.SaveChangesAsync();
 
-            return deletedName;
+            response.Name = deletedName;
+
+            return response;
         }
 
-        public async Task<OwnedPropertyResponse?> UpdateOwnedPropertyAsync(int id, OwnedPropertyRequest request)
+        public async Task<OwnedPropertyResponse> UpdateOwnedPropertyAsync(int id, OwnedPropertyRequest request)
         {
             // Fix: this used to build a brand new entity from the request, so any
             // field the caller did not send would overwrite the saved value with
@@ -97,16 +124,32 @@ namespace StayPilot.Application.Services
             var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
 
             if (entity is null)
-                return null;
+            {
+                var notFound = new OwnedPropertyResponse();
+                notFound.AddError(ErrorCode.OwnedPropertyNotFound, id.ToString());
 
-            Converter.ApplyUpdates(entity, request);
+                return notFound;
+            }
 
             var marketAreaRepo = await _marketAreaRepository.GetAllMarketAreasAsync();
 
             // Same as Add: the address parts decide the market area. Without this, an edit
             // kept whatever location the property was created with, however the user
             // changed the District/Municipality/Town/Zone pickers.
-            entity.MarketAreaId = Calculator.GetMarketId(marketAreaRepo, request.Country, request.District, request.Municipality, request.Town, request.Zone);
+            var marketAreaId = Calculator.GetMarketId(marketAreaRepo, request.Country, request.District, request.Municipality, request.Town, request.Zone);
+
+            // Asked before anything is copied onto the entity, so a bad address changes nothing.
+            if (marketAreaId is null)
+            {
+                var noMarketArea = new OwnedPropertyResponse();
+                noMarketArea.AddError(ErrorCode.MarketAreaNotFound, Calculator.DescribeAddress(request.Country, request.District, request.Municipality, request.Town, request.Zone));
+
+                return noMarketArea;
+            }
+
+            Converter.ApplyUpdates(entity, request);
+
+            entity.MarketAreaId = marketAreaId.Value;
 
             var beachMarkerRepo = await _beachMarkerRepository.GetAllBeachMarkersAsync();
 
@@ -131,14 +174,17 @@ namespace StayPilot.Application.Services
             return Converter.MapToResponse(entity);
         }
 
-        public async Task<OwnedPropertyAnalysisResponse?> EstimateOwnedPropertyValue(int id, int radiusMeters, int months)
+        public async Task<OwnedPropertyAnalysisResponse> EstimateOwnedPropertyValue(int id, int radiusMeters, int months)
         {
 
             var ownedPropertyRepo = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
 
             if (ownedPropertyRepo is null)
             {
-                return null;
+                var notFound = new OwnedPropertyAnalysisResponse();
+                notFound.AddError(ErrorCode.OwnedPropertyNotFound, id.ToString());
+
+                return notFound;
             }
 
             var ownedProperty = Converter.MapToResponse(ownedPropertyRepo);
@@ -167,7 +213,19 @@ namespace StayPilot.Application.Services
             // One call does the lot - price, range, confidence, equity and the breakdown.
             var allListings = await _propertyListingRepository.GetAllListingsForFeaturePremiumCalculationAsync();
 
-            var estimate = PropertyValuation.Fit(allListings).Estimate(ownedProperty, featureEffects);
+            var valuation = PropertyValuation.TryFit(allListings, out var usableListings);
+
+            // Not enough listings in the database to fit a model. Say so rather than crash - the
+            // property is fine, we just have nothing to price it against yet.
+            if (valuation is null)
+            {
+                var notEnoughData = new OwnedPropertyAnalysisResponse();
+                notEnoughData.AddError(ErrorCode.NotEnoughListingsToFitModel, usableListings.ToString(), PropertyValuation.MinimumListings.ToString());
+
+                return notEnoughData;
+            }
+
+            var estimate = valuation.Estimate(ownedProperty, featureEffects);
 
             // What the raw neighbours ask, unadjusted - shown beside the model's answer.
             var sortedCompPricesPerM2 = similarPropertiesRepo
@@ -204,14 +262,17 @@ namespace StayPilot.Application.Services
             };
         }
 
-        public async Task<List<OwnedPropertyResponse>> GetAllOwnedPropertiesAsync()
+        public async Task<OwnedPropertyListResponse> GetAllOwnedPropertiesAsync()
         {
             var domainOwnedProperties = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
 
             // Reuse the same mapper every other method here uses
-            return domainOwnedProperties
-                .Select(x => Converter.MapToResponse(x))
-                .ToList();
+            return new OwnedPropertyListResponse
+            {
+                Items = domainOwnedProperties
+                    .Select(x => Converter.MapToResponse(x))
+                    .ToList()
+            };
         }
 
     }

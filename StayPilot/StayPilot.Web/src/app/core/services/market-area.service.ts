@@ -58,6 +58,10 @@ export class MarketAreaService {
     if (district) params = params.set('district', district);
     if (municipality) params = params.set('municipality', municipality);
     if (town) params = params.set('town', town);
-    return this.http.get<string[]>(`${this.baseUrl}/GetOptions/options`, { params });
+
+    // The API wraps the list in a response object so it can carry errors; unwrap "items" here.
+    return this.http
+      .get<{ items: string[] }>(`${this.baseUrl}/GetOptions/options`, { params })
+      .pipe(map(response => response.items));
   }
 }
