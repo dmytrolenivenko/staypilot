@@ -6,7 +6,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
 }
 
 resource appService 'Microsoft.Web/sites@2023-12-01' = {
-    name: 'app-staypilot-dev'
+    name: 'api-staypilot-dev'
     location: 'swedencentral'
     properties: {
         serverFarmId: appServicePlan.id
@@ -67,7 +67,7 @@ resource sqlFirewallRule 'Microsoft.Sql/servers/firewallRules@2025-02-01-preview
 }
 
 resource staticWebApp 'Microsoft.Web/staticSites@2025-03-01' = {
-    name: 'stapp-staypilot-dev'
+    name: 'web-staypilot-dev'
     location: 'centralus'
     sku: {
         name: 'Free'
