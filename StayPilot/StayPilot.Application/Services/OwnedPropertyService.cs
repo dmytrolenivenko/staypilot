@@ -6,6 +6,7 @@ using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
+using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Services
@@ -189,18 +190,6 @@ namespace StayPilot.Application.Services
 
             var ownedProperty = Converter.MapToResponse(ownedPropertyRepo);
 
-            var similarPropertiesRepo = await _propertyListingRepository.GetComparablePropertyListingAsync(ownedProperty.MarketAreaId, ownedProperty.PropertyType,  ownedProperty.Typology, ownedProperty.AreaM2, ownedProperty.Latitude, ownedProperty.Longitude, radiusMeters, months);
-
-            // No comparable listings -> we cannot estimate anything.
-            if (similarPropertiesRepo.Count == 0)
-            {
-                return new OwnedPropertyAnalysisResponse
-                {
-                    CompsCount = 0,
-                    ConfidenceLevel = ValuationConfidence.Low
-                };
-            }
-
             // The breakdown is priced from the last recalculation, not from the model that is
             // about to price the property. Empty until ReCalculatePremiumFeaturesValue has run
             // once, which is the same state the Feature Impact screen shows.
@@ -213,6 +202,9 @@ namespace StayPilot.Application.Services
             // One call does the lot - price, range, confidence, equity and the breakdown.
             var allListings = await _propertyListingRepository.GetAllListingsForFeaturePremiumCalculationAsync();
 
+            // Fitted before the comps are fetched, because the fit is what knows where the
+            // property is: the comps have to come from the area the coordinates point at, not
+            // the one the address happened to name.
             var valuation = PropertyValuation.TryFit(allListings, out var usableListings);
 
             // Not enough listings in the database to fit a model. Say so rather than crash - the
@@ -227,14 +219,65 @@ namespace StayPilot.Application.Services
 
             var estimate = valuation.Estimate(ownedProperty, featureEffects);
 
+            var comparableListings = await _propertyListingRepository.GetComparablePropertyListingAsync(estimate.LocatedMarketAreaId, ownedProperty.PropertyType,  ownedProperty.Typology, ownedProperty.AreaM2, ownedProperty.DistanceToBeachMeters, ownedProperty.Latitude, ownedProperty.Longitude, radiusMeters, months);
+
+            // Held to the same standard as the listings the model learned from: broken rows out,
+            // re-advertisements of one flat counted once. Without this the comp median is a
+            // different market from the estimate printed beside it.
+            var comps = ListingQuality.DistinctProperties(
+                comparableListings.Where(x => ListingQuality.IsUsable(x, ListingQuality.NewestSnapshot(x))));
+
+            // No comparable listings -> the model still priced it, but there is nothing to show
+            // it against, so say that rather than quoting comp statistics over an empty set.
+            if (comps.Count == 0)
+            {
+                return new OwnedPropertyAnalysisResponse
+                {
+                    CompsCount = 0,
+                    ConfidenceLevel = ValuationConfidence.Low
+                };
+            }
+
+            // Only the nearest handful actually get a say. Distance weighting alone was not enough:
+            // the kernel still gives a comparable 800m away most of a vote, so three hundred of
+            // them drown out the seventeen next door - which is how "comps alone" read EUR 460,000
+            // for a flat whose immediate neighbours ask EUR 321,000. The model has always taken its
+            // ten nearest and weighted those; this is the same rule, applied to what we show.
+            const int comparablesUsedForStatistics = 25;
+
+            var nearestComps = OrderedByDistanceFrom(ownedProperty, comps)
+                .Take(comparablesUsedForStatistics)
+                .ToList();
+
             // What the raw neighbours ask, unadjusted - shown beside the model's answer.
-            var sortedCompPricesPerM2 = similarPropertiesRepo
-                .Select(x => x.ListingSnapshots.First().PricePerM2)
+            var sortedCompPricesPerM2 = nearestComps
+                .Select(x => ListingQuality.NewestSnapshot(x)!.PricePerM2)
                 .OrderBy(x => x)
                 .ToList();
 
-            var medianCompPricePerM2 = Calculator.Median(sortedCompPricesPerM2);
-            var averageCompPricePerM2 = sortedCompPricesPerM2.Average();
+            // Weighted by how close each comparable actually is, on the same scale the model uses
+            // for its own neighbours. An unweighted average over the whole radius is what made
+            // "comps alone" read EUR 464,000 for a flat the nearest seventeen comparables put at
+            // EUR 321,000: in a beach town a 2km circle holds two markets, and the dearer one has
+            // more listings in it. Falls back to the plain figures when the property has no
+            // coordinates, where there is no distance to weight by.
+            var weightedComps = ownedProperty.Latitude is null || ownedProperty.Longitude is null
+                ? nearestComps.Select(x => (Value: ListingQuality.NewestSnapshot(x)!.PricePerM2, Weight: 1d)).ToList()
+                : nearestComps.Select(x => (
+                        Value: ListingQuality.NewestSnapshot(x)!.PricePerM2,
+                        Weight: x.Latitude is null || x.Longitude is null
+                            ? 0d
+                            : PropertyValuation.EvidenceWeightAtMeters(Calculator.CalculateDistanceMeters(
+                                (double)ownedProperty.Latitude.Value, (double)ownedProperty.Longitude.Value,
+                                (double)x.Latitude.Value, (double)x.Longitude.Value))))
+                    .ToList();
+
+            var medianCompPricePerM2 = Calculator.WeightedMedian(weightedComps);
+            var averageCompPricePerM2 = Calculator.WeightedAverage(weightedComps);
+
+            var marketAreas = await _marketAreaRepository.GetAllMarketAreasAsync();
+
+            var locatedArea = marketAreas.FirstOrDefault(x => x.Id == estimate.LocatedMarketAreaId);
 
             return new OwnedPropertyAnalysisResponse
             {
@@ -243,22 +286,84 @@ namespace StayPilot.Application.Services
                 MaxPrice = estimate.MaxPrice,
                 AveragePrice = averageCompPricePerM2 * ownedProperty.AreaM2,
 
-                ConfidenceLevel = estimate.Confidence,
-                CompsCount = similarPropertiesRepo.Count,
+                ConfidenceLevel = ConfidenceAfterCrossCheck(estimate, medianCompPricePerM2 * ownedProperty.AreaM2),
+
+                // How many actually back the numbers, not how many the search turned up. Quoting
+                // the wider figure made a statistic drawn from twenty-five look like it rested on
+                // three hundred.
+                CompsCount = nearestComps.Count,
+                ComparablesFound = comps.Count,
 
                 MarketRatePerM2 = medianCompPricePerM2,
                 EstimateBeforeAdjustments = medianCompPricePerM2 * ownedProperty.AreaM2,
 
+                // The spread stays unweighted on purpose: it answers "what is the range of asking
+                // prices around here", which every comparable has an equal say in.
                 MinCompPricePerM2 = Calculator.Percentile(sortedCompPricesPerM2, 0.25),
-                MedianCompPricePerM2 = medianCompPricePerM2,
+                MedianCompPricePerM2 = Calculator.Median(sortedCompPricesPerM2),
                 MaxCompPricePerM2 = Calculator.Percentile(sortedCompPricesPerM2, 0.75),
                 AverageCompPricePerM2 = averageCompPricePerM2,
 
                 Adjustments = estimate.Adjustments,
 
-                Comps = similarPropertiesRepo.Select(Converter.MapToComp).ToList(),
+                // Exactly the comparables the statistics came from, so the table can be checked
+                // against them rather than being a different sample that happens to sit below.
+                Comps = nearestComps.Select(Converter.MapToComp).ToList(),
+
+                LocatedMarketAreaId = estimate.LocatedMarketAreaId,
+                LocatedAreaName = locatedArea is null
+                    ? string.Empty
+                    : string.IsNullOrWhiteSpace(locatedArea.Zone) ? locatedArea.Town : locatedArea.Zone,
+                LocatedByCoordinates = estimate.LocatedByCoordinates,
 
                 Equity = estimate.Equity,
+            };
+        }
+
+        /// <summary>
+        /// The comparables, nearest first. A property with no coordinates has no distances to sort
+        /// by, so it keeps the order the repository chose - its own market area, closest in size.
+        /// </summary>
+        private static IEnumerable<PropertyListing> OrderedByDistanceFrom(
+            OwnedPropertyResponse property, List<PropertyListing> comps)
+        {
+            if (property.Latitude is null || property.Longitude is null)
+                return comps;
+
+            return comps
+                .Where(x => x.Latitude is not null && x.Longitude is not null)
+                .OrderBy(x => Calculator.CalculateDistanceMeters(
+                    (double)property.Latitude.Value, (double)property.Longitude.Value,
+                    (double)x.Latitude!.Value, (double)x.Longitude!.Value))
+                .Concat(comps.Where(x => x.Latitude is null || x.Longitude is null));
+        }
+
+        /// <summary>
+        /// The model's confidence, knocked down a step when the comparables do not agree with it.
+        ///
+        /// Two ways of reading the same adverts landing far apart is the plainest evidence we have
+        /// that the answer is uncertain, and it used to be the one thing confidence ignored: a flat
+        /// came back High while the model said EUR 224,000 and the comps said EUR 305,000. "Far
+        /// apart" is measured against the range the estimate itself quotes - inside it the two are
+        /// telling the same story, outside it they are not.
+        /// </summary>
+        private static ValuationConfidence ConfidenceAfterCrossCheck(
+            PropertyEstimate estimate, decimal compBasedEstimate)
+        {
+            if (estimate.MidPrice <= 0 || compBasedEstimate <= 0)
+                return estimate.Confidence;
+
+            // Literally inside the range we quoted, not merely within its width - the second test
+            // is twice as forgiving, and it let a flat keep High confidence while the two methods
+            // sat 38% apart.
+            if (compBasedEstimate >= estimate.MinPrice && compBasedEstimate <= estimate.MaxPrice)
+                return estimate.Confidence;
+
+            return estimate.Confidence switch
+            {
+                ValuationConfidence.High => ValuationConfidence.Medium,
+                ValuationConfidence.Medium => ValuationConfidence.Low,
+                _ => ValuationConfidence.Low,
             };
         }
 

@@ -29,6 +29,16 @@ namespace StayPilot.Application.Helpers.Calculators
 
         /// <summary>One line per premium feature the property actually has.</summary>
         public List<ValuationAdjustment> Adjustments { get; set; } = new();
+
+        /// <summary>
+        /// Which market area the price came from, and whether the coordinates chose it rather than
+        /// the stored address. The comps are pulled from the same area, so the two halves of the
+        /// answer cannot disagree about where the property is.
+        /// </summary>
+        public int LocatedMarketAreaId { get; set; }
+
+        /// <inheritdoc cref="LocatedMarketAreaId"/>
+        public bool LocatedByCoordinates { get; set; }
     }
 
     /// <summary>
@@ -89,6 +99,19 @@ namespace StayPilot.Application.Helpers.Calculators
         public int TrainingListings => _model.TrainingListings;
 
         /// <summary>
+        /// How much a listing this far from a property is worth as evidence about it: full weight
+        /// next door, half a kilometre out, fading beyond. Public because the comparables shown
+        /// beside an estimate have to be summarised on the same scale the estimate itself uses -
+        /// a plain average over a 2km circle in a beach town mixes two markets and reads as the
+        /// dearer one. Measured around one Quarteira flat: the 17 comparables within 250m implied
+        /// EUR 321,000 and the 300 beyond it implied EUR 460,000-473,000.
+        /// </summary>
+        public static double EvidenceWeightAtMeters(double metres)
+        {
+            return ValuationModel.NeighbourWeight(metres);
+        }
+
+        /// <summary>
         /// Prices one property and explains the answer.
         /// </summary>
         /// <param name="featureEffects">
@@ -112,7 +135,19 @@ namespace StayPilot.Application.Helpers.Calculators
                 Confidence = DetermineConfidence(prediction),
                 Equity = BuildEquity(property.PurchasePrice, property.PurchaseDate, midPrice),
                 Adjustments = BuildAdjustments(subject, midPrice, featureEffects),
+                LocatedMarketAreaId = prediction.LocatedMarketAreaId,
+                LocatedByCoordinates = prediction.LocatedByCoordinates,
             };
+        }
+
+        /// <summary>
+        /// Which market area a property at these coordinates is priced as. Callers that also need
+        /// comparables should pull them from this area rather than the stored one, so the model's
+        /// answer and the comps beside it are talking about the same place.
+        /// </summary>
+        public int LocateMarketArea(decimal? latitude, decimal? longitude, int storedMarketAreaId)
+        {
+            return _model.LocateMarketArea(latitude, longitude, storedMarketAreaId);
         }
 
         /// <summary>
@@ -458,6 +493,19 @@ namespace StayPilot.Application.Helpers.Calculators
         /// second one look far more certain than it was.
         /// </summary>
         public double Spread { get; set; }
+
+        /// <summary>
+        /// Which market area the price was actually taken from - the one the coordinates point at,
+        /// which is not always the one the address said. See
+        /// <see cref="ValuationModel.LocateMarketArea"/>.
+        /// </summary>
+        public int LocatedMarketAreaId { get; set; }
+
+        /// <summary>
+        /// True when the coordinates overrode the stored area. Worth showing: it is the difference
+        /// between an estimate we placed ourselves and one that trusted a dropdown.
+        /// </summary>
+        public bool LocatedByCoordinates { get; set; }
     }
 
     /// <summary>
@@ -515,6 +563,20 @@ namespace StayPilot.Application.Helpers.Calculators
         private const double NeighbourKernelMeters = 1_000;
 
         /// <summary>
+        /// How many nearby listings vote on which market area a property is actually in. More
+        /// than the neighbourhood correction uses, because this is a question about which side of
+        /// a zone border the property sits on, and a single mis-filed neighbour must not decide it.
+        /// </summary>
+        private const int LocationVoteCount = 25;
+
+        /// <summary>
+        /// How close a listing has to be to get a vote on the market area. Past this the
+        /// coordinates are no longer evidence of being in anyone's zone, so the stored area -
+        /// whatever the address said - is the better answer.
+        /// </summary>
+        private const double LocationVoteMeters = 2_000;
+
+        /// <summary>
         /// How much wider the range gets for a property with no local evidence at all: at most
         /// double the model's typical error, easing back to roughly its normal width once there
         /// are neighbours worth listening to.
@@ -545,6 +607,7 @@ namespace StayPilot.Application.Helpers.Calculators
         // applied to the wrong thing.
         private readonly List<string> _locationColumns;
         private readonly HashSet<int> _denseAreas;
+        private readonly HashSet<int> _catchAllAreas;
         private readonly HashSet<string> _denseMunicipalities;
         private readonly HashSet<string> _denseDistricts;
         private readonly Dictionary<int, (string District, string Municipality)> _geographyByArea;
@@ -560,8 +623,21 @@ namespace StayPilot.Application.Helpers.Calculators
         private readonly double[] _coefficients;
         private readonly List<(double Latitude, double Longitude, double Residual)> _residuals;
 
+        /// <summary>
+        /// Where the listings the fit learned from are, and which market area each was filed
+        /// under. Separate from <see cref="_residuals"/> because this answers a different
+        /// question - not "how wrong is the regression here" but "which zone is here".
+        /// </summary>
+        private readonly List<(double Latitude, double Longitude, int MarketAreaId)> _listingLocations;
+
         /// <summary>How many listings the fit learned from, after the outlier pass.</summary>
         public int TrainingListings { get; }
+
+        /// <summary>
+        /// How many admitted rows were re-advertisements of a property already counted. See
+        /// <see cref="ListingQuality.DistinctProperties"/> for why they cannot be left in.
+        /// </summary>
+        public int DuplicateListings { get; }
 
         /// <summary>
         /// How many admitted listings the second pass then threw out. Worth watching: a jump
@@ -629,18 +705,23 @@ namespace StayPilot.Application.Helpers.Calculators
         /// </summary>
         public static ValuationModel? TryFit(IEnumerable<PropertyListing> listings, out int usableListings)
         {
-            var training = ListingQuality.UsableSubjects(listings);
+            var training = ListingQuality.UsableSubjects(listings, out var duplicatesCollapsed);
 
             usableListings = training.Count;
 
-            return training.Count < MinimumTrainingListings ? null : new ValuationModel(training);
+            return training.Count < MinimumTrainingListings
+                ? null
+                : new ValuationModel(training, duplicatesCollapsed);
         }
 
         /// <summary>The fewest usable listings a fit needs.</summary>
         public static int MinimumListings => MinimumTrainingListings;
 
-        private ValuationModel(List<(ValuationSubject Subject, double LogPricePerM2)> training)
+        private ValuationModel(
+            List<(ValuationSubject Subject, double LogPricePerM2)> training, int duplicatesCollapsed)
         {
+            DuplicateListings = duplicatesCollapsed;
+
             var subjects = training.Select(x => x.Subject).ToList();
 
             // Where each market area actually is, so a property can be placed in its
@@ -659,7 +740,14 @@ namespace StayPilot.Application.Helpers.Calculators
             // baseline area - so a quiet village in the interior was valued as though it sat in
             // whichever area happened to sort first. Falling back through municipality and then
             // district keeps those properties somewhere near the right part of the country.
+            _catchAllAreas = CatchAllAreasIn(subjects);
+
+            // A catch-all area is deliberately never dense, however many listings it holds: it is
+            // not a place, so it must not get a price level of its own. Its listings still count
+            // toward the municipality below, which is the most specific thing we honestly know
+            // about them.
             _denseAreas = subjects
+                .Where(x => !_catchAllAreas.Contains(x.MarketAreaId))
                 .GroupBy(x => x.MarketAreaId)
                 .Where(g => g.Count() >= MinimumListingsPerArea)
                 .Select(g => g.Key)
@@ -667,7 +755,7 @@ namespace StayPilot.Application.Helpers.Calculators
 
             _denseMunicipalities = subjects
                 .Where(x => !_denseAreas.Contains(x.MarketAreaId))
-                .GroupBy(MunicipalityKeyOf)
+                .GroupBy(x => MunicipalityKeyOf(x))
                 .Where(g => g.Key.Length > 0 && g.Count() >= MinimumListingsPerArea)
                 .Select(g => g.Key)
                 .ToHashSet();
@@ -684,7 +772,7 @@ namespace StayPilot.Application.Helpers.Calculators
             // against. Keep them all and the set equals the intercept, so the fit has no
             // unique answer - and it fails silently, as huge cancelling coefficients.
             _locationColumns = subjects
-                .Select(EffectiveLocation)
+                .Select(x => EffectiveLocation(x))
                 .Distinct()
                 .OrderBy(x => x, StringComparer.Ordinal)
                 .Skip(1)
@@ -724,7 +812,7 @@ namespace StayPilot.Application.Helpers.Calculators
             // pay every property a premium for being ordinary.
             _averageBathrooms = subjects.Average(x => (double)x.Bathrooms);
 
-            var allRows = subjects.Select(BuildRow).ToList();
+            var allRows = subjects.Select(x => BuildRow(x)).ToList();
             var allTargets = training.Select(x => x.LogPricePerM2).ToList();
 
             // Two passes. The first exists only to find the rows the rest of the data says are
@@ -748,6 +836,10 @@ namespace StayPilot.Application.Helpers.Calculators
             // The residual surface: where the regression is wrong, and where geographically.
             _residuals = new List<(double, double, double)>();
 
+            // The same points, carrying the zone each was filed under rather than its error -
+            // this is what lets a property's coordinates decide which zone it is in.
+            _listingLocations = new List<(double, double, int)>();
+
             var averageTarget = targets.Average();
             var residualSumOfSquares = 0d;
             var totalSumOfSquares = 0d;
@@ -762,7 +854,12 @@ namespace StayPilot.Application.Helpers.Calculators
                 var subject = subjects[i];
 
                 if (subject.Latitude.HasValue && subject.Longitude.HasValue)
+                {
                     _residuals.Add(((double)subject.Latitude.Value, (double)subject.Longitude.Value, residual));
+
+                    _listingLocations.Add((
+                        (double)subject.Latitude.Value, (double)subject.Longitude.Value, subject.MarketAreaId));
+                }
             }
 
             RSquared = totalSumOfSquares <= 0 ? 0 : 1 - residualSumOfSquares / totalSumOfSquares;
@@ -777,7 +874,12 @@ namespace StayPilot.Application.Helpers.Calculators
             if (subject.AreaM2 <= 0)
                 throw new ArgumentException("Cannot price a property with no floor area.", nameof(subject));
 
-            var logPricePerM2 = LeastSquares.Predict(_coefficients, BuildRow(subject));
+            // Where the property really is, rather than where its address said. Everything after
+            // this prices the located area, so the zone the user picked can no longer move the
+            // answer on its own.
+            var locatedMarketAreaId = LocateMarketArea(subject.Latitude, subject.Longitude, subject.MarketAreaId);
+
+            var logPricePerM2 = LeastSquares.Predict(_coefficients, BuildRow(subject, locatedMarketAreaId));
 
             var neighbours = NearestNeighbours(subject);
             var (correction, evidence) = NeighbourhoodCorrection(neighbours);
@@ -790,7 +892,53 @@ namespace StayPilot.Application.Helpers.Calculators
                 LocalComparablesUsed = neighbours.Count,
                 NearestComparableMeters = neighbours.Count == 0 ? double.MaxValue : neighbours.Min(x => x.Distance),
                 Spread = PredictionSpread * (1 + (ThinEvidenceWidening / (1 + evidence))),
+                LocatedMarketAreaId = locatedMarketAreaId,
+                LocatedByCoordinates = locatedMarketAreaId != subject.MarketAreaId,
             };
+        }
+
+        /// <summary>
+        /// Which market area a property at these coordinates should be priced as. The coordinates
+        /// win whenever there are listings near them; the stored area is only the fallback.
+        ///
+        /// The point is that a zone comes from a dropdown and can be mis-picked, while a
+        /// coordinate cannot. Around Quarteira the same flat priced as "Centro - Quarteira Velha"
+        /// and as the catch-all "Quarteira" differs by roughly 30%, and that catch-all overlaps
+        /// every other zone in the town - so the least reliable field in the request was deciding
+        /// the price, and the most reliable one was only trimming it by a few percent afterwards.
+        ///
+        /// Voted rather than taken from the single nearest listing, because one neighbour can
+        /// itself be mis-filed. Votes fade with distance on the same kernel the neighbourhood
+        /// correction uses, so a listing next door outweighs one at the edge of the search.
+        /// </summary>
+        public int LocateMarketArea(decimal? latitude, decimal? longitude, int storedMarketAreaId)
+        {
+            if (!latitude.HasValue || !longitude.HasValue)
+                return storedMarketAreaId;
+
+            var latitudeDegrees = (double)latitude.Value;
+            var longitudeDegrees = (double)longitude.Value;
+
+            var winner = _listingLocations
+                .Select(x => (
+                    x.MarketAreaId,
+                    Distance: Calculator.CalculateDistanceMeters(
+                        latitudeDegrees, longitudeDegrees, x.Latitude, x.Longitude)))
+                // A catch-all area gets no vote. It usually holds more listings in a town centre
+                // than any real zone does, so left in it wins nearly every vote - which replaced
+                // one mis-picked zone with a worse one, and cost a Quarteira flat 30%.
+                .Where(x => x.Distance <= LocationVoteMeters && !_catchAllAreas.Contains(x.MarketAreaId))
+                .OrderBy(x => x.Distance)
+                .Take(LocationVoteCount)
+                .GroupBy(x => x.MarketAreaId)
+                .Select(x => (MarketAreaId: x.Key, Weight: x.Sum(vote => NeighbourWeight(vote.Distance))))
+                .OrderByDescending(x => x.Weight)
+                .ThenBy(x => x.MarketAreaId)
+                .FirstOrDefault();
+
+            // No listing near enough to vote: the coordinates tell us nothing about which zone
+            // this is, so the address is still the best answer we have.
+            return winner.Weight <= 0 ? storedMarketAreaId : winner.MarketAreaId;
         }
 
         /// <summary>
@@ -813,7 +961,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 return (0, 0);
 
             var weights = neighbours
-                .Select(x => 1 / (1 + Math.Pow(x.Distance / NeighbourKernelMeters, 2)))
+                .Select(x => NeighbourWeight(x.Distance))
                 .ToList();
 
             var evidence = weights.Sum();
@@ -826,6 +974,17 @@ namespace StayPilot.Application.Helpers.Calculators
             // are really worth. Ten neighbours on the doorstep barely move it; ten across the
             // county leave the regression almost untouched.
             return (correction * (evidence / (evidence + 1)), evidence);
+        }
+
+        /// <summary>
+        /// How much a listing this far away is worth as evidence: full weight next door, half at
+        /// <see cref="NeighbourKernelMeters"/>, fading from there. One kernel for both questions
+        /// the neighbours are asked - how wrong the regression is here, and which zone this is -
+        /// so the two can never disagree about what "nearby" means.
+        /// </summary>
+        internal static double NeighbourWeight(double metres)
+        {
+            return 1 / (1 + Math.Pow(metres / NeighbourKernelMeters, 2));
         }
 
         /// <summary>
@@ -876,15 +1035,49 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
+        /// The areas that are not really places. When the source does not know which neighbourhood
+        /// a listing is in, it files it under a zone named after the whole town - so "Quarteira /
+        /// Quarteira" holds stock from every corner of Quarteira and overlaps all 23 real zones in
+        /// it. Measured on this data: those listings span 13m to 1.6km of the town centre, and the
+        /// area's median is EUR 7,276/m2 against EUR 4,290 for the old town next door. Pricing a
+        /// flat as that area prices it as the dearest average in town, wherever it actually is.
+        ///
+        /// Found from the data rather than named, because eleven towns here have one - Faro, with
+        /// 76 real zones, and Setubal with 64 among them. Only ever treated as a catch-all when
+        /// the town has other areas to fall back on: where it is all we have, it is a real place
+        /// as far as we can tell.
+        /// </summary>
+        internal static HashSet<int> CatchAllAreasIn(List<ValuationSubject> subjects)
+        {
+            var townsWithRealZonesToo = subjects
+                .GroupBy(x => Calculator.NormalizeText(x.Town))
+                .Where(x => x.Key.Length > 0 && x.Select(subject => subject.MarketAreaId).Distinct().Count() > 1)
+                .Select(x => x.Key)
+                .ToHashSet();
+
+            return subjects
+                .Where(x => Calculator.NormalizeText(x.Zone) == Calculator.NormalizeText(x.Town)
+                            && townsWithRealZonesToo.Contains(Calculator.NormalizeText(x.Town)))
+                .Select(x => x.MarketAreaId)
+                .ToHashSet();
+        }
+
+        /// <summary>
         /// The district a property sits in, taken from the property itself when it knows and
         /// otherwise looked up from its market area - an owned property carries only an area id.
         /// </summary>
-        private string DistrictOf(ValuationSubject subject)
+        /// <param name="marketAreaId">
+        /// Which area to look the geography up from, when it is not the one the subject carries -
+        /// a property whose zone was decided by its coordinates. Null means "the stored one".
+        /// Same meaning on <see cref="MunicipalityKeyOf"/>, <see cref="EffectiveLocation"/> and
+        /// <see cref="BuildRow"/>.
+        /// </param>
+        private string DistrictOf(ValuationSubject subject, int? marketAreaId = null)
         {
             if (!string.IsNullOrEmpty(subject.District))
                 return subject.District;
 
-            return _geographyByArea.TryGetValue(subject.MarketAreaId, out var geography)
+            return _geographyByArea.TryGetValue(marketAreaId ?? subject.MarketAreaId, out var geography)
                 ? geography.District
                 : string.Empty;
         }
@@ -893,15 +1086,16 @@ namespace StayPilot.Application.Helpers.Calculators
         /// Municipality names repeat across districts, so the key has to carry both or two
         /// unrelated places thousands of a kilometre apart would share one price level.
         /// </summary>
-        private string MunicipalityKeyOf(ValuationSubject subject)
+        /// <inheritdoc cref="DistrictOf"/>
+        private string MunicipalityKeyOf(ValuationSubject subject, int? marketAreaId = null)
         {
             var municipality = subject.Municipality;
 
             if (string.IsNullOrEmpty(municipality)
-                && _geographyByArea.TryGetValue(subject.MarketAreaId, out var geography))
+                && _geographyByArea.TryGetValue(marketAreaId ?? subject.MarketAreaId, out var geography))
                 municipality = geography.Municipality;
 
-            var district = DistrictOf(subject);
+            var district = DistrictOf(subject, marketAreaId);
 
             return string.IsNullOrEmpty(municipality) || string.IsNullOrEmpty(district)
                 ? string.Empty
@@ -913,17 +1107,20 @@ namespace StayPilot.Application.Helpers.Calculators
         /// market area, through its municipality, to its district, and finally to the national
         /// baseline - each step only taken when the level above has too little data to stand on.
         /// </summary>
-        private string EffectiveLocation(ValuationSubject subject)
+        /// <inheritdoc cref="DistrictOf"/>
+        private string EffectiveLocation(ValuationSubject subject, int? marketAreaId = null)
         {
-            if (_denseAreas.Contains(subject.MarketAreaId))
-                return $"A:{subject.MarketAreaId}";
+            var area = marketAreaId ?? subject.MarketAreaId;
 
-            var municipality = MunicipalityKeyOf(subject);
+            if (_denseAreas.Contains(area))
+                return $"A:{area}";
+
+            var municipality = MunicipalityKeyOf(subject, marketAreaId);
 
             if (_denseMunicipalities.Contains(municipality))
                 return $"M:{municipality}";
 
-            var district = DistrictOf(subject);
+            var district = DistrictOf(subject, marketAreaId);
 
             return _denseDistricts.Contains(district) ? $"D:{district}" : "national";
         }
@@ -937,7 +1134,8 @@ namespace StayPilot.Application.Helpers.Calculators
         /// than a threshold, and this is where the € figure is decided, so nothing here is
         /// rounded off for the sake of a simpler headline.
         /// </summary>
-        private double[] BuildRow(ValuationSubject subject)
+        /// <inheritdoc cref="DistrictOf"/>
+        private double[] BuildRow(ValuationSubject subject, int? marketAreaId = null)
         {
             var logArea = Math.Log(Math.Max(1, subject.AreaM2)) - _averageLogArea;
             var logBeach = Math.Log(BeachMetersOf(subject)) - _averageLogBeachMeters;
@@ -980,7 +1178,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 row.Add(subject.PropertyType == propertyType ? 1 : 0);
             }
 
-            var location = EffectiveLocation(subject);
+            var location = EffectiveLocation(subject, marketAreaId);
 
             foreach (var column in _locationColumns)
             {

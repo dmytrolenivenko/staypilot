@@ -54,14 +54,21 @@
   <section class="panel">
     <div class="headline">
       <div class="headline-main">
-        <span class="headline-label">Estimated value</span>
+        <!-- "Asking price", not "value". Every listing behind this number is an advert, so this is
+             what the property would be ADVERTISED at today. What it would sell for is lower, and
+             nothing in the database says by how much - that needs repeat snapshots of the same
+             listings (days on market, price cuts), which do not exist until the scraper has run
+             more than once. Calling it "value" was promising something the data cannot support. -->
+        <span class="headline-label">Typical asking price</span>
         <span class="headline-price">€{{ r.midPrice | number: '1.0-0' }}</span>
         <span class="headline-range">
           Range €{{ r.minPrice | number: '1.0-0' }} – €{{ r.maxPrice | number: '1.0-0' }}
         </span>
         <span class="headline-note">
-          The range is the model's own typical error, not the spread of the comps &mdash; roughly
-          two estimates in three land inside it.
+          What this would be <strong>advertised</strong> at, from {{ r.compsCount }} comparable
+          adverts nearby &mdash; not what it would sell for, which is lower. The range is the
+          model's own typical error, not the spread of the comps: roughly two estimates in three
+          land inside it.
         </span>
       </div>
       <span
@@ -73,18 +80,33 @@
       </span>
     </div>
 
+    <!-- Where the price came from. The coordinates decide the zone, so this can differ from the
+         one stored on the property - and when it does, it is the first thing worth knowing about
+         a number that looks wrong. -->
+    @if (r.locatedAreaName) {
+      <p class="hint">
+        Priced as <strong>{{ r.locatedAreaName }}</strong>
+        @if (r.locatedByCoordinates) {
+          &mdash; chosen from this property's coordinates, not the zone saved on it. Zones overlap,
+          and the saved one is a dropdown; the coordinates are not.
+        } @else {
+          &mdash; the zone saved on this property. Add coordinates and they will decide instead.
+        }
+      </p>
+    }
+
     <div class="stat-grid">
       <div class="stat">
-        <span class="stat-value">{{ r.compsCount }}</span>
-        <span class="stat-label">Comparables</span>
+        <span class="stat-value">{{ r.compsCount }} of {{ r.comparablesFound }}</span>
+        <span class="stat-label">Comparables used (nearest)</span>
       </div>
       <div class="stat">
         <span class="stat-value">€{{ r.marketRatePerM2 | number: '1.0-0' }}</span>
-        <span class="stat-label">Market rate / m² (median)</span>
+        <span class="stat-label">Asking rate / m² (nearest-weighted)</span>
       </div>
       <div class="stat">
         <span class="stat-value">€{{ r.estimateBeforeAdjustments | number: '1.0-0' }}</span>
-        <span class="stat-label">Comps alone (median × m²)</span>
+        <span class="stat-label">Comps alone (rate × m²)</span>
       </div>
       <div class="stat">
         <span class="stat-value">€{{ r.minCompPricePerM2 | number: '1.0-0' }} – €{{ r.maxCompPricePerM2 | number: '1.0-0' }}</span>
@@ -183,6 +205,15 @@
     @if (r.comps.length === 0) {
       <p class="hint">No comparable listings were used.</p>
     } @else {
+      <!-- Exactly the rows the statistics came from, so they can be checked rather than taken on
+           trust. Matched on floor area and distance to the beach because in a beach town both
+           change the price per m2 far more than the plain distance between two flats does. -->
+      <p class="hint">
+        Every advert behind the numbers above, nearest first &mdash; each within a quarter of this
+        property's floor area and a comparable distance from the beach, so their €/m² means the
+        same thing as its own. {{ r.comparablesFound }} matched the search; the nearest
+        {{ r.comps.length }} are what the figures rest on, weighted by how close each one is.
+      </p>
       <table class="data-table">
         <thead>
           <tr>

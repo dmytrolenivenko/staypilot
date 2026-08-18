@@ -45,7 +45,7 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// than the cutoff. Returns at most 100, same market area first, then nearest.
         /// Falls back to the market area alone when the property has no coordinates.
         /// </summary>
-        Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, decimal? latitude, decimal? longitude, int radiusMeters, int months);
+        Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months);
 
         /// <summary>
         /// Gets every property listing across the whole dataset, with just its newest

@@ -639,7 +639,220 @@ namespace StayPilot.UnitTests
             Assert.Empty(estimate.Adjustments);
         }
 
+        // ---------- Where the property actually is ----------
+
+        [Fact]
+        public void Predict_ZonePickedWrong_PricesTheZoneTheCoordinatesAreIn()
+        {
+            // The zone arrives from a dropdown; the coordinates cannot be mis-picked. On real data
+            // the same Quarteira flat priced as the cheap old town and as the town-wide catch-all
+            // zone came out 30% apart, decided entirely by which one the picker happened to say -
+            // while the coordinates, which knew, were only trimming the answer by a few percent.
+            var listings = new List<PropertyListing>();
+
+            listings.AddRange(AreaAt(areaId: 1, "Faro", "Loule", 200, 8_000m, 37.08m, -8.10m));
+            listings.AddRange(AreaAt(areaId: 2, "Faro", "Loule", 200, 3_000m, 37.20m, -8.30m));
+
+            var model = ValuationModel.Fit(listings);
+
+            var subject = FlatMarketSubject();
+            subject.MarketAreaId = 1;        // the expensive zone, chosen by mistake
+            subject.Latitude = 37.20m;       // standing in the cheap one
+            subject.Longitude = -8.30m;
+
+            var prediction = model.PredictPricePerM2(subject);
+
+            Assert.Equal(2, prediction.LocatedMarketAreaId);
+            Assert.True(prediction.LocatedByCoordinates);
+
+            // Priced as the cheap zone it is in, not the expensive one it was filed under.
+            Assert.InRange(prediction.PricePerM2, 2_400m, 3_600m);
+        }
+
+        [Fact]
+        public void Predict_PropertyWithNoCoordinates_KeepsTheZoneItWasFiledUnder()
+        {
+            // Nothing to override the picker with, so the picker is the best answer we have.
+            var model = ValuationModel.Fit(FlatMarket(400, pricePerM2: 4_000));
+
+            var subject = FlatMarketSubject();
+            subject.Latitude = null;
+            subject.Longitude = null;
+
+            var prediction = model.PredictPricePerM2(subject);
+
+            Assert.Equal(subject.MarketAreaId, prediction.LocatedMarketAreaId);
+            Assert.False(prediction.LocatedByCoordinates);
+        }
+
+        [Fact]
+        public void Predict_NoListingCloseEnoughToVote_KeepsTheZoneItWasFiledUnder()
+        {
+            // A property outside the collected area has coordinates, but they are not evidence of
+            // being in anyone's zone - borrowing the nearest zone from 300km away would be worse
+            // than believing the address.
+            var model = ValuationModel.Fit(FlatMarket(400, pricePerM2: 4_000));
+
+            var subject = FlatMarketSubject();
+            subject.Latitude = 41.15m;       // Porto; every listing here is in the Algarve
+            subject.Longitude = -8.61m;
+
+            var prediction = model.PredictPricePerM2(subject);
+
+            Assert.Equal(subject.MarketAreaId, prediction.LocatedMarketAreaId);
+            Assert.False(prediction.LocatedByCoordinates);
+        }
+
+        [Fact]
+        public void Predict_CoordinatesLandInAZoneNamedAfterItsTown_IsPricedAsARealZoneInstead()
+        {
+            // The source files a listing under a zone named after the whole town whenever it does
+            // not know the neighbourhood, so "Quarteira / Quarteira" holds stock from every corner
+            // of Quarteira and overlaps all 23 real zones in it. It usually has more listings in a
+            // town centre than any real zone, so left votable it won nearly every vote - which
+            // swapped one mis-picked zone for a worse one and cost a real flat 30%.
+            var realZone = AreaAt(areaId: 1, "Faro", "Loule", 200, 3_000m, 37.08m, -8.10m);
+            var catchAll = AreaAt(areaId: 2, "Faro", "Loule", 200, 9_000m, 37.08m, -8.10m);
+
+            foreach (var listing in realZone)
+            {
+                listing.MarketArea!.Town = "Quarteira";
+                listing.MarketArea.Zone = "Centro";
+            }
+
+            // Same coordinates as the real zone, because that is the whole problem: it is not
+            // somewhere, it is everywhere in the town.
+            foreach (var listing in catchAll)
+            {
+                listing.MarketArea!.Town = "Quarteira";
+                listing.MarketArea.Zone = "Quarteira";
+            }
+
+            var model = ValuationModel.Fit(realZone.Concat(catchAll).ToList());
+
+            var subject = FlatMarketSubject();
+            subject.MarketAreaId = 2;        // filed under the catch-all
+            subject.Latitude = 37.08m;
+            subject.Longitude = -8.10m;
+
+            var prediction = model.PredictPricePerM2(subject);
+
+            Assert.Equal(1, prediction.LocatedMarketAreaId);
+            Assert.True(prediction.LocatedByCoordinates);
+        }
+
+        [Fact]
+        public void CatchAllAreasIn_TownWithNoOtherZone_IsTakenAtItsWord()
+        {
+            // Where the town-named zone is the only one we have listings for, it is the most
+            // specific thing we know - discarding it would price the town off its municipality
+            // for no reason.
+            var onlyZone = AreaAt(areaId: 1, "Faro", "Loule", 200, 3_000m, 37.08m, -8.10m);
+
+            foreach (var listing in onlyZone)
+            {
+                listing.MarketArea!.Town = "Quarteira";
+                listing.MarketArea.Zone = "Quarteira";
+            }
+
+            var subjects = ListingQuality.UsableSubjects(onlyZone).Select(x => x.Subject).ToList();
+
+            Assert.Empty(ValuationModel.CatchAllAreasIn(subjects));
+        }
+
+        // ---------- The same flat, advertised twice ----------
+
+        [Fact]
+        public void UsableSubjects_SameFlatAdvertisedTwice_IsCountedOnce()
+        {
+            // Agencies re-advertise each other's stock. Counted twice, a copy pulls the fit toward
+            // whatever it is, and the ten "nearest neighbours" can be one advert ten times.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            listings.Add(CopyOfTheSameFlat(listings[0], listingId: 90_001));
+
+            Assert.Equal(200, ListingQuality.UsableSubjects(listings, out var collapsed).Count);
+            Assert.Equal(1, collapsed);
+        }
+
+        [Fact]
+        public void UsableSubjects_UnitsOfOneDevelopmentAtTheSamePrice_AreAllKept()
+        {
+            // A development advertising its units shares a price and a floor area but not a
+            // position, and those are real separate flats. On this data 1,625 of 1,823 same-price
+            // groups are that rather than re-advertisements, so a key without the coordinates
+            // would delete most of a development every time.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var firstUnit = CopyOfTheSameFlat(listings[0], listingId: 90_001);
+            var secondUnit = CopyOfTheSameFlat(listings[0], listingId: 90_002);
+
+            firstUnit.Latitude = 37.15m;
+            firstUnit.Longitude = -8.15m;
+            secondUnit.Latitude = 37.15m;
+            secondUnit.Longitude = -8.1501m;     // next door, same asking price
+
+            listings.Add(firstUnit);
+            listings.Add(secondUnit);
+
+            Assert.Equal(202, ListingQuality.UsableSubjects(listings, out var collapsed).Count);
+            Assert.Equal(0, collapsed);
+        }
+
         // ---------- Helpers ----------
+
+        /// <summary>
+        /// The same property re-advertised: every field a duplicate would share, under a new id.
+        /// </summary>
+        private static PropertyListing CopyOfTheSameFlat(PropertyListing original, int listingId)
+        {
+            var snapshot = original.ListingSnapshots.First();
+
+            return new PropertyListing
+            {
+                Id = listingId,
+                MarketAreaId = original.MarketAreaId,
+                MarketArea = original.MarketArea,
+                Typology = original.Typology,
+                PropertyType = original.PropertyType,
+                Condition = original.Condition,
+                AreaM2 = original.AreaM2,
+                Bathrooms = original.Bathrooms,
+                Latitude = original.Latitude,
+                Longitude = original.Longitude,
+                ListingSnapshots = new List<ListingSnapshot>
+                {
+                    new()
+                    {
+                        PricePerM2 = snapshot.PricePerM2,
+                        Price = snapshot.Price,
+                        SnapshotDateUtc = snapshot.SnapshotDateUtc,
+                    },
+                },
+            };
+        }
+
+        /// <summary>
+        /// The same market <see cref="Area"/> builds, moved somewhere of its own. The shared
+        /// builder stacks every area on one spot, which is fine while only the location column is
+        /// under test and useless once the coordinates are the thing being tested.
+        /// </summary>
+        private static List<PropertyListing> AreaAt(
+            int areaId, string district, string municipality, int count, decimal pricePerM2,
+            decimal latitude, decimal longitude)
+        {
+            var listings = Area(areaId, district, municipality, count, pricePerM2);
+
+            for (var i = 0; i < listings.Count; i++)
+            {
+                // Roughly 20m a step, so the area covers a few hundred metres and every listing
+                // in it is close enough to vote on which zone a property standing there is in.
+                listings[i].Latitude = latitude + (i % 20 * 0.0002m);
+                listings[i].Longitude = longitude + (i % 17 * 0.0002m);
+            }
+
+            return listings;
+        }
 
         /// <summary>
         /// The amount a feature worth <paramref name="percent"/> should account for: what

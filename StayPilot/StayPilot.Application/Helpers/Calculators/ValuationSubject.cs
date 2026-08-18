@@ -24,6 +24,16 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <inheritdoc cref="District"/>
         public string Municipality { get; set; } = string.Empty;
 
+        /// <summary>
+        /// The town and the zone within it. Carried only so the fit can spot the areas that are
+        /// not really places - see <see cref="ValuationModel.CatchAllAreasIn"/>. Empty on an owned
+        /// property, which knows only its area id; the fit looks those up by id instead.
+        /// </summary>
+        public string Town { get; set; } = string.Empty;
+
+        /// <inheritdoc cref="Town"/>
+        public string Zone { get; set; } = string.Empty;
+
         /// <summary>Number of rooms, Portuguese T-style (T0, T1, T2...).</summary>
         public Typology Typology { get; set; }
 
@@ -199,6 +209,8 @@ namespace StayPilot.Application.Helpers.Calculators
                 // mean "unknown", which the location fallback already handles.
                 District = listing.MarketArea?.District ?? string.Empty,
                 Municipality = listing.MarketArea?.Municipality ?? string.Empty,
+                Town = listing.MarketArea?.Town ?? string.Empty,
+                Zone = listing.MarketArea?.Zone ?? string.Empty,
                 Typology = listing.Typology,
                 PropertyType = listing.PropertyType,
                 Condition = listing.Condition,
@@ -338,19 +350,77 @@ namespace StayPilot.Application.Helpers.Calculators
         public static List<(ValuationSubject Subject, double LogPricePerM2)> UsableSubjects(
             IEnumerable<PropertyListing> listings)
         {
-            var usable = new List<(ValuationSubject, double)>();
+            return UsableSubjects(listings, out _);
+        }
+
+        /// <inheritdoc cref="UsableSubjects(IEnumerable{PropertyListing})"/>
+        /// <param name="duplicatesCollapsed">
+        /// How many admitted rows turned out to be re-advertisements of a property already in the
+        /// list. Worth watching: a jump means the scraper started collecting the same stock twice.
+        /// </param>
+        public static List<(ValuationSubject Subject, double LogPricePerM2)> UsableSubjects(
+            IEnumerable<PropertyListing> listings, out int duplicatesCollapsed)
+        {
+            var usable = new List<PropertyListing>();
 
             foreach (var listing in listings)
             {
-                var snapshot = NewestSnapshot(listing);
-
-                if (!IsUsable(listing, snapshot))
-                    continue;
-
-                usable.Add((ValuationSubject.FromListing(listing), Math.Log((double)snapshot!.PricePerM2)));
+                if (IsUsable(listing, NewestSnapshot(listing)))
+                    usable.Add(listing);
             }
 
-            return usable;
+            // Admission first, then duplicates: done the other way round, a broken row could be
+            // the copy we keep and the sound one the copy we throw away.
+            var distinct = DistinctProperties(usable);
+
+            duplicatesCollapsed = usable.Count - distinct.Count;
+
+            return distinct
+                .Select(x => (ValuationSubject.FromListing(x), Math.Log((double)NewestSnapshot(x)!.PricePerM2)))
+                .ToList();
+        }
+
+        /// <summary>
+        /// One row per physical property. Agencies re-advertise each other's stock, and the same
+        /// flat under two URLs is counted twice by everything downstream: both fits minimise
+        /// SQUARED error, so copies pull coefficients toward whatever they are, and the "ten
+        /// nearest neighbours" can be the same advert ten times - which is how a valuation
+        /// reports High confidence off one flat.
+        ///
+        /// Deliberately NOT collapsed: a development advertising many units at one price. Those
+        /// rows share a price and a floor area but sit at different coordinates, and they are real
+        /// separate flats - measured on this data, 1,625 of 1,823 same-price groups are that
+        /// rather than re-advertisements. They are still only one price DECISION, so they
+        /// over-weight the fit; that is a weighting problem, not a duplicate one, and deleting
+        /// them would be throwing away real market evidence to fix it.
+        /// </summary>
+        public static List<PropertyListing> DistinctProperties(IEnumerable<PropertyListing> listings)
+        {
+            return listings
+                .GroupBy(DuplicateKeyOf)
+                .Select(x => x.OrderBy(listing => listing.Id).First())
+                .ToList();
+        }
+
+        /// <summary>
+        /// What makes two adverts the same property: same place, same layout, same floor area,
+        /// same asking price, and the same point on the map. The coordinates are what separate a
+        /// re-advertisement from a neighbour who happens to be asking a round number - without
+        /// them this key merges genuinely different flats, because asking prices cluster hard on
+        /// figures like EUR 350,000.
+        ///
+        /// A row with no price, or no coordinates, keeps a key of its own and is never merged:
+        /// we cannot tell whether it is a copy, and guessing loses real listings.
+        /// </summary>
+        private static string DuplicateKeyOf(PropertyListing listing)
+        {
+            var price = NewestSnapshot(listing)?.Price;
+
+            if (price is null || listing.Latitude is null || listing.Longitude is null)
+                return $"listing:{listing.Id}";
+
+            return $"{listing.MarketAreaId}|{(int)listing.Typology}|{listing.AreaM2}|{price.Value}|" +
+                   $"{listing.Latitude.Value}|{listing.Longitude.Value}";
         }
     }
 }

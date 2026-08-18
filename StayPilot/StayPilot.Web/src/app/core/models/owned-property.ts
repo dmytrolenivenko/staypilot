@@ -123,7 +123,12 @@ export interface OwnedPropertyAnalysisResponse {
   averagePrice: number;
 
   confidenceLevel: ValuationConfidence;
+
+  // compsCount is what the numbers rest on (the nearest few); comparablesFound is how many the
+  // search turned up in total. Quoting the second next to statistics drawn from the first is how
+  // a figure built on 25 adverts came to look like it rested on 317.
   compsCount: number;
+  comparablesFound: number;
 
   marketRatePerM2: number;
   estimateBeforeAdjustments: number;
@@ -134,6 +139,16 @@ export interface OwnedPropertyAnalysisResponse {
   averageCompPricePerM2: number;
 
   adjustments: ValuationAdjustment[];
+
+  // Only the nearest few of compsCount — the statistics above are over all of them.
   comps: ValuationComp[];
+
+  // Which zone the price was actually taken from. The coordinates decide this, so it does not
+  // always match the zone stored on the property — and when it doesn't, that is the single most
+  // useful thing on the screen for explaining a surprising number.
+  locatedMarketAreaId: number;
+  locatedAreaName: string;
+  locatedByCoordinates: boolean;
+
   equity: EquitySummary;
 }

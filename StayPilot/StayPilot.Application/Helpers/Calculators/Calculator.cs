@@ -171,6 +171,42 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
+        /// The middle value when some observations count for more than others: half the weight
+        /// below it, half above. Used to summarise comparables, where one 200m away says far more
+        /// about a property than one 2km away, and a plain median pretends they say the same.
+        /// </summary>
+        public static decimal WeightedMedian(IReadOnlyList<(decimal Value, double Weight)> weighted)
+        {
+            if (weighted.Count == 0)
+                return 0;
+
+            var ordered = weighted.OrderBy(x => x.Value).ToList();
+            var half = ordered.Sum(x => x.Weight) / 2;
+            var running = 0d;
+
+            foreach (var (value, weight) in ordered)
+            {
+                running += weight;
+
+                if (running >= half)
+                    return value;
+            }
+
+            return ordered[^1].Value;
+        }
+
+        /// <inheritdoc cref="WeightedMedian"/>
+        public static decimal WeightedAverage(IReadOnlyList<(decimal Value, double Weight)> weighted)
+        {
+            var totalWeight = weighted.Sum(x => x.Weight);
+
+            if (weighted.Count == 0 || totalWeight <= 0)
+                return 0;
+
+            return weighted.Sum(x => x.Value * (decimal)x.Weight) / (decimal)totalWeight;
+        }
+
+        /// <summary>
         /// Value at a percentile (0.0-1.0) of an ascending-sorted list, interpolated.
         /// Used instead of raw min/max so one freak listing can't define a range.
         /// </summary>

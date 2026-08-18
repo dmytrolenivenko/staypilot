@@ -14,7 +14,8 @@ namespace StayPilot.Application.Contracts.Response
 
         // confidence (the "how much to trust it" we discussed)
         public ValuationConfidence ConfidenceLevel { get; set; }  // High / Medium / Low  (new enum)
-        public int CompsCount { get; set; }                       // how many comps backed it
+        public int CompsCount { get; set; }                       // how many comps the numbers below actually rest on
+        public int ComparablesFound { get; set; }                 // how many the search turned up, before only the nearest were used
 
         // the math trail
         public decimal MarketRatePerM2 { get; set; }  // median €/m² across the comps
@@ -29,7 +30,14 @@ namespace StayPilot.Application.Contracts.Response
 
         public List<ValuationAdjustment> Adjustments { get; set; } = new List<ValuationAdjustment>();
 
-        public List<ValuationComp> Comps { get; set; } = new List<ValuationComp>();
+        public List<ValuationComp> Comps { get; set; } = new List<ValuationComp>();  // the nearest few of CompsCount, for the table
+
+        // where the price was taken from — the coordinates decide this, and they do not always
+        // agree with the zone on the property. Shown so a surprising number can be traced to the
+        // place it was priced as, instead of looking like the model changing its mind.
+        public int LocatedMarketAreaId { get; set; }
+        public string LocatedAreaName { get; set; } = string.Empty;
+        public bool LocatedByCoordinates { get; set; }  // true = the coordinates overrode the stored zone
 
         public EquitySummary Equity { get; set; } = new EquitySummary();
 

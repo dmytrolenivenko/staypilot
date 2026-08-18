@@ -286,13 +286,13 @@ namespace StayPilot.Infrastructure.Repositories
 
         /// <summary>
         /// Finds properties that can be compared to the given one: same property type,
-        /// a room layout within one step (a T2 is a fair comp for a T1), and either in the
-        /// same market area or within radiusMeters of the given lat/lon. Only keeps a
-        /// listing if its newest snapshot is not older than the cutoff.
-        /// Returns at most 100, best first: same market area, then nearest.
+        /// a room layout within one step (a T2 is a fair comp for a T1), a floor area within
+        /// a quarter either way, and either in the same market area or within radiusMeters of
+        /// the given lat/lon. Only keeps a listing if its newest snapshot is not older than
+        /// the cutoff. Ordered best first: same market area, then nearest.
         /// When the property has no coordinates it falls back to the market area alone.
         /// </summary>
-        public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, decimal? latitude, decimal? longitude, int radiusMeters, int months)
+        public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months)
         {
             var query = _context.PropertyListings.AsQueryable();
 
@@ -310,7 +310,31 @@ namespace StayPilot.Infrastructure.Repositories
             // To avoid corrupted data, do not return tiny areasM2 (30 m2)
             query = query.Where(x => x.AreaM2 > 30);
 
-            const int maxComps = 100;
+            // Within a quarter of this property's size. Price per m2 falls steadily as flats get
+            // bigger, so an unbanded set answers a different question than the one asked: a 45 m2
+            // flat was being compared against 60-90 m2 ones, and their EUR/m2 is not its EUR/m2.
+            // The band is what makes "median comp EUR/m2" a number worth putting on screen.
+            const double areaBand = 0.25;
+
+            var smallestComparableArea = (int)Math.Floor(areaM2 * (1 - areaBand));
+            var largestComparableArea = (int)Math.Ceiling(areaM2 * (1 + areaBand));
+
+            query = query.Where(x => x.AreaM2 >= smallestComparableArea && x.AreaM2 <= largestComparableArea);
+
+            // Within a factor of two of this property's distance to the beach. In a beach town the
+            // radius alone is not comparability: measured around one Quarteira flat, 65-92 m2 flats
+            // inside the same 2km circle asked EUR 8,223/m2 within 300m of the sand and EUR 5,619
+            // past 800m. Comparing a flat 615m out against the seafront is how "comps alone" came
+            // back at EUR 533,000 for a 73 m2 T2. Skipped when the distance is unknown - we cannot
+            // band on something we never measured.
+            if (distanceToBeachMeters is > 0)
+            {
+                var nearestComparableBeach = distanceToBeachMeters.Value / 2;
+                var farthestComparableBeach = distanceToBeachMeters.Value * 2;
+
+                query = query.Where(x => x.DistanceToBeachMeters >= nearestComparableBeach
+                                      && x.DistanceToBeachMeters <= farthestComparableBeach);
+            }
 
             IOrderedQueryable<PropertyListing> ordered;
 
@@ -353,10 +377,12 @@ namespace StayPilot.Infrastructure.Repositories
                 ordered = query.OrderBy(x => Math.Abs(x.AreaM2 - areaM2));
             }
 
-            // ThenBy(Id) keeps the "top N" deterministic when several comps tie.
+            // Every comp that fits, not a top slice of them: the old cap of 100 quietly decided
+            // WHICH comps counted, because the ordering puts the whole market area ahead of
+            // anything outside it. The band above is what keeps this set small enough to be
+            // worth returning in full. ThenBy(Id) only settles ties, so the order is stable.
             var items = await ordered
                 .ThenBy(x => x.Id)
-                .Take(maxComps)
                 .Include(x => x.MarketArea)
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
                 .ToListAsync();
