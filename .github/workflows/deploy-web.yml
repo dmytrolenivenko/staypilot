@@ -47,7 +47,7 @@ jobs:
                 # Why: a stored key goes stale the moment the site is recreated.
                 # This always gets the current one, so there is nothing to rotate.
                 TOKEN=$(az staticwebapp secrets list \
-                  --name stapp-staypilot-dev \
+                  --name web-staypilot-dev \
                   --resource-group rg-staypilot-dev \
                   --query "properties.apiKey" -o tsv)
                 echo "::add-mask::$TOKEN"                 # hide it everywhere in the logs
