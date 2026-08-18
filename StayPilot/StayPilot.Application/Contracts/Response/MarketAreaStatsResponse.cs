@@ -47,15 +47,62 @@ namespace StayPilot.Application.Contracts.Response
         public int ProjectCount { get; set; }
 
         /// <summary>
+        /// Of <see cref="ProjectCount"/>, how many the advert itself called out as needing work.
+        /// The rest were caught by a poor energy grade. The split matters: an agent typing
+        /// "needs renovation" and a certificate reading E are not the same claim.
+        /// </summary>
+        public int ProjectByConditionCount { get; set; }
+
+        /// <inheritdoc cref="ProjectByConditionCount"/>
+        public int ProjectByEnergyCount { get; set; }
+
+        /// <summary>
         /// Middle price for each square meter of the project stock. Null when there is too little.
         /// </summary>
         public decimal? ProjectMedianPricePerM2 { get; set; }
+
+        /// <summary>
+        /// Middle floor area of the project stock, so the per-square-meter discount can be turned
+        /// into a sum of money for a property of a realistic size.
+        /// </summary>
+        public decimal? ProjectMedianAreaM2 { get; set; }
+
+        /// <summary>
+        /// The middle half of the project asking prices for each square meter. Together with the
+        /// move-in pair below, this is what says whether the discount is a finding or a rounding.
+        /// </summary>
+        public decimal? ProjectP25PricePerM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectP25PricePerM2"/>
+        public decimal? ProjectP75PricePerM2 { get; set; }
 
         /// <summary>How many listings here are ready to move into.</summary>
         public int MoveInCount { get; set; }
 
         /// <inheritdoc cref="ProjectMedianPricePerM2"/>
         public decimal? MoveInMedianPricePerM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectMedianAreaM2"/>
+        public decimal? MoveInMedianAreaM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectP25PricePerM2"/>
+        public decimal? MoveInP25PricePerM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectP25PricePerM2"/>
+        public decimal? MoveInP75PricePerM2 { get; set; }
+
+        /// <summary>
+        /// Listings here that are neither a project nor clearly move-in ready. They are left out
+        /// of both sides; showing the count is what stops the discount looking like it was
+        /// measured over the whole market when it was measured over part of it.
+        /// </summary>
+        public int UnclassifiedCount { get; set; }
+
+        /// <summary>
+        /// How much the renovation discount deserves to be trusted, from the sample sizes and
+        /// from how far the two spreads sit apart. Null when there is no discount to judge.
+        /// </summary>
+        public RenovationEvidenceResponse? RenovationEvidence { get; set; }
 
         /// <summary>
         /// How much cheaper a square meter is if it needs work, in euros. Positive means projects

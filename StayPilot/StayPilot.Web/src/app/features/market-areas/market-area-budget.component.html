@@ -1,96 +1,214 @@
-<section class="panel">
-  <div class="panel-head">
-    <h1>What your money buys</h1>
-    <span class="hint">{{ sortedAreas().length }} places within reach</span>
-  </div>
+<div class="page">
+  <app-page-header
+    title="What money buys"
+    sub="The other way round from every property portal: put in what you have, and see what it actually gets you in each place."
+  />
 
-  <p class="hint">
-    The other way round from every property portal: instead of filtering places by price, put in
-    what you have and see <strong>what it actually gets you</strong> in each one. Same money, very
-    different homes.
-  </p>
-  <p class="hint">
-    &ldquo;Best fit&rdquo; is the most rooms a place usually sells for your budget, judged on what
-    that typology <em>typically</em> costs there &mdash; not on the cheapest advert in it. One
-    bargain T3 in Cascais does not make Cascais a place where €300,000 buys a T3. Places where the
-    budget reaches nothing are left out rather than shown empty.
-  </p>
-  <p class="hint">
-    The three number columns will not multiply out, and that is correct: each is its own middle
-    value taken separately, and the middle price is not the middle size times the middle rate. Read
-    each as &ldquo;typically about this&rdquo;, not as one worked example.
-  </p>
-
-  <div class="toolbar">
-    <label class="control">
-      Budget €
-      <input
-        class="budget-input"
-        type="number"
-        min="1000"
-        step="10000"
-        [ngModel]="budget()"
-        (ngModelChange)="changeBudget($event)"
-      />
-    </label>
-
-    <label class="control">
-      Level
-      <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
-        @for (option of levels; track option) {
-          <option [ngValue]="option">{{ option }}</option>
-        }
-      </select>
-    </label>
-
-    <label class="control">
-      Min listings
-      <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
-    </label>
-
-    @if (calculatedAtUtc()) {
-      <span class="hint">Worked out {{ calculatedAtUtc() | date:'medium' }}</span>
-    }
-  </div>
-
-  @if (loading()) {
-    <p class="hint">Loading...</p>
-  } @else if (error()) {
-    <p class="error">{{ error() }}</p>
-  } @else if (sortedAreas().length === 0) {
-    <p class="hint">
-      Nothing is within €{{ budget() | number:'1.0-0' }} at {{ level() }} level. Raise the budget,
-      try a wider level, or lower Min listings.
+  <app-explainer>
+    <p>
+      <strong>Best fit</strong> is the most rooms a place usually sells for your budget, judged on
+      what that typology <em>typically</em> costs there &mdash; not on the cheapest advert in it. One
+      bargain T3 in Cascais does not make Cascais a place where €300,000 buys a T3. Places where the
+      budget reaches nothing are left out rather than shown empty.
     </p>
-  } @else {
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th class="rank">#</th>
-          <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
-          <th class="sortable" (click)="toggleSort('typology')">Best fit{{ arrow('typology') }}</th>
-          <th class="num sortable" (click)="toggleSort('area')">Median m²{{ arrow('area') }}</th>
-          <th class="num sortable" (click)="toggleSort('price')">Typical price{{ arrow('price') }}</th>
-          <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
-          <th class="num">Listings</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (area of sortedAreas(); track area.displayName; let i = $index) {
-          <tr>
-            <td class="rank">{{ i + 1 }}</td>
-            <td>{{ area.displayName }}</td>
-            <td><span class="typology">{{ area.bestTypology }}</span></td>
-            <td class="num">{{ area.medianAreaM2 | number:'1.0-0' }}</td>
-            <td class="num">{{ area.medianPrice | number:'1.0-0' }}</td>
-            <td class="num">{{ area.medianPricePerM2 | number:'1.0-0' }}</td>
-            <td class="num">
-              {{ area.typologyListingCount }}
-              <span class="muted">of {{ area.listingCount }}</span>
-            </td>
-          </tr>
+    <p>
+      <strong>Min rooms</strong> turns the question from &ldquo;where does my money buy
+      something&rdquo; into &ldquo;where does it buy the T3 I actually need&rdquo;, which has far
+      fewer answers and is the one worth acting on. <strong>Stretch</strong> answers the question
+      people really have at the edge of their means &mdash; and what would a little more get me.
+      Places reached only by the stretch are marked <span class="tag tag-muted">stretch</span>,
+      never quietly mixed in with the ones that fit.
+    </p>
+    <p>
+      Click any row to see <strong>every</strong> typology the budget reaches there, not only the
+      biggest. The headline answer assumes more rooms is what you want, and often it is not: the
+      same money that reaches a small T3 also reaches a larger, cheaper-per-metre T2, and that
+      trade is the actual decision.
+    </p>
+    <p>
+      The three number columns will not multiply out, and that is correct: each is its own middle
+      value taken separately, and the middle price is not the middle size times the middle rate. Read
+      each as &ldquo;typically about this&rdquo;, not as one worked example.
+    </p>
+  </app-explainer>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Scope</span>
+      @if (calculatedAtUtc()) {
+        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+      }
+    </div>
+    <div class="card-body">
+      <div class="toolbar">
+        <label class="control">
+          Budget €
+          <input
+            class="budget-input"
+            type="number"
+            min="1000"
+            step="10000"
+            [ngModel]="budget()"
+            (ngModelChange)="changeBudget($event)"
+          />
+        </label>
+
+        <label class="control">
+          Stretch
+          <select [ngModel]="stretchPercent()" (ngModelChange)="changeStretch($event)">
+            @for (option of stretchChoices; track option) {
+              <option [ngValue]="option">{{ option === 0 ? 'None' : '+' + option + '%' }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="control">
+          Min rooms
+          <select [ngModel]="minTypology()" (ngModelChange)="changeMinTypology($event)">
+            <option value="">Any</option>
+            @for (option of typologies; track option) {
+              <option [value]="option">{{ option }} or more</option>
+            }
+          </select>
+        </label>
+
+        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
+
+        <label class="control">
+          Level
+          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+            @for (option of levels; track option) {
+              <option [ngValue]="option">{{ levelName(option) }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="control">
+          Min listings
+          <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Within reach</span>
+      <span class="meta">
+        {{ sortedAreas().length }} places
+        @if (stretchPercent() > 0) {
+          · up to €{{ reach() | number: '1.0-0' }} with the stretch
+          @if (stretchedCount() > 0) {
+            · {{ stretchedCount() }} need it
+          }
         }
-      </tbody>
-    </table>
-  }
-</section>
+      </span>
+    </div>
+
+    @if (loading()) {
+      <p class="empty">Loading…</p>
+    } @else if (error()) {
+      <div class="card-body"><p class="error">{{ error() }}</p></div>
+    } @else if (sortedAreas().length === 0) {
+      <p class="empty">
+        Nothing is within €{{ reach() | number: '1.0-0' }}
+        @if (minTypology()) {
+          for a {{ minTypology() }} or bigger
+        }
+        at {{ levelName(level()).toLowerCase() }} level. Raise the budget, add a stretch, drop the
+        room floor, widen the area, or lower Min listings.
+      </p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="rank">#</th>
+              <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
+              <th class="sortable" (click)="toggleSort('typology')">Best fit{{ arrow('typology') }}</th>
+              <th class="num sortable" (click)="toggleSort('area')">Median m²{{ arrow('area') }}</th>
+              <th class="num sortable" (click)="toggleSort('price')">Typical price{{ arrow('price') }}</th>
+              <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+              <th class="num sortable" (click)="toggleSort('listings')">Listings{{ arrow('listings') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (area of sortedAreas(); track area.displayName; let i = $index) {
+              <tr class="drillable" (click)="toggleExpanded(area.displayName)">
+                <td class="rank">{{ i + 1 }}</td>
+                <td>
+                  <app-place-name
+                    [level]="area.level"
+                    [district]="area.district"
+                    [municipality]="area.municipality"
+                    [town]="area.town"
+                  >
+                    @if (area.needsStretch) {
+                      <span class="tag tag-muted" title="Only in reach because the budget was stretched">
+                        stretch
+                      </span>
+                    }
+                  </app-place-name>
+                </td>
+                <td><span class="tag typology">{{ area.bestTypology }}</span></td>
+                <td class="num">{{ area.medianAreaM2 | number: '1.0-0' }}</td>
+                <td class="num">{{ area.medianPrice | number: '1.0-0' }}</td>
+                <td class="num">{{ area.medianPricePerM2 | number: '1.0-0' }}</td>
+                <td class="num">
+                  {{ area.typologyListingCount }}
+                  <span class="faint">of {{ area.listingCount }}</span>
+                </td>
+              </tr>
+
+              @if (isExpanded(area.displayName)) {
+                <tr class="expansion">
+                  <td colspan="7">
+                    @if (area.affordableTypologies.length <= 1) {
+                      <p class="note-inline">
+                        A {{ area.bestTypology }} is the only layout the budget reaches here, so
+                        there is no trade to weigh up.
+                      </p>
+                    } @else {
+                      <span class="expansion-title">
+                        Everything €{{ reach() | number: '1.0-0' }} reaches in
+                        {{ area.displayName }}
+                      </span>
+
+                      <table class="data-table nested">
+                        <thead>
+                          <tr>
+                            <th>Layout</th>
+                            <th class="num">Median m²</th>
+                            <th class="num">Typical price</th>
+                            <th class="num">€/m²</th>
+                            <th class="num">Listings</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (option of area.affordableTypologies; track option.typology) {
+                            <tr [class.best]="option.typology === area.bestTypology">
+                              <td>
+                                <span class="tag typology">{{ option.typology }}</span>
+                                @if (option.typology === area.bestTypology) {
+                                  <span class="tag tag-quiet">best fit</span>
+                                }
+                              </td>
+                              <td class="num">{{ option.medianAreaM2 | number: '1.0-0' }}</td>
+                              <td class="num">{{ option.medianPrice | number: '1.0-0' }}</td>
+                              <td class="num">{{ option.medianPricePerM2 | number: '1.0-0' }}</td>
+                              <td class="num">{{ option.listingCount }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

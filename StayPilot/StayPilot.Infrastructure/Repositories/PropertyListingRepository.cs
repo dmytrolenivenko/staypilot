@@ -68,6 +68,68 @@ namespace StayPilot.Infrastructure.Repositories
         }
 
         /// <summary>
+        /// Turns a blank filter into null, so "not chosen" is one value and not three.
+        /// </summary>
+        private static string? NullIfBlank(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        /// <summary>
+        /// Works out the middle point of a place's listings, to use as the centre of a radius
+        /// search. Returns null when no radius was asked for, when no place was chosen (a
+        /// circle needs a centre), or when nothing advertised there carries coordinates —
+        /// in every one of those cases the caller falls back to matching the place exactly.
+        /// The middle point of the adverts, not of the place: we hold no real borders, which
+        /// is the same approximation the neighbour gaps screen is built on.
+        /// </summary>
+        private async Task<(decimal Latitude, decimal Longitude)?> GetPlaceCentreAsync(string? district, string? municipality, string? town, string? zone, double? withinKm)
+        {
+            if (withinKm is not > 0)
+            {
+                return null;
+            }
+
+            if (district is null && municipality is null && town is null && zone is null)
+            {
+                return null;
+            }
+
+            var placed = _context.PropertyListings.Where(x => x.Latitude != null && x.Longitude != null);
+
+            if (district is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.District == district);
+            }
+
+            if (municipality is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.Municipality == municipality);
+            }
+
+            if (town is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.Town == town);
+            }
+
+            if (zone is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.Zone == zone);
+            }
+
+            // Averaging a nullable column gives null back on an empty set instead of throwing.
+            var latitude = await placed.AverageAsync(x => x.Latitude);
+            var longitude = await placed.AverageAsync(x => x.Longitude);
+
+            if (latitude is null || longitude is null)
+            {
+                return null;
+            }
+
+            return (latitude.Value, longitude.Value);
+        }
+
+        /// <summary>
         /// Searches properties using the filters in the request, one page at a time.
         /// Returns the properties for the page and the total count of matches.
         /// </summary>
@@ -78,24 +140,65 @@ namespace StayPilot.Infrastructure.Repositories
 
             #region Filters
 
-            if (!string.IsNullOrWhiteSpace(request.District))
-            {
-                query = query.Where(x => x.MarketArea.District == request.District);
-            }
+            // Blank means "not chosen", and null reads better than "" in the query below.
+            var district = NullIfBlank(request.District);
+            var municipality = NullIfBlank(request.Municipality);
+            var town = NullIfBlank(request.Town);
+            var zone = NullIfBlank(request.Zone);
 
-            if (!string.IsNullOrWhiteSpace(request.Municipality))
-            {
-                query = query.Where(x => x.MarketArea.Municipality == request.Municipality);
-            }
+            // With a radius the place stops being a border and becomes a circle around it,
+            // so a search for Lisboa also brings back Oeiras and Amadora. Without one, the
+            // place is matched exactly, level by level, as it always was.
+            var centre = await GetPlaceCentreAsync(district, municipality, town, zone, request.WithinKm);
 
-            if (!string.IsNullOrWhiteSpace(request.Town))
+            if (centre is null)
             {
-                query = query.Where(x => x.MarketArea.Town == request.Town);
-            }
+                if (district is not null)
+                {
+                    query = query.Where(x => x.MarketArea.District == district);
+                }
 
-            if (!string.IsNullOrWhiteSpace(request.Zone))
+                if (municipality is not null)
+                {
+                    query = query.Where(x => x.MarketArea.Municipality == municipality);
+                }
+
+                if (town is not null)
+                {
+                    query = query.Where(x => x.MarketArea.Town == town);
+                }
+
+                if (zone is not null)
+                {
+                    query = query.Where(x => x.MarketArea.Zone == zone);
+                }
+            }
+            else
             {
-                query = query.Where(x => x.MarketArea.Zone == request.Zone);
+                var latitude = centre.Value.Latitude;
+                var longitude = centre.Value.Longitude;
+
+                // Degrees, not metres, because that is what the columns hold. One degree of
+                // latitude is always about 111320 m; degrees of longitude get shorter away
+                // from the equator, so they are scaled by cos(latitude). Same conversion as
+                // the comparables query - keep the two in step if either ever changes.
+                const double metersPerDegree = 111_320;
+
+                var longitudeScale = (decimal)Math.Cos((double)latitude * Math.PI / 180);
+                var radiusDegrees = (decimal)(request.WithinKm!.Value * 1000 / metersPerDegree);
+                var radiusDegreesSquared = radiusDegrees * radiusDegrees;
+
+                // Inside the place, or close enough to it on the map. Distances stay squared
+                // so there is no square root to take; it does not change what falls inside.
+                // The place half also keeps listings with no coordinates, which a circle
+                // alone would silently drop.
+                query = query.Where(x =>
+                    ((district == null || x.MarketArea.District == district)
+                        && (municipality == null || x.MarketArea.Municipality == municipality)
+                        && (town == null || x.MarketArea.Town == town)
+                        && (zone == null || x.MarketArea.Zone == zone))
+                    || (x.Latitude - latitude) * (x.Latitude - latitude)
+                     + (x.Longitude - longitude) * longitudeScale * (x.Longitude - longitude) * longitudeScale <= radiusDegreesSquared);
             }
 
             if (request.PropertyType is not null)
@@ -400,6 +503,83 @@ namespace StayPilot.Infrastructure.Repositories
             return await _context.PropertyListings
                 .Include(x => x.MarketArea) // needed so the premium calc can filter by town name
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Reads one slice of the market for the overview screen: a place, optionally narrowed to
+        /// one property type and one room layout, with just the newest snapshot of each listing.
+        ///
+        /// The whole slice, not a page of it - the caller takes medians and a distribution over it.
+        /// The market area is filtered on but not loaded: the overview counts and prices listings,
+        /// it never prints their address, so pulling the area rows would be paid for nothing.
+        /// </summary>
+        public async Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology)
+        {
+            var query = _context.PropertyListings.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(district))
+            {
+                query = query.Where(x => x.MarketArea.District == district);
+            }
+
+            if (!string.IsNullOrWhiteSpace(municipality))
+            {
+                query = query.Where(x => x.MarketArea.Municipality == municipality);
+            }
+
+            if (!string.IsNullOrWhiteSpace(town))
+            {
+                query = query.Where(x => x.MarketArea.Town == town);
+            }
+
+            if (propertyType is not null)
+            {
+                query = query.Where(x => x.PropertyType == propertyType);
+            }
+
+            if (typology is not null)
+            {
+                query = query.Where(x => x.Typology == typology);
+            }
+
+            return await query
+                // The area comes along because the overview now also breaks the slice into the
+                // places inside it, and that needs a district/município/freguesia per listing.
+                .Include(x => x.MarketArea)
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Reads one place with the full price history of every listing in it.
+        ///
+        /// Deliberately unpaged and unfiltered beyond the place: the two things this feeds -
+        /// how long homes sit, and which way prices are moving - are both properties of the
+        /// whole place, and a page of twenty would describe the page.
+        /// </summary>
+        public async Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town)
+        {
+            var query = _context.PropertyListings.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(district))
+            {
+                query = query.Where(x => x.MarketArea.District == district);
+            }
+
+            if (!string.IsNullOrWhiteSpace(municipality))
+            {
+                query = query.Where(x => x.MarketArea.Municipality == municipality);
+            }
+
+            if (!string.IsNullOrWhiteSpace(town))
+            {
+                query = query.Where(x => x.MarketArea.Town == town);
+            }
+
+            return await query
+                // Every snapshot, not just the newest - see the interface for why.
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc))
                 .ToListAsync();
         }
     }

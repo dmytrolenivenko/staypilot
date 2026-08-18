@@ -1,98 +1,120 @@
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin: 0.75rem 0;
-}
-
-.control {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.control input[type='number'] {
-  margin: 0;
-  width: 5rem;
-}
-
 .cost-input {
-  width: 6rem;
+  width: 6.5rem;
 }
 
-/* Clickable, sortable column headers. Same behaviour as the listing browser. */
-.data-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-}
-
-.data-table th.sortable:hover {
-  color: var(--text);
-}
-
-.num {
-  text-align: right;
-}
-
-.rank {
-  color: var(--text-muted);
-  width: 2rem;
-}
-
-/* Measured against estimated. The dotted underline on the cost is the reminder that this one
-   column is a guess you typed, not something read off the market. */
+/* Measured against estimated. The dotted underline on the cost is the reminder
+   that this one column is a guess you typed, not something read off the market. */
 .measured {
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .estimated {
-  border-bottom: 1px dotted var(--text-muted);
+  border-bottom: 1px dotted var(--text-faint);
   color: var(--text-muted);
 }
 
-.verdict {
-  padding: 0.1rem 0.45rem;
-  border: 1px solid currentColor;
-  border-radius: 0.65rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
+/* Rows open to show the working behind their discount, so they have to look clickable. */
+.drillable {
+  cursor: pointer;
 }
 
-.verdict.good {
-  color: #2e7d32;
+.drillable:hover {
+  background: var(--surface-hover);
 }
 
-.verdict.even {
-  color: var(--text-muted);
+/* --- The working panel --------------------------------------------------- */
+
+.expansion > td {
+  background: var(--surface-2);
+  padding: var(--sp-4);
 }
 
-.verdict.bad {
-  color: #b3261e;
+/* Four blocks: trust, classification, spreads, and the sum of money. The first two are narrow
+   enough to sit side by side; the last two ask for the full width. */
+.working {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-4);
 }
 
-/* Thinly evidenced rows: shown, but visibly weaker than the rest. */
-tr.thin {
-  opacity: 0.62;
+.working-block.wide {
+  grid-column: 1 / -1;
 }
 
-.thin-tag {
-  margin-left: 0.4rem;
-  padding: 0.05rem 0.35rem;
-  border: 1px solid var(--text-muted);
-  border-radius: 0.65rem;
-  color: var(--text-muted);
-  font-size: 0.7rem;
+.working-block h4 {
+  margin-bottom: var(--sp-2);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
+  letter-spacing: 0.05em;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
 }
 
-.muted {
+/* The badge and its reason on one line, so the verdict is never separated from its why. */
+.verdict-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-sm);
   color: var(--text-muted);
-  font-size: 0.8rem;
+}
+
+.note-inline {
+  margin-top: var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* --- The two spreads, on one scale --------------------------------------- */
+/* Drawn rather than described: whether the discount is real is a question about whether these
+   two bars overlap, and a percentage makes you picture what a picture can just show. */
+
+.spread-row {
+  display: grid;
+  grid-template-columns: 6rem 1fr 9rem;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.spread-label {
+  color: var(--text-muted);
+}
+
+.spread-track {
+  position: relative;
+  height: 1rem;
+  background: var(--surface-hover);
+  border-radius: 3px;
+}
+
+.spread-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  /* A floor, so a pile whose middle half is a single price is still visible as a mark. */
+  min-width: 2px;
+}
+
+.spread-bar.project {
+  background: var(--warn);
+}
+
+.spread-bar.movein {
+  background: var(--success);
+}
+
+.spread-figures {
+  text-align: right;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A checkbox in a toolbar of dropdowns: laid out along the row rather than stacked. */
+.control.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-2);
 }

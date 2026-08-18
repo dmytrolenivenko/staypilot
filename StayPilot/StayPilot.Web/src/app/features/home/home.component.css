@@ -1,42 +1,45 @@
-.lede {
-  max-width: 70ch;
-  color: var(--text-muted);
-}
-
 .module-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sp-3);
 }
 
-.module-card {
-  display: block;
+.module {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.9rem 1rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  padding: var(--sp-3) var(--sp-4);
   text-decoration: none;
   color: inherit;
-  background: var(--surface);
-  transition: border-color 0.1s ease;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
 }
 
-.module-card:hover {
+.module:hover {
   border-color: var(--accent);
+  background: var(--surface);
 }
 
-.module-card-head {
+.module-planned {
+  opacity: 0.7;
+}
+
+.module-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--sp-2);
 }
 
 .module-title {
   font-weight: 600;
+  font-size: var(--fs-sm);
 }
 
 .module-desc {
-  margin: 0.4rem 0 0;
-  font-size: 0.88rem;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
+  line-height: 1.45;
 }

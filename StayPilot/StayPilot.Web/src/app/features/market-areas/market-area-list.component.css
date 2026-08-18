@@ -1,62 +1,12 @@
-.panel-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.list-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin: 0.75rem 0;
-}
-
-.text-input {
-  margin: 0;
-  max-width: 420px;
+/* The search box takes the slack in the toolbar; the Rows select stays small. */
+.search {
   flex: 1;
+  min-width: 220px;
+  max-width: 420px;
 }
 
-.page-size {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
+/* Notes are free text — the only column allowed to wrap. */
 .notes {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-/* Paging controls under the table. */
-.pager {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 1rem;
-}
-
-/* Numbered / First / Last buttons — light by default, accent when it's the current page. */
-.page-btn {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.3rem 0.6rem;
-  min-width: 2.2rem;
-}
-
-.page-btn:hover:not(:disabled) {
-  background: var(--surface-hover);
-}
-
-.page-btn.active {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: var(--accent);
-  cursor: default;
+  white-space: normal;
+  max-width: 22rem;
 }

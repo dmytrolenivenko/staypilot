@@ -47,5 +47,20 @@ namespace StayPilot.Application.Interfaces.Services
         /// Every owned property of the user. Empty when there are none.
         /// </summary>
         Task<OwnedPropertyListResponse> GetAllOwnedPropertiesAsync();
+
+        /// <summary>
+        /// Prices every owned property in one pass, and adds what its place is doing around it:
+        /// how keen buyers are there, and where the value is heading over the next few years.
+        ///
+        /// One call rather than one per property because the valuation model is fitted over the
+        /// whole listing table - fitting once and pricing ten is the work of pricing one.
+        ///
+        /// Comes back carrying NotEnoughListingsToFitModel when there is too little market data
+        /// to price anything, and an empty list when the user simply owns nothing yet.
+        /// </summary>
+        /// <param name="radiusMeters">How far out comparable adverts still count.</param>
+        /// <param name="months">How far back a comparable advert may have last been seen.</param>
+        /// <param name="years">How many years the projections run for.</param>
+        Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync(int radiusMeters, int months, int years);
     }
 }

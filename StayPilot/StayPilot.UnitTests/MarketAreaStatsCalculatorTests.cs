@@ -418,6 +418,74 @@ namespace StayPilot.UnitTests
                 .ToList();
         }
 
+        [Fact]
+        public void Calculate_ProjectStock_SplitsWhyEachOneWasFlaggedAndCountsWhatItCouldNotJudge()
+        {
+            var listings = new List<PropertyListing>();
+
+            // Three the advert itself calls out, three caught only by a poor energy grade.
+            listings.AddRange(ThreeListings(1_500m, condition: PropertyCondition.NeedsRenovation, energyCertificate: "B"));
+            listings.AddRange(ThreeListings(1_600m, condition: PropertyCondition.Good, energyCertificate: "E"));
+
+            // Three clearly finished, and three we cannot judge at all.
+            listings.AddRange(ThreeListings(2_500m, condition: PropertyCondition.Renovated, energyCertificate: "A"));
+            listings.AddRange(ThreeListings(2_400m, condition: PropertyCondition.Used, energyCertificate: null));
+
+            var row = Row(MarketAreaStatsCalculator.Calculate(listings), AreaLevel.Town, "Faro", "Albufeira", "Guia");
+
+            Assert.Equal(6, row.ProjectCount);
+
+            // The advert's own word wins when both apply, so the two never double-count.
+            Assert.Equal(3, row.ProjectByConditionCount);
+            Assert.Equal(3, row.ProjectByEnergyCount);
+            Assert.Equal(3, row.MoveInCount);
+
+            // The whole point of this count: the discount rests on 9 of the 12 listings here, and
+            // a reader who cannot see the other 3 will trust it more than it deserves.
+            Assert.Equal(3, row.UnclassifiedCount);
+        }
+
+        [Fact]
+        public void Calculate_ProjectStock_CarriesTheSpreadAndTheSizeItWasMeasuredOn()
+        {
+            var listings = new List<PropertyListing>();
+
+            listings.AddRange(ThreeListings(1_000m, areaM2: 80, condition: PropertyCondition.NeedsRenovation));
+            listings.AddRange(ThreeListings(2_000m, areaM2: 80, condition: PropertyCondition.NeedsRenovation));
+            listings.AddRange(ThreeListings(3_000m, areaM2: 120, condition: PropertyCondition.Renovated, energyCertificate: "A"));
+
+            var row = Row(MarketAreaStatsCalculator.Calculate(listings), AreaLevel.Town, "Faro", "Albufeira", "Guia");
+
+            // Six projects at 1,000 and 2,000: the middle half runs from 1,000 to 2,000.
+            Assert.Equal(1_000m, row.ProjectP25PricePerM2);
+            Assert.Equal(2_000m, row.ProjectP75PricePerM2);
+
+            // Without the sizes the discount is a rate with nothing to multiply it by.
+            Assert.Equal(80m, row.ProjectMedianAreaM2);
+            Assert.Equal(120m, row.MoveInMedianAreaM2);
+        }
+
+        [Fact]
+        public void Calculate_TooFewProjects_LeavesTheSpreadUnmeasuredRatherThanGuessing()
+        {
+            var listings = new List<PropertyListing>
+            {
+                Listing("Faro", "Albufeira", "Guia", 1_500m, condition: PropertyCondition.NeedsRenovation)
+            };
+
+            listings.AddRange(ThreeListings(2_500m, condition: PropertyCondition.Renovated, energyCertificate: "A"));
+
+            var row = Row(MarketAreaStatsCalculator.Calculate(listings), AreaLevel.Town, "Faro", "Albufeira", "Guia");
+
+            // One project is counted, but nothing is measured off it - a quartile from a single
+            // advert is that advert twice, and it would read on screen as a spread.
+            Assert.Equal(1, row.ProjectCount);
+            Assert.Null(row.ProjectMedianPricePerM2);
+            Assert.Null(row.ProjectP25PricePerM2);
+            Assert.Null(row.ProjectP75PricePerM2);
+            Assert.Null(row.ProjectMedianAreaM2);
+        }
+
         /// <summary>Finds the one row for a place, and fails the test when it is missing.</summary>
         private static MarketAreaStats Row(List<MarketAreaStats> rows, AreaLevel level, string district, string municipality = "", string town = "")
         {

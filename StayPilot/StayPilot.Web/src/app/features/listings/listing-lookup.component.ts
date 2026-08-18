@@ -5,11 +5,12 @@ import { PropertyListingService } from '../../core/services/property-listing.ser
 import { RecentListingsService } from '../../core/services/recent-listings.service';
 import { PropertyListingResponse } from '../../core/models/property-listing';
 import { ListingDetailComponent } from './listing-detail.component';
+import { PageHeaderComponent } from '../../shared/page-header.component';
 
 @Component({
   selector: 'app-listing-lookup',
   standalone: true,
-  imports: [FormsModule, ListingDetailComponent],
+  imports: [FormsModule, ListingDetailComponent, PageHeaderComponent],
   templateUrl: './listing-lookup.component.html',
   styleUrl: './listing-lookup.component.css'
 })

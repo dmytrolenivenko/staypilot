@@ -1,205 +1,228 @@
-<!-- FILTERS (these are the only thing that calls the database — on Search) -->
-<section class="panel">
-  <h1>Listing Browser</h1>
-  <p class="hint">
-    Filter, then Search. Sorting and paging happen instantly in the browser — click a column
-    header to sort (▲/▼). Leave a box empty to ignore that filter.
-  </p>
+<div class="page">
+  <app-page-header
+    title="Browse listings"
+    sub="Set the filters, then Search. Sorting and paging happen instantly in the browser — leave a box empty to ignore that filter."
+  />
 
-  <form class="filters" (ngSubmit)="search()">
-     <!-- Location cascade: Distrito → Município → Freguesia → Zona. Each pick loads the next. -->
-    <label class="field">
-      <span>Distrito</span>
-      <select name="district" [(ngModel)]="form.district" (ngModelChange)="onDistrictChange()">
-        <option value="">Any</option>
-        @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
-      </select>
-    </label>
+  <!-- FILTERS (the only thing that calls the database — on Search) -->
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Filters</span>
+    </div>
+    <div class="card-body">
+      <form class="form-grid" (ngSubmit)="search()">
+        <!-- Location cascade: Distrito → Município → Freguesia → Zona. Each pick loads the next. -->
+        <label class="field">
+          <span>Distrito</span>
+          <select name="district" [(ngModel)]="form.district" (ngModelChange)="onDistrictChange()">
+            <option value="">Any</option>
+            @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
+          </select>
+        </label>
 
-    <label class="field">
-      <span>Município</span>
-      <select name="municipality" [(ngModel)]="form.municipality" (ngModelChange)="onMunicipalityChange()" [disabled]="!form.district">
-        <option value="">Any</option>
-        @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
-      </select>
-    </label>
+        <label class="field">
+          <span>Município</span>
+          <select
+            name="municipality"
+            [(ngModel)]="form.municipality"
+            (ngModelChange)="onMunicipalityChange()"
+            [disabled]="!form.district"
+          >
+            <option value="">Any</option>
+            @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
+          </select>
+        </label>
 
-    <label class="field">
-      <span>Freguesia</span>
-      <select name="town" [(ngModel)]="form.town" (ngModelChange)="onTownChange()" [disabled]="!form.municipality">
-        <option value="">Any</option>
-        @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
-      </select>
-    </label>
+        <label class="field">
+          <span>Freguesia</span>
+          <select name="town" [(ngModel)]="form.town" (ngModelChange)="onTownChange()" [disabled]="!form.municipality">
+            <option value="">Any</option>
+            @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
 
-    <label class="field">
-      <span>Zona</span>
-      <select name="zone" [(ngModel)]="form.zone" [disabled]="!form.town">
-        <option value="">Any</option>
-        @for (z of zoneOptions(); track z) { <option [value]="z">{{ z }}</option> }
-      </select>
-    </label>
+        <label class="field">
+          <span>Zona</span>
+          <select name="zone" [(ngModel)]="form.zone" [disabled]="!form.town">
+            <option value="">Any</option>
+            @for (z of zoneOptions(); track z) { <option [value]="z">{{ z }}</option> }
+          </select>
+        </label>
 
-    <label class="field">
-      <span>Property type</span>
-      <select name="propertyType" [(ngModel)]="form.propertyType">
-        <option value="">Any</option>
-        @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
-      </select>
-    </label>
+        <label class="field">
+          <span>Property type</span>
+          <select name="propertyType" [(ngModel)]="form.propertyType">
+            <option value="">Any</option>
+            @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
 
-    <label class="field">
-      <span>Typology</span>
-      <select name="typology" [(ngModel)]="form.typology">
-        <option value="">Any</option>
-        @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
-      </select>
-    </label>
+        <label class="field">
+          <span>Typology</span>
+          <select name="typology" [(ngModel)]="form.typology">
+            <option value="">Any</option>
+            @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
 
-    <label class="field">
-      <span>Condition</span>
-      <select name="condition" [(ngModel)]="form.condition">
-        <option value="">Any</option>
-        @for (c of conditions; track c) { <option [value]="c">{{ c }}</option> }
-      </select>
-    </label>
+        <label class="field">
+          <span>Condition</span>
+          <select name="condition" [(ngModel)]="form.condition">
+            <option value="">Any</option>
+            @for (c of conditions; track c) { <option [value]="c">{{ c }}</option> }
+          </select>
+        </label>
 
-    <label class="field">
-      <span>Status</span>
-      <select name="listingStatus" [(ngModel)]="form.listingStatus">
-        <option value="">Any</option>
-        @for (s of listingStatuses; track s) { <option [value]="s">{{ s }}</option> }
-      </select>
-    </label>
+        <label class="field">
+          <span>Status</span>
+          <select name="listingStatus" [(ngModel)]="form.listingStatus">
+            <option value="">Any</option>
+            @for (s of listingStatuses; track s) { <option [value]="s">{{ s }}</option> }
+          </select>
+        </label>
 
-    <!-- Number-range filters -->
-    <label class="field">
-      <span>Min price (€)</span>
-      <input type="number" min="0" name="minPrice" [(ngModel)]="form.minPrice" />
-    </label>
+        <!-- Number-range filters -->
+        <label class="field">
+          <span>Min price (€)</span>
+          <input type="number" min="0" name="minPrice" [(ngModel)]="form.minPrice" />
+        </label>
 
-    <label class="field">
-      <span>Max price (€)</span>
-      <input type="number" min="0" name="maxPrice" [(ngModel)]="form.maxPrice" />
-    </label>
+        <label class="field">
+          <span>Max price (€)</span>
+          <input type="number" min="0" name="maxPrice" [(ngModel)]="form.maxPrice" />
+        </label>
 
-    <label class="field">
-      <span>Min area (m²)</span>
-      <input type="number" min="0" name="minAreaM2" [(ngModel)]="form.minAreaM2" />
-    </label>
+        <label class="field">
+          <span>Min area (m²)</span>
+          <input type="number" min="0" name="minAreaM2" [(ngModel)]="form.minAreaM2" />
+        </label>
 
-    <label class="field">
-      <span>Max area (m²)</span>
-      <input type="number" min="0" name="maxAreaM2" [(ngModel)]="form.maxAreaM2" />
-    </label>
+        <label class="field">
+          <span>Max area (m²)</span>
+          <input type="number" min="0" name="maxAreaM2" [(ngModel)]="form.maxAreaM2" />
+        </label>
 
-    <label class="field">
-      <span>Max €/m²</span>
-      <input type="number" min="0" name="maxPricePerM2" [(ngModel)]="form.maxPricePerM2" />
-    </label>
+        <label class="field">
+          <span>Max €/m²</span>
+          <input type="number" min="0" name="maxPricePerM2" [(ngModel)]="form.maxPricePerM2" />
+        </label>
 
-    <label class="field">
-      <span>Max beach distance (m)</span>
-      <input type="number" min="0" name="distanceToBeachMeters" [(ngModel)]="form.distanceToBeachMeters" />
-    </label>
+        <label class="field">
+          <span>Max beach distance (m)</span>
+          <input type="number" min="0" name="distanceToBeachMeters" [(ngModel)]="form.distanceToBeachMeters" />
+        </label>
 
-    <!-- Feature checkboxes -->
-    <div class="field checkboxes">
-      <span>Must have</span>
-      <div class="checkbox-row">
-        <label><input type="checkbox" name="hasGarage" [(ngModel)]="form.hasGarage" /> Garage</label>
-        <label><input type="checkbox" name="hasSwimmingPool" [(ngModel)]="form.hasSwimmingPool" /> Pool</label>
-        <label><input type="checkbox" name="hasSeaView" [(ngModel)]="form.hasSeaView" /> Sea view</label>
-        <label><input type="checkbox" name="hasElevator" [(ngModel)]="form.hasElevator" /> Elevator</label>
+        <!-- Feature checkboxes -->
+        <div class="field wide">
+          <span>Must have</span>
+          <fieldset class="check-grid">
+            <label class="check"><input type="checkbox" name="hasGarage" [(ngModel)]="form.hasGarage" /> Garage</label>
+            <label class="check"><input type="checkbox" name="hasSwimmingPool" [(ngModel)]="form.hasSwimmingPool" /> Pool</label>
+            <label class="check"><input type="checkbox" name="hasSeaView" [(ngModel)]="form.hasSeaView" /> Sea view</label>
+            <label class="check"><input type="checkbox" name="hasElevator" [(ngModel)]="form.hasElevator" /> Elevator</label>
+          </fieldset>
+        </div>
+
+        <div class="actions">
+          <button type="submit" [disabled]="loading()">Search</button>
+          <button type="button" class="secondary" (click)="reset()" [disabled]="loading()">Reset</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Results</span>
+      @if (hasSearched() && totalRecords() > 0) {
+        <div class="card-actions">
+          <span class="meta">
+            {{ totalRecords() }} match{{ totalRecords() === 1 ? '' : 'es' }} · page {{ page() }} of {{ totalPages() }}
+          </span>
+          <label class="control">
+            Per page
+            <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
+            </select>
+          </label>
+        </div>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="empty">Loading…</p>
+    } @else if (error()) {
+      <div class="card-body"><p class="error">{{ error() }}</p></div>
+    } @else if (!hasSearched()) {
+      <p class="empty">Set your filters above and press Search.</p>
+    } @else if (totalRecords() === 0) {
+      <p class="empty">No listings match those filters.</p>
+    } @else {
+      <!-- Click any header to sort by that column. The arrow shows the active one. -->
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="sortable" (click)="toggleSort('id')">#{{ arrow('id') }}</th>
+              <th class="sortable" (click)="toggleSort('location')">Location{{ arrow('location') }}</th>
+              <th class="sortable" (click)="toggleSort('type')">Type{{ arrow('type') }}</th>
+              <th class="sortable" (click)="toggleSort('typology')">Typology{{ arrow('typology') }}</th>
+              <th class="num sortable" (click)="toggleSort('area')">Area{{ arrow('area') }}</th>
+              <th class="num sortable" (click)="toggleSort('price')">Price{{ arrow('price') }}</th>
+              <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+              <th class="num sortable" (click)="toggleSort('beach')">Beach{{ arrow('beach') }}</th>
+              <th class="sortable" (click)="toggleSort('status')">Status{{ arrow('status') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of pagedRows(); track item.id) {
+              <tr>
+                <td><a [routerLink]="['/listings/lookup']" [queryParams]="{ id: item.id }">#{{ item.id }}</a></td>
+                <td>{{ item.marketAreaTown || item.marketAreaMunicipality }}</td>
+                <td>{{ item.propertyType }}</td>
+                <td>{{ item.typology }}</td>
+                <td class="num">{{ item.areaM2 }} m²</td>
+                <td class="num">
+                  {{ item.listingSnapshot ? (item.listingSnapshot.price | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="num">
+                  {{ item.listingSnapshot ? (item.listingSnapshot.pricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="num">{{ item.distanceToBeachMeters != null ? item.distanceToBeachMeters + ' m' : '—' }}</td>
+                <td class="muted">{{ item.listingSnapshot ? item.listingSnapshot.status : '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
-    </div>
 
-    <div class="actions">
-      <button type="submit" [disabled]="loading()">Search</button>
-      <button type="button" class="secondary" (click)="reset()" [disabled]="loading()">Reset</button>
-    </div>
-  </form>
-</section>
+      <!-- Paging (instant, no API call): First · Prev · 1 2 3 … · Next · Last -->
+      @if (totalPages() > 1) {
+        <div class="pager">
+          <button type="button" class="page-btn" (click)="goToPage(1)" [disabled]="page() === 1">« First</button>
+          <button type="button" class="page-btn" (click)="goToPage(page() - 1)" [disabled]="page() === 1">‹ Prev</button>
 
-<!-- RESULTS -->
-<section class="panel">
-  @if (loading()) {
-    <p class="hint">Loading...</p>
-  } @else if (error()) {
-    <p class="error">{{ error() }}</p>
-  } @else if (!hasSearched()) {
-    <p class="hint">Set your filters above and press Search.</p>
-  } @else if (totalRecords() === 0) {
-    <p class="hint">No listings match those filters.</p>
-  } @else {
-    <div class="result-head">
-      <p class="hint">
-        {{ totalRecords() }} match{{ totalRecords() === 1 ? '' : 'es' }} — page {{ page() }} of {{ totalPages() }}
-      </p>
-      <label class="page-size hint">
-        Per page
-        <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
-          <option [ngValue]="20">20</option>
-          <option [ngValue]="50">50</option>
-          <option [ngValue]="100">100</option>
-        </select>
-      </label>
-    </div>
+          @for (p of visiblePages(); track p) {
+            <button type="button" class="page-btn" [class.active]="p === page()" (click)="goToPage(p)">{{ p }}</button>
+          }
 
-    <!-- Click any header to sort by that column. The arrow shows the active one. -->
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th class="sortable" (click)="toggleSort('id')">#{{ arrow('id') }}</th>
-          <th class="sortable" (click)="toggleSort('location')">Location{{ arrow('location') }}</th>
-          <th class="sortable" (click)="toggleSort('type')">Type{{ arrow('type') }}</th>
-          <th class="sortable" (click)="toggleSort('typology')">Typology{{ arrow('typology') }}</th>
-          <th class="sortable" (click)="toggleSort('area')">Area{{ arrow('area') }}</th>
-          <th class="sortable" (click)="toggleSort('price')">Price{{ arrow('price') }}</th>
-          <th class="sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
-          <th class="sortable" (click)="toggleSort('beach')">Beach{{ arrow('beach') }}</th>
-          <th class="sortable" (click)="toggleSort('status')">Status{{ arrow('status') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of pagedRows(); track item.id) {
-          <tr>
-            <td><a [routerLink]="['/listings/lookup']" [queryParams]="{ id: item.id }">#{{ item.id }}</a></td>
-            <td>{{ item.marketAreaTown || item.marketAreaMunicipality }}</td>
-            <td>{{ item.propertyType }}</td>
-            <td>{{ item.typology }}</td>
-            <td>{{ item.areaM2 }} m²</td>
-            <td>{{ item.listingSnapshot ? (item.listingSnapshot.price | currency:'EUR':'symbol':'1.0-0') : '—' }}</td>
-            <td>{{ item.listingSnapshot ? (item.listingSnapshot.pricePerM2 | currency:'EUR':'symbol':'1.0-0') : '—' }}</td>
-            <td>{{ item.distanceToBeachMeters != null ? item.distanceToBeachMeters + ' m' : '—' }}</td>
-            <td>{{ item.listingSnapshot ? item.listingSnapshot.status : '—' }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+          <button type="button" class="page-btn" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()">
+            Next ›
+          </button>
+          <button type="button" class="page-btn" (click)="goToPage(totalPages())" [disabled]="page() === totalPages()">
+            Last »
+          </button>
+        </div>
+      }
 
-    <!-- Paging (instant, no API call): First · Prev · 1 2 3 … · Next · Last -->
-    @if (totalPages() > 1) {
-      <div class="pager">
-        <button type="button" class="page-btn" (click)="goToPage(1)" [disabled]="page() === 1">« First</button>
-        <button type="button" class="page-btn" (click)="goToPage(page() - 1)" [disabled]="page() === 1">‹ Prev</button>
-
-        @for (p of visiblePages(); track p) {
-          <button
-            type="button"
-            class="page-btn"
-            [class.active]="p === page()"
-            (click)="goToPage(p)"
-          >{{ p }}</button>
-        }
-
-        <button type="button" class="page-btn" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()">Next ›</button>
-        <button type="button" class="page-btn" (click)="goToPage(totalPages())" [disabled]="page() === totalPages()">Last »</button>
-      </div>
+      @if (capped()) {
+        <div class="card-body">
+          <p class="hint">Showing the first 1000 matches. Narrow your filters to see the rest.</p>
+        </div>
+      }
     }
-
-    @if (capped()) {
-      <p class="hint">Showing the first 1000 matches. Narrow your filters to see the rest.</p>
-    }
-  }
-</section>
+  </section>
+</div>

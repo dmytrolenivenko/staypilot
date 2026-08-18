@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
@@ -10,6 +10,25 @@ import {
   MarketAreaNeighbourGapResponse
 } from '../models/market-area-stats';
 import { environment } from '../../../environments/environment';
+
+/**
+ * Adds a filter only when it has a value.
+ *
+ * The API treats a missing parameter as "not filtered on" and an empty string as a filter for
+ * the empty string, which matches nothing. Sending `district=` therefore returns an empty board
+ * rather than the whole country — so the empty ones are left off the query entirely.
+ */
+function withOptional(params: HttpParams, values: Record<string, string | number | undefined>): HttpParams {
+  let next = params;
+
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined && value !== '') {
+      next = next.set(key, value);
+    }
+  }
+
+  return next;
+}
 
 // Talks to MarketAreaController's stats endpoints. api/[controller]/[action] routing.
 @Injectable({ providedIn: 'root' })
@@ -23,38 +42,52 @@ export class MarketAreaStatsService {
   // Carries the deal counts and the renovation numbers too, so the leaderboard and the
   // renovation screen both read from here.
   getLeaderboard(query: MarketAreaLeaderboardQuery): Observable<MarketAreaLeaderboardResponse> {
-    return this.http.get<MarketAreaLeaderboardResponse>(`${this.baseUrl}/GetLeaderboard`, {
-      params: {
-        level: query.level,
-        minListings: query.minListings
-      }
-    });
+    const params = withOptional(
+      new HttpParams().set('level', query.level).set('minListings', query.minListings),
+      { district: query.district, municipality: query.municipality }
+    );
+
+    return this.http.get<MarketAreaLeaderboardResponse>(`${this.baseUrl}/GetLeaderboard`, { params });
   }
 
   // GET /api/MarketArea/GetBudgetRanking
   // What a budget buys in each place. Places where it reaches nothing are left out server-side.
   getBudgetRanking(query: MarketAreaBudgetQuery): Observable<MarketAreaBudgetResponse> {
-    return this.http.get<MarketAreaBudgetResponse>(`${this.baseUrl}/GetBudgetRanking`, {
-      params: {
-        budget: query.budget,
-        level: query.level,
-        minListings: query.minListings
+    const params = withOptional(
+      new HttpParams()
+        .set('budget', query.budget)
+        .set('level', query.level)
+        .set('minListings', query.minListings),
+      {
+        district: query.district,
+        municipality: query.municipality,
+        minTypology: query.minTypology,
+        stretchPercent: query.stretchPercent
       }
-    });
+    );
+
+    return this.http.get<MarketAreaBudgetResponse>(`${this.baseUrl}/GetBudgetRanking`, { params });
   }
 
   // GET /api/MarketArea/GetNeighbourGaps
   // Pairs of nearby places with a big price gap. Paired on the server because it is pairwise
   // work over the whole level, not a per-row read.
   getNeighbourGaps(query: MarketAreaNeighbourGapQuery): Observable<MarketAreaNeighbourGapResponse> {
-    return this.http.get<MarketAreaNeighbourGapResponse>(`${this.baseUrl}/GetNeighbourGaps`, {
-      params: {
-        level: query.level,
-        minListings: query.minListings,
-        maxDistanceKm: query.maxDistanceKm,
-        minGapPercent: query.minGapPercent
+    const params = withOptional(
+      new HttpParams()
+        .set('level', query.level)
+        .set('minListings', query.minListings)
+        .set('maxDistanceKm', query.maxDistanceKm)
+        .set('minGapPercent', query.minGapPercent),
+      {
+        district: query.district,
+        municipality: query.municipality,
+        typology: query.typology,
+        minTypologyListings: query.minTypologyListings
       }
-    });
+    );
+
+    return this.http.get<MarketAreaNeighbourGapResponse>(`${this.baseUrl}/GetNeighbourGaps`, { params });
   }
 
   // POST /api/MarketArea/RecalculateMarketAreaStats

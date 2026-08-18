@@ -1,40 +1,44 @@
 <div class="shell">
   <aside class="sidebar">
-    <div class="brand">
-      <span class="brand-title">StayPilot</span>
-      <span class="brand-sub">Comps</span>
-    </div>
-
-    <button type="button" class="theme-toggle" (click)="toggleTheme()">
-      {{ theme() === 'light' ? 'Dark mode' : 'Light mode' }}
-    </button>
+    <a class="brand" routerLink="/">
+      <span class="brand-mark">SP</span>
+      <span class="brand-text">
+        <span class="brand-title">StayPilot</span>
+        <span class="brand-sub">Comps · Algarve</span>
+      </span>
+    </a>
 
     <nav>
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Overview
+      </a>
 
-      <span class="nav-group-label">Data</span>
-      <a routerLink="/market-areas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Market Areas</a>
-      <a routerLink="/listings/lookup" routerLinkActive="active">Listing Lookup</a>
-      <a routerLink="/listings/new" routerLinkActive="active">Add Listing</a>
-      <a routerLink="/listing-browser" routerLinkActive="active">Listing Browser</a>
-      <a routerLink="/price-history" routerLinkActive="active">Price Snapshots</a>
-      <a routerLink="/my-properties" routerLinkActive="active">My Properties</a>
+      <span class="nav-group">Listings</span>
+      <a class="nav-link" routerLink="/listing-browser" routerLinkActive="active">Browse</a>
+      <a class="nav-link" routerLink="/listings/lookup" routerLinkActive="active">Look up by id</a>
 
-      <span class="nav-group-label">Market Areas</span>
-      <a routerLink="/market-areas/leaderboard" routerLinkActive="active">Leaderboard</a>
-      <a routerLink="/market-areas/budget" routerLinkActive="active">What Money Buys</a>
-      <a routerLink="/market-areas/neighbours" routerLinkActive="active">Neighbour Gaps</a>
-      <a routerLink="/market-areas/renovation" routerLinkActive="active">Renovation Upside</a>
+      <span class="nav-group">Market areas</span>
+      <a class="nav-link" routerLink="/market-overview" routerLinkActive="active">Market overview</a>
+      <a class="nav-link" routerLink="/market-areas/leaderboard" routerLinkActive="active">Leaderboard</a>
+      <a class="nav-link" routerLink="/market-areas/budget" routerLinkActive="active">What money buys</a>
+      <a class="nav-link" routerLink="/market-areas/neighbours" routerLinkActive="active">Neighbour gaps</a>
+      <a class="nav-link" routerLink="/market-areas/renovation" routerLinkActive="active">Renovation upside</a>
 
-      <span class="nav-group-label">Analysis</span>
-      <a routerLink="/feature-impact" routerLinkActive="active">Feature Impact</a>
-      <a routerLink="/valuation" routerLinkActive="active">Valuation</a>
-      <a routerLink="/build-cost" routerLinkActive="active">Build Cost</a>
+      <span class="nav-group">My portfolio</span>
+      <a class="nav-link" routerLink="/my-properties" routerLinkActive="active">My properties</a>
+      <a class="nav-link" routerLink="/valuation" routerLinkActive="active">Valuation</a>
 
-      <span class="nav-group-label">Planned</span>
-      <a routerLink="/market-overview" routerLinkActive="active">Market Overview</a>
-      <a routerLink="/beach-proximity" routerLinkActive="active">Beach Proximity</a>
+      <span class="nav-group">Tools</span>
+      <a class="nav-link" routerLink="/feature-impact" routerLinkActive="active">Feature impact</a>
+      <a class="nav-link" routerLink="/build-cost" routerLinkActive="active">Build cost</a>
+
+      <span class="nav-group">Planned</span>
+      <a class="nav-link planned" routerLink="/beach-proximity" routerLinkActive="active">Beach proximity</a>
     </nav>
+
+    <button type="button" class="theme-toggle" (click)="toggleTheme()">
+      {{ theme() === 'light' ? '◐ Dark' : '◑ Light' }}
+    </button>
   </aside>
 
   <main class="content">

@@ -1,93 +1,288 @@
-<section class="panel">
-  <div class="panel-head">
-    <h1>Neighbour gaps</h1>
-    <span class="hint">{{ gaps().length }} pairs &middot; {{ level() }}</span>
-  </div>
+<div class="page">
+  <app-page-header
+    title="Neighbour gaps"
+    sub="Pick a place to see everything around it and how each neighbour is priced against it — or leave it on “every pair” for the biggest gaps at this level."
+  />
 
-  <p class="hint">
-    Pairs of places close enough to be a real choice, priced far enough apart to be worth the move.
-    Biggest gap first. This is where the money actually is: a border you cannot see on a price list.
-  </p>
-  <p class="hint">
-    Distances are measured between the <strong>middle point of each place's listings</strong>, not
-    between real borders &mdash; we hold no boundaries. So read 3 km as roughly how far you would
-    move, not as an exact figure. Two places can also sit close on the map and still be separated
-    by water or a motorway, which no distance here knows about.
-  </p>
+  <app-explainer>
+    <p>
+      A gap is the difference in <strong>median €/m²</strong> between two places close enough to be
+      a real choice. This is where the money is: a border you cannot see on a price list.
+    </p>
+    <p>
+      Distances are measured between the <strong>middle point of each place's listings</strong>, not
+      between real borders &mdash; we hold no boundaries. So read 3 km as roughly how far you would
+      move, not as an exact figure. Two places can also sit close on the map and still be separated
+      by water or a motorway, which no distance here knows about.
+    </p>
+    <p>
+      Picking a place drops <strong>Min gap</strong> to 1% so you see every neighbour, including the
+      ones priced much the same. Clearing it puts the 20% league-table default back.
+    </p>
+    <p>
+      Every place names itself with the places it sits inside underneath, and a chip saying which
+      grain it is: a <strong>distrito</strong> is the broadest, a <strong>munic&iacute;pio</strong>
+      is a council inside one, a <strong>freguesia</strong> is a parish inside that. Both halves of
+      a pair are always the same grain &mdash; <strong>Level</strong> sets it, and it decides what
+      counts as a neighbour at all.
+    </p>
+    <p>
+      <strong>Compare</strong> is the control that makes a gap trustworthy. On <em>all stock</em>,
+      two places can sit 30% apart purely because one of them sells villas and the other sells
+      studios &mdash; that gap is a fact about the buildings, not about the places, and moving
+      would save you nothing. Pick a typology and it compares T2 against T2 instead. The
+      <strong>all stock</strong> column stays on screen either way, because the two side by side
+      are the real finding: &ldquo;T2s are 30% apart while the places overall are within 4%&rdquo;
+      says something neither number says alone.
+    </p>
+  </app-explainer>
 
-  <div class="toolbar">
-    <label class="control">
-      Level
-      <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
-        @for (option of levels; track option) {
-          <option [ngValue]="option">{{ option }}</option>
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Scope</span>
+      @if (calculatedAtUtc()) {
+        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+      }
+    </div>
+    <div class="card-body">
+      <div class="toolbar">
+        <label class="field anchor-picker">
+          <span>Around this {{ levelName(level()).toLowerCase() }}</span>
+          <select [ngModel]="anchor()" (ngModelChange)="changeAnchor($event)">
+            <option value="">Every pair at this level</option>
+            @for (place of places(); track place) {
+              <option [value]="place">{{ place }}</option>
+            }
+          </select>
+        </label>
+
+        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
+
+        <label class="control">
+          Level
+          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+            @for (option of levels; track option) {
+              <option [ngValue]="option">{{ levelName(option) }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="control">
+          Compare
+          <select [ngModel]="typology()" (ngModelChange)="changeTypology($event)">
+            <option value="">All stock</option>
+            @for (option of typologies; track option) {
+              <option [value]="option">{{ option }} only</option>
+            }
+          </select>
+        </label>
+
+        @if (typology()) {
+          <label class="control">
+            Min {{ typology() }}s
+            <input
+              type="number"
+              min="1"
+              max="1000"
+              [ngModel]="minTypologyListings()"
+              (ngModelChange)="changeMinTypologyListings($event)"
+            />
+          </label>
         }
-      </select>
-    </label>
 
-    <label class="control">
-      Within km
-      <input type="number" min="1" max="500" [ngModel]="maxDistanceKm()" (ngModelChange)="changeMaxDistance($event)" />
-    </label>
+        <label class="control">
+          Within km
+          <input type="number" min="1" max="500" [ngModel]="maxDistanceKm()" (ngModelChange)="changeMaxDistance($event)" />
+        </label>
 
-    <label class="control">
-      Min gap %
-      <input type="number" min="1" max="100" [ngModel]="minGapPercent()" (ngModelChange)="changeMinGap($event)" />
-    </label>
+        <label class="control">
+          Min gap %
+          <input type="number" min="1" max="100" [ngModel]="minGapPercent()" (ngModelChange)="changeMinGap($event)" />
+        </label>
 
-    <label class="control">
-      Min listings
-      <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
-    </label>
-
-    @if (calculatedAtUtc()) {
-      <span class="hint">Worked out {{ calculatedAtUtc() | date:'medium' }}</span>
-    }
-  </div>
+        <label class="control">
+          Min listings
+          <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+        </label>
+      </div>
+    </div>
+  </section>
 
   @if (loading()) {
-    <p class="hint">Loading...</p>
+    <section class="card"><p class="empty">Loading…</p></section>
   } @else if (error()) {
-    <p class="error">{{ error() }}</p>
-  } @else if (gaps().length === 0) {
-    <p class="hint">
-      No pairs within {{ maxDistanceKm() }} km differ by {{ minGapPercent() }}% or more. Widen the
-      distance, lower the gap, or try Town level where neighbours sit closer together.
-    </p>
+    <section class="card"><div class="card-body"><p class="error">{{ error() }}</p></div></section>
+  } @else if (anchor()) {
+    <!-- ANCHORED: everything around one place, read from that place's point of view. -->
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">Around {{ anchor() }}</span>
+        <span class="meta">
+          {{ neighbours().length }} within {{ maxDistanceKm() }} km
+          @if (comparedOn()) {
+            · compared on {{ comparedOn() }} only
+          }
+          @if (anchorPricePerM2(); as own) {
+            · {{ anchor() }}
+            @if (comparedOn()) {
+              {{ comparedOn() }}s ask
+            } @else {
+              asks
+            }
+            €{{ own | number: '1.0-0' }}/m²
+          }
+        </span>
+      </div>
+
+      @if (neighbours().length === 0) {
+        <p class="empty">
+          Nothing sits within {{ maxDistanceKm() }} km of {{ anchor() }} at {{ levelName(level()).toLowerCase() }} level with at
+          least {{ minListings() }} listings. Widen the distance, lower Min listings, or try Town level
+          where neighbours sit closer together.
+        </p>
+      } @else {
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="rank">#</th>
+                <th class="sortable" (click)="toggleAnchorSort('place')">Neighbour{{ anchorArrow('place') }}</th>
+                <th class="num sortable" (click)="toggleAnchorSort('distance')">Apart{{ anchorArrow('distance') }}</th>
+                <th class="num sortable" (click)="toggleAnchorSort('listings')">Listings{{ anchorArrow('listings') }}</th>
+                <th class="num sortable" (click)="toggleAnchorSort('pricePerM2')">
+                  Their €/m²{{ anchorArrow('pricePerM2') }}
+                </th>
+                @if (comparedOn()) {
+                  <th class="num" title="This place's median across all its stock, for comparison">
+                    All stock
+                  </th>
+                }
+                <th class="num sortable" (click)="toggleAnchorSort('gap')">
+                  vs {{ anchor() }}{{ anchorArrow('gap') }}
+                </th>
+                <th class="num sortable" (click)="toggleAnchorSort('perM2')">Per m²{{ anchorArrow('perM2') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (n of neighbours(); track n.place.displayName; let i = $index) {
+                <tr>
+                  <td class="rank">{{ i + 1 }}</td>
+                  <td>
+                    <app-place-name
+                      [level]="n.place.level"
+                      [district]="n.place.district"
+                      [municipality]="n.place.municipality"
+                      [town]="n.place.town"
+                    />
+                  </td>
+                  <td class="num">{{ n.distanceKm | number: '1.1-1' }} km</td>
+                  <td class="num">{{ n.listingCount }}</td>
+                  <td class="num">{{ n.pricePerM2 | number: '1.0-0' }}</td>
+                  @if (comparedOn()) {
+                    <td class="num muted">
+                      {{ n.place.allStockPricePerM2 | number: '1.0-0' }}
+                      <span class="faint">n={{ n.place.allStockListingCount }}</span>
+                    </td>
+                  }
+                  <!-- Direction is the whole point of this column, so it says the word. -->
+                  <td class="num">
+                    <span [class.pos]="n.cheaper" [class.neg]="!n.cheaper">
+                      {{ n.cheaper ? '−' : '+' }}{{ n.gapPercent | number: '1.0-0' }}%
+                      {{ n.cheaper ? 'cheaper' : 'dearer' }}
+                    </span>
+                  </td>
+                  <td class="num muted">
+                    {{ n.cheaper ? 'save' : 'pay' }} {{ n.differencePerM2 | number: '1.0-0' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
   } @else {
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th class="rank">#</th>
-          <th>Pay more in</th>
-          <th class="num">€/m²</th>
-          <th>Pay less in</th>
-          <th class="num">€/m²</th>
-          <th class="num">Apart</th>
-          <th class="num">You save</th>
-          <th class="num">Gap</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (gap of gaps(); track gap.expensivePlace + gap.cheaperPlace; let i = $index) {
-          <tr>
-            <td class="rank">{{ i + 1 }}</td>
-            <td>
-              {{ gap.expensivePlace }}
-              <span class="muted">n={{ gap.expensiveListingCount }}</span>
-            </td>
-            <td class="num">{{ gap.expensivePricePerM2 | number:'1.0-0' }}</td>
-            <td>
-              {{ gap.cheaperPlace }}
-              <span class="muted">n={{ gap.cheaperListingCount }}</span>
-            </td>
-            <td class="num">{{ gap.cheaperPricePerM2 | number:'1.0-0' }}</td>
-            <td class="num">{{ gap.distanceKm | number:'1.1-1' }} km</td>
-            <td class="num">{{ saving(gap) | number:'1.0-0' }}/m²</td>
-            <td class="num gap">−{{ gap.gapPercent | number:'1.0-0' }}%</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <!-- UNANCHORED: every pair at this level, biggest gap first. -->
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">Every pair</span>
+        <span class="meta">
+          {{ sortedGaps().length }} pairs · {{ levelName(level()) }}
+          · compared on {{ comparedOn() ? comparedOn() + ' only' : 'all stock' }}
+        </span>
+      </div>
+
+      @if (sortedGaps().length === 0) {
+        <p class="empty">
+          No pairs within {{ maxDistanceKm() }} km differ by {{ minGapPercent() }}% or more. Widen the
+          distance, lower the gap, or try Town level where neighbours sit closer together.
+        </p>
+      } @else {
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="rank">#</th>
+                <th class="sortable" (click)="togglePairSort('expensive')">Pay more in{{ pairArrow('expensive') }}</th>
+                <th class="num sortable" (click)="togglePairSort('expensivePrice')">
+                  €/m²{{ pairArrow('expensivePrice') }}
+                </th>
+                @if (comparedOn()) {
+                  <th class="num" title="Its median across all stock, for comparison">All stock</th>
+                }
+                <th class="sortable" (click)="togglePairSort('cheaper')">Pay less in{{ pairArrow('cheaper') }}</th>
+                <th class="num sortable" (click)="togglePairSort('cheaperPrice')">
+                  €/m²{{ pairArrow('cheaperPrice') }}
+                </th>
+                @if (comparedOn()) {
+                  <th class="num" title="Its median across all stock, for comparison">All stock</th>
+                }
+                <th class="num sortable" (click)="togglePairSort('distance')">Apart{{ pairArrow('distance') }}</th>
+                <th class="num sortable" (click)="togglePairSort('saving')">You save{{ pairArrow('saving') }}</th>
+                <th class="num sortable" (click)="togglePairSort('gap')">Gap{{ pairArrow('gap') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (gap of sortedGaps(); track gap.expensive.displayName + gap.cheaper.displayName; let i = $index) {
+                <tr>
+                  <td class="rank">{{ i + 1 }}</td>
+                  <td>
+                    <app-place-name
+                      [level]="gap.expensive.level"
+                      [district]="gap.expensive.district"
+                      [municipality]="gap.expensive.municipality"
+                      [town]="gap.expensive.town"
+                    >
+                      <span class="faint">n={{ gap.expensive.listingCount }}</span>
+                    </app-place-name>
+                  </td>
+                  <td class="num">{{ gap.expensive.medianPricePerM2 | number: '1.0-0' }}</td>
+                  @if (comparedOn()) {
+                    <td class="num muted">{{ gap.expensive.allStockPricePerM2 | number: '1.0-0' }}</td>
+                  }
+                  <td>
+                    <app-place-name
+                      [level]="gap.cheaper.level"
+                      [district]="gap.cheaper.district"
+                      [municipality]="gap.cheaper.municipality"
+                      [town]="gap.cheaper.town"
+                    >
+                      <span class="faint">n={{ gap.cheaper.listingCount }}</span>
+                    </app-place-name>
+                  </td>
+                  <td class="num">{{ gap.cheaper.medianPricePerM2 | number: '1.0-0' }}</td>
+                  @if (comparedOn()) {
+                    <td class="num muted">{{ gap.cheaper.allStockPricePerM2 | number: '1.0-0' }}</td>
+                  }
+                  <td class="num">{{ gap.distanceKm | number: '1.1-1' }} km</td>
+                  <td class="num">{{ saving(gap) | number: '1.0-0' }}/m²</td>
+                  <td class="num gap">−{{ gap.gapPercent | number: '1.0-0' }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
   }
-</section>
+</div>

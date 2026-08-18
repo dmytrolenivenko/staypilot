@@ -35,6 +35,9 @@ namespace StayPilot.Infrastructure.Persistence
         /// <summary>The per-typology stats table: what a T1, T2, T3... costs in each place.</summary>
         public DbSet<MarketAreaTypologyStats> MarketAreaTypologyStats => Set<MarketAreaTypologyStats>();
 
+        /// <summary>The seeded per-district house price growth assumptions used by the forecast.</summary>
+        public DbSet<HousePriceGrowth> HousePriceGrowth => Set<HousePriceGrowth>();
+
         /// <summary>
         /// Builds the database shape: tables, keys, indexes, and number precision.
         /// EF calls this once when it first needs the model.

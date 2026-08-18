@@ -3,6 +3,7 @@ using StayPilot.Domain.Entities;
 using StayPilot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Request;
+using StayPilot.Domain.Enums;
 
 namespace StayPilot.Infrastructure.Repositories
 {
@@ -48,17 +49,46 @@ namespace StayPilot.Infrastructure.Repositories
             // Count before paging, so the caller knows how many pages exist.
             var totalRecords = await query.CountAsync();
 
-            var items = await query
+            var ordered = Order(query, request.SortBy, request.SortDescending);
+
+            var items = await ordered
                 // Paging needs a stable order, otherwise the same row can show up on two pages.
-                .OrderBy(x => x.District)
-                .ThenBy(x => x.Municipality)
-                .ThenBy(x => x.Town)
+                // Names repeat all over the country, so Id is what finally settles the ties.
                 .ThenBy(x => x.Id)
                 .Skip((request.PageNumber - 1) * request.PageSize) // jump over the earlier pages
                 .Take(request.PageSize)                            // take only this page
                 .ToListAsync();
 
             return (items, totalRecords);
+        }
+
+        /// <summary>
+        /// Sorts the page by the column the caller clicked. Every column the table shows can
+        /// be sorted, in both directions; the caller adds the tie-breaker.
+        /// </summary>
+        private static IOrderedQueryable<MarketArea> Order(IQueryable<MarketArea> query, MarketAreaSortBy sortBy, bool descending)
+        {
+            return sortBy switch
+            {
+                MarketAreaSortBy.Id => descending ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id),
+
+                MarketAreaSortBy.District => descending ? query.OrderByDescending(x => x.District) : query.OrderBy(x => x.District),
+
+                MarketAreaSortBy.Municipality => descending ? query.OrderByDescending(x => x.Municipality) : query.OrderBy(x => x.Municipality),
+
+                MarketAreaSortBy.Town => descending ? query.OrderByDescending(x => x.Town) : query.OrderBy(x => x.Town),
+
+                MarketAreaSortBy.Zone => descending ? query.OrderByDescending(x => x.Zone) : query.OrderBy(x => x.Zone),
+
+                MarketAreaSortBy.Country => descending ? query.OrderByDescending(x => x.Country) : query.OrderBy(x => x.Country),
+
+                MarketAreaSortBy.Notes => descending ? query.OrderByDescending(x => x.Notes) : query.OrderBy(x => x.Notes),
+
+                // The address order the table reads in, and what it falls back to.
+                _ => descending
+                    ? query.OrderByDescending(x => x.District).ThenByDescending(x => x.Municipality).ThenByDescending(x => x.Town)
+                    : query.OrderBy(x => x.District).ThenBy(x => x.Municipality).ThenBy(x => x.Town)
+            };
         }
 
         /// <summary>

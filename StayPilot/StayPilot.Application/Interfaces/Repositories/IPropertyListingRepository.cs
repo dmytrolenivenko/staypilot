@@ -53,5 +53,27 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// filter and no pagination, this is a bulk read for analysis, not a UI-facing list.
         /// </summary>
         Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync();
+
+        /// <summary>
+        /// Gets every listing in one slice of the market - a place, optionally narrowed to one
+        /// property type and one room layout - with just its newest snapshot loaded.
+        ///
+        /// Not paged: the market overview takes medians and a distribution over the whole slice,
+        /// and a page of twenty would summarise the page rather than the market. Pass null or an
+        /// empty string for any filter you do not want applied.
+        /// </summary>
+        Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology);
+
+        /// <summary>
+        /// Gets every listing in one place with its WHOLE snapshot history loaded, newest first.
+        ///
+        /// The overview read only ever loads the newest snapshot, which is enough to price a
+        /// market but says nothing about how it moved. Demand and the local price trend both
+        /// need the history: one measures how long a listing sat before its last sighting, the
+        /// other needs two points in time to have a slope at all.
+        ///
+        /// Pass null or an empty string for any level you do not want applied.
+        /// </summary>
+        Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town);
     }
 }

@@ -117,9 +117,18 @@ namespace StayPilot.Application.Helpers.Calculators
                 CentroidLatitude = collected.AverageLatitude(),
                 CentroidLongitude = collected.AverageLongitude(),
                 ProjectCount = collected.ProjectPricesPerM2.Count,
+                ProjectByConditionCount = collected.ProjectByConditionCount,
+                ProjectByEnergyCount = collected.ProjectByEnergyCount,
                 ProjectMedianPricePerM2 = MedianOrNull(collected.ProjectPricesPerM2),
+                ProjectMedianAreaM2 = MedianOrNull(collected.ProjectAreas),
+                ProjectP25PricePerM2 = PercentileOrNull(collected.ProjectPricesPerM2, 0.25),
+                ProjectP75PricePerM2 = PercentileOrNull(collected.ProjectPricesPerM2, 0.75),
                 MoveInCount = collected.MoveInPricesPerM2.Count,
                 MoveInMedianPricePerM2 = MedianOrNull(collected.MoveInPricesPerM2),
+                MoveInMedianAreaM2 = MedianOrNull(collected.MoveInAreas),
+                MoveInP25PricePerM2 = PercentileOrNull(collected.MoveInPricesPerM2, 0.25),
+                MoveInP75PricePerM2 = PercentileOrNull(collected.MoveInPricesPerM2, 0.75),
+                UnclassifiedCount = collected.UnclassifiedCount,
                 CalculatedAtUtc = calculatedAtUtc
             };
 
@@ -294,6 +303,23 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
+        /// One point of the spread, or null when there is too little to have a spread. Gated at
+        /// the same count as the median it sits beside, so a row never carries a quartile it has
+        /// no median for.
+        /// </summary>
+        private static decimal? PercentileOrNull(List<decimal> values, double percentile)
+        {
+            if (values.Count < MinimumForSplit)
+            {
+                return null;
+            }
+
+            values.Sort();
+
+            return decimal.Round(Calculator.Percentile(values, percentile), 2);
+        }
+
+        /// <summary>
         /// One place at one level. A record, so two listings in the same town land on the same
         /// key without us writing any comparison code.
         /// </summary>
@@ -328,8 +354,23 @@ namespace StayPilot.Application.Helpers.Calculators
             /// <summary>Price for each square meter of the stock that needs work.</summary>
             public List<decimal> ProjectPricesPerM2 { get; } = new();
 
+            /// <summary>Floor area of the same, so the discount can be turned into money.</summary>
+            public List<decimal> ProjectAreas { get; } = new();
+
             /// <summary>Price for each square meter of the stock that does not.</summary>
             public List<decimal> MoveInPricesPerM2 { get; } = new();
+
+            /// <inheritdoc cref="ProjectAreas"/>
+            public List<decimal> MoveInAreas { get; } = new();
+
+            /// <summary>Projects the advert itself called out as needing work.</summary>
+            public int ProjectByConditionCount { get; private set; }
+
+            /// <summary>Projects caught only by a poor energy grade.</summary>
+            public int ProjectByEnergyCount { get; private set; }
+
+            /// <summary>Listings that are neither, so they sit out of the comparison.</summary>
+            public int UnclassifiedCount { get; private set; }
 
             public Dictionary<Typology, TypologyListings> ByTypology { get; } = new();
 
@@ -349,10 +390,29 @@ namespace StayPilot.Application.Helpers.Calculators
                 if (IsProject(listing))
                 {
                     ProjectPricesPerM2.Add(snapshot.PricePerM2);
+                    ProjectAreas.Add(listing.AreaM2);
+
+                    // Which of the two signals caught it. The advert's own word wins when both
+                    // apply, so the two counts add up to the project count rather than overlapping.
+                    if (listing.Condition == PropertyCondition.NeedsRenovation)
+                    {
+                        ProjectByConditionCount++;
+                    }
+                    else
+                    {
+                        ProjectByEnergyCount++;
+                    }
                 }
                 else if (IsMoveInReady(listing))
                 {
                     MoveInPricesPerM2.Add(snapshot.PricePerM2);
+                    MoveInAreas.Add(listing.AreaM2);
+                }
+                else
+                {
+                    // Neither. Counted so the screen can say how much of the stock the discount
+                    // has no opinion about, instead of quietly resting on a third of the market.
+                    UnclassifiedCount++;
                 }
 
                 if (listing.Latitude.HasValue && listing.Longitude.HasValue)

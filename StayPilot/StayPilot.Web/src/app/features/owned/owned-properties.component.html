@@ -1,271 +1,257 @@
-<section class="panel">
-  <h1>My Properties</h1>
-  <p class="hint">
-    Manage the apartments you own — the ones a future valuation will compare against market
-    listings. Look one up by id to edit it, or start a new one.
-  </p>
+<div class="page">
+  <app-page-header
+    title="My properties"
+    sub="The apartments you own — the base a valuation compares against market listings."
+  >
+    <button actions type="button" (click)="newProperty()">New property</button>
+  </app-page-header>
 
-  <div class="row">
-    <input
-      class="text-input"
-      type="number"
-      min="1"
-      placeholder="Property id"
-      [ngModel]="idInput()"
-      (ngModelChange)="idInput.set($event)"
-      name="lookupId"
-    />
-    <button type="button" (click)="lookup()" [disabled]="loading()">Look up</button>
-    <button type="button" class="secondary" (click)="newProperty()">New property</button>
-  </div>
-
-  @if (loading()) {
-    <p class="hint">Working...</p>
-  }
   @if (error()) {
     <p class="error">{{ error() }}</p>
   }
   @if (message()) {
-    <p class="hint" style="color: var(--success)">{{ message() }}</p>
+    <p class="success">{{ message() }}</p>
   }
-</section>
 
-<section class="panel">
-  <div class="form-head">
-    <h2>All properties ({{ properties().length }})</h2>
-    @if (selectedIds().size > 0) {
-      <button type="button" class="danger" (click)="deleteSelected()" [disabled]="loading()">
-        Delete selected ({{ selectedIds().size }})
-      </button>
-    }
-  </div>
-
-  @if (listLoading()) {
-    <p class="hint">Loading...</p>
-  } @else if (properties().length === 0) {
-    <p class="hint">You have no properties yet. Create one below.</p>
-  } @else {
-    <table class="data-table list-table">
-      <thead>
-        <tr>
-          <th class="pick">
-            <input
-              type="checkbox"
-              [checked]="allSelected()"
-              (change)="toggleSelectAll()"
-              title="Select all"
-            />
-          </th>
-          <th class="sortable" (click)="sortBy('id')">Id {{ sortField() === 'id' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
-          <th class="sortable" (click)="sortBy('name')">Name {{ sortField() === 'name' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
-          <th class="sortable" (click)="sortBy('propertyType')">Type {{ sortField() === 'propertyType' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
-          <th class="sortable" (click)="sortBy('typology')">Typology {{ sortField() === 'typology' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
-          <th class="sortable num" (click)="sortBy('areaM2')">Area (m²) {{ sortField() === 'areaM2' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
-          <th class="sortable num" (click)="sortBy('purchasePrice')">Paid (€) {{ sortField() === 'purchasePrice' ? (sortDirection() === 'asc' ? '▲' : '▼') : '' }}</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (p of sortedProperties(); track p.id) {
-          <tr [class.row-selected]="isSelected(p.id)" [class.row-editing]="editingId() === p.id">
-            <td class="pick">
-              <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" />
-            </td>
-            <td>#{{ p.id }}</td>
-            <td>{{ p.name }}</td>
-            <td>{{ p.propertyType }}</td>
-            <td>{{ p.typology }}</td>
-            <td class="num">{{ p.areaM2 | number: '1.0-0' }}</td>
-            <td class="num">{{ p.purchasePrice != null ? ('€' + (p.purchasePrice | number: '1.0-0')) : '—' }}</td>
-            <td class="row-actions">
-              <button type="button" class="secondary sm" (click)="select(p)">Edit</button>
-              <a
-                class="btn-link sm"
-                [routerLink]="['/valuation']"
-                [queryParams]="{ propertyId: p.id }"
-                title="Estimate this property's value against comparable listings"
-              >Evaluate →</a>
-            </td>
-          </tr>
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">All properties</span>
+      <div class="card-actions">
+        <span class="meta">{{ properties().length }} owned</span>
+        @if (selectedIds().size > 0) {
+          <button type="button" class="danger sm" (click)="deleteSelected()" [disabled]="loading()">
+            Delete selected ({{ selectedIds().size }})
+          </button>
         }
-      </tbody>
-    </table>
-  }
-</section>
+      </div>
+    </div>
 
-<section class="panel">
-  <div class="form-head">
-    <h2>{{ editingId() ? 'Edit property #' + editingId() : 'New property' }}</h2>
-    @if (editingId()) {
-      <button type="button" class="danger" (click)="remove()" [disabled]="loading()">Delete</button>
+    @if (listLoading()) {
+      <p class="empty">Loading…</p>
+    } @else if (properties().length === 0) {
+      <p class="empty">You have no properties yet. Use <strong>New property</strong> to add the first one.</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="pick">
+                <input type="checkbox" [checked]="allSelected()" (change)="toggleSelectAll()" title="Select all" />
+              </th>
+              <th class="num sortable" (click)="sortBy('id')">Id{{ arrow('id') }}</th>
+              <th class="sortable" (click)="sortBy('name')">Name{{ arrow('name') }}</th>
+              <th class="sortable" (click)="sortBy('propertyType')">Type{{ arrow('propertyType') }}</th>
+              <th class="sortable" (click)="sortBy('typology')">Typology{{ arrow('typology') }}</th>
+              <th class="num sortable" (click)="sortBy('areaM2')">Area (m²){{ arrow('areaM2') }}</th>
+              <th class="num sortable" (click)="sortBy('purchasePrice')">Paid (€){{ arrow('purchasePrice') }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of sortedProperties(); track p.id) {
+              <tr [class.row-selected]="isSelected(p.id)" [class.row-editing]="editingId() === p.id">
+                <td class="pick">
+                  <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" />
+                </td>
+                <td class="num">#{{ p.id }}</td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.propertyType }}</td>
+                <td>{{ p.typology }}</td>
+                <td class="num">{{ p.areaM2 | number: '1.0-0' }}</td>
+                <td class="num">{{ p.purchasePrice != null ? ('€' + (p.purchasePrice | number: '1.0-0')) : '—' }}</td>
+                <td class="row-actions">
+                  <button type="button" class="secondary sm" (click)="select(p)">Edit</button>
+                  <a
+                    class="link"
+                    [routerLink]="['/valuation']"
+                    [queryParams]="{ propertyId: p.id }"
+                    title="Estimate this property's value against comparable listings"
+                    >Evaluate →</a
+                  >
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
-  </div>
-
-  <form class="form-grid" (ngSubmit)="save()">
-    <label class="wide">
-      Name *
-      <input type="text" [(ngModel)]="form.name" name="name" placeholder="e.g. Faro T2 flat" />
-    </label>
-
-    <label>
-      Type *
-      <select [(ngModel)]="form.propertyType" name="propertyType">
-        @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
-      </select>
-    </label>
-    <label>
-      Typology *
-      <select [(ngModel)]="form.typology" name="typology">
-        @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
-      </select>
-    </label>
-    <label>
-      Condition
-      <select [(ngModel)]="form.condition" name="condition">
-        @for (c of conditions; track c) { <option [value]="c">{{ c }}</option> }
-      </select>
-    </label>
-
-    <label>
-      Area (m²) *
-      <input type="number" min="1" [(ngModel)]="form.areaM2" name="areaM2" />
-    </label>
-    <label>
-      Bathrooms
-      <input type="number" min="0" [(ngModel)]="form.bathrooms" name="bathrooms" />
-    </label>
-    <label>
-      Balconies
-      <input type="number" min="0" [(ngModel)]="form.balconyCount" name="balconyCount" />
-    </label>
-    <label>
-      Floor
-      <input type="number" [(ngModel)]="form.floor" name="floor" />
-    </label>
-    <label>
-      Total floors
-      <input type="number" [(ngModel)]="form.totalFloors" name="totalFloors" />
-    </label>
-
-    <!-- Location cascade: District → Municipality → Town → Zone. Each pick loads
-         the next, from the same market-area data the Listing Browser filters use. -->
-    <label>
-      District *
-      <select [(ngModel)]="form.district" name="district" (ngModelChange)="onDistrictChange()">
-        <option value="">— select —</option>
-        @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
-      </select>
-    </label>
-    <label>
-      Municipality *
-      <select
-        [(ngModel)]="form.municipality"
-        name="municipality"
-        (ngModelChange)="onMunicipalityChange()"
-        [disabled]="!form.district"
-      >
-        <option value="">— select —</option>
-        @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
-      </select>
-    </label>
-    <label>
-      Town
-      <select
-        [(ngModel)]="form.town"
-        name="town"
-        (ngModelChange)="onTownChange()"
-        [disabled]="!form.municipality"
-      >
-        <option value="">— any —</option>
-        @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
-      </select>
-    </label>
-    <label>
-      Zone
-      <select [(ngModel)]="form.zone" name="zone" [disabled]="!form.town">
-        <option [ngValue]="null">— any —</option>
-        @for (z of zoneOptions(); track z) { <option [ngValue]="z">{{ z }}</option> }
-      </select>
-    </label>
-
-    <label>
-      Purchase price (€)
-      <input type="number" min="0" [(ngModel)]="form.purchasePrice" name="purchasePrice" />
-    </label>
-    <label>
-      Purchase date
-      <input type="date" [(ngModel)]="form.purchaseDate" name="purchaseDate" />
-    </label>
-    <label>
-      Renovation investment (€)
-      <input type="number" min="0" [(ngModel)]="form.renovationInvestment" name="renovationInvestment" />
-    </label>
-    <label>
-      Energy certificate
-      <input type="text" [(ngModel)]="form.energyCertificate" name="energyCertificate" placeholder="A / B / C..." />
-    </label>
-
-    <label>
-      Construction year
-      <input type="number" [(ngModel)]="form.constructionYear" name="constructionYear" />
-    </label>
-    <label>
-      Renovation year
-      <input type="number" [(ngModel)]="form.renovationYear" name="renovationYear" />
-    </label>
-    <label>
-      Latitude *
-      <input type="number" step="any" [(ngModel)]="form.latitude" name="latitude" />
-    </label>
-    <label>
-      Longitude *
-      <input type="number" step="any" [(ngModel)]="form.longitude" name="longitude" />
-    </label>
-
-    <fieldset class="wide checks">
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasElevator" name="hasElevator" /> Elevator</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasAirConditioning" name="hasAirConditioning" /> A/C</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasGarage" name="hasGarage" /> Garage</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasParking" name="hasParking" /> Parking</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasTerrace" name="hasTerrace" /> Terrace</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasSwimmingPool" name="hasSwimmingPool" /> Pool</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.isFurnished" name="isFurnished" /> Furnished</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasSeaView" name="hasSeaView" /> Sea view</label>
-      <label class="check"><input type="checkbox" [(ngModel)]="form.hasCityView" name="hasCityView" /> City view</label>
-    </fieldset>
-
-    <label class="wide">
-      Notes
-      <textarea rows="2" [(ngModel)]="form.notes" name="notes"></textarea>
-    </label>
-
-    <div class="actions">
-      <button type="submit" [disabled]="loading()">{{ editingId() ? 'Save changes' : 'Create property' }}</button>
-    </div>
-  </form>
-</section>
-
-@if (current(); as p) {
-  <section class="panel">
-    <div class="form-head">
-      <h2>Saved details</h2>
-      <a
-        class="btn-primary"
-        [routerLink]="['/valuation']"
-        [queryParams]="{ propertyId: p.id }"
-      >Estimate value →</a>
-    </div>
-    <table class="data-table">
-      <tbody>
-        <tr><th>Id</th><td>#{{ p.id }}</td></tr>
-        <tr><th>Market area id</th><td>{{ p.marketAreaId }}</td></tr>
-        <tr><th>Nearest beach</th><td>{{ p.nearestBeachName ?? '—' }}</td></tr>
-        <tr><th>Distance to beach</th><td>{{ p.distanceToBeachMeters != null ? (p.distanceToBeachMeters + ' m') : '—' }}</td></tr>
-      </tbody>
-    </table>
-    <p class="hint">
-      Market area and nearest beach are resolved by the server from the address / coordinates.
-      Use <strong>Estimate value</strong> to value this property against comparable market listings.
-    </p>
   </section>
-}
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">{{ editingId() ? 'Edit property #' + editingId() : 'New property' }}</span>
+      @if (editingId()) {
+        <button type="button" class="danger sm" (click)="remove()" [disabled]="loading()">Delete</button>
+      }
+    </div>
+    <div class="card-body">
+      <form class="form-grid" (ngSubmit)="save()">
+        <label class="field wide">
+          <span>Name *</span>
+          <input type="text" [(ngModel)]="form.name" name="name" placeholder="e.g. Faro T2 flat" />
+        </label>
+
+        <label class="field">
+          <span>Type *</span>
+          <select [(ngModel)]="form.propertyType" name="propertyType">
+            @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Typology *</span>
+          <select [(ngModel)]="form.typology" name="typology">
+            @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Condition</span>
+          <select [(ngModel)]="form.condition" name="condition">
+            @for (c of conditions; track c) { <option [value]="c">{{ c }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Area (m²) *</span>
+          <input type="number" min="1" [(ngModel)]="form.areaM2" name="areaM2" />
+        </label>
+        <label class="field">
+          <span>Bathrooms</span>
+          <input type="number" min="0" [(ngModel)]="form.bathrooms" name="bathrooms" />
+        </label>
+        <label class="field">
+          <span>Balconies</span>
+          <input type="number" min="0" [(ngModel)]="form.balconyCount" name="balconyCount" />
+        </label>
+        <label class="field">
+          <span>Floor</span>
+          <input type="number" [(ngModel)]="form.floor" name="floor" />
+        </label>
+        <label class="field">
+          <span>Total floors</span>
+          <input type="number" [(ngModel)]="form.totalFloors" name="totalFloors" />
+        </label>
+
+        <!-- Location cascade: District → Municipality → Town → Zone. Each pick loads
+             the next, from the same market-area data the listing filters use. -->
+        <label class="field">
+          <span>District *</span>
+          <select [(ngModel)]="form.district" name="district" (ngModelChange)="onDistrictChange()">
+            <option value="">— select —</option>
+            @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Municipality *</span>
+          <select
+            [(ngModel)]="form.municipality"
+            name="municipality"
+            (ngModelChange)="onMunicipalityChange()"
+            [disabled]="!form.district"
+          >
+            <option value="">— select —</option>
+            @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Town</span>
+          <select [(ngModel)]="form.town" name="town" (ngModelChange)="onTownChange()" [disabled]="!form.municipality">
+            <option value="">— any —</option>
+            @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Zone</span>
+          <select [(ngModel)]="form.zone" name="zone" [disabled]="!form.town">
+            <option [ngValue]="null">— any —</option>
+            @for (z of zoneOptions(); track z) { <option [ngValue]="z">{{ z }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Latitude *</span>
+          <input type="number" step="any" [(ngModel)]="form.latitude" name="latitude" />
+        </label>
+        <label class="field">
+          <span>Longitude *</span>
+          <input type="number" step="any" [(ngModel)]="form.longitude" name="longitude" />
+        </label>
+
+        <label class="field">
+          <span>Purchase price (€)</span>
+          <input type="number" min="0" [(ngModel)]="form.purchasePrice" name="purchasePrice" />
+        </label>
+        <label class="field">
+          <span>Purchase date</span>
+          <input type="date" [(ngModel)]="form.purchaseDate" name="purchaseDate" />
+        </label>
+        <label class="field">
+          <span>Renovation investment (€)</span>
+          <input type="number" min="0" [(ngModel)]="form.renovationInvestment" name="renovationInvestment" />
+        </label>
+        <label class="field">
+          <span>Energy certificate</span>
+          <input type="text" [(ngModel)]="form.energyCertificate" name="energyCertificate" placeholder="A / B / C…" />
+        </label>
+
+        <label class="field">
+          <span>Construction year</span>
+          <input type="number" [(ngModel)]="form.constructionYear" name="constructionYear" />
+        </label>
+        <label class="field">
+          <span>Renovation year</span>
+          <input type="number" [(ngModel)]="form.renovationYear" name="renovationYear" />
+        </label>
+
+        <fieldset class="check-grid wide">
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasElevator" name="hasElevator" /> Elevator</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasAirConditioning" name="hasAirConditioning" /> A/C</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasGarage" name="hasGarage" /> Garage</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasParking" name="hasParking" /> Parking</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasTerrace" name="hasTerrace" /> Terrace</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasSwimmingPool" name="hasSwimmingPool" /> Pool</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.isFurnished" name="isFurnished" /> Furnished</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasSeaView" name="hasSeaView" /> Sea view</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasCityView" name="hasCityView" /> City view</label>
+        </fieldset>
+
+        <label class="field wide">
+          <span>Notes</span>
+          <textarea rows="2" [(ngModel)]="form.notes" name="notes"></textarea>
+        </label>
+
+        <div class="actions">
+          <button type="submit" [disabled]="loading()">
+            {{ editingId() ? 'Save changes' : 'Create property' }}
+          </button>
+          @if (editingId()) {
+            <button type="button" class="secondary" (click)="newProperty()">Cancel</button>
+          }
+        </div>
+      </form>
+    </div>
+  </section>
+
+  @if (current(); as p) {
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">Resolved by the server</span>
+        <a class="btn" [routerLink]="['/valuation']" [queryParams]="{ propertyId: p.id }">Estimate value →</a>
+      </div>
+      <div class="card-body stack">
+        <dl class="kv">
+          <dt>Id</dt>
+          <dd>#{{ p.id }}</dd>
+          <dt>Market area id</dt>
+          <dd>{{ p.marketAreaId }}</dd>
+          <dt>Nearest beach</dt>
+          <dd>{{ p.nearestBeachName ?? '—' }}</dd>
+          <dt>Distance to beach</dt>
+          <dd>{{ p.distanceToBeachMeters != null ? (p.distanceToBeachMeters + ' m') : '—' }}</dd>
+        </dl>
+        <p class="hint">
+          Market area and nearest beach are resolved from the coordinates, not typed in.
+        </p>
+      </div>
+    </section>
+  }
+</div>

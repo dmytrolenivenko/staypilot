@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, switchMap } from 'rxjs';
 import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketArea } from '../../core/models/market-area';
+import { PageHeaderComponent } from '../../shared/page-header.component';
 
 // Page sizes offered in the dropdown. 200 is the biggest the API accepts.
 const PAGE_SIZES = [20, 50, 100, 200];
@@ -10,7 +11,7 @@ const PAGE_SIZES = [20, 50, 100, 200];
 @Component({
   selector: 'app-market-area-list',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PageHeaderComponent],
   templateUrl: './market-area-list.component.html',
   styleUrl: './market-area-list.component.css'
 })

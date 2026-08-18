@@ -3,86 +3,156 @@
   min-height: 100vh;
 }
 
+/* --- Sidebar ------------------------------------------------------------- */
+
 .sidebar {
-  width: 220px;
-  flex: 0 0 220px;
+  width: 232px;
+  flex: 0 0 232px;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
-  padding: 1rem 0;
+  padding: var(--sp-4) var(--sp-3);
   display: flex;
   flex-direction: column;
+  gap: var(--sp-4);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .brand {
-  padding: 0 1rem 1rem;
   display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 0.75rem;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-2);
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
 }
 
 .brand-title {
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-weight: 650;
+  font-size: var(--fs-base);
 }
 
 .brand-sub {
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
 }
+
+/* --- Nav ----------------------------------------------------------------- */
 
 nav {
   display: flex;
   flex-direction: column;
+  gap: 1px;
 }
 
-nav a {
-  padding: 0.4rem 1rem;
-  color: var(--text);
+.nav-group {
+  margin: var(--sp-4) var(--sp-2) var(--sp-1);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.nav-link {
+  padding: 0.35rem var(--sp-2);
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
   text-decoration: none;
-  font-size: 0.9rem;
-  border-left: 3px solid transparent;
+  font-size: var(--fs-sm);
 }
 
-nav a:hover {
+.nav-link:hover {
   background: var(--surface-hover);
+  color: var(--text);
 }
 
-nav a.active {
-  border-left-color: var(--accent);
-  background: var(--surface-hover);
+.nav-link.active {
+  background: var(--accent-soft);
+  color: var(--accent);
   font-weight: 600;
 }
 
-.nav-group-label {
-  margin: 0.75rem 1rem 0.15rem;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
+/* Routes that only have a placeholder screen behind them. */
+.nav-link.planned {
+  color: var(--text-faint);
 }
 
-.content {
-  flex: 1;
-  padding: 1.5rem 2rem;
-  max-width: 1200px;
-}
+/* --- Footer -------------------------------------------------------------- */
 
 .theme-toggle {
-  margin: 0 1rem 0.75rem;
+  margin-top: auto;
   align-self: flex-start;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-faint);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 0.72rem;
-  text-align: left;
-  padding: 0.25rem 0.55rem;
+  font-size: var(--fs-xs);
+  filter: none;
 }
 
 .theme-toggle:hover {
   background: var(--surface-hover);
   color: var(--text);
-  opacity: 1;
+  filter: none;
+}
+
+/* --- Content ------------------------------------------------------------- */
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-8) var(--sp-8) var(--sp-8);
+  max-width: 1280px;
+}
+
+/* Narrow windows: the sidebar becomes a scrolling strip on top. */
+@media (max-width: 860px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex: none;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+  }
+
+  .nav-group {
+    display: none;
+  }
+
+  .content {
+    padding: var(--sp-5) var(--sp-4);
+  }
 }

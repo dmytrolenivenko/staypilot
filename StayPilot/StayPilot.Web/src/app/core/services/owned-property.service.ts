@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import {
   OwnedPropertyAnalysisResponse,
+  OwnedPropertyPortfolioResponse,
   OwnedPropertyRequest,
   OwnedPropertyResponse
 } from '../models/owned-property';
@@ -36,6 +37,16 @@ export class OwnedPropertyService {
     return this.http.post<OwnedPropertyAnalysisResponse>(
       `${this.baseUrl}/EstimateEvaluationsOwnedproperty?id=${id}&months=${months}&radiusMeters=${radiusMeters}`,
       null
+    );
+  }
+
+  // GET /api/OwnedProperty/ListValuationsOwnedproperty?months=&radiusMeters=&years=
+  // Every owned property priced in one pass, each with how keen buyers are in its place and
+  // where its value is heading. Not unwrapped to a bare array like getAll: the totals on the
+  // response are the portfolio summary the screen puts at the top.
+  portfolio(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
+    return this.http.get<OwnedPropertyPortfolioResponse>(
+      `${this.baseUrl}/ListValuationsOwnedproperty?months=${months}&radiusMeters=${radiusMeters}&years=${years}`
     );
   }
 

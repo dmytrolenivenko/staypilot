@@ -1,10 +1,1 @@
-.lede {
-  max-width: 60ch;
-  color: var(--text-muted);
-}
-
-.needs {
-  max-width: 60ch;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
+/* Nothing local — the screen is the shared page header plus one card. */

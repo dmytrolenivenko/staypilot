@@ -1,0 +1,118 @@
+/* The three summary blocks: price, price per m², floor area. */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-3);
+}
+
+.summary {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.summary h3 {
+  margin-bottom: var(--sp-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+/* Figures right-align against their labels so the column reads down. */
+.figures dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The median is the number to quote, so it is the only one typeset large. */
+.figures dd.lead {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+/* A slice too thin to lean on. Louder than a hint, quieter than an error — the
+   numbers are real, there are just very few of them. */
+.warning {
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+/* The distribution: price range on the left, bar in the middle, count on the right. */
+.distribution {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+/* The label column sizes to its widest label instead of being pinned at 13rem. A whole-country
+   slice runs to seven-figure prices, and a nowrap label wider than its track used to spill
+   across the bar and swallow the row. The bar keeps whatever is left, down to a floor. */
+.distribution li {
+  display: grid;
+  grid-template-columns: max-content minmax(4rem, 1fr) 6rem;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.range {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.track {
+  background: var(--surface-hover);
+  border-radius: 3px;
+  height: 1.1rem;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Narrow windows: let the bar rows stack their labels instead of squashing the bar. */
+@media (max-width: 720px) {
+  .distribution li {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
+
+/* --- Breakdown by the places inside the slice --------------------------- */
+
+/* Each row narrows the whole screen to that place, so it has to look like it does something. */
+.drillable {
+  cursor: pointer;
+}
+
+.drillable:hover {
+  background: var(--surface-hover);
+}
+
+/* Dearer or cheaper than the slice this place belongs to. Neither is good or bad on its own —
+   the colour says which way it leans, not whether to buy. */
+.above {
+  color: var(--warn);
+}
+
+.below {
+  color: var(--success);
+}

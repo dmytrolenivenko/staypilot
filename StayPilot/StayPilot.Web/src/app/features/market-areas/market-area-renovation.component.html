@@ -1,106 +1,301 @@
-<section class="panel">
-  <div class="panel-head">
-    <h1>Renovation upside</h1>
-    <span class="hint">{{ sortedAreas().length }} places measured &middot; {{ level() }}</span>
-  </div>
+<div class="page">
+  <app-page-header
+    title="Renovation upside"
+    sub="Where the market pays you enough for taking the work on. The other screens find value; this one says where to create it."
+  />
 
-  <p class="hint">
-    Where the market pays you enough for taking the work on. The other screens find value; this is
-    the one that tells you where to <strong>create</strong> it.
-  </p>
-  <p class="hint">
-    <strong>Discount</strong> is measured: what stock needing work actually sells for per m²
-    against finished stock in the same place, from real adverts. Renovation stock means the advert
-    says it needs work <em>or</em> its energy certificate is D or worse &mdash; the certificate
-    carries most of it, because &ldquo;needs renovation&rdquo; is set on barely 1% of listings and
-    a grade is measured rather than typed by an agent.
-  </p>
-  <p class="hint">
-    <strong>Cost</strong> is an estimate, and yours to set. The two are kept in separate columns and
-    never merged into a single score, because one is measured and the other is a guess &mdash; when
-    the guess is wrong you need to be able to see it.
-  </p>
-
-  <div class="toolbar">
-    <label class="control">
-      Level
-      <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
-        @for (option of levels; track option) {
-          <option [ngValue]="option">{{ option }}</option>
-        }
-      </select>
-    </label>
-
-    <label class="control">
-      Renovation €/m²
-      <input
-        class="cost-input"
-        type="number"
-        min="0"
-        step="50"
-        [ngModel]="renovationCostPerM2()"
-        (ngModelChange)="changeRenovationCost($event)"
-      />
-    </label>
-
-    <label class="control">
-      Min listings
-      <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
-    </label>
-
-    @if (calculatedAtUtc()) {
-      <span class="hint">Worked out {{ calculatedAtUtc() | date:'medium' }}</span>
-    }
-  </div>
-
-  @if (loading()) {
-    <p class="hint">Loading...</p>
-  } @else if (error()) {
-    <p class="error">{{ error() }}</p>
-  } @else if (sortedAreas().length === 0) {
-    <p class="hint">
-      No place at {{ level() }} level has both enough project stock and enough finished stock to
-      compare. Lower Min listings, or try a wider level &mdash; renovation stock is thin
-      everywhere, which is exactly why the energy certificate is used to find it.
+  <app-explainer>
+    <p>
+      <strong>How the discount is worked out.</strong> Every listing in a place is sorted into one
+      of three piles. A <em>project</em> is one whose advert says it needs work, <em>or</em> whose
+      energy certificate is D or worse. <em>Finished</em> means the advert calls it good,
+      renovated, or a new build. Everything else &mdash; an unknown condition with no certificate
+      &mdash; goes in neither pile and is counted separately. The discount is the middle
+      &euro;/m&sup2; of the finished pile minus the middle &euro;/m&sup2; of the project pile. That
+      is the whole calculation: one subtraction between two medians, from real adverts.
     </p>
-  } @else {
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th class="rank">#</th>
-          <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
-          <th class="num sortable" (click)="toggleSort('projects')">Projects{{ arrow('projects') }}</th>
-          <th class="num">Needs work €/m²</th>
-          <th class="num">Finished €/m²</th>
-          <th class="num sortable" (click)="toggleSort('discount')">Discount{{ arrow('discount') }}</th>
-          <th class="num">Cost</th>
-          <th class="num sortable" (click)="toggleSort('margin')">Margin{{ arrow('margin') }}</th>
-          <th>Verdict</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (area of sortedAreas(); track area.displayName; let i = $index) {
-          <tr [class.thin]="isThin(area)">
-            <td class="rank">{{ i + 1 }}</td>
-            <td>
-              {{ area.displayName }}
-              @if (isThin(area)) {
-                <span class="thin-tag" title="Fewer than 10 project listings — read with suspicion">thin</span>
-              }
-            </td>
-            <td class="num">
-              {{ area.projectCount }}
-              <span class="muted">of {{ area.listingCount }}</span>
-            </td>
-            <td class="num">{{ area.projectMedianPricePerM2 | number:'1.0-0' }}</td>
-            <td class="num">{{ area.moveInMedianPricePerM2 | number:'1.0-0' }}</td>
-            <td class="num measured">{{ area.renovationDiscountPerM2 | number:'1.0-0' }}</td>
-            <td class="num estimated">−{{ renovationCostPerM2() | number:'1.0-0' }}</td>
-            <td class="num">{{ margin(area) | number:'1.0-0' }}</td>
-            <td><span class="verdict" [class]="verdictClass(area)">{{ verdict(area) }}</span></td>
-          </tr>
+    <p>
+      <strong>Why the certificate does most of the work.</strong> &ldquo;Needs renovation&rdquo; is
+      set on barely 1% of listings &mdash; too few for most places to have any project stock at
+      all. A poor energy grade covers roughly ten times as many and is measured rather than typed
+      by an agent. It is also not quite the same claim: a grade E flat is badly insulated, which
+      overlaps with needing work without being identical to it. Open any row to see which of the
+      two signals its projects came from.
+    </p>
+    <p>
+      <strong>Trust</strong> is why this screen is worth believing at all. Two medians always
+      differ by something. Whether that something is a finding depends on how many adverts each
+      side rests on, how far the two price spreads sit apart, and how much of the place's stock got
+      sorted at all. Where the project prices and the finished prices cover the same ground, the
+      gap between their middles is noise wearing a decimal point &mdash; and the row says so,
+      with the reason.
+    </p>
+    <p>
+      <strong>Cost</strong> is an estimate, and yours to set. It is kept in its own column and
+      never merged into the measured discount, because one is read off the market and the other is
+      a guess &mdash; when the guess is wrong you need to be able to see it.
+    </p>
+  </app-explainer>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Scope</span>
+      @if (calculatedAtUtc()) {
+        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+      }
+    </div>
+    <div class="card-body">
+      <div class="toolbar">
+        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
+
+        <label class="control">
+          Level
+          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+            @for (option of levels; track option) {
+              <option [ngValue]="option">{{ levelName(option) }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="control">
+          Renovation €/m²
+          <input
+            class="cost-input"
+            type="number"
+            min="0"
+            step="50"
+            [ngModel]="renovationCostPerM2()"
+            (ngModelChange)="changeRenovationCost($event)"
+          />
+        </label>
+
+        <label class="control">
+          Min listings
+          <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+        </label>
+
+        <label class="control checkbox">
+          <input type="checkbox" [ngModel]="trustedOnly()" (ngModelChange)="trustedOnly.set($event)" />
+          Hide low trust
+          @if (lowTrustCount() > 0) {
+            <span class="faint">({{ lowTrustCount() }})</span>
+          }
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Places measured</span>
+      <span class="meta">
+        {{ sortedAreas().length }} places · {{ levelName(level()) }}
+        @if (trustedOnly() && lowTrustCount() > 0) {
+          · {{ lowTrustCount() }} low-trust hidden
         }
-      </tbody>
-    </table>
-  }
-</section>
+      </span>
+    </div>
+
+    @if (loading()) {
+      <p class="empty">Loading…</p>
+    } @else if (error()) {
+      <div class="card-body"><p class="error">{{ error() }}</p></div>
+    } @else if (sortedAreas().length === 0) {
+      <p class="empty">
+        No place at {{ levelName(level()).toLowerCase() }} level has both enough project stock and
+        enough finished stock to compare. Lower Min listings, widen the area, or try a wider level
+        &mdash; renovation stock is thin everywhere, which is exactly why the energy certificate is
+        used to find it.
+      </p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="rank">#</th>
+              <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
+              <th
+                class="sortable"
+                (click)="toggleSort('trust')"
+                title="How far the discount deserves to be believed — open a row for the reason"
+              >
+                Trust{{ arrow('trust') }}
+              </th>
+              <th class="num sortable" (click)="toggleSort('projects')">Projects{{ arrow('projects') }}</th>
+              <th class="num sortable" (click)="toggleSort('needsWork')">Needs work €/m²{{ arrow('needsWork') }}</th>
+              <th class="num sortable" (click)="toggleSort('finished')">Finished €/m²{{ arrow('finished') }}</th>
+              <th class="num sortable" (click)="toggleSort('discount')">Discount{{ arrow('discount') }}</th>
+              <th class="num" title="You type this in — the same on every row, so there is nothing to sort">Cost</th>
+              <th class="num sortable" (click)="toggleSort('margin')">Margin{{ arrow('margin') }}</th>
+              <th
+                class="num sortable"
+                (click)="toggleSort('onAFlat')"
+                title="The margin as money, on a project of the size this place actually sells"
+              >
+                On a typical flat{{ arrow('onAFlat') }}
+              </th>
+              <th class="sortable" (click)="toggleSort('verdict')">Verdict{{ arrow('verdict') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (area of sortedAreas(); track area.displayName; let i = $index) {
+              <tr class="drillable" [class.thin]="isThin(area)" (click)="toggleExpanded(area.displayName)">
+                <td class="rank">{{ i + 1 }}</td>
+                <td>
+                  <app-place-name
+                    [level]="area.level"
+                    [district]="area.district"
+                    [municipality]="area.municipality"
+                    [town]="area.town"
+                  >
+                    @if (isThin(area)) {
+                      <span class="tag tag-quiet" title="Fewer than 10 project listings — read with suspicion">thin</span>
+                    }
+                  </app-place-name>
+                </td>
+                <td>
+                  @if (area.renovationEvidence; as evidence) {
+                    <span class="badge" [class]="trustClass(area)" [title]="evidence.reason">
+                      {{ evidence.confidence }}
+                    </span>
+                  }
+                </td>
+                <td class="num">
+                  {{ area.projectCount }}
+                  <span class="faint">of {{ area.listingCount }}</span>
+                </td>
+                <td class="num">{{ area.projectMedianPricePerM2 | number: '1.0-0' }}</td>
+                <td class="num">{{ area.moveInMedianPricePerM2 | number: '1.0-0' }}</td>
+                <td class="num measured">{{ area.renovationDiscountPerM2 | number: '1.0-0' }}</td>
+                <td class="num estimated">−{{ renovationCostPerM2() | number: '1.0-0' }}</td>
+                <td class="num">{{ margin(area) | number: '1.0-0' }}</td>
+                <td class="num">
+                  {{ marginOnATypicalFlat(area) | number: '1.0-0' }}
+                  <span class="faint">{{ typicalFlatM2(area) | number: '1.0-0' }} m²</span>
+                </td>
+                <td><span class="tag" [class]="verdictClass(area)">{{ verdict(area) }}</span></td>
+              </tr>
+
+              @if (isExpanded(area.displayName)) {
+                <tr class="expansion">
+                  <td colspan="11">
+                    <div class="working">
+                      <!-- 1. Why this row should or should not be believed. -->
+                      @if (area.renovationEvidence; as evidence) {
+                        <div class="working-block">
+                          <h4>How much to trust this</h4>
+                          <p class="verdict-line">
+                            <span class="badge" [class]="trustClass(area)">{{ evidence.confidence }}</span>
+                            {{ evidence.reason }}
+                          </p>
+                          <dl class="kv">
+                            <dt>Spreads overlap</dt>
+                            <dd>
+                              {{ evidence.spreadOverlapPercent | number: '1.0-0' }}%
+                              <span class="faint">0% = the two piles are cleanly apart</span>
+                            </dd>
+                            <dt>Stock with a verdict</dt>
+                            <dd>
+                              {{ evidence.classifiedSharePercent | number: '1.0-0' }}%
+                              <span class="faint">
+                                {{ classifiedCount(area) | number }} of {{ area.listingCount | number }} listings
+                              </span>
+                            </dd>
+                          </dl>
+                        </div>
+                      }
+
+                      <!-- 2. Where the project pile came from. -->
+                      <div class="working-block">
+                        <h4>How the {{ area.projectCount }} projects were found</h4>
+                        <dl class="kv">
+                          <dt>Advert says needs work</dt>
+                          <dd>{{ area.projectByConditionCount | number }}</dd>
+                          <dt>Energy grade D or worse</dt>
+                          <dd>{{ area.projectByEnergyCount | number }}</dd>
+                          <dt>Finished stock, to compare against</dt>
+                          <dd>{{ area.moveInCount | number }}</dd>
+                          <dt>Neither, so left out</dt>
+                          <dd>
+                            {{ area.unclassifiedCount | number }}
+                            <span class="faint">no condition and no certificate</span>
+                          </dd>
+                        </dl>
+                      </div>
+
+                      <!-- 3. The two spreads, on one scale. -->
+                      @if (hasSpread(area)) {
+                        <div class="working-block wide">
+                          <h4>Where the two piles actually sit</h4>
+                          <p class="note-inline">
+                            The middle half of each pile &mdash; a quarter of the listings ask less
+                            than the left edge, a quarter more than the right. Bars that sit on top
+                            of each other mean the discount between their middles is not a finding.
+                          </p>
+
+                          <div class="spread-row">
+                            <span class="spread-label">Needs work</span>
+                            <span class="spread-track">
+                              <span
+                                class="spread-bar project"
+                                [style.left]="spreadOffset(area, area.projectP25PricePerM2)"
+                                [style.width]="spreadWidth(area, area.projectP25PricePerM2, area.projectP75PricePerM2)"
+                              ></span>
+                            </span>
+                            <span class="spread-figures">
+                              {{ area.projectP25PricePerM2 | number: '1.0-0' }} –
+                              {{ area.projectP75PricePerM2 | number: '1.0-0' }}
+                            </span>
+                          </div>
+
+                          <div class="spread-row">
+                            <span class="spread-label">Finished</span>
+                            <span class="spread-track">
+                              <span
+                                class="spread-bar movein"
+                                [style.left]="spreadOffset(area, area.moveInP25PricePerM2)"
+                                [style.width]="spreadWidth(area, area.moveInP25PricePerM2, area.moveInP75PricePerM2)"
+                              ></span>
+                            </span>
+                            <span class="spread-figures">
+                              {{ area.moveInP25PricePerM2 | number: '1.0-0' }} –
+                              {{ area.moveInP75PricePerM2 | number: '1.0-0' }}
+                            </span>
+                          </div>
+                        </div>
+                      }
+
+                      <!-- 4. The whole thing as money, on one flat. -->
+                      <div class="working-block wide">
+                        <h4>On a typical {{ typicalFlatM2(area) | number: '1.0-0' }} m² project here</h4>
+                        <dl class="kv figures">
+                          <dt>Buy at the project rate</dt>
+                          <dd>€{{ buyPrice(area) | number: '1.0-0' }}</dd>
+                          <dt>Spend on the work <span class="faint">your estimate</span></dt>
+                          <dd class="estimated">€{{ workCost(area) | number: '1.0-0' }}</dd>
+                          <dt>Total in</dt>
+                          <dd>€{{ buyPrice(area) + workCost(area) | number: '1.0-0' }}</dd>
+                          <dt>Finished stock here sells for</dt>
+                          <dd>€{{ finishedValue(area) | number: '1.0-0' }}</dd>
+                          <dt>Margin</dt>
+                          <dd class="lead" [class.pos]="margin(area) > 0" [class.neg]="margin(area) < 0">
+                            €{{ marginOnATypicalFlat(area) | number: '1.0-0' }}
+                          </dd>
+                        </dl>
+                        <p class="note-inline">
+                          Before buying and selling costs, tax, and the months it takes &mdash; none
+                          of which this screen knows about. Read the margin as the room there is to
+                          work in, not as profit.
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

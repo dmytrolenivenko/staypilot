@@ -96,5 +96,21 @@ namespace StayPilot.Api.Controllers
 
             return this.ToActionResult(result);
         }
+
+        /// <summary>
+        /// Price every owned property at once, each with how keen buyers are in its place and
+        /// where its value is heading.
+        /// 400 Bad Request when we hold too few listings to price anything; an empty list is a
+        /// normal 200 for a user who owns nothing yet.
+        /// </summary>
+        // Every parameter defaults, because a missing query string value binds to 0 - which
+        // would shrink the comparable search to nothing and project zero years forward.
+        [HttpGet]
+        public async Task<ActionResult<OwnedPropertyPortfolioResponse>> ListValuationsOwnedpropertyAsync(int months = 12, int radiusMeters = 2000, int years = 10)
+        {
+            var result = await _ownedPropertyService.GetPortfolioAsync(radiusMeters, months, years);
+
+            return this.ToActionResult(result);
+        }
     }
 }

@@ -11448,6 +11448,234 @@ namespace StayPilot.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("StayPilot.Domain.Entities.HousePriceGrowth", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AnnualGrowthPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("AsOfYear")
+                        .HasColumnType("int");
+
+                    b.Property<string>("District")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<decimal>("VolatilityPercentagePoints")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("District")
+                        .IsUnique();
+
+                    b.ToTable("HousePriceGrowth");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AnnualGrowthPercent = 6.0m,
+                            AsOfYear = 2026,
+                            District = "",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.0m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AnnualGrowthPercent = 7.5m,
+                            AsOfYear = 2026,
+                            District = "Faro",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 4.0m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AnnualGrowthPercent = 7.0m,
+                            AsOfYear = 2026,
+                            District = "Lisboa",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.5m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AnnualGrowthPercent = 7.0m,
+                            AsOfYear = 2026,
+                            District = "Porto",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.5m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AnnualGrowthPercent = 6.8m,
+                            AsOfYear = 2026,
+                            District = "Setúbal",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.5m
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AnnualGrowthPercent = 7.0m,
+                            AsOfYear = 2026,
+                            District = "Madeira",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 4.0m
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AnnualGrowthPercent = 6.5m,
+                            AsOfYear = 2026,
+                            District = "Braga",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.0m
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AnnualGrowthPercent = 6.0m,
+                            AsOfYear = 2026,
+                            District = "Aveiro",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.0m
+                        },
+                        new
+                        {
+                            Id = 9,
+                            AnnualGrowthPercent = 5.5m,
+                            AsOfYear = 2026,
+                            District = "Leiria",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.0m
+                        },
+                        new
+                        {
+                            Id = 10,
+                            AnnualGrowthPercent = 5.5m,
+                            AsOfYear = 2026,
+                            District = "Viana do Castelo",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.0m
+                        },
+                        new
+                        {
+                            Id = 11,
+                            AnnualGrowthPercent = 5.5m,
+                            AsOfYear = 2026,
+                            District = "Açores",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 3.5m
+                        },
+                        new
+                        {
+                            Id = 12,
+                            AnnualGrowthPercent = 5.0m,
+                            AsOfYear = 2026,
+                            District = "Coimbra",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.5m
+                        },
+                        new
+                        {
+                            Id = 13,
+                            AnnualGrowthPercent = 4.5m,
+                            AsOfYear = 2026,
+                            District = "Santarém",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.5m
+                        },
+                        new
+                        {
+                            Id = 14,
+                            AnnualGrowthPercent = 4.5m,
+                            AsOfYear = 2026,
+                            District = "Évora",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.5m
+                        },
+                        new
+                        {
+                            Id = 15,
+                            AnnualGrowthPercent = 4.5m,
+                            AsOfYear = 2026,
+                            District = "Viseu",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.5m
+                        },
+                        new
+                        {
+                            Id = 16,
+                            AnnualGrowthPercent = 4.0m,
+                            AsOfYear = 2026,
+                            District = "Vila Real",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.5m
+                        },
+                        new
+                        {
+                            Id = 17,
+                            AnnualGrowthPercent = 4.0m,
+                            AsOfYear = 2026,
+                            District = "Beja",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.5m
+                        },
+                        new
+                        {
+                            Id = 18,
+                            AnnualGrowthPercent = 3.5m,
+                            AsOfYear = 2026,
+                            District = "Castelo Branco",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.0m
+                        },
+                        new
+                        {
+                            Id = 19,
+                            AnnualGrowthPercent = 3.5m,
+                            AsOfYear = 2026,
+                            District = "Bragança",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.0m
+                        },
+                        new
+                        {
+                            Id = 20,
+                            AnnualGrowthPercent = 3.0m,
+                            AsOfYear = 2026,
+                            District = "Guarda",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.0m
+                        },
+                        new
+                        {
+                            Id = 21,
+                            AnnualGrowthPercent = 3.0m,
+                            AsOfYear = 2026,
+                            District = "Portalegre",
+                            Source = "StayPilot planning assumption, calibrated to published national and regional trends. Not a measured index.",
+                            VolatilityPercentagePoints = 2.0m
+                        });
+                });
+
             modelBuilder.Entity("StayPilot.Domain.Entities.ListingSnapshot", b =>
                 {
                     b.Property<int>("Id")
@@ -53016,7 +53244,19 @@ namespace StayPilot.Infrastructure.Migrations
                     b.Property<int>("MoveInCount")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("MoveInMedianAreaM2")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<decimal?>("MoveInMedianPricePerM2")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MoveInP25PricePerM2")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MoveInP75PricePerM2")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -53025,10 +53265,28 @@ namespace StayPilot.Infrastructure.Migrations
                         .HasColumnType("nvarchar(450)")
                         .UseCollation("Latin1_General_CI_AI");
 
+                    b.Property<int>("ProjectByConditionCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProjectByEnergyCount")
+                        .HasColumnType("int");
+
                     b.Property<int>("ProjectCount")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("ProjectMedianAreaM2")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<decimal?>("ProjectMedianPricePerM2")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ProjectP25PricePerM2")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ProjectP75PricePerM2")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -53036,6 +53294,9 @@ namespace StayPilot.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)")
                         .UseCollation("Latin1_General_CI_AI");
+
+                    b.Property<int>("UnclassifiedCount")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
