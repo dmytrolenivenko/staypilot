@@ -1,43 +1,6 @@
-.toolbar {
-  display: flex;
-  gap: 0.5rem;
-  margin: 0.75rem 0 0.25rem;
-}
-
-.secondary {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.secondary:hover {
-  background: var(--surface-hover);
-}
-
-.pos {
-  color: var(--success);
-  font-weight: 600;
-}
-
-.neg {
-  color: var(--error);
-  font-weight: 600;
-}
-
-/* Rows the data cannot speak to. Dimmed rather than hidden - "we looked and found nothing"
-   is a real answer, and hiding them would make the list look cherry-picked. */
-.unmeasured {
-  opacity: 0.6;
-}
-
-.muted {
-  color: var(--text-muted, #6b7280);
-  font-style: italic;
-}
-
 /* The "up to" figure sits under the average, deliberately smaller and in normal weight: it is
-   the same fit read under the best conditions, not a better estimate, and typesetting it as the
-   headline would be the number people quote back at us. */
+   the same fit read under the best conditions, not a better estimate, and typesetting it as
+   the headline would be the number people quote back at us. */
 .peak {
   display: block;
   font-size: 0.85em;
@@ -46,24 +9,13 @@
   white-space: nowrap;
 }
 
-.peak .muted {
-  font-size: 0.95em;
-}
-
 .range {
-  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-/* Only beach proximity carries a basis note ("per halving of the distance to the beach");
-   everything else falls back to a short "if present". */
+/* Only some features carry a basis note ("per bathroom"); it may wrap. */
 .basis {
-  font-size: 0.9em;
+  white-space: normal;
+  max-width: 16rem;
   line-height: 1.35;
-}
-
-/* The table gained columns, so let it scroll sideways on a narrow window instead of
-   squashing the numbers or pushing the page out. */
-.table-scroll {
-  overflow-x: auto;
 }

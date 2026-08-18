@@ -1,42 +1,50 @@
-<section class="panel">
-  <h1>Listing Lookup</h1>
-  <p class="hint">
-    There's no "list all listings" endpoint yet (see the Listing Browser module) — look up one
-    listing at a time by id.
-  </p>
+<div class="page">
+  <app-page-header
+    title="Look up a listing"
+    sub="One listing in full, by id. Use Browse to find an id if you don't have one."
+  />
 
-  <form class="lookup-form" (ngSubmit)="lookup()">
-    <input
-      class="text-input"
-      type="number"
-      min="1"
-      placeholder="Listing id"
-      [ngModel]="idInput()"
-      (ngModelChange)="idInput.set($event)"
-      name="id"
-    />
-    <button type="submit">Look up</button>
-  </form>
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Find</span>
+    </div>
+    <div class="card-body stack">
+      <form class="toolbar" (ngSubmit)="lookup()">
+        <label class="field">
+          <span>Listing id</span>
+          <input
+            class="id-input"
+            type="number"
+            min="1"
+            placeholder="e.g. 1042"
+            [ngModel]="idInput()"
+            (ngModelChange)="idInput.set($event)"
+            name="id"
+          />
+        </label>
+        <button type="submit" [disabled]="loading()">{{ loading() ? 'Looking up…' : 'Look up' }}</button>
+      </form>
 
-  @if (recentListings.ids().length > 0) {
-    <p class="hint">
-      Recently viewed:
-      @for (id of recentListings.ids(); track id) {
-        <button class="link-button" type="button" (click)="lookup(id)">#{{ id }}</button>
+      @if (recentListings.ids().length > 0) {
+        <div class="row">
+          <span class="field-label">Recently viewed</span>
+          @for (id of recentListings.ids(); track id) {
+            <button class="link" type="button" (click)="lookup(id)">#{{ id }}</button>
+          }
+        </div>
       }
-    </p>
-  }
 
-  @if (loading()) {
-    <p class="hint">Loading...</p>
-  }
-  @if (error()) {
-    <p class="error">{{ error() }}</p>
-  }
-</section>
-
-@if (listing()) {
-  <section class="panel">
-    <app-listing-detail [listing]="listing()!" />
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+    </div>
   </section>
-}
+
+  @if (listing()) {
+    <section class="card">
+      <div class="card-body">
+        <app-listing-detail [listing]="listing()!" />
+      </div>
+    </section>
+  }
+</div>

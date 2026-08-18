@@ -1,89 +1,111 @@
-<section class="panel">
-  <h1>Build Cost</h1>
-  <p class="hint">
-    Rough estimate of what it would cost to build a house from scratch, using €/m² baselines
-    for Portugal. Excludes land, taxes and professional fees. These are static reference
-    figures, not live supplier prices.
-  </p>
+<div class="page">
+  <app-page-header
+    title="Build cost"
+    sub="Rough cost to build a house from scratch, on €/m² baselines for Portugal. Excludes land, taxes and professional fees."
+  />
 
-  <div class="controls">
-    <label>
-      <span>Built area (m²)</span>
-      <input type="number" min="1" [ngModel]="areaM2()" (ngModelChange)="areaM2.set($event)" />
-    </label>
-
-    <label>
-      <span>Quality tier</span>
-      <select [ngModel]="tier()" (ngModelChange)="tier.set($event)">
-        @for (t of tiers; track t.key) {
-          <option [ngValue]="t">{{ t.label }} — €{{ t.ratePerM2 | number: '1.0-0' }}/m²</option>
-        }
-      </select>
-    </label>
-
-    <label>
-      <span>Region</span>
-      <select [ngModel]="region()" (ngModelChange)="region.set($event)">
-        @for (r of regions; track r.key) {
-          <option [ngValue]="r">{{ r.label }} (×{{ r.multiplier }})</option>
-        }
-      </select>
-    </label>
-
-    <label>
-      <span>Contingency (%)</span>
-      <input type="number" min="0" max="100" [ngModel]="contingencyPct()" (ngModelChange)="contingencyPct.set($event)" />
-    </label>
-  </div>
-
-  <fieldset class="checks">
-    <legend>Extras</legend>
-    @for (e of extras; track e.key) {
-      <label class="check">
-        <input type="checkbox" [checked]="isExtraSelected(e.key)" (change)="toggleExtra(e.key)" />
-        {{ e.label }} <span class="extra-cost">+€{{ e.cost | number: '1.0-0' }}</span>
-      </label>
-    }
-  </fieldset>
-</section>
-
-<!-- Headline total -->
-<section class="panel">
-  <div class="headline">
-    <div class="headline-main">
-      <span class="headline-label">Estimated build cost</span>
-      <span class="headline-price">€{{ total() | number: '1.0-0' }}</span>
-      <span class="headline-range">≈ €{{ effectiveRatePerM2() | number: '1.0-0' }}/m² all-in</span>
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Inputs</span>
+      <span class="meta">Static reference figures, not live supplier prices</span>
     </div>
-  </div>
+    <div class="card-body stack">
+      <div class="form-grid">
+        <label class="field">
+          <span>Built area (m²)</span>
+          <input type="number" min="1" [ngModel]="areaM2()" (ngModelChange)="areaM2.set($event)" />
+        </label>
 
-  <table class="data-table breakdown">
-    <tbody>
-      <tr>
-        <th>Base construction</th>
-        <td class="hint-cell">{{ tier().ratePerM2 | number: '1.0-0' }} €/m² × {{ areaM2() || 0 }} m² × {{ region().multiplier }}</td>
-        <td class="num">€{{ baseConstruction() | number: '1.0-0' }}</td>
-      </tr>
-      <tr>
-        <th>Extras</th>
-        <td class="hint-cell">{{ selectedExtras().size }} selected</td>
-        <td class="num">€{{ extrasTotal() | number: '1.0-0' }}</td>
-      </tr>
-      <tr class="subtotal-row">
-        <th>Subtotal</th>
-        <td></td>
-        <td class="num">€{{ subtotal() | number: '1.0-0' }}</td>
-      </tr>
-      <tr>
-        <th>Contingency</th>
-        <td class="hint-cell">{{ contingencyPct() || 0 }}%</td>
-        <td class="num">€{{ contingencyAmount() | number: '1.0-0' }}</td>
-      </tr>
-      <tr class="total-row">
-        <th>Total</th>
-        <td></td>
-        <td class="num">€{{ total() | number: '1.0-0' }}</td>
-      </tr>
-    </tbody>
-  </table>
-</section>
+        <label class="field">
+          <span>Quality tier</span>
+          <select [ngModel]="tier()" (ngModelChange)="tier.set($event)">
+            @for (t of tiers; track t.key) {
+              <option [ngValue]="t">{{ t.label }} — €{{ t.ratePerM2 | number: '1.0-0' }}/m²</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Region</span>
+          <select [ngModel]="region()" (ngModelChange)="region.set($event)">
+            @for (r of regions; track r.key) {
+              <option [ngValue]="r">{{ r.label }} (×{{ r.multiplier }})</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Contingency (%)</span>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            [ngModel]="contingencyPct()"
+            (ngModelChange)="contingencyPct.set($event)"
+          />
+        </label>
+
+        <div class="field wide">
+          <span>Extras</span>
+          <fieldset class="check-grid">
+            @for (e of extras; track e.key) {
+              <label class="check">
+                <input type="checkbox" [checked]="isExtraSelected(e.key)" (change)="toggleExtra(e.key)" />
+                {{ e.label }} <span class="faint">+€{{ e.cost | number: '1.0-0' }}</span>
+              </label>
+            }
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Estimate</span>
+    </div>
+    <div class="card-body">
+      <div class="headline">
+        <div class="headline-main">
+          <span class="headline-label">Estimated build cost</span>
+          <span class="headline-price">€{{ total() | number: '1.0-0' }}</span>
+          <span class="headline-range">≈ €{{ effectiveRatePerM2() | number: '1.0-0' }}/m² all-in</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table record breakdown">
+        <tbody>
+          <tr>
+            <th>Base construction</th>
+            <td class="muted">
+              {{ tier().ratePerM2 | number: '1.0-0' }} €/m² × {{ areaM2() || 0 }} m² × {{ region().multiplier }}
+            </td>
+            <td class="num">€{{ baseConstruction() | number: '1.0-0' }}</td>
+          </tr>
+          <tr>
+            <th>Extras</th>
+            <td class="muted">{{ selectedExtras().size }} selected</td>
+            <td class="num">€{{ extrasTotal() | number: '1.0-0' }}</td>
+          </tr>
+          <tr class="subtotal-row">
+            <th>Subtotal</th>
+            <td></td>
+            <td class="num">€{{ subtotal() | number: '1.0-0' }}</td>
+          </tr>
+          <tr>
+            <th>Contingency</th>
+            <td class="muted">{{ contingencyPct() || 0 }}%</td>
+            <td class="num">€{{ contingencyAmount() | number: '1.0-0' }}</td>
+          </tr>
+          <tr class="total-row">
+            <th>Total</th>
+            <td></td>
+            <td class="num">€{{ total() | number: '1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

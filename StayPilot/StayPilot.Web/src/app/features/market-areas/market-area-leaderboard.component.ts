@@ -3,6 +3,10 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
 import { AreaLevel, MarketAreaStatsResponse } from '../../core/models/market-area-stats';
+import { PageHeaderComponent } from '../../shared/page-header.component';
+import { ExplainerComponent } from '../../shared/explainer.component';
+import { PlaceNameComponent, placeLevelLabel, placeOwnName } from '../../shared/place-name.component';
+import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
 
 // The columns you can sort by. Client-side only — the API never sees these.
 type SortColumn = 'place' | 'listings' | 'pricePerM2' | 'area' | 'deals';
@@ -27,12 +31,23 @@ const RELIABLE_LISTINGS = 15;
 @Component({
   selector: 'app-market-area-leaderboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PageHeaderComponent,
+    ExplainerComponent,
+    PlaceNameComponent,
+    AreaScopePickerComponent
+  ],
   templateUrl: './market-area-leaderboard.component.html',
   styleUrl: './market-area-leaderboard.component.css'
 })
 export class MarketAreaLeaderboardComponent implements OnInit {
   readonly levels: AreaLevel[] = ['District', 'Municipality', 'Town'];
+
+  // The dropdown reads in the same words the table does — "Town" on its own never said whether
+  // it meant a freguesia or a município.
+  levelName = placeLevelLabel;
 
   areas = signal<MarketAreaStatsResponse[]>([]);
   calculatedAtUtc = signal<string | null>(null);
@@ -48,6 +63,11 @@ export class MarketAreaLeaderboardComponent implements OnInit {
   // board entirely. Single-advert places are still excluded — their "median" is one price.
   minListings = signal(5);
 
+  // Narrowed to one distrito, and inside it one municipio. Empty = the whole country. A national
+  // board answers "where is cheapest in Portugal", which you ask once; scoped, it answers "where
+  // is cheapest near where I am looking", which is the question you come back for.
+  scope = signal<AreaScope>(emptyScope());
+
   sortColumn = signal<SortColumn>('pricePerM2');
   sortDirection = signal<SortDirection>('desc');
 
@@ -62,7 +82,7 @@ export class MarketAreaLeaderboardComponent implements OnInit {
 
       switch (column) {
         case 'place':
-          result = a.displayName.localeCompare(b.displayName, 'pt');
+          result = placeOwnName(a).localeCompare(placeOwnName(b), 'pt');
           break;
 
         case 'listings':
@@ -134,6 +154,11 @@ export class MarketAreaLeaderboardComponent implements OnInit {
     this.load();
   }
 
+  changeScope(scope: AreaScope): void {
+    this.scope.set(scope);
+    this.load();
+  }
+
   // Click the same column again to flip the direction; click a new one and it starts at the
   // interesting end — highest first for the numbers, A to Z for the name.
   toggleSort(column: SortColumn): void {
@@ -186,16 +211,23 @@ export class MarketAreaLeaderboardComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.service.getLeaderboard({ level: this.level(), minListings: this.minListings() }).subscribe({
-      next: response => {
-        this.areas.set(response.items);
-        this.calculatedAtUtc.set(response.calculatedAtUtc);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Could not load the leaderboard. Check the API is running.');
-        this.loading.set(false);
-      }
-    });
+    this.service
+      .getLeaderboard({
+        level: this.level(),
+        minListings: this.minListings(),
+        district: this.scope().district || undefined,
+        municipality: this.scope().municipality || undefined
+      })
+      .subscribe({
+        next: response => {
+          this.areas.set(response.items);
+          this.calculatedAtUtc.set(response.calculatedAtUtc);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Could not load the leaderboard. Check the API is running.');
+          this.loading.set(false);
+        }
+      });
   }
 }

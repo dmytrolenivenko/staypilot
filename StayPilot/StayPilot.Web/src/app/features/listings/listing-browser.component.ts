@@ -12,6 +12,7 @@ import {
   PROPERTY_TYPES,
   TYPOLOGIES
 } from '../../core/models/enums';
+import { PageHeaderComponent } from '../../shared/page-header.component';
 
 // The columns you can click to sort by.
 type SortColumn =
@@ -67,7 +68,7 @@ function emptyForm(): FilterForm {
 @Component({
   selector: 'app-listing-browser',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent],
   templateUrl: './listing-browser.component.html',
   styleUrl: './listing-browser.component.css'
 })

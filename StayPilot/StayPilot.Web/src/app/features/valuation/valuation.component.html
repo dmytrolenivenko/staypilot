@@ -1,241 +1,580 @@
-<section class="panel">
-  <h1>Valuation</h1>
-  <p class="hint">
-    Estimate what one of your properties is worth today. The estimate comes from a model fitted
-    on every listing collected &mdash; holding size, rooms, condition and distance to the beach
-    still &mdash; then corrected for what nearby listings actually ask. Asking prices, not sale
-    prices. Widen the window if there aren't enough recent comps to show below.
-  </p>
+<div class="page">
+  <app-page-header
+    title="Valuation"
+    sub="Every property you own, priced against the adverts around it, with how keen buyers are in each place and where the value goes from here."
+  >
+    <button actions type="button" (click)="reload()" [disabled]="loading()">
+      {{ loading() ? 'Pricing…' : 'Re-price' }}
+    </button>
+  </app-page-header>
 
-  @if (loadingProps()) {
-    <p class="hint">Loading your properties...</p>
-  } @else if (properties().length === 0) {
-    <p class="hint">
-      You have no properties yet. Add one under <strong>My Properties</strong> first.
+  <app-explainer>
+    <p>
+      Every number here comes from <strong>asking prices, not sale prices</strong> &mdash; what a
+      property would be <em>advertised</em> at today. What it sells for is lower, and nothing in the
+      database says by how much.
     </p>
-  } @else {
-    <div class="controls">
-      <label>
-        <span>Property</span>
-        <select [ngModel]="selectedId()" (ngModelChange)="selectedId.set($event)">
-          @for (p of properties(); track p.id) {
-            <option [ngValue]="p.id">#{{ p.id }} — {{ p.name }} ({{ p.typology }}, {{ p.areaM2 }} m²)</option>
-          }
-        </select>
-      </label>
+    <p>
+      Click any row to open it. Inside are the adverts the estimate was checked against, what each
+      feature contributes, how long homes sit in that place, and three paths for the years ahead.
+    </p>
+    <p>
+      The projections blend two rates that are <strong>kept apart on purpose</strong>: a seeded long
+      run assumption for the district, and the trend measured from the adverts nearby. The seeded one
+      is an assumption, not a measurement, and the panel says so in the words it was written with.
+    </p>
+  </app-explainer>
 
-      <label>
-        <span>Look back (months)</span>
-        <input type="number" min="1" max="120" [ngModel]="months()" (ngModelChange)="months.set($event)" />
-      </label>
-
-      <button type="button" (click)="estimate()" [disabled]="estimating()">
-        {{ estimating() ? 'Estimating...' : 'Estimate value' }}
-      </button>
-
-      @if (selected(); as p) {
-        <a
-          class="btn-link"
-          [routerLink]="['/my-properties']"
-          [queryParams]="{ edit: p.id }"
-          title="Open this property in My Properties to edit it"
-        >Edit #{{ p.id }} in My Properties →</a>
+  <!-- Settings -->
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Settings</span>
+      @if (portfolio(); as p) {
+        <span class="meta">Priced {{ p.generatedAtUtc | date: 'medium' }}</span>
       }
     </div>
-  }
+    <div class="card-body">
+      <div class="toolbar">
+        <label class="control">
+          Look back (months)
+          <input type="number" min="1" max="120" [ngModel]="months()" (ngModelChange)="months.set(+$event)" />
+        </label>
+
+        <label class="control">
+          Comp radius (m)
+          <input type="number" min="100" max="20000" step="100" [ngModel]="radiusMeters()" (ngModelChange)="radiusMeters.set(+$event)" />
+        </label>
+
+        <label class="control">
+          Project (years)
+          <input type="number" min="1" max="30" [ngModel]="years()" (ngModelChange)="years.set(+$event)" />
+        </label>
+
+        <button type="button" (click)="reload()" [disabled]="loading()">Apply</button>
+      </div>
+    </div>
+  </section>
 
   @if (error()) {
-    <p class="error">{{ error() }}</p>
-  }
-</section>
-
-@if (result(); as r) {
-  <!-- Headline estimate -->
-  <section class="panel">
-    <div class="headline">
-      <div class="headline-main">
-        <!-- "Asking price", not "value". Every listing behind this number is an advert, so this is
-             what the property would be ADVERTISED at today. What it would sell for is lower, and
-             nothing in the database says by how much - that needs repeat snapshots of the same
-             listings (days on market, price cuts), which do not exist until the scraper has run
-             more than once. Calling it "value" was promising something the data cannot support. -->
-        <span class="headline-label">Typical asking price</span>
-        <span class="headline-price">€{{ r.midPrice | number: '1.0-0' }}</span>
-        <span class="headline-range">
-          Range €{{ r.minPrice | number: '1.0-0' }} – €{{ r.maxPrice | number: '1.0-0' }}
-        </span>
-        <span class="headline-note">
-          What this would be <strong>advertised</strong> at, from {{ r.compsCount }} comparable
-          adverts nearby &mdash; not what it would sell for, which is lower. The range is the
-          model's own typical error, not the spread of the comps: roughly two estimates in three
-          land inside it.
-        </span>
-      </div>
-      <span
-        class="badge"
-        [class.badge-high]="r.confidenceLevel === 'High'"
-        [class.badge-medium]="r.confidenceLevel === 'Medium'"
-        [class.badge-low]="r.confidenceLevel === 'Low'">
-        {{ r.confidenceLevel }} confidence
-      </span>
-    </div>
-
-    <!-- Where the price came from. The coordinates decide the zone, so this can differ from the
-         one stored on the property - and when it does, it is the first thing worth knowing about
-         a number that looks wrong. -->
-    @if (r.locatedAreaName) {
-      <p class="hint">
-        Priced as <strong>{{ r.locatedAreaName }}</strong>
-        @if (r.locatedByCoordinates) {
-          &mdash; chosen from this property's coordinates, not the zone saved on it. Zones overlap,
-          and the saved one is a dropdown; the coordinates are not.
-        } @else {
-          &mdash; the zone saved on this property. Add coordinates and they will decide instead.
-        }
-      </p>
-    }
-
-    <div class="stat-grid">
-      <div class="stat">
-        <span class="stat-value">{{ r.compsCount }} of {{ r.comparablesFound }}</span>
-        <span class="stat-label">Comparables used (nearest)</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value">€{{ r.marketRatePerM2 | number: '1.0-0' }}</span>
-        <span class="stat-label">Asking rate / m² (nearest-weighted)</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value">€{{ r.estimateBeforeAdjustments | number: '1.0-0' }}</span>
-        <span class="stat-label">Comps alone (rate × m²)</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value">€{{ r.minCompPricePerM2 | number: '1.0-0' }} – €{{ r.maxCompPricePerM2 | number: '1.0-0' }}</span>
-        <span class="stat-label">Comp €/m² spread</span>
-      </div>
-    </div>
-
-    <!-- Confidence is about evidence NEAR this property, not how many comps the window found.
-         Without this note, "65 comparables" next to "Low confidence" reads as a bug. -->
-    @if (r.confidenceLevel !== 'High') {
-      <p class="hint">
-        Confidence reflects how much data sits near this property, not the number of comps listed
-        below. <strong>{{ r.confidenceLevel }}</strong> means there are few or no listings close
-        enough to lean on &mdash; check the property's coordinates are right, since every listing
-        collected so far is in the Algarve.
-      </p>
-    }
-  </section>
-
-  <!-- Equity — only when there's a purchase to compare against -->
-  @if (hasEquity()) {
-    <section class="panel">
-      <h2>Equity</h2>
-      <div class="stat-grid">
-        <div class="stat">
-          <span class="stat-value">€{{ r.equity.purchasePrice | number: '1.0-0' }}</span>
-          <span class="stat-label">Paid</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value" [class.pos]="r.equity.gainAmount > 0" [class.neg]="r.equity.gainAmount < 0">
-            {{ r.equity.gainAmount > 0 ? '+' : '' }}€{{ r.equity.gainAmount | number: '1.0-0' }}
-          </span>
-          <span class="stat-label">Gain</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value" [class.pos]="r.equity.gainPercent > 0" [class.neg]="r.equity.gainPercent < 0">
-            {{ r.equity.gainPercent > 0 ? '+' : '' }}{{ r.equity.gainPercent | number: '1.0-1' }}%
-          </span>
-          <span class="stat-label">Gain %</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">{{ r.equity.yearsHeld }}</span>
-          <span class="stat-label">Years held</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value" [class.pos]="r.equity.roiPerYear > 0" [class.neg]="r.equity.roiPerYear < 0">
-            {{ r.equity.roiPerYear | number: '1.0-1' }}%
-          </span>
-          <span class="stat-label">ROI / year</span>
-        </div>
-      </div>
+    <section class="card">
+      <div class="card-body"><p class="error">{{ error() }}</p></div>
     </section>
   }
 
-  <!-- Adjustments -->
-  @if (r.adjustments.length > 0) {
-    <section class="panel">
-      <h2>What the features contribute</h2>
-      <p class="hint">
-        What each feature this property has is worth, at the premiums measured on the Feature
-        Impact screen. These compound rather than add up, so they will not sum to the total.
-      </p>
-      <p class="hint">
-        The counted features &mdash; bathrooms, balconies, floor, energy grade, distance to the
-        beach &mdash; are measured against the typical property in this market, not against zero,
-        so &ldquo;Measured against&rdquo; is what the amount is a premium <em>over</em>. A property
-        at or below typical gets no row for them at all, and nothing is ever shown as a discount:
-        the estimate already prices what the property does not have. Greyed rows are features
-        whose confidence range crosses zero &mdash; the data cannot confirm they are worth
-        anything, so they are shown at nothing.
-      </p>
-      <table class="data-table">
-        <thead>
-          <tr><th>Adjustment</th><th>Measured against</th><th class="num">Amount</th></tr>
-        </thead>
-        <tbody>
-          @for (a of r.adjustments; track a.label) {
-            <tr [class.unmeasured]="!a.isMeasurable">
-              <td>{{ a.label }}</td>
-              <td class="muted">{{ a.detail ?? '—' }}</td>
-              <!-- Never negative: a feature is worth something or nothing, so a row that
-                   measured out at nothing reads "€0" rather than as a charge. -->
-              <td class="num" [class.pos]="a.amount > 0">
-                {{ a.amount > 0 ? '+' : '' }}&euro;{{ a.amount | number: '1.0-0' }}
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </section>
+  <!-- Portfolio summary -->
+  @if (portfolio(); as p) {
+    @if (p.propertyCount > 0) {
+      <section class="card">
+        <div class="card-head">
+          <span class="card-title">Portfolio</span>
+          <span class="meta">{{ p.propertyCount }} {{ p.propertyCount === 1 ? 'property' : 'properties' }}</span>
+        </div>
+        <div class="card-body">
+          <div class="stat-grid">
+            <div class="stat">
+              <span class="stat-value" [title]="'€' + (p.totalEstimatedValue | number: '1.0-0')">
+                {{ money(p.totalEstimatedValue) }}
+              </span>
+              <span class="stat-label">Advertised value today</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" [title]="'€' + (p.totalPurchasePrice | number: '1.0-0')">
+                {{ money(p.totalPurchasePrice) }}
+              </span>
+              <span class="stat-label">Paid</span>
+            </div>
+            <div class="stat">
+              <span
+                class="stat-value"
+                [class.pos]="p.totalGainAmount > 0"
+                [class.neg]="p.totalGainAmount < 0"
+                [title]="'€' + (p.totalGainAmount | number: '1.0-0')"
+              >
+                {{ p.totalGainAmount > 0 ? '+' : '' }}{{ money(p.totalGainAmount) }}
+              </span>
+              <span class="stat-label">Gain</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" [class.pos]="p.totalGainPercent > 0" [class.neg]="p.totalGainPercent < 0">
+                {{ p.totalGainPercent > 0 ? '+' : '' }}{{ p.totalGainPercent | number: '1.0-1' }}%
+              </span>
+              <span class="stat-label">Gain %</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" [title]="'€' + (p.totalProjectedValue | number: '1.0-0')">
+                {{ money(p.totalProjectedValue) }}
+              </span>
+              <span class="stat-label">Base path in {{ p.projectionYears }} years</span>
+            </div>
+          </div>
+
+          <p class="hint">
+            The projected total follows the <strong>Base</strong> path of every property. Adding up
+            the optimistic ones would assume every district has its best decade at the same time.
+          </p>
+        </div>
+      </section>
+    }
   }
 
-  <!-- Comparables -->
-  <section class="panel">
-    <h2>Comparables ({{ r.comps.length }})</h2>
-    @if (r.comps.length === 0) {
-      <p class="hint">No comparable listings were used.</p>
+  <!-- The list -->
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Your properties</span>
+      <span class="meta">Click a row for the evidence behind its number</span>
+    </div>
+
+    @if (loading()) {
+      <p class="empty">Pricing every property against the market…</p>
+    } @else if (items().length === 0) {
+      <p class="empty">
+        You have no properties yet. Add one under <a routerLink="/my-properties">My properties</a> first.
+      </p>
     } @else {
-      <!-- Exactly the rows the statistics came from, so they can be checked rather than taken on
-           trust. Matched on floor area and distance to the beach because in a beach town both
-           change the price per m2 far more than the plain distance between two flats does. -->
-      <p class="hint">
-        Every advert behind the numbers above, nearest first &mdash; each within a quarter of this
-        property's floor area and a comparable distance from the beach, so their €/m² means the
-        same thing as its own. {{ r.comparablesFound }} matched the search; the nearest
-        {{ r.comps.length }} are what the figures rest on, weighted by how close each one is.
-      </p>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Typology</th>
-            <th class="num">Area (m²)</th>
-            <th class="num">€ / m²</th>
-            <th class="num">To beach (m)</th>
-            <th>Snapshot</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (c of r.comps; track $index) {
+      <div class="table-wrap">
+        <table class="data-table portfolio">
+          <thead>
             <tr>
-              <td>{{ c.typology }}</td>
-              <td class="num">{{ c.areaM2 | number: '1.0-0' }}</td>
-              <td class="num">€{{ c.pricePerM2 | number: '1.0-0' }}</td>
-              <td class="num">{{ c.distanceToBeachMeters != null ? (c.distanceToBeachMeters | number: '1.0-0') : '—' }}</td>
-              <td>{{ c.snapshotDateUtc | date: 'mediumDate' }}</td>
+              <th class="chevron"></th>
+              <th class="sortable" (click)="toggleSort('name')">Property{{ arrow('name') }}</th>
+              <th class="sortable" (click)="toggleSort('place')">Where{{ arrow('place') }}</th>
+              <th class="num sortable" (click)="toggleSort('value')">Advertised at{{ arrow('value') }}</th>
+              <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+              <th class="num sortable" (click)="toggleSort('gain')">Gain{{ arrow('gain') }}</th>
+              <th class="sortable" (click)="toggleSort('demand')">Demand{{ arrow('demand') }}</th>
+              <th class="num sortable" (click)="toggleSort('projected')">
+                In {{ portfolio()?.projectionYears }} yrs{{ arrow('projected') }}
+              </th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (item of sortedItems(); track item.id) {
+              <tr class="row" [class.open]="expandedId() === item.id" (click)="toggle(item.id)">
+                <td class="chevron">{{ expandedId() === item.id ? '▾' : '▸' }}</td>
+
+                <td>
+                  <strong>{{ item.name }}</strong>
+                  <span class="sub">{{ item.typology }} · {{ item.areaM2 }} m²</span>
+                </td>
+
+                <td>
+                  <span class="place">{{ placeLabel(item) }}</span>
+                  @if (item.locatedByCoordinates) {
+                    <span class="tag tag-quiet" title="The coordinates decided the zone, not the saved address">by map</span>
+                  }
+                </td>
+
+                <td class="num">
+                  <span [title]="'€' + (item.midPrice | number: '1.0-0')">{{ money(item.midPrice) }}</span>
+                  <span
+                    class="badge badge-small"
+                    [class.badge-high]="item.confidenceLevel === 'High'"
+                    [class.badge-medium]="item.confidenceLevel === 'Medium'"
+                    [class.badge-low]="item.confidenceLevel === 'Low'"
+                    [title]="item.confidenceNote || 'The estimate had everything it wanted'"
+                  >
+                    {{ item.confidenceLevel }}
+                  </span>
+                </td>
+
+                <td class="num">€{{ item.pricePerM2 | number: '1.0-0' }}</td>
+
+                <td class="num">
+                  @if (item.equity.purchasePrice > 0) {
+                    <span [class.pos]="item.equity.gainPercent > 0" [class.neg]="item.equity.gainPercent < 0">
+                      {{ item.equity.gainPercent > 0 ? '+' : '' }}{{ item.equity.gainPercent | number: '1.0-0' }}%
+                    </span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+
+                <td>
+                  @if (item.demand.isMeasurable) {
+                    <span class="demand demand-{{ item.demand.level | lowercase }}" [title]="item.demand.reason">
+                      {{ item.demand.level }}
+                    </span>
+                  } @else {
+                    <span class="demand demand-unknown" [title]="item.demand.reason">not measured</span>
+                  }
+                </td>
+
+                <td class="num">
+                  @if (base(item); as b) {
+                    <span [title]="'€' + (b.finalYearValue | number: '1.0-0') + ' at ' + (b.annualPercent | number: '1.0-1') + '% a year'">
+                      {{ money(b.finalYearValue) }}
+                    </span>
+                  }
+                </td>
+              </tr>
+
+              <!-- The panel. One row wide, so it reads as a page rather than a wide cell. -->
+              @if (expandedId() === item.id) {
+                <tr class="panel-row">
+                  <td colspan="8">
+                    <div class="panel">
+                      <!-- 1. The estimate -->
+                      <div class="panel-block">
+                        <h3>What it would be advertised at</h3>
+
+                        <div class="headline">
+                          <div class="headline-main">
+                            <span class="headline-price">€{{ item.midPrice | number: '1.0-0' }}</span>
+                            <span class="headline-range">
+                              Range €{{ item.minPrice | number: '1.0-0' }} – €{{ item.maxPrice | number: '1.0-0' }}
+                            </span>
+                          </div>
+                          <span
+                            class="badge"
+                            [class.badge-high]="item.confidenceLevel === 'High'"
+                            [class.badge-medium]="item.confidenceLevel === 'Medium'"
+                            [class.badge-low]="item.confidenceLevel === 'Low'"
+                          >
+                            {{ item.confidenceLevel }} confidence
+                          </span>
+                        </div>
+
+                        <p class="hint">
+                          The range is the model's own typical error, not the spread of the adverts:
+                          roughly two estimates in three land inside it.
+                          @if (item.confidenceNote) {
+                            Confidence is <strong>{{ item.confidenceLevel }}</strong> because
+                            {{ item.confidenceNote }}.
+                          }
+                        </p>
+
+                        @if (item.locatedAreaName) {
+                          <p class="hint">
+                            Priced as <strong>{{ item.locatedAreaName }}</strong>
+                            @if (item.locatedByCoordinates) {
+                              &mdash; chosen from this property's coordinates, not the zone saved on
+                              it. Zones overlap, and the saved one is a dropdown; the coordinates are
+                              not.
+                            } @else {
+                              &mdash; the zone saved on this property. Add coordinates and they will
+                              decide instead.
+                            }
+                          </p>
+                        }
+
+                        <div class="stat-grid">
+                          <div class="stat">
+                            <span class="stat-value">€{{ item.pricePerM2 | number: '1.0-0' }}</span>
+                            <span class="stat-label">Per m²</span>
+                          </div>
+                          @if (item.equity.purchasePrice > 0) {
+                            <div class="stat">
+                              <span class="stat-value">€{{ item.equity.purchasePrice | number: '1.0-0' }}</span>
+                              <span class="stat-label">Paid</span>
+                            </div>
+                            <div class="stat">
+                              <span class="stat-value" [class.pos]="item.equity.gainAmount > 0" [class.neg]="item.equity.gainAmount < 0">
+                                {{ item.equity.gainAmount > 0 ? '+' : '' }}€{{ item.equity.gainAmount | number: '1.0-0' }}
+                              </span>
+                              <span class="stat-label">Gain</span>
+                            </div>
+                            <div class="stat">
+                              <span class="stat-value">{{ item.equity.yearsHeld }}</span>
+                              <span class="stat-label">Years held</span>
+                            </div>
+                            <div class="stat">
+                              <span class="stat-value" [class.pos]="item.equity.roiPerYear > 0" [class.neg]="item.equity.roiPerYear < 0">
+                                {{ item.equity.roiPerYear | number: '1.0-1' }}%
+                              </span>
+                              <span class="stat-label">Return / year</span>
+                            </div>
+                          }
+                        </div>
+
+                        @if (item.equity.purchasePrice <= 0) {
+                          <p class="hint">
+                            No purchase price saved on this property, so there is nothing to compare
+                            the estimate against.
+                            <a [routerLink]="['/my-properties']" [queryParams]="{ edit: item.id }">Add one →</a>
+                          </p>
+                        }
+                      </div>
+
+                      <!-- 2. Demand -->
+                      <div class="panel-block">
+                        <h3>How keen buyers are in {{ item.demand.placeName || 'this place' }}</h3>
+
+                        @if (item.demand.isMeasurable) {
+                          <div class="meter">
+                            <div class="meter-scale">
+                              <span>Cold</span><span>Soft</span><span>Balanced</span><span>Firm</span><span>Hot</span>
+                            </div>
+                            <div class="meter-track">
+                              <div class="meter-needle" [style.left.%]="demandOffset(item.demand.score)"></div>
+                            </div>
+                          </div>
+
+                          <p class="headline-note">
+                            <span class="demand demand-{{ item.demand.level | lowercase }}">{{ item.demand.level }}</span>
+                            &mdash; {{ item.demand.score | number: '1.0-0' }} out of 100, from
+                            {{ item.demand.sampleSize | number }} adverts in this município.
+                          </p>
+                        } @else {
+                          <p class="hint warn">
+                            <strong>Not measured.</strong> {{ item.demand.reason }}.
+                          </p>
+                        }
+
+                        <div class="halves">
+                          <div class="half">
+                            <span class="half-label">How long homes sit</span>
+                            @if (item.demand.medianDaysOnMarket !== null) {
+                              <span class="half-value">{{ item.demand.medianDaysOnMarket | number: '1.0-0' }} days</span>
+                              <span class="half-note">
+                                {{ item.demand.daysMeasuredOnSold
+                                    ? 'Measured on homes that actually sold — first sighting to the day it went.'
+                                    : 'Measured on adverts still up, so this is how long they have been up so far, not how long they take.' }}
+                              </span>
+                            } @else {
+                              <span class="half-value muted">—</span>
+                              <span class="half-note">Nothing to measure this on yet.</span>
+                            }
+                            @if (item.demand.daysScore !== null) {
+                              <span class="half-score">Scores {{ item.demand.daysScore | number: '1.0-0' }}/100</span>
+                            } @else {
+                              <span class="half-score muted">Not counted in the score</span>
+                            }
+                          </div>
+
+                          <div class="half">
+                            <span class="half-label">New supply arriving</span>
+                            @if (item.demand.supplyChangePercent !== null) {
+                              <span class="half-value" [class.neg]="item.demand.supplyChangePercent > 0" [class.pos]="item.demand.supplyChangePercent < 0">
+                                {{ item.demand.supplyChangePercent > 0 ? '+' : '' }}{{ item.demand.supplyChangePercent | number: '1.0-0' }}%
+                              </span>
+                              <span class="half-note">
+                                {{ item.demand.newListingsRecent | number }} new adverts in the last 90 days
+                                against {{ item.demand.newListingsPrevious | number }} in the 90 before.
+                                More stock arriving is supply outrunning demand, so it scores the other way.
+                              </span>
+                            } @else {
+                              <span class="half-value muted">—</span>
+                              <span class="half-note">
+                                We hold {{ item.demand.collectionSpanDays }} days of history here, and
+                                comparing two 90-day windows needs 180.
+                              </span>
+                            }
+                            @if (item.demand.supplyScore !== null) {
+                              <span class="half-score">Scores {{ item.demand.supplyScore | number: '1.0-0' }}/100</span>
+                            } @else {
+                              <span class="half-score muted">Not counted in the score</span>
+                            }
+                          </div>
+                        </div>
+
+                        <p class="hint">
+                          Both halves are measured from adverts, never from sales &mdash; there are no
+                          sale prices in this database. Everything is bounded by the
+                          {{ item.demand.collectionSpanDays }} days of history collected for this place.
+                        </p>
+                      </div>
+
+                      <!-- 3. Forecast -->
+                      <div class="panel-block">
+                        <h3>Where the value goes from here</h3>
+
+                        <div class="rates">
+                          <div class="rate">
+                            <span class="rate-value">{{ item.forecast.seededAnnualPercent | number: '1.0-1' }}%</span>
+                            <span class="rate-label">Long run, {{ item.forecast.seededDistrict }}</span>
+                            <span class="rate-note">{{ item.forecast.seededSource }}</span>
+                          </div>
+
+                          <div class="rate">
+                            @if (item.forecast.localAnnualPercent !== null) {
+                              <span class="rate-value" [class.pos]="item.forecast.localAnnualPercent > 0" [class.neg]="item.forecast.localAnnualPercent < 0">
+                                {{ item.forecast.localAnnualPercent > 0 ? '+' : '' }}{{ item.forecast.localAnnualPercent | number: '1.0-1' }}%
+                              </span>
+                            } @else {
+                              <span class="rate-value muted">—</span>
+                            }
+                            <span class="rate-label">
+                              Measured nearby
+                              @if (item.forecast.localAnnualPercent !== null) {
+                                · {{ item.forecast.localWeightPercent | number: '1.0-0' }}% of the blend
+                              }
+                            </span>
+                            <span class="rate-note">
+                              {{ item.forecast.localReason }}.
+                              @if (item.forecast.localWasCapped) {
+                                <strong>Held at its cap</strong> &mdash; a series this short cannot support more.
+                              }
+                            </span>
+                          </div>
+
+                          <div class="rate rate-blend">
+                            <span class="rate-value">{{ item.forecast.blendedAnnualPercent | number: '1.0-1' }}%</span>
+                            <span class="rate-label">What the paths run on</span>
+                            <span class="rate-note">
+                              The local rate never gets more than half the blend, however long the series
+                              &mdash; a market that ran hot for a year does not run hot for a decade.
+                            </span>
+                          </div>
+                        </div>
+
+                        <div class="table-wrap">
+                          <table class="data-table">
+                            <thead>
+                              <tr>
+                                <th>Path</th>
+                                <th class="num">Per year</th>
+                                @for (year of milestones(); track year) {
+                                  <th class="num">Year {{ year }}</th>
+                                }
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (s of item.forecast.scenarios; track s.name) {
+                                <tr [class.emphasis]="s.name === 'Base'">
+                                  <td>{{ s.name }}</td>
+                                  <td class="num">{{ s.annualPercent | number: '1.0-1' }}%</td>
+                                  @for (year of milestones(); track year) {
+                                    <td class="num" [title]="'€' + (s.values[year] | number: '1.0-0')">
+                                      {{ money(s.values[year]) }}
+                                    </td>
+                                  }
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <p class="hint">
+                          Three paths rather than one, because a single number invites being read as a
+                          prediction. The spread is this district's own volatility, so a tourist market
+                          fans wider than a quiet one. All three compound from today's estimate, which
+                          is an <strong>asking</strong> price &mdash; every euro above is an asking
+                          price too.
+                        </p>
+                      </div>
+
+                      <!-- 4. The evidence: comps and feature contributions -->
+                      <div class="panel-block">
+                        <h3>The adverts behind the number</h3>
+
+                        @if (detailLoadingId() === item.id) {
+                          <p class="hint">Loading the comparables…</p>
+                        } @else if (detailError()) {
+                          <p class="error">{{ detailError() }}</p>
+                        } @else {
+                          @if (openDetail(); as d) {
+                            @if (d.comps.length === 0) {
+                              <p class="hint">
+                                No comparable adverts were close enough to check the estimate against.
+                                Widen the comp radius or the look-back window above.
+                              </p>
+                            } @else {
+                              <div class="stat-grid">
+                                <div class="stat">
+                                  <span class="stat-value">{{ d.compsCount }} of {{ d.comparablesFound }}</span>
+                                  <span class="stat-label">Comparables used (nearest)</span>
+                                </div>
+                                <div class="stat">
+                                  <span class="stat-value">€{{ d.marketRatePerM2 | number: '1.0-0' }}</span>
+                                  <span class="stat-label">Asking rate / m² (nearest-weighted)</span>
+                                </div>
+                                <div class="stat">
+                                  <span class="stat-value">€{{ d.estimateBeforeAdjustments | number: '1.0-0' }}</span>
+                                  <span class="stat-label">Comps alone (rate × m²)</span>
+                                </div>
+                                <div class="stat">
+                                  <span class="stat-value">
+                                    €{{ d.minCompPricePerM2 | number: '1.0-0' }} – €{{ d.maxCompPricePerM2 | number: '1.0-0' }}
+                                  </span>
+                                  <span class="stat-label">Comp €/m² spread</span>
+                                </div>
+                              </div>
+
+                              <div class="table-wrap">
+                                <table class="data-table">
+                                  <thead>
+                                    <tr>
+                                      <th class="sortable" (click)="toggleCompSort('typology')">Typology{{ compArrow('typology') }}</th>
+                                      <th class="num sortable" (click)="toggleCompSort('area')">Area (m²){{ compArrow('area') }}</th>
+                                      <th class="num sortable" (click)="toggleCompSort('pricePerM2')">€ / m²{{ compArrow('pricePerM2') }}</th>
+                                      <th class="num sortable" (click)="toggleCompSort('beach')">To beach (m){{ compArrow('beach') }}</th>
+                                      <th class="sortable" (click)="toggleCompSort('snapshot')">Snapshot{{ compArrow('snapshot') }}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    @for (c of sortedComps(); track $index) {
+                                      <tr>
+                                        <td>{{ c.typology }}</td>
+                                        <td class="num">{{ c.areaM2 | number: '1.0-0' }}</td>
+                                        <td class="num">€{{ c.pricePerM2 | number: '1.0-0' }}</td>
+                                        <td class="num">
+                                          {{ c.distanceToBeachMeters != null ? (c.distanceToBeachMeters | number: '1.0-0') : '—' }}
+                                        </td>
+                                        <td class="muted">{{ c.snapshotDateUtc | date: 'mediumDate' }}</td>
+                                      </tr>
+                                    }
+                                  </tbody>
+                                </table>
+                              </div>
+                            }
+
+                            @if (d.adjustments.length > 0) {
+                              <h3>What the features contribute</h3>
+
+                              <p class="hint">
+                                What each feature this property has is worth, at the premiums measured on
+                                the Feature Impact screen. These compound rather than add up, so they will
+                                not sum to the total. Greyed rows are features whose confidence range
+                                crosses zero. Nothing is ever shown as a discount: the estimate already
+                                prices what the property does not have.
+                              </p>
+
+                              <div class="table-wrap">
+                                <table class="data-table">
+                                  <thead>
+                                    <tr>
+                                      <th class="sortable" (click)="toggleAdjustmentSort('label')">
+                                        Adjustment{{ adjustmentArrow('label') }}
+                                      </th>
+                                      <th class="sortable" (click)="toggleAdjustmentSort('detail')">
+                                        Measured against{{ adjustmentArrow('detail') }}
+                                      </th>
+                                      <th class="num sortable" (click)="toggleAdjustmentSort('amount')">
+                                        Amount{{ adjustmentArrow('amount') }}
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    @for (a of sortedAdjustments(); track a.label) {
+                                      <tr [class.unmeasured]="!a.isMeasurable">
+                                        <td>{{ a.label }}</td>
+                                        <td class="muted">{{ a.detail ?? '—' }}</td>
+                                        <td class="num" [class.pos]="a.amount > 0">
+                                          {{ a.amount > 0 ? '+' : '' }}&euro;{{ a.amount | number: '1.0-0' }}
+                                        </td>
+                                      </tr>
+                                    }
+                                  </tbody>
+                                </table>
+                              </div>
+                            }
+                          }
+                        }
+
+                        <p class="panel-actions">
+                          <a [routerLink]="['/my-properties']" [queryParams]="{ edit: item.id }">
+                            Edit {{ item.name }} →
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
     }
   </section>
-}
+</div>

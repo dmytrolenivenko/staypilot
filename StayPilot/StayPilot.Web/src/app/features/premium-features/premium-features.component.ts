@@ -2,9 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { PremiumFeatureService } from '../../core/services/premium-feature.service';
 import { PremiumFeatureResponse } from '../../core/models/premium-feature';
+import { PageHeaderComponent } from '../../shared/page-header.component';
+import { ExplainerComponent } from '../../shared/explainer.component';
 
-// We are going to sort these fields
-type SortField = 'featureName' | 'premiumPercentage' | 'sampleSize';
+// Every column in the table is sortable — one entry here per <th>.
+type SortField =
+  | 'featureName'
+  | 'premiumPercentage'
+  | 'confidenceRange'
+  | 'basis'
+  | 'listings'
+  | 'calculatedAt';
 type SortDirection = 'asc' | 'desc';
 
 // Feature Impact — how much each tracked feature (sea view, garage, ...) adds to price,
@@ -13,7 +21,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-premium-features',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PageHeaderComponent, ExplainerComponent],
   templateUrl: './premium-features.component.html',
   styleUrl: './premium-features.component.css',
 })
@@ -39,23 +47,43 @@ export class PremiumFeaturesComponent implements OnInit {
       }
 
       let result = 0;
-      switch(field) {
-      case "premiumPercentage":
-        result = a.premiumPercent - b.premiumPercent;
-        break;
+      switch (field) {
+        case 'premiumPercentage':
+          result = a.premiumPercent - b.premiumPercent;
+          break;
 
-      case "featureName":
-        result = a.feature.localeCompare(b.feature);
-        break;
+        case 'featureName':
+          result = a.feature.localeCompare(b.feature);
+          break;
+
+        // On the width of the range, not its ends: a narrow range is the useful reading,
+        // and sorting on the lower bound just re-sorts by impact.
+        case 'confidenceRange':
+          result =
+            a.upperBoundPercent - a.lowerBoundPercent - (b.upperBoundPercent - b.lowerBoundPercent);
+          break;
+
+        case 'basis':
+          result = this.basis(a).localeCompare(this.basis(b));
+          break;
+
+        // The evidence behind the row, which is the count that carries the feature.
+        case 'listings':
+          result = a.listingsWithFeature - b.listingsWithFeature;
+          break;
+
+        case 'calculatedAt':
+          result = Date.parse(a.calculatedAtUtc) - Date.parse(b.calculatedAtUtc);
+          break;
       }
 
-      if (direction === "desc") {
+      if (direction === 'desc') {
         return -result;
       }
       return result;
-    })
+    });
     return rows;
-  })
+  });
 
   constructor(private readonly service: PremiumFeatureService) {}
 
@@ -118,13 +146,20 @@ export class PremiumFeaturesComponent implements OnInit {
 
   sortBy(field: SortField): void {
     if (this.sortField() === field) {
-      this.sortDirection.set(
-        this.sortDirection() === "asc" ? "desc" :"asc"
-      );
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
       this.sortField.set(field);
-      this.sortDirection.set("desc");
+      // Text columns start A→Z; the numbers start at their interesting end.
+      this.sortDirection.set(field === 'featureName' || field === 'basis' ? 'asc' : 'desc');
     }
   }
 
+  // The little arrow shown next to the active column header.
+  arrow(field: SortField): string {
+    if (this.sortField() !== field) {
+      return '';
+    }
+
+    return this.sortDirection() === 'asc' ? ' ▲' : ' ▼';
+  }
 }

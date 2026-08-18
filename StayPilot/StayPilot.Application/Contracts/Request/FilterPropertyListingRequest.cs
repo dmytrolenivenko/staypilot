@@ -26,6 +26,17 @@ namespace StayPilot.Application.Contracts.Request
         /// <summary>Filter by zone inside the town. Many listings have no zone.</summary>
         public string? Zone { get; set; }
 
+        /// <summary>
+        /// Widens the place above into a circle: also keep properties this many kilometers
+        /// around it, not only the ones inside it. This is what makes "Lisboa + 15 km" show
+        /// Oeiras and Amadora too, instead of stopping at a border nobody buys by.
+        /// The centre of the circle is the middle point of the chosen place's listings — we
+        /// hold no real borders — so leave it empty when no place is chosen: a circle needs
+        /// a centre. Properties without coordinates can only be found by the place itself.
+        /// </summary>
+        [Range(1, 200)]
+        public double? WithinKm { get; set; }
+
         /// <summary>Kind of property (for example apartment or house).</summary>
         public PropertyType? PropertyType { get; set; }
 

@@ -1,59 +1,51 @@
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin: 0.75rem 0;
-}
-
-.control {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.control input[type='number'] {
-  margin: 0;
-  width: 5rem;
-}
-
+/* Budgets are six figures — wider than the shared numeric control. */
 .budget-input {
   width: 8rem;
 }
 
-/* Clickable, sortable column headers. Same behaviour as the listing browser. */
-.data-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-}
-
-.data-table th.sortable:hover {
+/* The T-number is the answer on this screen, so it gets to stand out. */
+.typology {
+  font-weight: 600;
   color: var(--text);
 }
 
-.num {
-  text-align: right;
+/* Rows open to show the other typologies the budget reaches, so they have to look clickable. */
+.drillable {
+  cursor: pointer;
 }
 
-.rank {
+.drillable:hover {
+  background: var(--surface-hover);
+}
+
+/* The opened panel under a row. Sunk into the table rather than floating over it, so the row it
+   belongs to is never in doubt. */
+.expansion > td {
+  background: var(--surface-2);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.expansion-title {
+  display: block;
+  margin-bottom: var(--sp-2);
   color: var(--text-muted);
-  width: 2rem;
+  font-size: var(--fs-sm);
+  font-weight: 550;
 }
 
-/* The T-number is the answer on this screen, so it gets to stand out. */
-.typology {
-  padding: 0.1rem 0.45rem;
-  border: 1px solid var(--text-muted);
-  border-radius: 0.65rem;
-  font-weight: 600;
-  white-space: nowrap;
+/* A table inside a table cell: no outer border of its own, and quiet enough that the row above
+   still reads as the answer. */
+.nested {
+  font-size: var(--fs-sm);
 }
 
-.muted {
+/* The layout the headline picked, so the expansion says which row you came from. */
+.nested .best {
+  background: var(--surface-hover);
+}
+
+/* One caveat, where a whole explainer paragraph would be too much. */
+.note-inline {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }

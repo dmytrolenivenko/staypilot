@@ -28,5 +28,23 @@ namespace StayPilot.Application.Contracts.Request
         /// </summary>
         [Range(1, 1000)]
         public int MinListings { get; set; } = 5;
+
+        /// <summary>
+        /// Keep only places inside this district. Empty means the whole country.
+        ///
+        /// A national board answers "where is cheapest in Portugal", which is a question you ask
+        /// once. Scoped to a district it answers "where is cheapest near where I am looking",
+        /// which is the question you actually come back for.
+        /// </summary>
+        [StringLength(100)]
+        public string? District { get; set; }
+
+        /// <summary>
+        /// Keep only places inside this município. Only meaningful at município or freguesia
+        /// level - a district row carries no município, so setting this at district level
+        /// correctly returns nothing.
+        /// </summary>
+        [StringLength(100)]
+        public string? Municipality { get; set; }
     }
 }

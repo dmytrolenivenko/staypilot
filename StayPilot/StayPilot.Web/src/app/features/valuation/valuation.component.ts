@@ -4,38 +4,220 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OwnedPropertyService } from '../../core/services/owned-property.service';
 import {
+  DemandLevel,
+  GrowthScenarioResponse,
   OwnedPropertyAnalysisResponse,
-  OwnedPropertyResponse
+  OwnedPropertyPortfolioItemResponse,
+  OwnedPropertyPortfolioResponse
 } from '../../core/models/owned-property';
+import { PageHeaderComponent } from '../../shared/page-header.component';
+import { ExplainerComponent } from '../../shared/explainer.component';
 
-// Valuation — pick one of your own properties, pick how far back to look for
-// comparable sales, and get a price estimate (range + confidence + the comps
-// and adjustments behind it, and how much you've gained since you bought it).
-// Backed by OwnedPropertyController.EstimateEvaluationsOwnedproperty.
+// Columns of the list. Sorted in the browser — a portfolio is a handful of rows.
+type PortfolioSort = 'name' | 'place' | 'value' | 'pricePerM2' | 'gain' | 'demand' | 'projected';
+type SortDirection = 'asc' | 'desc';
+
+// Columns of the two tables inside an expanded property.
+type AdjustmentSort = 'label' | 'detail' | 'amount';
+type CompSort = 'typology' | 'area' | 'pricePerM2' | 'beach' | 'snapshot';
+
+// Where each band sits on the 0-100 scale, so the badge and the meter agree.
+const DEMAND_ORDER: Record<DemandLevel, number> = {
+  Cold: 1,
+  Soft: 2,
+  Balanced: 3,
+  Firm: 4,
+  Hot: 5
+};
+
+// Compare on the number after the T, so T10 sorts above T9 rather than next to T1.
+function typologyRooms(typology: string): number {
+  return Number(typology.replace(/^T/i, '')) || 0;
+}
+
+// The Base path is what the list column and the portfolio total quote. Named rather than
+// indexed so a reordering on the server cannot silently swap it for the optimistic one.
+function baseScenario(item: OwnedPropertyPortfolioItemResponse): GrowthScenarioResponse | null {
+  return item.forecast.scenarios.find(s => s.name === 'Base') ?? null;
+}
+
+// Valuation — every property you own, priced in one pass, each row opening into the
+// evidence behind its number: what the neighbours ask, what the features contribute,
+// how keen buyers are around it, and where the value goes from here.
+//
+// Backed by OwnedPropertyController.ListValuationsOwnedproperty for the list, and by
+// EstimateEvaluationsOwnedproperty for the comps and adjustments of whichever row is open —
+// those two are per-property and large, so they are fetched only when a row is expanded.
 @Component({
   selector: 'app-valuation',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent, ExplainerComponent],
   templateUrl: './valuation.component.html',
   styleUrl: './valuation.component.css'
 })
 export class ValuationComponent implements OnInit {
-  properties = signal<OwnedPropertyResponse[]>([]);
-  selectedId = signal<number | null>(null);
-  months = signal(12);
-  // How far outside the property's own market area we still accept comparable listings.
-  radiusMeters = signal(2000);
+  portfolio = signal<OwnedPropertyPortfolioResponse | null>(null);
 
-  result = signal<OwnedPropertyAnalysisResponse | null>(null);
-
-  loadingProps = signal(true);
-  estimating = signal(false);
+  loading = signal(true);
   error = signal<string | null>(null);
 
-  // The property currently chosen in the dropdown (for the header line).
-  selected = computed(() =>
-    this.properties().find(p => p.id === this.selectedId()) ?? null
-  );
+  // How far back a comparable advert may have last been seen, and how far out one still counts.
+  months = signal(12);
+  radiusMeters = signal(2000);
+
+  // How far the projections run. Ten by default because that is the horizon the seeded growth
+  // rates are pitched at; one year on its own reads as a prediction rather than a direction.
+  years = signal(10);
+
+  // The property whose panel is open. Only one at a time — the panel is a page of its own.
+  expandedId = signal<number | null>(null);
+
+  // The comps and adjustments for the open property, fetched on expand and kept per id so
+  // re-opening a row you already looked at costs nothing.
+  details = signal<Record<number, OwnedPropertyAnalysisResponse>>({});
+  detailLoadingId = signal<number | null>(null);
+  detailError = signal<string | null>(null);
+
+  sortColumn = signal<PortfolioSort>('value');
+  sortDirection = signal<SortDirection>('desc');
+
+  items = computed(() => this.portfolio()?.items ?? []);
+
+  sortedItems = computed(() => {
+    const rows = [...this.items()];
+    const column = this.sortColumn();
+    const direction = this.sortDirection();
+
+    rows.sort((a, b) => {
+      let result = 0;
+
+      switch (column) {
+        case 'name':
+          result = a.name.localeCompare(b.name, 'pt');
+          break;
+
+        case 'place':
+          result = this.placeLabel(a).localeCompare(this.placeLabel(b), 'pt');
+          break;
+
+        case 'value':
+          result = a.midPrice - b.midPrice;
+          break;
+
+        case 'pricePerM2':
+          result = a.pricePerM2 - b.pricePerM2;
+          break;
+
+        case 'gain':
+          // On the percentage, not the amount: otherwise this just re-sorts by property value.
+          result = a.equity.gainPercent - b.equity.gainPercent;
+          break;
+
+        case 'demand':
+          // Places that could not be measured sink to the bottom either way — an unmeasured
+          // place is not a Balanced one, and sorting them together would say it was.
+          if (a.demand.isMeasurable !== b.demand.isMeasurable) {
+            return a.demand.isMeasurable ? -1 : 1;
+          }
+
+          result = a.demand.score - b.demand.score;
+          break;
+
+        case 'projected':
+          result = (baseScenario(a)?.finalYearValue ?? 0) - (baseScenario(b)?.finalYearValue ?? 0);
+          break;
+      }
+
+      return direction === 'desc' ? -result : result;
+    });
+
+    return rows;
+  });
+
+  // --- Adjustments table (inside the open panel) ---------------------------
+  adjustmentSort = signal<AdjustmentSort>('amount');
+  adjustmentDirection = signal<SortDirection>('desc');
+
+  sortedAdjustments = computed(() => {
+    const rows = [...(this.openDetail()?.adjustments ?? [])];
+    const column = this.adjustmentSort();
+    const direction = this.adjustmentDirection();
+
+    rows.sort((a, b) => {
+      // Rows the data cannot speak to sink to the bottom whichever way the column is sorted,
+      // the same rule the Feature Impact table uses.
+      if (a.isMeasurable !== b.isMeasurable) {
+        return a.isMeasurable ? -1 : 1;
+      }
+
+      let result = 0;
+
+      switch (column) {
+        case 'label':
+          result = a.label.localeCompare(b.label);
+          break;
+
+        case 'detail':
+          result = (a.detail ?? '').localeCompare(b.detail ?? '');
+          break;
+
+        case 'amount':
+          result = a.amount - b.amount;
+          break;
+      }
+
+      return direction === 'desc' ? -result : result;
+    });
+
+    return rows;
+  });
+
+  // --- Comparables table (inside the open panel) ---------------------------
+  // Nearest first is how the server hands them over, and how they are weighted, so the
+  // default keeps that order rather than imposing one of its own.
+  compSort = signal<CompSort | null>(null);
+  compDirection = signal<SortDirection>('asc');
+
+  sortedComps = computed(() => {
+    const rows = [...(this.openDetail()?.comps ?? [])];
+    const column = this.compSort();
+
+    if (column === null) {
+      return rows;
+    }
+
+    const direction = this.compDirection();
+
+    rows.sort((a, b) => {
+      let result = 0;
+
+      switch (column) {
+        case 'typology':
+          result = typologyRooms(a.typology) - typologyRooms(b.typology);
+          break;
+
+        case 'area':
+          result = a.areaM2 - b.areaM2;
+          break;
+
+        case 'pricePerM2':
+          result = a.pricePerM2 - b.pricePerM2;
+          break;
+
+        case 'beach':
+          result = (a.distanceToBeachMeters ?? 0) - (b.distanceToBeachMeters ?? 0);
+          break;
+
+        case 'snapshot':
+          result = Date.parse(a.snapshotDateUtc) - Date.parse(b.snapshotDateUtc);
+          break;
+      }
+
+      return direction === 'desc' ? -result : result;
+    });
+
+    return rows;
+  });
 
   constructor(
     private readonly service: OwnedPropertyService,
@@ -43,54 +225,190 @@ export class ValuationComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Arriving from "My Properties" with ?propertyId=<id> pre-selects that
-    // property and runs the estimate straight away.
+    this.load();
+  }
+
+  // Arriving from "My Properties" with ?propertyId=<id> opens that row once the list lands.
+  private load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+
     const requestedId = Number(this.route.snapshot.queryParamMap.get('propertyId'));
 
-    this.service.getAll().subscribe({
-      next: rows => {
-        this.properties.set(rows ?? []);
-        if (rows?.length) {
-          const preselect = rows.some(p => p.id === requestedId) ? requestedId : rows[0].id;
-          this.selectedId.set(preselect);
-        }
-        this.loadingProps.set(false);
+    this.service.portfolio(this.months(), this.radiusMeters(), this.years()).subscribe({
+      next: response => {
+        this.portfolio.set(response);
+        this.loading.set(false);
 
-        // Only auto-estimate when we were sent here for a specific property.
-        if (requestedId > 0 && this.properties().some(p => p.id === requestedId)) {
-          this.estimate();
+        if (requestedId > 0 && response.items.some(x => x.id === requestedId)) {
+          this.toggle(requestedId);
         }
       },
       error: () => {
-        this.error.set('Could not load your properties from the API.');
-        this.loadingProps.set(false);
+        this.error.set(
+          'Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.'
+        );
+        this.loading.set(false);
       }
     });
   }
 
-  estimate(): void {
-    const id = this.selectedId();
-    if (!id) {
-      this.error.set('Pick a property first.');
+  // The three settings all change what comes back, so each reloads. The open row closes with
+  // them: its comps were fetched at the old settings and would otherwise sit there stale.
+  reload(): void {
+    this.expandedId.set(null);
+    this.details.set({});
+    this.load();
+  }
+
+  toggleSort(column: PortfolioSort): void {
+    if (this.sortColumn() === column) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+
       return;
     }
 
-    this.estimating.set(true);
-    this.error.set(null);
-    this.result.set(null);
+    this.sortColumn.set(column);
+    this.sortDirection.set(column === 'name' || column === 'place' ? 'asc' : 'desc');
+  }
+
+  arrow(column: PortfolioSort): string {
+    if (this.sortColumn() !== column) {
+      return '';
+    }
+
+    return this.sortDirection() === 'asc' ? ' ▲' : ' ▼';
+  }
+
+  // Open a row, closing whichever was open. The comps and adjustments are fetched the first
+  // time only — they do not change until a setting does, and that closes everything anyway.
+  toggle(id: number): void {
+    if (this.expandedId() === id) {
+      this.expandedId.set(null);
+
+      return;
+    }
+
+    this.expandedId.set(id);
+    this.detailError.set(null);
+
+    if (this.details()[id]) {
+      return;
+    }
+
+    this.detailLoadingId.set(id);
 
     this.service.estimate(id, this.months(), this.radiusMeters()).subscribe({
-      next: res => {
-        this.result.set(res);
-        this.estimating.set(false);
+      next: detail => {
+        this.details.update(current => ({ ...current, [id]: detail }));
+        this.detailLoadingId.set(null);
       },
       error: () => {
-        this.error.set('Could not estimate this property. It may have no comparable listings in the chosen window.');
-        this.estimating.set(false);
+        this.detailError.set('Could not load the comparables for this property.');
+        this.detailLoadingId.set(null);
       }
     });
   }
 
-  // True when there's a real purchase to compare the estimate against.
-  hasEquity = computed(() => (this.result()?.equity?.purchasePrice ?? 0) > 0);
+  // The comps/adjustments of the open row, once they have arrived.
+  openDetail = computed(() => {
+    const id = this.expandedId();
+
+    return id === null ? null : this.details()[id] ?? null;
+  });
+
+  openItem = computed(() => {
+    const id = this.expandedId();
+
+    return id === null ? null : this.items().find(x => x.id === id) ?? null;
+  });
+
+  // --- Formatting helpers --------------------------------------------------
+
+  // "Quarteira · Loulé, Faro" — narrowest first, then what it sits inside, same order the
+  // market screens use so a place reads the same wherever it appears.
+  placeLabel(item: OwnedPropertyPortfolioItemResponse): string {
+    return [item.town, item.municipality, item.district].filter(part => part).join(' · ');
+  }
+
+  // Where the demand needle sits, 0-100, for the little meter in the panel.
+  demandOffset(score: number): number {
+    return Math.max(0, Math.min(100, score));
+  }
+
+  demandRank(level: DemandLevel): number {
+    return DEMAND_ORDER[level] ?? 0;
+  }
+
+  // Compact euros for the table cells: €1.2M rather than €1,234,567, which is what pushed the
+  // Market Overview bars off their own rows. The exact figure stays in the title attribute.
+  money(value: number): string {
+    const absolute = Math.abs(value);
+
+    if (absolute >= 1_000_000) {
+      return `€${(value / 1_000_000).toFixed(1)}M`;
+    }
+
+    if (absolute >= 10_000) {
+      return `€${Math.round(value / 1000)}k`;
+    }
+
+    return `€${Math.round(value).toLocaleString('pt-PT')}`;
+  }
+
+  scenario(item: OwnedPropertyPortfolioItemResponse, name: string): GrowthScenarioResponse | null {
+    return item.forecast.scenarios.find(s => s.name === name) ?? null;
+  }
+
+  base(item: OwnedPropertyPortfolioItemResponse): GrowthScenarioResponse | null {
+    return baseScenario(item);
+  }
+
+  // The years to print in the projection table. Ten rows of a ten year path is a wall, so the
+  // milestones people actually plan against: next year, five out, and the end of the horizon.
+  milestones = computed(() => {
+    const total = this.portfolio()?.projectionYears ?? 0;
+
+    return [1, 5, total].filter((year, index, all) => year > 0 && year <= total && all.indexOf(year) === index);
+  });
+
+  // --- Adjustment / comp table sorting -------------------------------------
+
+  toggleAdjustmentSort(column: AdjustmentSort): void {
+    if (this.adjustmentSort() === column) {
+      this.adjustmentDirection.set(this.adjustmentDirection() === 'asc' ? 'desc' : 'asc');
+
+      return;
+    }
+
+    this.adjustmentSort.set(column);
+    this.adjustmentDirection.set(column === 'amount' ? 'desc' : 'asc');
+  }
+
+  adjustmentArrow(column: AdjustmentSort): string {
+    if (this.adjustmentSort() !== column) {
+      return '';
+    }
+
+    return this.adjustmentDirection() === 'asc' ? ' ▲' : ' ▼';
+  }
+
+  toggleCompSort(column: CompSort): void {
+    if (this.compSort() === column) {
+      this.compDirection.set(this.compDirection() === 'asc' ? 'desc' : 'asc');
+
+      return;
+    }
+
+    this.compSort.set(column);
+    this.compDirection.set(column === 'typology' ? 'asc' : 'desc');
+  }
+
+  compArrow(column: CompSort): string {
+    if (this.compSort() !== column) {
+      return '';
+    }
+
+    return this.compDirection() === 'asc' ? ' ▲' : ' ▼';
+  }
 }

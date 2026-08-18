@@ -12,6 +12,7 @@ import {
   PROPERTY_TYPES,
   TYPOLOGIES
 } from '../../core/models/enums';
+import { PageHeaderComponent } from '../../shared/page-header.component';
 
 // Columns the property list can be sorted by.
 type SortField = 'id' | 'name' | 'propertyType' | 'typology' | 'areaM2' | 'purchasePrice';
@@ -23,7 +24,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-owned-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent],
   templateUrl: './owned-properties.component.html',
   styleUrl: './owned-properties.component.css'
 })
@@ -228,6 +229,15 @@ export class OwnedPropertiesComponent implements OnInit {
       this.sortField.set(field);
       this.sortDirection.set('asc');
     }
+  }
+
+  // The little arrow shown next to the active column header.
+  arrow(field: SortField): string {
+    if (this.sortField() !== field) {
+      return '';
+    }
+
+    return this.sortDirection() === 'asc' ? ' ▲' : ' ▼';
   }
 
   // --- Multi-select --------------------------------------------------------

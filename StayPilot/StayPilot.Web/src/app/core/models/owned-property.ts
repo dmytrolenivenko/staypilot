@@ -152,3 +152,93 @@ export interface OwnedPropertyAnalysisResponse {
 
   equity: EquitySummary;
 }
+
+// How keen buyers are in a place. Mirrors StayPilot.Domain.Enums.DemandLevel.
+export type DemandLevel = 'Cold' | 'Soft' | 'Balanced' | 'Firm' | 'Hot';
+
+// The demand score for one place and the working behind it.
+// Read isMeasurable BEFORE level: when it is false the level means "not measured", not "average".
+export interface AreaDemandResponse {
+  level: DemandLevel;
+  score: number;
+  isMeasurable: boolean;
+  placeName: string;
+  medianDaysOnMarket: number | null;
+  daysMeasuredOnSold: boolean;
+  daysScore: number | null;
+  newListingsRecent: number;
+  newListingsPrevious: number;
+  supplyChangePercent: number | null;
+  supplyScore: number | null;
+  sampleSize: number;
+  collectionSpanDays: number;
+  reason: string;
+}
+
+// One projected path. values[0] is today, values[n] the end of year n.
+export interface GrowthScenarioResponse {
+  name: string;
+  annualPercent: number;
+  nextYearValue: number;
+  finalYearValue: number;
+  values: number[];
+}
+
+// Where a property's value is heading, with the two rates behind it kept apart.
+// seededAnnualPercent is an assumption (read seededSource, it says so); localAnnualPercent is
+// measured from the adverts nearby. Neither is the forecast on its own.
+export interface GrowthForecastResponse {
+  seededAnnualPercent: number;
+  seededSource: string;
+  seededDistrict: string;
+  localAnnualPercent: number | null;
+  localWeightPercent: number;
+  localWasCapped: boolean;
+  localSnapshotCount: number;
+  localSpanDays: number;
+  localMonthsObserved: number;
+  localReason: string;
+  blendedAnnualPercent: number;
+  years: number;
+  scenarios: GrowthScenarioResponse[];
+}
+
+// One owned property, priced, with what its place is doing around it.
+export interface OwnedPropertyPortfolioItemResponse {
+  id: number;
+  name: string;
+  propertyType: PropertyType;
+  typology: Typology;
+  areaM2: number;
+
+  district: string;
+  municipality: string;
+  town: string;
+  locatedAreaName: string;
+  locatedByCoordinates: boolean;
+
+  midPrice: number;
+  minPrice: number;
+  maxPrice: number;
+  pricePerM2: number;
+  confidenceLevel: ValuationConfidence;
+  confidenceNote: string;
+  equity: EquitySummary;
+
+  demand: AreaDemandResponse;
+  forecast: GrowthForecastResponse;
+}
+
+// Every owned property priced in one pass. One request, because the valuation model is fitted
+// over the whole listing table — ten separate calls would be ten fits of the same model.
+export interface OwnedPropertyPortfolioResponse {
+  items: OwnedPropertyPortfolioItemResponse[];
+  propertyCount: number;
+  totalEstimatedValue: number;
+  totalPurchasePrice: number;
+  totalGainAmount: number;
+  totalGainPercent: number;
+  totalProjectedValue: number;
+  projectionYears: number;
+  generatedAtUtc: string;
+}

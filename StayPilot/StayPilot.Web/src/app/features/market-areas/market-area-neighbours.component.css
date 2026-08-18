@@ -1,41 +1,11 @@
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin: 0.75rem 0;
+/* The anchor is the main control on this screen — give it the slack in the toolbar. */
+.anchor-picker {
+  flex: 1;
+  min-width: 240px;
+  max-width: 26rem;
 }
 
-.control {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.control input[type='number'] {
-  margin: 0;
-  width: 5rem;
-}
-
-.num {
-  text-align: right;
-}
-
-.rank {
-  color: var(--text-muted);
-  width: 2rem;
-}
-
-/* The gap is the headline of every row. */
+/* The gap is the headline of every row in the all-pairs table. */
 .gap {
-  font-weight: 600;
-}
-
-.muted {
-  margin-left: 0.35rem;
-  color: var(--text-muted);
-  font-size: 0.75rem;
+  font-weight: 650;
 }

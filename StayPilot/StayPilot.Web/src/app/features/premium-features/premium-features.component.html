@@ -1,65 +1,64 @@
-<section class="panel">
-  <h1>Feature Impact</h1>
-  <p class="hint">
-    What each feature is worth, measured by the valuation model while holding size, rooms,
-    condition, beach distance and location still. This is correlation across current asking
-    prices, not causation. Recalculate to refresh from the latest data.
-  </p>
-  <p class="hint">
-    Where a feature is worth wildly different amounts depending on the property &mdash; a sea view
-    on the beachfront against one that means a sliver on the horizon &mdash; the row also shows
-    what it reaches, and the conditions that figure holds under. Same model, different question:
-    the headline stays the market-wide average.
-  </p>
-  <p class="hint">
-    Every number has a confidence range. Where that range crosses zero the data cannot tell
-    whether the feature affects price at all &mdash; those rows say <em>no measurable effect</em>
-    rather than showing a percentage, and sort to the bottom. Features whose ranges overlap
-    cannot be ranked against each other. &ldquo;Listings with it&rdquo; is how many of the fitted
-    listings actually carry the feature &mdash; the evidence behind that row, and why the rarer
-    ones have wider ranges.
-  </p>
-
-  <div class="toolbar">
-    <button type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
-      {{ recalculating() ? 'Recalculating...' : 'Recalculate' }}
+<div class="page">
+  <app-page-header
+    title="Feature impact"
+    sub="What each feature is worth as a price premium, holding size, rooms, condition, beach distance and location still."
+  >
+    <button actions type="button" class="secondary" (click)="reload()" [disabled]="loading()">Refresh</button>
+    <button actions type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
+      {{ recalculating() ? 'Recalculating…' : 'Recalculate' }}
     </button>
-    <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">Refresh</button>
-  </div>
+  </app-page-header>
 
-  @if (loading()) {
-    <p class="hint">Loading...</p>
-  }
+  <app-explainer>
+    <p>
+      This is correlation across current asking prices, not causation. Recalculate to refresh from
+      the latest data.
+    </p>
+    <p>
+      Where a feature is worth wildly different amounts depending on the property &mdash; a sea view
+      on the beachfront against one that means a sliver on the horizon &mdash; the row also shows
+      what it reaches, and the conditions that figure holds under. Same model, different question:
+      the headline stays the market-wide average.
+    </p>
+    <p>
+      Every number has a confidence range. Where that range crosses zero the data cannot tell whether
+      the feature affects price at all &mdash; those rows say <em>no measurable effect</em> rather than
+      showing a percentage, and sort to the bottom whichever column you sort on. Features whose ranges
+      overlap cannot be ranked against each other. &ldquo;Listings with it&rdquo; is how many of the
+      fitted listings actually carry the feature &mdash; the evidence behind that row, and why the
+      rarer ones have wider ranges.
+    </p>
+  </app-explainer>
+
   @if (error()) {
     <p class="error">{{ error() }}</p>
   }
-</section>
 
-@if (!loading() && !error()) {
-  <section class="panel">
-    @if (features().length === 0) {
-      <p class="hint">No feature premiums yet. Hit "Recalculate" to compute them from current listings.</p>
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Premiums</span>
+      <span class="meta">{{ features().length }} features · click any column to sort</span>
+    </div>
+
+    @if (loading()) {
+      <p class="empty">Loading…</p>
+    } @else if (features().length === 0) {
+      <p class="empty">
+        No feature premiums yet. Hit <strong>Recalculate</strong> to compute them from current listings.
+      </p>
     } @else {
-      <div class="table-scroll">
+      <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
-              <th (click)="sortBy('featureName')" style="cursor: pointer;">
-                Feature
-                @if (sortField() === 'featureName') {
-                  {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-                }
+              <th class="sortable" (click)="sortBy('featureName')">Feature{{ arrow('featureName') }}</th>
+              <th class="sortable" (click)="sortBy('premiumPercentage')">Impact{{ arrow('premiumPercentage') }}</th>
+              <th class="sortable" (click)="sortBy('confidenceRange')" title="Sorted on how wide the range is">
+                Confidence range{{ arrow('confidenceRange') }}
               </th>
-              <th (click)="sortBy('premiumPercentage')" style="cursor: pointer;">
-                Impact
-                @if (sortField() === 'premiumPercentage') {
-                  {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-                }
-              </th>
-              <th>Confidence range</th>
-              <th>Basis</th>
-              <th>Listings with it</th>
-              <th>Last calculated</th>
+              <th class="sortable" (click)="sortBy('basis')">Basis{{ arrow('basis') }}</th>
+              <th class="num sortable" (click)="sortBy('listings')">Listings with it{{ arrow('listings') }}</th>
+              <th class="sortable" (click)="sortBy('calculatedAt')">Last calculated{{ arrow('calculatedAt') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -75,13 +74,12 @@
                     @if (f.maximumPercent !== null) {
                       <span class="peak">
                         up to +{{ f.maximumPercent | number: '1.0-1' }}%
-                        <span class="muted">{{ f.maximumBasis }}</span>
+                        <span class="faint">{{ f.maximumBasis }}</span>
                       </span>
                     }
                   </td>
                   <td class="range">
-                    {{ f.lowerBoundPercent > 0 ? '+' : '' }}{{ f.lowerBoundPercent | number: '1.0-1' }}%
-                    to
+                    {{ f.lowerBoundPercent > 0 ? '+' : '' }}{{ f.lowerBoundPercent | number: '1.0-1' }}% to
                     {{ f.upperBoundPercent > 0 ? '+' : '' }}{{ f.upperBoundPercent | number: '1.0-1' }}%
                   </td>
                 } @else {
@@ -94,11 +92,11 @@
                 }
 
                 <td class="muted basis">{{ basis(f) }}</td>
-                <td [title]="evidenceHint(f)">
+                <td class="num" [title]="evidenceHint(f)">
                   {{ f.listingsWithFeature | number }}
-                  <span class="muted">of {{ f.sampleSize | number }}</span>
+                  <span class="faint">of {{ f.sampleSize | number }}</span>
                 </td>
-                <td>{{ f.calculatedAtUtc | date: 'medium' }}</td>
+                <td class="muted">{{ f.calculatedAtUtc | date: 'medium' }}</td>
               </tr>
             }
           </tbody>
@@ -106,4 +104,4 @@
       </div>
     }
   </section>
-}
+</div>

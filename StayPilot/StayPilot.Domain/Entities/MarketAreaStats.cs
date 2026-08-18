@@ -84,10 +84,45 @@ namespace StayPilot.Domain.Entities
         public int ProjectCount { get; set; }
 
         /// <summary>
+        /// Of <see cref="ProjectCount"/>, how many were flagged by the advert itself saying it
+        /// needs renovation. Kept apart from the energy-grade count because the two signals are
+        /// not equally trustworthy: this one is whatever the agent felt like typing.
+        /// </summary>
+        public int ProjectByConditionCount { get; set; }
+
+        /// <summary>
+        /// Of <see cref="ProjectCount"/>, how many were flagged only by an energy certificate of
+        /// D or worse. The more objective of the two signals, and roughly ten times as common.
+        /// A place whose projects are all this kind is measuring "poorly insulated", which is
+        /// related to "needs work" but is not the same thing - worth being able to see.
+        /// </summary>
+        public int ProjectByEnergyCount { get; set; }
+
+        /// <summary>
         /// Middle price for each square meter of the project stock here.
         /// Null when there are too few projects to take a median from.
         /// </summary>
         public decimal? ProjectMedianPricePerM2 { get; set; }
+
+        /// <summary>
+        /// Middle floor area of the project stock. Without it the discount is a rate with nothing
+        /// to multiply it by, and "€420/m² cheaper" never becomes a sum of money.
+        /// </summary>
+        public decimal? ProjectMedianAreaM2 { get; set; }
+
+        /// <summary>
+        /// The middle half of the project prices for each square meter: a quarter of them ask
+        /// less than <see cref="ProjectP25PricePerM2"/>, a quarter more than
+        /// <see cref="ProjectP75PricePerM2"/>.
+        ///
+        /// This is the number that decides whether the discount is real. Two medians always
+        /// differ by something; if the project spread and the move-in spread sit on top of each
+        /// other, that difference is noise wearing a decimal point.
+        /// </summary>
+        public decimal? ProjectP25PricePerM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectP25PricePerM2"/>
+        public decimal? ProjectP75PricePerM2 { get; set; }
 
         /// <summary>How many listings here are ready to move into.</summary>
         public int MoveInCount { get; set; }
@@ -97,6 +132,26 @@ namespace StayPilot.Domain.Entities
         /// project stock is discounted against. Null when there is too little to compare with.
         /// </summary>
         public decimal? MoveInMedianPricePerM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectMedianAreaM2"/>
+        public decimal? MoveInMedianAreaM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectP25PricePerM2"/>
+        public decimal? MoveInP25PricePerM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectP25PricePerM2"/>
+        public decimal? MoveInP75PricePerM2 { get; set; }
+
+        /// <summary>
+        /// Listings here that are neither a project nor clearly move-in ready - an unknown
+        /// condition with no certificate to fall back on.
+        ///
+        /// They are counted and then left out of both sides, which is the honest thing to do and
+        /// also the thing most worth showing: a place with 1,200 listings whose renovation
+        /// discount rests on 40 projects and 300 finished homes has 860 listings with no opinion,
+        /// and a reader who cannot see that will trust the discount more than it deserves.
+        /// </summary>
+        public int UnclassifiedCount { get; set; }
 
         /// <summary>
         /// One row per typology found here (T1, T2, T3...), for answering what a budget buys.

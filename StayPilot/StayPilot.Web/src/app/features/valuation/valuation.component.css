@@ -1,149 +1,261 @@
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+/* Every input here is a plain number, so none of them needs the width of a name. */
+.control input[type='number'] {
+  width: 7rem;
 }
 
-.controls label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+/* ---- The list ---------------------------------------------------------- */
+
+/* The whole row is the button, so it has to look like one. */
+.portfolio tr.row {
+  cursor: pointer;
 }
 
-.controls select {
-  min-width: 20rem;
+.portfolio tr.row:hover {
+  background: var(--row-hover, rgba(127, 127, 127, 0.08));
 }
 
-.controls input[type='number'] {
-  width: 6rem;
+.portfolio tr.row.open {
+  background: var(--row-hover, rgba(127, 127, 127, 0.08));
+  font-weight: 500;
 }
 
-/* Return link back to the property in My Properties. Sits inline with the
-   Estimate button (the controls row is flex-end aligned). */
-.controls .btn-link {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding-bottom: 0.5rem;
+/* Just wide enough for the arrow. max-content would collapse it to nothing on
+   the header row, which has no arrow in it. */
+.chevron {
+  width: 1.5rem;
+  text-align: center;
+  color: var(--muted, #777);
+  user-select: none;
+}
+
+/* Typology and size under the name: supporting detail, not a second column. */
+.sub {
+  display: block;
+  font-size: 0.82em;
+  font-weight: 400;
+  color: var(--muted, #777);
+}
+
+.place {
   white-space: nowrap;
 }
 
-.controls .btn-link:hover {
-  text-decoration: underline;
+/* The confidence chip rides next to the price, so it must not push the number
+   onto a second line in a narrow column. */
+.badge-small {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.72em;
+  vertical-align: middle;
 }
 
-/* Headline estimate */
-.headline {
+/* ---- Demand ------------------------------------------------------------ */
+
+/* Five bands, five colours, one shape. Colour alone never carries the meaning —
+   the word is always printed inside. */
+.demand {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.78em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.demand-hot {
+  background: rgba(220, 68, 55, 0.15);
+  color: #b3362b;
+}
+
+.demand-firm {
+  background: rgba(233, 145, 45, 0.16);
+  color: #a2610f;
+}
+
+.demand-balanced {
+  background: rgba(120, 120, 120, 0.16);
+  color: var(--muted, #666);
+}
+
+.demand-soft {
+  background: rgba(60, 130, 200, 0.15);
+  color: #2a6294;
+}
+
+.demand-cold {
+  background: rgba(60, 100, 180, 0.18);
+  color: #24457c;
+}
+
+/* Not measured must not look like a band. No fill, dashed outline, muted text. */
+.demand-unknown {
+  border: 1px dashed var(--border, #ccc);
+  color: var(--muted, #888);
+  font-weight: 400;
+}
+
+.meter {
+  margin: 0.6rem 0 0.9rem;
+  max-width: 34rem;
+}
+
+.meter-scale {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
+  font-size: 0.72em;
+  color: var(--muted, #888);
+  margin-bottom: 0.2rem;
 }
 
-.headline-main {
+.meter-track {
+  position: relative;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #24457c 0%, #2a6294 25%, #999 50%, #a2610f 75%, #b3362b 100%);
+}
+
+.meter-needle {
+  position: absolute;
+  top: -0.2rem;
+  width: 0.28rem;
+  height: 0.9rem;
+  border-radius: 2px;
+  background: var(--fg, #222);
+  border: 1px solid var(--bg, #fff);
+  transform: translateX(-50%);
+}
+
+/* The two halves of the score, side by side, so neither reads as the whole. */
+.halves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.9rem;
+  margin: 0.8rem 0;
+}
+
+.half {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border, #e3e3e3);
+  border-radius: 6px;
 }
 
-.headline-label {
-  font-size: 0.78rem;
+.half-label {
+  font-size: 0.78em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  color: var(--muted, #888);
 }
 
-.headline-price {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.1;
+.half-value {
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
-.headline-range {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-/* Explains what the range above actually measures. Kept narrow so it reads as a footnote to
-   the headline rather than competing with it. */
-.headline-note {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  max-width: 34rem;
+.half-note {
+  font-size: 0.84em;
+  color: var(--muted, #777);
   line-height: 1.4;
 }
 
-.badge-high {
-  background: rgba(30, 130, 76, 0.15);
-  color: var(--success);
+.half-score {
+  margin-top: 0.3rem;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--muted, #777);
 }
 
-.badge-medium {
-  background: rgba(230, 160, 30, 0.18);
-  color: #b8860b;
-}
+/* ---- Forecast ---------------------------------------------------------- */
 
-.badge-low {
-  background: rgba(192, 57, 43, 0.15);
-  color: var(--error);
-}
-
-/* Stat grid */
-.stat-grid {
+/* Seeded, measured, blended. Three boxes because the whole point is that the
+   first two are different things and the third is made of them. */
+.rates {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.9rem;
+  margin: 0.6rem 0 1rem;
 }
 
-.stat {
+.rate {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  padding: 0.65rem 0.75rem;
-  border: 1px solid var(--border);
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border, #e3e3e3);
   border-radius: 6px;
-  background: var(--bg);
 }
 
-.stat-value {
-  font-size: 1.05rem;
+/* The blend is what the numbers below actually run on, so it is the one with weight. */
+.rate-blend {
+  border-color: var(--fg, #333);
+}
+
+.rate-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.rate-label {
+  font-size: 0.82em;
   font-weight: 600;
 }
 
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+.rate-note {
+  font-size: 0.8em;
+  color: var(--muted, #777);
+  line-height: 1.4;
 }
 
-.num {
-  text-align: right;
-}
-
-.pos {
-  color: var(--success);
+/* The Base path is the one the portfolio total quotes, so it reads first. */
+.data-table tr.emphasis td {
   font-weight: 600;
 }
 
-.neg {
-  color: var(--error);
-  font-weight: 600;
+/* ---- The expanded panel ------------------------------------------------ */
+
+/* The panel spans the table, so it must not inherit the row's centred cells or
+   its hover. It is a page, not a cell. */
+.panel-row > td {
+  padding: 0;
+  background: var(--panel-bg, rgba(127, 127, 127, 0.04));
 }
 
-/* Rows the data cannot speak to. Dimmed rather than hidden - the amount is still part of the
-   estimate, so dropping it would leave the breakdown quietly not adding up. Same treatment as
-   the Feature Impact screen, on purpose: one visual language for "we looked and found nothing". */
-.unmeasured {
-  opacity: 0.6;
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.2rem 1.4rem 1.6rem;
+  border-top: 1px solid var(--border, #e3e3e3);
 }
 
-.muted {
-  color: var(--text-muted);
-  font-style: italic;
+.panel-block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted, #777);
+}
+
+/* A second heading inside one block (features, after the comps) needs air above it. */
+.panel-block h3 + h3,
+.panel-block .table-wrap + h3 {
+  margin-top: 1.2rem;
+}
+
+.panel-actions {
+  margin: 0.4rem 0 0;
+  font-size: 0.9em;
+}
+
+/* "Not measured" is a caveat, not an error — it gets a rule, not a red box. */
+.hint.warn {
+  border-left: 3px solid var(--border, #ccc);
+  padding-left: 0.6rem;
+}
+
+/* Footnote to the headline: narrow so it reads as a caption, not a paragraph. */
+.headline-note {
+  max-width: 62ch;
 }

@@ -1,0 +1,343 @@
+<div class="page">
+  <app-page-header
+    title="Market overview"
+    sub="Pick a place, narrow it to one kind of property if you want. Every number is worked out from the listings at the moment you ask — no recalculation step to run first."
+  />
+
+  <app-explainer>
+    <p>
+      <strong>Median</strong> and <strong>average</strong> are both shown on purpose: the gap between
+      them is the reading. They agree on an even market, and the average runs away from the median
+      exactly where a few expensive listings are pulling it.
+    </p>
+    <p>
+      The distribution bars are as wide as the price range they cover, drawn between the 5th and the
+      95th percentile so one very expensive listing cannot stretch them until every other bar is
+      empty &mdash; that listing is still counted, in the last bar.
+    </p>
+    <p>
+      <strong>Inside &hellip;</strong> is the section to read on a broad slice. A single median
+      taken across every distrito describes no market you can buy in; the same listings split by
+      place do. The split is always one grain finer than what you picked &mdash; distritos when
+      nothing is narrowed, munic&iacute;pios inside a distrito, freguesias inside a
+      munic&iacute;pio &mdash; and <strong>vs slice</strong> says how far each place sits from the
+      median printed above it. Click any row to narrow the whole screen to that place.
+    </p>
+  </app-explainer>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Slice</span>
+      @if (overview()) {
+        <span class="meta">{{ overview()!.placeName }} · {{ overview()!.listingCount | number }} listings</span>
+      }
+    </div>
+    <div class="card-body">
+      <form class="form-grid" (ngSubmit)="load()">
+        <label class="field">
+          <span>Distrito</span>
+          <select name="district" [(ngModel)]="form.district" (ngModelChange)="onDistrictChange()">
+            <option value="">All areas</option>
+            @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Município</span>
+          <select
+            name="municipality"
+            [(ngModel)]="form.municipality"
+            (ngModelChange)="onMunicipalityChange()"
+            [disabled]="!form.district"
+          >
+            <option value="">All</option>
+            @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Freguesia</span>
+          <select name="town" [(ngModel)]="form.town" (ngModelChange)="load()" [disabled]="!form.municipality">
+            <option value="">All</option>
+            @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Property type</span>
+          <select name="propertyType" [(ngModel)]="form.propertyType" (ngModelChange)="load()">
+            <option value="">Any</option>
+            @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Typology</span>
+          <select name="typology" [(ngModel)]="form.typology" (ngModelChange)="load()">
+            <option value="">Any</option>
+            @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Distribution bars</span>
+          <select name="buckets" [(ngModel)]="form.buckets" (ngModelChange)="load()">
+            @for (b of bucketChoices; track b) { <option [ngValue]="b">{{ b }}</option> }
+          </select>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Show</button>
+          <button type="button" class="secondary" (click)="reset()">Reset</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <section class="card"><p class="empty">Loading…</p></section>
+  } @else if (error()) {
+    <section class="card"><div class="card-body"><p class="error">{{ error() }}</p></div></section>
+  } @else if (!overview()) {
+    <section class="card">
+      <p class="empty">
+        Press <strong>Show</strong> to measure every area at once, or pick a distrito to start
+        narrower. Either way the summary is followed by the places inside it broken out one by
+        one &mdash; the whole country in a single median describes no market you can buy in, so
+        that table, not the median, is the answer on a broad slice.
+      </p>
+    </section>
+  } @else if (overview()!.listingCount === 0) {
+    <section class="card">
+      <p class="empty">
+        No listings match this slice. Widen it &mdash; drop the typology, or step back up to the
+        município. An empty market is an answer too.
+      </p>
+    </section>
+  } @else {
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">{{ overview()!.placeName }}</span>
+        <span class="meta">Read {{ overview()!.generatedAtUtc | date: 'medium' }}</span>
+      </div>
+      <div class="card-body stack">
+        @if (isThin()) {
+          <p class="warning">
+            Only {{ overview()!.listingCount }} listings in this slice. Read every number below as
+            &ldquo;these few adverts&rdquo;, not as the market.
+          </p>
+        }
+
+        <div class="summary-grid">
+          <div class="summary">
+            <h3>Asking price</h3>
+            <dl class="kv figures">
+              <dt>Median</dt>
+              <dd class="lead">&euro;{{ overview()!.price.median | number: '1.0-0' }}</dd>
+              <dt>Average</dt>
+              <dd>&euro;{{ overview()!.price.average | number: '1.0-0' }}</dd>
+              <dt>Lowest</dt>
+              <dd>&euro;{{ overview()!.price.min | number: '1.0-0' }}</dd>
+              <dt>Highest</dt>
+              <dd>&euro;{{ overview()!.price.max | number: '1.0-0' }}</dd>
+            </dl>
+          </div>
+
+          <div class="summary">
+            <h3>Price per m&sup2;</h3>
+            <dl class="kv figures">
+              <dt>Median</dt>
+              <dd class="lead">&euro;{{ overview()!.pricePerM2.median | number: '1.0-0' }}</dd>
+              <dt>Average</dt>
+              <dd>&euro;{{ overview()!.pricePerM2.average | number: '1.0-0' }}</dd>
+              <dt>Lowest</dt>
+              <dd>&euro;{{ overview()!.pricePerM2.min | number: '1.0-0' }}</dd>
+              <dt>Highest</dt>
+              <dd>&euro;{{ overview()!.pricePerM2.max | number: '1.0-0' }}</dd>
+            </dl>
+          </div>
+
+          <div class="summary">
+            <h3>Floor area</h3>
+            <dl class="kv figures">
+              <dt>Median</dt>
+              <dd class="lead">{{ overview()!.areaM2.median | number: '1.0-0' }} m&sup2;</dd>
+              <dt>Average</dt>
+              <dd>{{ overview()!.areaM2.average | number: '1.0-0' }} m&sup2;</dd>
+              <dt>Smallest</dt>
+              <dd>{{ overview()!.areaM2.min | number: '1.0-0' }} m&sup2;</dd>
+              <dt>Largest</dt>
+              <dd>{{ overview()!.areaM2.max | number: '1.0-0' }} m&sup2;</dd>
+            </dl>
+          </div>
+        </div>
+
+        @if (isSkewed()) {
+          <p class="hint">
+            The average asking price sits {{ skewPercent() | number: '1.0-0' }}% above the median, so a
+            few expensive listings are carrying it. The median is the one to quote.
+          </p>
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">Price distribution</span>
+        <span class="meta">{{ overview()!.distribution.length }} bars</span>
+      </div>
+      <div class="card-body">
+        <ul class="distribution">
+          @for (bucket of overview()!.distribution; track bucket.fromPrice) {
+            <li>
+              <span class="range" [title]="bucketRangeFull(bucket.fromPrice, bucket.toPrice)">
+                {{ bucketRange(bucket.fromPrice, bucket.toPrice) }}
+              </span>
+              <span class="track">
+                <span class="fill" [style.width]="barWidth(bucket.sharePercent)"></span>
+              </span>
+              <span class="count">
+                {{ bucket.listingCount | number }}
+                <span class="faint">{{ bucket.sharePercent | number: '1.0-1' }}%</span>
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+    </section>
+
+    @if (overview()!.breakdown; as breakdown) {
+      <section class="card">
+        <div class="card-head">
+          <span class="card-title">Inside {{ overview()!.placeName }}</span>
+          <span class="meta">{{ breakdownHeading() }}</span>
+        </div>
+
+        <div class="card-body">
+          <p class="hint">
+            The numbers above are one median over every listing in the slice. This is where they
+            come from &mdash; click a row to narrow the whole screen to that place.
+          </p>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="rank">#</th>
+                <th class="sortable" (click)="toggleBreakdownSort('place')">Place{{ breakdownArrow('place') }}</th>
+                <th class="num sortable" (click)="toggleBreakdownSort('listings')">
+                  Listings{{ breakdownArrow('listings') }}
+                </th>
+                <th class="num sortable" (click)="toggleBreakdownSort('price')">
+                  Median price{{ breakdownArrow('price') }}
+                </th>
+                <th class="num sortable" (click)="toggleBreakdownSort('area')">
+                  Median m&sup2;{{ breakdownArrow('area') }}
+                </th>
+                <th class="num sortable" (click)="toggleBreakdownSort('pricePerM2')">
+                  Median &euro;/m&sup2;{{ breakdownArrow('pricePerM2') }}
+                </th>
+                <th
+                  class="num sortable"
+                  (click)="toggleBreakdownSort('vsSlice')"
+                  title="How far this place sits from the slice's own €/m² median"
+                >
+                  vs slice{{ breakdownArrow('vsSlice') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of visibleBreakdown(); track row.displayName; let i = $index) {
+                <tr class="drillable" [class.thin]="isThinPlace(row)" (click)="drillInto(row)">
+                  <td class="rank">{{ i + 1 }}</td>
+                  <td>
+                    <app-place-name
+                      [level]="breakdown.level"
+                      [district]="row.district"
+                      [municipality]="row.municipality"
+                      [town]="row.town"
+                    >
+                      @if (isThinPlace(row)) {
+                        <span class="tag tag-quiet" title="Fewer than 10 listings — read as those adverts">thin</span>
+                      }
+                    </app-place-name>
+                  </td>
+                  <td class="num">
+                    {{ row.listingCount | number }}
+                    <span class="faint">{{ row.sharePercent | number: '1.0-1' }}%</span>
+                  </td>
+                  <td class="num">&euro;{{ row.medianPrice | number: '1.0-0' }}</td>
+                  <td class="num">{{ row.medianAreaM2 | number: '1.0-0' }}</td>
+                  <td class="num">&euro;{{ row.medianPricePerM2 | number: '1.0-0' }}</td>
+                  <td class="num" [class]="vsSliceClass(row)">
+                    {{ row.vsSlicePercent > 0 ? '+' : '' }}{{ row.vsSlicePercent | number: '1.0-0' }}%
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (hiddenBreakdownCount() > 0) {
+          <div class="card-body">
+            <button type="button" class="secondary" (click)="showAllBreakdown.set(true)">
+              Show all {{ sortedBreakdown().length }} places ({{ hiddenBreakdownCount() }} more)
+            </button>
+          </div>
+        } @else if (showAllBreakdown() && sortedBreakdown().length > 12) {
+          <div class="card-body">
+            <button type="button" class="secondary" (click)="showAllBreakdown.set(false)">Show fewer</button>
+          </div>
+        }
+      </section>
+    }
+
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">By typology</span>
+        <span class="meta">{{ overview()!.typologies.length }} layouts on sale here</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="sortable" (click)="toggleTypologySort('typology')">
+                Typology{{ typologyArrow('typology') }}
+              </th>
+              <th class="num sortable" (click)="toggleTypologySort('listings')">
+                Listings{{ typologyArrow('listings') }}
+              </th>
+              <th class="num sortable" (click)="toggleTypologySort('price')">
+                Median price{{ typologyArrow('price') }}
+              </th>
+              <th class="num sortable" (click)="toggleTypologySort('area')">
+                Median m&sup2;{{ typologyArrow('area') }}
+              </th>
+              <th class="num sortable" (click)="toggleTypologySort('pricePerM2')">
+                Median &euro;/m&sup2;{{ typologyArrow('pricePerM2') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of sortedTypologies(); track row.typology) {
+              <tr [class.thin]="isThinRow(row.listingCount)">
+                <td>
+                  {{ row.typology }}
+                  @if (isThinRow(row.listingCount)) {
+                    <span class="tag tag-quiet" title="Fewer than 3 listings — this median is those adverts">thin</span>
+                  }
+                </td>
+                <td class="num">{{ row.listingCount | number }}</td>
+                <td class="num">&euro;{{ row.medianPrice | number: '1.0-0' }}</td>
+                <td class="num">{{ row.medianAreaM2 | number: '1.0-0' }}</td>
+                <td class="num">&euro;{{ row.medianPricePerM2 | number: '1.0-0' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

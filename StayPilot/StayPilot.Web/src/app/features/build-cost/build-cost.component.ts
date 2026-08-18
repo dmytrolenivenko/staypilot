@@ -9,6 +9,7 @@ import {
   Region,
   REGIONS
 } from '../../core/models/build-cost';
+import { PageHeaderComponent } from '../../shared/page-header.component';
 
 // Build Cost — a "what would it cost to build this from scratch?" calculator.
 // Pure client-side math over static €/m² baselines (see build-cost.ts). Reactive:
@@ -16,7 +17,7 @@ import {
 @Component({
   selector: 'app-build-cost',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageHeaderComponent],
   templateUrl: './build-cost.component.html',
   styleUrl: './build-cost.component.css'
 })

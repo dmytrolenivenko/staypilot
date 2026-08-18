@@ -65,7 +65,8 @@ namespace StayPilot.Application.Services
         /// <inheritdoc/>
         public async Task<MarketAreaLeaderboardResponse> GetLeaderboardAsync(MarketAreaLeaderboardRequest request)
         {
-            var rows = await _marketAreaStatsRepo.GetLeaderboardAsync(request.Level, request.MinListings);
+            var rows = await _marketAreaStatsRepo.GetLeaderboardAsync(
+                request.Level, request.MinListings, request.District, request.Municipality);
 
             return new MarketAreaLeaderboardResponse
             {
@@ -77,17 +78,23 @@ namespace StayPilot.Application.Services
         /// <inheritdoc/>
         public async Task<MarketAreaBudgetResponse> GetBudgetRankingAsync(MarketAreaBudgetRequest request)
         {
-            var rows = await _marketAreaStatsRepo.GetWithTypologiesAsync(request.Level, request.MinListings);
+            var rows = await _marketAreaStatsRepo.GetWithTypologiesAsync(
+                request.Level, request.MinListings, request.District, request.Municipality);
+
+            // What the budget is allowed to reach once stretched. Zero stretch leaves it alone,
+            // which is the default: nothing over budget is affordable unless you say so.
+            var reach = request.Budget * (1m + request.StretchPercent / 100m);
 
             var response = new MarketAreaBudgetResponse
             {
                 Budget = request.Budget,
+                Reach = reach,
                 CalculatedAtUtc = LastCalculatedAt(rows)
             };
 
             foreach (var place in rows)
             {
-                var affordable = BestWithinBudget(place, request.Budget);
+                var affordable = BestWithinBudget(place, reach);
 
                 // No typology here usually sells for the budget, so the place is left out
                 // entirely rather than listed with an empty answer.
@@ -96,7 +103,27 @@ namespace StayPilot.Application.Services
                     continue;
                 }
 
-                response.Items.Add(Converter.MapToBudgetItem(place, affordable));
+                // Asked for a T3 and the budget only reaches a T1 here: that is not an answer to
+                // the question, so the place goes rather than being listed as a near miss.
+                if (request.MinTypology is not null && affordable.Typology < request.MinTypology)
+                {
+                    continue;
+                }
+
+                var item = Converter.MapToBudgetItem(place, affordable);
+
+                // Reached only because the budget was stretched. Flagged rather than hidden or
+                // silently mixed in - "you could have this for 8% more" is worth knowing, and
+                // worth knowing that it is what you are looking at.
+                item.NeedsStretch = affordable.MedianPrice > request.Budget;
+
+                item.AffordableTypologies = place.TypologyStats
+                    .Where(x => x.MedianPrice <= reach)
+                    .OrderByDescending(x => x.Typology)
+                    .Select(Converter.MapToBudgetTypology)
+                    .ToList();
+
+                response.Items.Add(item);
             }
 
             return response;
@@ -105,7 +132,14 @@ namespace StayPilot.Application.Services
         /// <inheritdoc/>
         public async Task<MarketAreaNeighbourGapResponse> GetNeighbourGapsAsync(MarketAreaNeighbourGapRequest request)
         {
-            var rows = await _marketAreaStatsRepo.GetLeaderboardAsync(request.Level, request.MinListings);
+            // The typology children only come along when a typology was asked for: comparing
+            // like with like needs them, comparing all stock does not, and they are several
+            // thousand rows.
+            var rows = request.Typology is null
+                ? await _marketAreaStatsRepo.GetLeaderboardAsync(
+                    request.Level, request.MinListings, request.District, request.Municipality)
+                : await _marketAreaStatsRepo.GetWithTypologiesAsync(
+                    request.Level, request.MinListings, request.District, request.Municipality);
 
             // A place with no coordinates cannot be anybody's neighbour.
             var placeable = rows
@@ -114,16 +148,27 @@ namespace StayPilot.Application.Services
 
             var response = new MarketAreaNeighbourGapResponse
             {
+                ComparedOn = request.Typology,
                 CalculatedAtUtc = LastCalculatedAt(rows)
             };
 
+            // Reduced to "the place, and the one price we are comparing it on" before any pairing
+            // happens, so the pairwise loop below never has to know whether a typology was asked
+            // for. Places that cannot be compared on that basis drop out here, once, rather than
+            // being re-checked against every other place.
+            var comparable = placeable
+                .Select(x => ToComparable(x, request))
+                .Where(x => x is not null)
+                .Select(x => x!.Value)
+                .ToList();
+
             // Each pair once: the inner loop starts past the outer one, so A/B is compared but
             // B/A is not, and nothing is compared with itself.
-            for (var first = 0; first < placeable.Count; first++)
+            for (var first = 0; first < comparable.Count; first++)
             {
-                for (var second = first + 1; second < placeable.Count; second++)
+                for (var second = first + 1; second < comparable.Count; second++)
                 {
-                    var gap = BuildGap(placeable[first], placeable[second], request);
+                    var gap = BuildGap(comparable[first], comparable[second], request);
 
                     if (gap is not null)
                     {
@@ -156,17 +201,43 @@ namespace StayPilot.Application.Services
         }
 
         /// <summary>
+        /// One place reduced to the single price the comparison will run on, or null when it
+        /// cannot be compared on that basis at all.
+        ///
+        /// With no typology asked for that price is the place's overall median, and every place
+        /// qualifies. With one, it is that typology's median here, and a place without enough of
+        /// that typology drops out - a "T4 gap" measured off three adverts is exactly the finding
+        /// this screen should not produce.
+        /// </summary>
+        private static ComparablePlace? ToComparable(MarketAreaStats place, MarketAreaNeighbourGapRequest request)
+        {
+            if (request.Typology is null)
+            {
+                return new ComparablePlace(place, place.MedianPricePerM2, place.ListingCount);
+            }
+
+            var forTypology = place.TypologyStats.FirstOrDefault(x => x.Typology == request.Typology);
+
+            if (forTypology is null || forTypology.ListingCount < request.MinTypologyListings)
+            {
+                return null;
+            }
+
+            return new ComparablePlace(place, forTypology.MedianPricePerM2, forTypology.ListingCount);
+        }
+
+        /// <summary>
         /// One pair of places as a gap, or null when they are too far apart, too alike in price,
         /// or a pair we could not measure.
         /// </summary>
         private static NeighbourGapResponse? BuildGap(
-            MarketAreaStats first, MarketAreaStats second, MarketAreaNeighbourGapRequest request)
+            ComparablePlace first, ComparablePlace second, MarketAreaNeighbourGapRequest request)
         {
             var distanceMeters = Calculator.CalculateDistanceMeters(
-                (double)first.CentroidLatitude!.Value,
-                (double)first.CentroidLongitude!.Value,
-                (double)second.CentroidLatitude!.Value,
-                (double)second.CentroidLongitude!.Value);
+                (double)first.Stats.CentroidLatitude!.Value,
+                (double)first.Stats.CentroidLongitude!.Value,
+                (double)second.Stats.CentroidLatitude!.Value,
+                (double)second.Stats.CentroidLongitude!.Value);
 
             var distanceKm = (decimal)(distanceMeters / 1000);
 
@@ -176,15 +247,15 @@ namespace StayPilot.Application.Services
             }
 
             // Sort the pair by price so the response always reads "dear place -> cheaper place".
-            var expensive = first.MedianPricePerM2 >= second.MedianPricePerM2 ? first : second;
-            var cheaper = ReferenceEquals(expensive, first) ? second : first;
+            var expensive = first.PricePerM2 >= second.PricePerM2 ? first : second;
+            var cheaper = ReferenceEquals(expensive.Stats, first.Stats) ? second : first;
 
-            if (expensive.MedianPricePerM2 <= 0)
+            if (expensive.PricePerM2 <= 0)
             {
                 return null;
             }
 
-            var gapPercent = (expensive.MedianPricePerM2 - cheaper.MedianPricePerM2) / expensive.MedianPricePerM2 * 100m;
+            var gapPercent = (expensive.PricePerM2 - cheaper.PricePerM2) / expensive.PricePerM2 * 100m;
 
             if (gapPercent < request.MinGapPercent)
             {
@@ -193,16 +264,18 @@ namespace StayPilot.Application.Services
 
             return new NeighbourGapResponse
             {
-                ExpensivePlace = Converter.PlaceName(expensive),
-                ExpensivePricePerM2 = expensive.MedianPricePerM2,
-                ExpensiveListingCount = expensive.ListingCount,
-                CheaperPlace = Converter.PlaceName(cheaper),
-                CheaperPricePerM2 = cheaper.MedianPricePerM2,
-                CheaperListingCount = cheaper.ListingCount,
+                Expensive = Converter.MapToGapPlace(expensive.Stats, expensive.PricePerM2, expensive.ListingCount),
+                Cheaper = Converter.MapToGapPlace(cheaper.Stats, cheaper.PricePerM2, cheaper.ListingCount),
                 DistanceKm = decimal.Round(distanceKm, 1),
                 GapPercent = decimal.Round(gapPercent, 1)
             };
         }
+
+        /// <summary>
+        /// A place and the one price the comparison is running on, with the count that price
+        /// rests on. Keeps "which basis are we comparing on" out of the pairwise loop entirely.
+        /// </summary>
+        private readonly record struct ComparablePlace(MarketAreaStats Stats, decimal PricePerM2, int ListingCount);
 
         /// <summary>
         /// When these rows were worked out. Every row of one run carries the same stamp, so the

@@ -13,11 +13,18 @@ a milestone specifically calls for more.
 
 This repo holds the Web API (`StayPilot/`, `StayPilot.slnx`) and, as of 2026-07-14, a minimal
 Angular front end at `StayPilot/StayPilot.Web/` — see its own `README.md` for how to run it. It's
-plain CSS/standalone-components, no UI framework, and only wires up the screens the API actually
-supports today (Market Areas, Listing Lookup, Add Listing); everything else in the product pitch
-(Market Overview, Feature Impact, Listing Browser, Price History, My Valuation, Beach Proximity)
-is a placeholder screen stating which backend endpoint it's waiting on — check `app.routes.ts`
-there before assuming a module is real. The scraper that feeds the API (`AddProperty`) used to
+plain CSS/standalone-components, no UI framework, and only wires up screens the API actually
+supports. Most of the product pitch is now real (Market Overview, Leaderboard, What Money Buys,
+Neighbour Gaps, Renovation Upside, Listing Browser, Listing Lookup,
+My Properties, Valuation, Feature Impact, Build Cost); Beach Proximity is the last placeholder
+screen stating which backend endpoint it's waiting on — check `app.routes.ts` there before
+assuming a module is real. The plain Market Areas list screen was folded into Market Overview
+(the zone table is a filter, not something to read as a list), so `/market-areas` no longer
+routes anywhere. **Add Listing and Price Snapshots were removed from the front end** (2026-08-18):
+they are data-entry screens for the scraper's job, not something a customer of this tool should
+see. The `ListingSnapshot` and `PropertyListing` write endpoints on the API are untouched — the
+scraper still uses them; only the UI for hand-entry is gone, so do not re-add those screens.
+The scraper that feeds the API (`AddProperty`) used to
 live here as a second solution but now has its own repo:
 https://github.com/dmytrolenivenko/AddProperty — clone it separately if you need to work on
 scraping/ingestion.
@@ -61,14 +68,20 @@ Layered solution, dependency direction `Api → Application → Infrastructure`,
 StayPilot.Api             Controllers (thin — no business logic), Program.cs composition root, Swagger
 StayPilot.Application     Request/Response DTOs (Contracts/) and service interfaces (Interfaces/) only — no implementations
 StayPilot.Domain          Entities and enums, plain C# classes, no NuGet deps
-StayPilot.Infrastructure  EF Core DbContext + migrations + entity configurations, AND the service implementations
+StayPilot.Infrastructure  EF Core DbContext + migrations + entity configurations + repositories
 StayPilot.UnitTests       xUnit
 ```
 
-**Note the non-standard part:** service implementations (`PropertyListingService`, `MarketAreaService`,
-etc.) live in `StayPilot.Infrastructure/Services/`, not in `StayPilot.Application`. `Application`
-only holds the DTOs and interfaces. Follow this existing split rather than "fixing" it by moving
-services — it's a deliberate simplification for a single-developer project, not an oversight.
+Service implementations (`PropertyListingService`, `MarketAreaService`, `MarketOverviewService`,
+etc.) live in `StayPilot.Application/Services/`, alongside the DTOs in `Contracts/` and the
+interfaces in `Interfaces/`. The pure calculation is pulled out one level further into
+`StayPilot.Application/Helpers/Calculators/` — a service loads, delegates the maths to a static
+calculator, and maps; that split is what makes the calculators unit-testable without a DbContext.
+`StayPilot.Infrastructure` holds the EF Core side and the repositories.
+
+> **Note on history:** these services used to live in `StayPilot.Infrastructure/Services/` and this
+> file used to describe that as deliberate. They have since moved to `Application`; if you find a
+> doc or comment still pointing at `Infrastructure/Services`, it is stale.
 
 Controller → Service (interface, injected) → Repository (interface, injected) → `StayPilotDbContext`.
 Repositories live in `StayPilot.Infrastructure/Repositories/` and own all LINQ/EF query logic
@@ -85,6 +98,12 @@ alongside its service.
 
 ### Domain model
 
+- `MarketAreaStats` — one precomputed row per place per level, rebuilt wholesale by
+  `RecalculateMarketAreaStats`. **Anything added to this entity is null/zero on existing rows until
+  a recalculation runs**, and that endpoint is `[Authorize(Roles = "Api.Write")]` — so a new stats
+  column cannot be backfilled from a dev machine without a token. Design the read side to degrade
+  honestly in the meantime (the renovation confidence treats a missing spread as fully overlapping,
+  i.e. "not measurable", rather than as a clean separation).
 - `MarketArea` — a geographic zone (District/Municipality/Town/Zone). Seeded via EF migrations
   from real-world Algarve data; matched by exact normalized-string lookup (`GetMarketId` in
   `PropertyListingService`), not by ID, when a scraped listing doesn't supply a `MarketAreaId`.
@@ -95,7 +114,28 @@ alongside its service.
   spatial SQL types) and stamps `NearestBeachName`/`DistanceToBeachMeters` onto the listing.
 - `ListingSnapshot` — price history, one row per observation date, linked to a `PropertyListing`.
 - `BeachMarker` — reference points used purely for nearest-beach distance calculation.
-- `OwnedProperty` — the developer's own apartments, for future valuation against comparables.
+- `OwnedProperty` — the developer's own apartments, priced against comparables by the
+  Valuation screen. That screen is a **portfolio** view: one call to
+  `OwnedProperty/ListValuationsOwnedproperty` prices every property in one pass (the model is
+  fitted once over the whole listing table — never loop the single-property estimate
+  endpoint), and each row expands into comps, feature contributions, an area demand score
+  and a growth projection.
+- `HousePriceGrowth` — **seeded reference data**, one row per Portuguese district plus a
+  national fallback (`District = ""`). The percentages are *planning assumptions*, not a
+  measured index: nobody scraped INE into this table, and every screen that quotes them also
+  prints their `Source` string, which says so. Correct them by editing
+  `Persistence/Configurations/AllHousePriceGrowth.cs` and adding a migration — nothing
+  computes off them at write time. They exist because this database holds a few months of
+  adverts in one region, and a ten year projection built on that alone would call one season
+  of the Algarve "Portugal". `GrowthForecastCalculator` blends the seeded rate with the trend
+  measured from local snapshots, capping the local half at 50% of the blend however long the
+  series gets, and returns both halves separately so a forecast can always be taken apart.
+- Demand (`DemandCalculator`) scores a place out of 100 on exactly two inputs — median days
+  on market and whether new supply is arriving faster than it was. Both guards matter: days
+  on market switches itself off while the median approaches the collection window (early on,
+  every listing looks young because collection is young), and supply needs two full 90 day
+  windows of history. An unmeasurable place reports `IsMeasurable = false`, never the middle
+  of the scale — "not measured" and "average" must not render the same.
 
 Known scaling caveats (documented, not yet fixed — see the vault's Session-08 log for full
 reasoning before touching these): `GetMarketId` and the nearest-beach lookup both do a full

@@ -199,7 +199,9 @@ namespace StayPilot.Application.Helpers.Calculators
             var gainPercent = paid > 0 ? gainAmount / paid * 100 : 0;
 
             // Fractional years (2.5, not 2) so the ROI maths is accurate.
-            var yearsHeldExact = purchaseDate.HasValue
+            // A property saved without a purchase date carries the DateTime default, which reads as
+            // two thousand years held. Anything before 1900 is an unset field, not a purchase.
+            var yearsHeldExact = purchaseDate.HasValue && purchaseDate.Value.Year > 1900
                 ? (decimal)(DateTime.UtcNow - purchaseDate.Value).TotalDays / DaysPerYear
                 : 0m;
 

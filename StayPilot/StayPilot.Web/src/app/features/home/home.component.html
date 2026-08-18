@@ -1,27 +1,30 @@
-<section class="panel">
-  <h1>StayPilot Comps</h1>
-  <p class="lede">
-    A private market-intelligence tool for the Algarve — turns scraped Idealista listings into
-    market stats, feature-impact analysis, and a personal property valuation. Single-user,
-    no login. Median over average, always show sample size, never hide the messiness of real data.
-  </p>
-</section>
+<div class="page">
+  <app-page-header
+    title="StayPilot Comps"
+    sub="Private market intelligence for the Algarve, built from scraped Idealista adverts. Median over average, sample size always shown, asking prices never dressed up as sale prices."
+  />
 
-<section class="panel">
-  <h2>Modules</h2>
-  <div class="module-grid">
-    @for (m of modules; track m.title) {
-      <a class="module-card" [routerLink]="m.link">
-        <div class="module-card-head">
-          <span class="module-title">{{ m.title }}</span>
-          @if (m.live) {
-            <span class="badge badge-live">Live</span>
-          } @else {
-            <span class="badge badge-soon">Not available yet</span>
+  @for (section of sections; track section.title) {
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">{{ section.title }}</span>
+        <span class="meta">{{ section.hint }}</span>
+      </div>
+      <div class="card-body">
+        <div class="module-grid">
+          @for (m of section.modules; track m.title) {
+            <a class="module" [routerLink]="m.link" [class.module-planned]="!m.live">
+              <span class="module-head">
+                <span class="module-title">{{ m.title }}</span>
+                @if (!m.live) {
+                  <span class="badge badge-soon">Planned</span>
+                }
+              </span>
+              <span class="module-desc">{{ m.description }}</span>
+            </a>
           }
         </div>
-        <p class="module-desc">{{ m.description }}</p>
-      </a>
-    }
-  </div>
-</section>
+      </div>
+    </section>
+  }
+</div>

@@ -18,6 +18,7 @@ namespace StayPilot.Application.Services
         private readonly IBeachMarkerRepository _beachMarkerRepository;
         private readonly IPropertyListingRepository _propertyListingRepository;
         private readonly IPremiumFeatureRepository _premiumFeatureRepository;
+        private readonly IHousePriceGrowthRepository _housePriceGrowthRepository;
 
         // The stored PremiumFeature rows are back: the breakdown quotes the percentages already
         // measured, so a second bathroom cannot read as +4% on the Feature Impact screen and
@@ -25,13 +26,14 @@ namespace StayPilot.Application.Services
         // features are worth. The cost is that a valuation reflects the last recalculation rather
         // than a fresh one - which is the trade we want, because two different answers for the
         // same feature is worse than one answer that is a recalculation behind.
-        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository, IPremiumFeatureRepository premiumFeatureRepository)
+        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository, IPremiumFeatureRepository premiumFeatureRepository, IHousePriceGrowthRepository housePriceGrowthRepository)
         {
             _ownedPropertyRepository = ownedPropertyRepository;
             _marketAreaRepository = marketAreaRepository;
             _beachMarkerRepository = beachMarkerRepository;
             _propertyListingRepository = propertyListingRepository;
             _premiumFeatureRepository = premiumFeatureRepository;
+            _housePriceGrowthRepository = housePriceGrowthRepository;
         }
 
         public async Task<OwnedPropertyResponse> AddOwnedPropertyAsync(OwnedPropertyRequest request)
@@ -238,42 +240,13 @@ namespace StayPilot.Application.Services
                 };
             }
 
-            // Only the nearest handful actually get a say. Distance weighting alone was not enough:
-            // the kernel still gives a comparable 800m away most of a vote, so three hundred of
-            // them drown out the seventeen next door - which is how "comps alone" read EUR 460,000
-            // for a flat whose immediate neighbours ask EUR 321,000. The model has always taken its
-            // ten nearest and weighted those; this is the same rule, applied to what we show.
-            const int comparablesUsedForStatistics = 25;
-
-            var nearestComps = OrderedByDistanceFrom(ownedProperty, comps)
-                .Take(comparablesUsedForStatistics)
-                .ToList();
+            var (nearestComps, medianCompPricePerM2, averageCompPricePerM2) = NearestCompStatistics(ownedProperty, comps);
 
             // What the raw neighbours ask, unadjusted - shown beside the model's answer.
             var sortedCompPricesPerM2 = nearestComps
                 .Select(x => ListingQuality.NewestSnapshot(x)!.PricePerM2)
                 .OrderBy(x => x)
                 .ToList();
-
-            // Weighted by how close each comparable actually is, on the same scale the model uses
-            // for its own neighbours. An unweighted average over the whole radius is what made
-            // "comps alone" read EUR 464,000 for a flat the nearest seventeen comparables put at
-            // EUR 321,000: in a beach town a 2km circle holds two markets, and the dearer one has
-            // more listings in it. Falls back to the plain figures when the property has no
-            // coordinates, where there is no distance to weight by.
-            var weightedComps = ownedProperty.Latitude is null || ownedProperty.Longitude is null
-                ? nearestComps.Select(x => (Value: ListingQuality.NewestSnapshot(x)!.PricePerM2, Weight: 1d)).ToList()
-                : nearestComps.Select(x => (
-                        Value: ListingQuality.NewestSnapshot(x)!.PricePerM2,
-                        Weight: x.Latitude is null || x.Longitude is null
-                            ? 0d
-                            : PropertyValuation.EvidenceWeightAtMeters(Calculator.CalculateDistanceMeters(
-                                (double)ownedProperty.Latitude.Value, (double)ownedProperty.Longitude.Value,
-                                (double)x.Latitude.Value, (double)x.Longitude.Value))))
-                    .ToList();
-
-            var medianCompPricePerM2 = Calculator.WeightedMedian(weightedComps);
-            var averageCompPricePerM2 = Calculator.WeightedAverage(weightedComps);
 
             var marketAreas = await _marketAreaRepository.GetAllMarketAreasAsync();
 
@@ -324,6 +297,269 @@ namespace StayPilot.Application.Services
         /// The comparables, nearest first. A property with no coordinates has no distances to sort
         /// by, so it keeps the order the repository chose - its own market area, closest in size.
         /// </summary>
+        /// <inheritdoc/>
+        public async Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync(int radiusMeters, int months, int years)
+        {
+            var response = new OwnedPropertyPortfolioResponse
+            {
+                GeneratedAtUtc = DateTime.UtcNow,
+                ProjectionYears = years,
+            };
+
+            var owned = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+
+            // No properties is not an error - it is what the screen shows before you add one.
+            if (owned.Count == 0)
+            {
+                return response;
+            }
+
+            var premiumFeatureRepo = await _premiumFeatureRepository.GetAllPremiumFeaturesAsync();
+
+            var featureEffects = premiumFeatureRepo.Select(x => Converter.MapToFeatureEffect(x)).ToList();
+
+            // Fitted once for the whole portfolio. The fit reads every listing in the database, so
+            // pricing ten properties through ten calls to the single-property endpoint would read
+            // that table ten times to reach the same answer.
+            var allListings = await _propertyListingRepository.GetAllListingsForFeaturePremiumCalculationAsync();
+
+            var valuation = PropertyValuation.TryFit(allListings, out var usableListings);
+
+            if (valuation is null)
+            {
+                response.AddError(ErrorCode.NotEnoughListingsToFitModel, usableListings.ToString(), PropertyValuation.MinimumListings.ToString());
+
+                return response;
+            }
+
+            var marketAreas = await _marketAreaRepository.GetAllMarketAreasAsync();
+
+            // Demand and the local trend describe a place, not a property, so two flats in the
+            // same município share one answer and one read of that município's history.
+            var outlooks = new Dictionary<string, AreaOutlook>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var entity in owned)
+            {
+                response.Items.Add(await BuildPortfolioItemAsync(
+                    entity, valuation, featureEffects, marketAreas, outlooks, radiusMeters, months, years, response.GeneratedAtUtc));
+            }
+
+            // Most valuable first: the list is read to decide what to do next, and the biggest
+            // number on the page is where that decision usually starts.
+            response.Items = response.Items.OrderByDescending(x => x.MidPrice).ToList();
+
+            response.PropertyCount = response.Items.Count;
+            response.TotalEstimatedValue = response.Items.Sum(x => x.MidPrice);
+            response.TotalPurchasePrice = response.Items.Sum(x => x.Equity.PurchasePrice);
+            response.TotalGainAmount = response.TotalEstimatedValue - response.TotalPurchasePrice;
+
+            response.TotalGainPercent = response.TotalPurchasePrice <= 0m
+                ? 0m
+                : Math.Round(response.TotalGainAmount / response.TotalPurchasePrice * 100m, 1);
+
+            // The Base path only. Adding up the optimistic paths would produce a portfolio total
+            // that assumes every district has its best decade at once.
+            response.TotalProjectedValue = response.Items.Sum(x =>
+                x.Forecast.Scenarios.FirstOrDefault(s => s.Name == BaseScenarioName)?.FinalYearValue ?? x.MidPrice);
+
+            return response;
+        }
+
+        /// <summary>The scenario the portfolio totals are added up from.</summary>
+        private const string BaseScenarioName = "Base";
+
+        /// <summary>
+        /// Prices one owned property and works out what its place is doing around it.
+        /// </summary>
+        private async Task<OwnedPropertyPortfolioItemResponse> BuildPortfolioItemAsync(
+            OwnedProperty entity,
+            PropertyValuation valuation,
+            IReadOnlyList<FeatureEffect> featureEffects,
+            IReadOnlyList<MarketArea> marketAreas,
+            Dictionary<string, AreaOutlook> outlooks,
+            int radiusMeters,
+            int months,
+            int years,
+            DateTime asOfUtc)
+        {
+            var ownedProperty = Converter.MapToResponse(entity);
+
+            var estimate = valuation.Estimate(ownedProperty, featureEffects);
+
+            // The zone the model actually priced it as, which the coordinates can override. The
+            // stored one is the fallback, because a property with no coordinates still has an
+            // address.
+            var locatedArea = marketAreas.FirstOrDefault(x => x.Id == estimate.LocatedMarketAreaId);
+            var storedArea = marketAreas.FirstOrDefault(x => x.Id == entity.MarketAreaId);
+
+            var placedIn = locatedArea ?? storedArea;
+
+            var item = new OwnedPropertyPortfolioItemResponse
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                PropertyType = entity.PropertyType,
+                Typology = entity.Typology,
+                AreaM2 = entity.AreaM2,
+
+                District = placedIn?.District ?? string.Empty,
+                Municipality = placedIn?.Municipality ?? string.Empty,
+                Town = placedIn?.Town ?? string.Empty,
+
+                LocatedAreaName = locatedArea is null
+                    ? string.Empty
+                    : string.IsNullOrWhiteSpace(locatedArea.Zone) ? locatedArea.Town : locatedArea.Zone,
+                LocatedByCoordinates = estimate.LocatedByCoordinates,
+
+                MidPrice = estimate.MidPrice,
+                MinPrice = estimate.MinPrice,
+                MaxPrice = estimate.MaxPrice,
+                PricePerM2 = entity.AreaM2 <= 0 ? 0m : Math.Round(estimate.MidPrice / entity.AreaM2, 0),
+                ConfidenceLevel = estimate.Confidence,
+                Equity = estimate.Equity,
+            };
+
+            // Cross-checked against what the immediate neighbours ask, exactly as the detail panel
+            // does it - otherwise the same property would carry one confidence in the list and a
+            // different one when opened.
+            var comparableListings = await _propertyListingRepository.GetComparablePropertyListingAsync(
+                estimate.LocatedMarketAreaId, ownedProperty.PropertyType, ownedProperty.Typology, ownedProperty.AreaM2,
+                ownedProperty.DistanceToBeachMeters, ownedProperty.Latitude, ownedProperty.Longitude, radiusMeters, months);
+
+            var comps = ListingQuality.DistinctProperties(
+                comparableListings.Where(x => ListingQuality.IsUsable(x, ListingQuality.NewestSnapshot(x))));
+
+            if (comps.Count == 0)
+            {
+                // The model still priced it, but with nothing nearby to check the answer against
+                // it is the weakest kind of estimate we produce, and says so.
+                item.ConfidenceLevel = ValuationConfidence.Low;
+                item.ConfidenceNote = "no comparable adverts nearby to check the estimate against";
+            }
+            else
+            {
+                var (_, medianCompPricePerM2, _) = NearestCompStatistics(ownedProperty, comps);
+
+                item.ConfidenceLevel = ConfidenceAfterCrossCheck(estimate, medianCompPricePerM2 * ownedProperty.AreaM2);
+
+                if (item.ConfidenceLevel != ValuationConfidence.High)
+                {
+                    item.ConfidenceNote = $"checked against {comps.Count} nearby adverts, and either they disagree with the model or there are too few close by";
+                }
+            }
+
+            var outlook = await GetOutlookAsync(item.District, item.Municipality, outlooks, asOfUtc);
+
+            item.Demand = Converter.MapToDemand(outlook.Demand, DescribePlace(item.Municipality, item.District));
+
+            item.Forecast = Converter.MapToForecast(
+                GrowthForecastCalculator.Calculate(estimate.MidPrice, outlook.Growth, outlook.Trend, years),
+                outlook.Growth.District,
+                years);
+
+            return item;
+        }
+
+        /// <summary>
+        /// The demand score, local price trend and seeded growth rate for one place, read once and
+        /// then handed to every property that sits in it.
+        ///
+        /// Scoped to the município rather than the freguesia: a parish rarely holds the ten
+        /// listings the demand score needs, and a whole district is too broad to say anything
+        /// about a particular street.
+        /// </summary>
+        private async Task<AreaOutlook> GetOutlookAsync(
+            string district, string municipality, Dictionary<string, AreaOutlook> cache, DateTime asOfUtc)
+        {
+            var key = $"{district}|{municipality}";
+
+            if (cache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var listings = await _propertyListingRepository.GetListingsWithHistoryAsync(district, municipality, null);
+
+            var growth = await _housePriceGrowthRepository.GetForDistrictAsync(district);
+
+            var outlook = new AreaOutlook(
+                DemandCalculator.Calculate(listings, asOfUtc),
+                GrowthForecastCalculator.MeasureLocalTrend(listings, asOfUtc),
+                // Only when the seed table itself is empty, which means a migration did not run.
+                // A flat zero growth is the one assumption that cannot mislead about direction.
+                growth ?? new HousePriceGrowth
+                {
+                    District = district,
+                    AnnualGrowthPercent = 0m,
+                    VolatilityPercentagePoints = 0m,
+                    Source = "No growth assumption is seeded for this district, so nothing is projected.",
+                    AsOfYear = asOfUtc.Year,
+                });
+
+            cache[key] = outlook;
+
+            return outlook;
+        }
+
+        /// <summary>Names a place the way the demand block prints it.</summary>
+        private static string DescribePlace(string municipality, string district)
+        {
+            if (!string.IsNullOrWhiteSpace(municipality) && !string.IsNullOrWhiteSpace(district))
+            {
+                return $"{municipality}, {district}";
+            }
+
+            return string.IsNullOrWhiteSpace(municipality) ? district : municipality;
+        }
+
+        /// <summary>What one place is doing, cached for every property inside it.</summary>
+        private readonly record struct AreaOutlook(
+            DemandCalculator.DemandOutcome Demand,
+            GrowthForecastCalculator.LocalTrend Trend,
+            HousePriceGrowth Growth);
+
+        /// <summary>
+        /// The nearest comparables to one property, and what they ask, weighted by how close each
+        /// one actually is.
+        ///
+        /// Only the nearest handful get a say. Distance weighting alone was not enough: the kernel
+        /// still gives a comparable 800m away most of a vote, so three hundred of them drown out
+        /// the seventeen next door - which is how "comps alone" read EUR 460,000 for a flat whose
+        /// immediate neighbours ask EUR 321,000. The model has always taken its ten nearest and
+        /// weighted those; this is the same rule, applied to what we show.
+        ///
+        /// One method rather than two because the Valuation panel and the portfolio list both
+        /// cross-check the model against these numbers, and two copies of the rule would
+        /// eventually give the same property two different confidences.
+        /// </summary>
+        private static (List<PropertyListing> Nearest, decimal WeightedMedianPricePerM2, decimal WeightedAveragePricePerM2)
+            NearestCompStatistics(OwnedPropertyResponse ownedProperty, List<PropertyListing> comps)
+        {
+            const int comparablesUsedForStatistics = 25;
+
+            var nearestComps = OrderedByDistanceFrom(ownedProperty, comps)
+                .Take(comparablesUsedForStatistics)
+                .ToList();
+
+            // An unweighted average over the whole radius is what made "comps alone" read
+            // EUR 464,000 for a flat the nearest seventeen comparables put at EUR 321,000: in a
+            // beach town a 2km circle holds two markets, and the dearer one has more listings in
+            // it. Falls back to the plain figures when the property has no coordinates, where
+            // there is no distance to weight by.
+            var weightedComps = ownedProperty.Latitude is null || ownedProperty.Longitude is null
+                ? nearestComps.Select(x => (Value: ListingQuality.NewestSnapshot(x)!.PricePerM2, Weight: 1d)).ToList()
+                : nearestComps.Select(x => (
+                        Value: ListingQuality.NewestSnapshot(x)!.PricePerM2,
+                        Weight: x.Latitude is null || x.Longitude is null
+                            ? 0d
+                            : PropertyValuation.EvidenceWeightAtMeters(Calculator.CalculateDistanceMeters(
+                                (double)ownedProperty.Latitude.Value, (double)ownedProperty.Longitude.Value,
+                                (double)x.Latitude.Value, (double)x.Longitude.Value))))
+                    .ToList();
+
+            return (nearestComps, Calculator.WeightedMedian(weightedComps), Calculator.WeightedAverage(weightedComps));
+        }
+
         private static IEnumerable<PropertyListing> OrderedByDistanceFrom(
             OwnedPropertyResponse property, List<PropertyListing> comps)
         {

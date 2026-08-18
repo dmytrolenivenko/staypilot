@@ -25,10 +25,16 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             // Money: same shape as the price columns on ListingSnapshot.
             builder.Property(x => x.MedianPricePerM2).HasPrecision(18, 2);
             builder.Property(x => x.ProjectMedianPricePerM2).HasPrecision(18, 2);
+            builder.Property(x => x.ProjectP25PricePerM2).HasPrecision(18, 2);
+            builder.Property(x => x.ProjectP75PricePerM2).HasPrecision(18, 2);
             builder.Property(x => x.MoveInMedianPricePerM2).HasPrecision(18, 2);
+            builder.Property(x => x.MoveInP25PricePerM2).HasPrecision(18, 2);
+            builder.Property(x => x.MoveInP75PricePerM2).HasPrecision(18, 2);
 
             // Floor area: same shape as PropertyListing.AreaM2.
             builder.Property(x => x.MedianAreaM2).HasPrecision(10, 2);
+            builder.Property(x => x.ProjectMedianAreaM2).HasPrecision(10, 2);
+            builder.Property(x => x.MoveInMedianAreaM2).HasPrecision(10, 2);
 
             // Coordinates: same accuracy as every other lat/long in the database.
             builder.Property(x => x.CentroidLatitude).HasPrecision(9, 6);

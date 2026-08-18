@@ -336,9 +336,18 @@ namespace StayPilot.Application.Helpers.Mappers
                 MedianAreaM2 = stats.MedianAreaM2,
                 BelowEstimateCount = stats.BelowEstimateCount,
                 ProjectCount = stats.ProjectCount,
+                ProjectByConditionCount = stats.ProjectByConditionCount,
+                ProjectByEnergyCount = stats.ProjectByEnergyCount,
                 ProjectMedianPricePerM2 = stats.ProjectMedianPricePerM2,
+                ProjectMedianAreaM2 = stats.ProjectMedianAreaM2,
+                ProjectP25PricePerM2 = stats.ProjectP25PricePerM2,
+                ProjectP75PricePerM2 = stats.ProjectP75PricePerM2,
                 MoveInCount = stats.MoveInCount,
                 MoveInMedianPricePerM2 = stats.MoveInMedianPricePerM2,
+                MoveInMedianAreaM2 = stats.MoveInMedianAreaM2,
+                MoveInP25PricePerM2 = stats.MoveInP25PricePerM2,
+                MoveInP75PricePerM2 = stats.MoveInP75PricePerM2,
+                UnclassifiedCount = stats.UnclassifiedCount,
 
                 // Only a discount when we measured both sides. One side alone tells you nothing
                 // about the gap, and a zero here would read as "no discount" instead of "unknown".
@@ -346,8 +355,129 @@ namespace StayPilot.Application.Helpers.Mappers
                     ? null
                     : stats.MoveInMedianPricePerM2 - stats.ProjectMedianPricePerM2,
 
+                RenovationEvidence = BuildRenovationEvidence(stats),
+
                 CalculatedAtUtc = stats.CalculatedAtUtc,
             };
+        }
+
+        /// <summary>
+        /// The fewest projects before a discount is worth calling measured. Ten, matching the
+        /// threshold the renovation screen already marks a row "thin" at.
+        /// </summary>
+        private const int ProjectsForConfidence = 10;
+
+        /// <summary>
+        /// How much the two spreads may overlap before the discount stops being a finding.
+        /// Half: past that, most project stock here asks what finished stock asks, and the gap
+        /// between the two medians is describing the sample rather than the market.
+        /// </summary>
+        private const decimal MaximumUsefulOverlapPercent = 50m;
+
+        /// <summary>
+        /// The share of a place's stock that has to get a verdict before the discount can be read
+        /// as being about that place. A fifth is low, deliberately - most listings carry neither a
+        /// condition nor a certificate, so demanding a majority would empty the screen.
+        /// </summary>
+        private const decimal MinimumClassifiedSharePercent = 20m;
+
+        /// <summary>
+        /// Why the discount for this place should or should not be believed. Null when there is no
+        /// discount to judge, which the screen already handles by leaving the place out.
+        /// </summary>
+        private static RenovationEvidenceResponse? BuildRenovationEvidence(MarketAreaStats stats)
+        {
+            if (stats.ProjectMedianPricePerM2 is null || stats.MoveInMedianPricePerM2 is null)
+            {
+                return null;
+            }
+
+            var overlapPercent = SpreadOverlapPercent(stats);
+
+            var classifiedSharePercent = stats.ListingCount == 0
+                ? 0m
+                : decimal.Round((decimal)(stats.ProjectCount + stats.MoveInCount) / stats.ListingCount * 100m, 1);
+
+            var evidence = new RenovationEvidenceResponse
+            {
+                SpreadOverlapPercent = overlapPercent,
+                ClassifiedSharePercent = classifiedSharePercent
+            };
+
+            // Ordered by how badly each failure undermines the number, worst first, so the reason
+            // names the thing most worth fixing rather than the first thing checked.
+            if (stats.ProjectCount < ProjectsForConfidence)
+            {
+                evidence.Confidence = ValuationConfidence.Low;
+                evidence.Reason = $"only {stats.ProjectCount} project listings here";
+
+                return evidence;
+            }
+
+            if (overlapPercent > MaximumUsefulOverlapPercent)
+            {
+                evidence.Confidence = ValuationConfidence.Low;
+                evidence.Reason =
+                    $"project and finished prices overlap {overlapPercent:0}% - most project stock here asks what finished stock asks";
+
+                return evidence;
+            }
+
+            if (classifiedSharePercent < MinimumClassifiedSharePercent)
+            {
+                evidence.Confidence = ValuationConfidence.Medium;
+                evidence.Reason =
+                    $"resting on {classifiedSharePercent:0}% of the listings here - the rest carry no condition or certificate";
+
+                return evidence;
+            }
+
+            evidence.Confidence = ValuationConfidence.High;
+            evidence.Reason =
+                $"{stats.ProjectCount} projects against {stats.MoveInCount} finished, spreads {overlapPercent:0}% apart";
+
+            return evidence;
+        }
+
+        /// <summary>
+        /// How much of the middle half of the project prices also falls inside the middle half of
+        /// the move-in prices, against the narrower of the two.
+        ///
+        /// Measured against the narrower one on purpose: a tight project spread sitting wholly
+        /// inside a wide finished spread is total overlap, and dividing by the wide one would
+        /// report it as partial.
+        /// </summary>
+        private static decimal SpreadOverlapPercent(MarketAreaStats stats)
+        {
+            if (stats.ProjectP25PricePerM2 is null || stats.ProjectP75PricePerM2 is null
+                || stats.MoveInP25PricePerM2 is null || stats.MoveInP75PricePerM2 is null)
+            {
+                // No spread to compare. Reported as fully overlapping rather than as zero, so a
+                // missing measurement can never be read as a clean separation.
+                return 100m;
+            }
+
+            var overlapLow = Math.Max(stats.ProjectP25PricePerM2.Value, stats.MoveInP25PricePerM2.Value);
+            var overlapHigh = Math.Min(stats.ProjectP75PricePerM2.Value, stats.MoveInP75PricePerM2.Value);
+            var overlap = overlapHigh - overlapLow;
+
+            if (overlap <= 0)
+            {
+                return 0m;
+            }
+
+            var narrower = Math.Min(
+                stats.ProjectP75PricePerM2.Value - stats.ProjectP25PricePerM2.Value,
+                stats.MoveInP75PricePerM2.Value - stats.MoveInP25PricePerM2.Value);
+
+            // Both spreads are a single price. They overlap iff they are the same price, and the
+            // one above already established that they are.
+            if (narrower <= 0)
+            {
+                return 100m;
+            }
+
+            return decimal.Round(Math.Min(overlap / narrower * 100m, 100m), 1);
         }
 
         /// <summary>
@@ -357,6 +487,7 @@ namespace StayPilot.Application.Helpers.Mappers
         {
             return new MarketAreaBudgetItemResponse
             {
+                Level = stats.Level,
                 DisplayName = BuildPlaceName(stats),
                 District = stats.District,
                 Municipality = stats.Municipality,
@@ -371,12 +502,56 @@ namespace StayPilot.Application.Helpers.Mappers
         }
 
         /// <summary>
+        /// One typology a budget reaches, as an alternative to the headline answer.
+        /// </summary>
+        public static MarketAreaBudgetTypologyResponse MapToBudgetTypology(MarketAreaTypologyStats typology)
+        {
+            return new MarketAreaBudgetTypologyResponse
+            {
+                Typology = typology.Typology,
+                MedianPrice = typology.MedianPrice,
+                MedianAreaM2 = typology.MedianAreaM2,
+                MedianPricePerM2 = typology.MedianPricePerM2,
+                ListingCount = typology.ListingCount
+            };
+        }
+
+        /// <summary>
         /// The place written out for a human, without the parent in brackets. Used where the
         /// parent is already obvious from the row, like both halves of a neighbour pair.
         /// </summary>
         public static string PlaceName(MarketAreaStats stats)
         {
             return BuildPlaceName(stats);
+        }
+
+        /// <summary>
+        /// One half of a neighbour pair, with the place broken into its parts so the screen can
+        /// name the grain instead of leaving a bracket to be guessed at.
+        /// </summary>
+        /// <param name="stats">The place.</param>
+        /// <param name="pricePerM2">
+        /// The price the pair was actually compared on. The place's overall median normally, or
+        /// one typology's median when the caller narrowed the comparison to a typology - passed
+        /// in rather than read off <paramref name="stats"/> so the number on screen is always the
+        /// number the gap was worked out from.
+        /// </param>
+        /// <param name="listingCount">How many listings that price rests on, on the same basis.</param>
+        public static NeighbourGapPlaceResponse MapToGapPlace(
+            MarketAreaStats stats, decimal pricePerM2, int listingCount)
+        {
+            return new NeighbourGapPlaceResponse
+            {
+                Level = stats.Level,
+                District = stats.District,
+                Municipality = stats.Municipality,
+                Town = stats.Town,
+                DisplayName = BuildPlaceName(stats),
+                MedianPricePerM2 = pricePerM2,
+                ListingCount = listingCount,
+                AllStockPricePerM2 = stats.MedianPricePerM2,
+                AllStockListingCount = stats.ListingCount
+            };
         }
 
         /// <summary>
@@ -390,6 +565,63 @@ namespace StayPilot.Application.Helpers.Mappers
                 AreaLevel.District => stats.District,
                 AreaLevel.Municipality => $"{stats.Municipality} ({stats.District})",
                 _ => $"{stats.Town} ({stats.Municipality})"
+            };
+        }
+
+        /// <summary>
+        /// Turns the demand score into the block the screen prints, adding the place name -
+        /// the calculator scores listings and has no idea which place they came from.
+        /// </summary>
+        public static AreaDemandResponse MapToDemand(DemandCalculator.DemandOutcome outcome, string placeName)
+        {
+            return new AreaDemandResponse
+            {
+                Level = outcome.Level,
+                Score = outcome.Score,
+                IsMeasurable = outcome.IsMeasurable,
+                PlaceName = placeName,
+                MedianDaysOnMarket = outcome.MedianDaysOnMarket is null ? null : Math.Round(outcome.MedianDaysOnMarket.Value, 0),
+                DaysMeasuredOnSold = outcome.DaysMeasuredOnSold,
+                DaysScore = outcome.DaysScore is null ? null : Math.Round(outcome.DaysScore.Value, 1),
+                NewListingsRecent = outcome.NewListingsRecent,
+                NewListingsPrevious = outcome.NewListingsPrevious,
+                SupplyChangePercent = outcome.SupplyChangePercent,
+                SupplyScore = outcome.SupplyScore is null ? null : Math.Round(outcome.SupplyScore.Value, 1),
+                SampleSize = outcome.SampleSize,
+                CollectionSpanDays = outcome.CollectionSpanDays,
+                Reason = outcome.Reason,
+            };
+        }
+
+        /// <summary>
+        /// Turns the forecast into the block the screen prints. The two rates stay apart all
+        /// the way to the wire, so a projection can be taken apart wherever it is read.
+        /// </summary>
+        public static GrowthForecastResponse MapToForecast(GrowthForecastCalculator.Forecast forecast, string seededDistrict, int years)
+        {
+            return new GrowthForecastResponse
+            {
+                SeededAnnualPercent = forecast.SeededAnnualPercent,
+                SeededSource = forecast.SeededSource,
+                // The empty district is the national fallback row, which needs a name on screen.
+                SeededDistrict = string.IsNullOrWhiteSpace(seededDistrict) ? "Portugal (national)" : seededDistrict,
+                LocalAnnualPercent = forecast.LocalAnnualPercent,
+                LocalWeightPercent = forecast.LocalWeightPercent,
+                LocalWasCapped = forecast.Trend.WasCapped,
+                LocalSnapshotCount = forecast.Trend.SnapshotCount,
+                LocalSpanDays = forecast.Trend.SpanDays,
+                LocalMonthsObserved = forecast.Trend.MonthsObserved,
+                LocalReason = forecast.Trend.Reason,
+                BlendedAnnualPercent = forecast.BlendedAnnualPercent,
+                Years = years,
+                Scenarios = forecast.Scenarios.Select(x => new GrowthScenarioResponse
+                {
+                    Name = x.Name,
+                    AnnualPercent = x.AnnualPercent,
+                    NextYearValue = x.Values.Count > 1 ? x.Values[1] : x.Values[0],
+                    FinalYearValue = x.Values[^1],
+                    Values = x.Values.ToList(),
+                }).ToList(),
             };
         }
     }
