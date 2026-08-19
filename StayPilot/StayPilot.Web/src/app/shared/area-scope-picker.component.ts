@@ -50,7 +50,17 @@ export function emptyScope(): AreaScope {
         }
       </select>
     </label>
-  `
+  `,
+  styles: [
+    `
+      /* The two dropdowns belong to whatever toolbar hosts them, not to a box of their
+         own. With a host box they stacked on top of each other and dragged the rest of
+         the toolbar out of line with them. */
+      :host {
+        display: contents;
+      }
+    `
+  ]
 })
 export class AreaScopePickerComponent implements OnInit {
   @Input({ required: true }) scope: AreaScope = emptyScope();

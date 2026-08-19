@@ -40,6 +40,7 @@ builder.Services.AddScoped<IOwnedPropertyService, OwnedPropertyService>();
 builder.Services.AddScoped<IPremiumFeatureService, PremiumFeatureService>();
 builder.Services.AddScoped<IMarketAreaStatsService, MarketAreaStatsService>();
 builder.Services.AddScoped<IMarketOverviewService, MarketOverviewService>();
+builder.Services.AddScoped<IBuildCostService, BuildCostService>();
 
 // Register the repositories (the classes that read and write the database).
 builder.Services.AddScoped<IPropertyListingRepository, PropertyListingRepository>();
@@ -51,6 +52,16 @@ builder.Services.AddScoped<IPremiumFeatureRepository, PremiumFeatureRepository>(
 builder.Services.AddScoped<IMarketAreaStatsRepository, MarketAreaStatsRepository>();
 builder.Services.AddScoped<IHousePriceGrowthRepository, HousePriceGrowthRepository>();
 
+// The one repository that reads a public statistic instead of the database. Build Cost prices
+// itself from INE's construction cost index rather than from a stored price list - no table and
+// no migration behind that screen, just an anchor and an index.
+//
+// INE sends no CORS headers, which is why this proxy exists: the browser cannot read it directly.
+builder.Services.AddHttpClient<IIneRepository, IneRepository>(client =>
+{
+    client.BaseAddress = new Uri("https://www.ine.pt/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
 
 // Turn on ProblemDetails: send errors back in a standard shape.
 builder.Services.AddProblemDetails();

@@ -144,7 +144,7 @@
           </div>
 
           <div class="summary">
-            <h3>Price per m&sup2;</h3>
+            <h3>Price per m²</h3>
             <dl class="kv figures">
               <dt>Median</dt>
               <dd class="lead">&euro;{{ overview()!.pricePerM2.median | number: '1.0-0' }}</dd>
@@ -161,13 +161,13 @@
             <h3>Floor area</h3>
             <dl class="kv figures">
               <dt>Median</dt>
-              <dd class="lead">{{ overview()!.areaM2.median | number: '1.0-0' }} m&sup2;</dd>
+              <dd class="lead">{{ overview()!.areaM2.median | number: '1.0-0' }} m²</dd>
               <dt>Average</dt>
-              <dd>{{ overview()!.areaM2.average | number: '1.0-0' }} m&sup2;</dd>
+              <dd>{{ overview()!.areaM2.average | number: '1.0-0' }} m²</dd>
               <dt>Smallest</dt>
-              <dd>{{ overview()!.areaM2.min | number: '1.0-0' }} m&sup2;</dd>
+              <dd>{{ overview()!.areaM2.min | number: '1.0-0' }} m²</dd>
               <dt>Largest</dt>
-              <dd>{{ overview()!.areaM2.max | number: '1.0-0' }} m&sup2;</dd>
+              <dd>{{ overview()!.areaM2.max | number: '1.0-0' }} m²</dd>
             </dl>
           </div>
         </div>
@@ -186,9 +186,19 @@
         <span class="card-title">Price distribution</span>
         <span class="meta">{{ overview()!.distribution.length }} bars</span>
       </div>
-      <div class="card-body">
+      <div class="card-body stack">
+        @if (distributionUnreadable()) {
+          <p class="warning">
+            These bars came back without figures this build can read, so none of them is drawn. The
+            rest of the screen is worked out from the same response and is fine &mdash; it is the
+            shape of the distribution that does not match.
+          </p>
+        }
+
         <ul class="distribution">
-          @for (bucket of overview()!.distribution; track bucket.fromPrice) {
+          <!-- Tracked by position: a bar is its slot in the list, and two buckets can carry the
+               same price at the edges of a narrow range, which is enough to lose rows. -->
+          @for (bucket of overview()!.distribution; track $index) {
             <li>
               <span class="range" [title]="bucketRangeFull(bucket.fromPrice, bucket.toPrice)">
                 {{ bucketRange(bucket.fromPrice, bucket.toPrice) }}
@@ -197,8 +207,12 @@
                 <span class="fill" [style.width]="barWidth(bucket.sharePercent)"></span>
               </span>
               <span class="count">
-                {{ bucket.listingCount | number }}
-                <span class="faint">{{ bucket.sharePercent | number: '1.0-1' }}%</span>
+                @if (distributionUnreadable()) {
+                  &mdash;
+                } @else {
+                  {{ bucket.listingCount | number }}
+                  <span class="faint">{{ bucket.sharePercent | number: '1.0-1' }}%</span>
+                }
               </span>
             </li>
           }
@@ -233,10 +247,10 @@
                   Median price{{ breakdownArrow('price') }}
                 </th>
                 <th class="num sortable" (click)="toggleBreakdownSort('area')">
-                  Median m&sup2;{{ breakdownArrow('area') }}
+                  Median m²{{ breakdownArrow('area') }}
                 </th>
                 <th class="num sortable" (click)="toggleBreakdownSort('pricePerM2')">
-                  Median &euro;/m&sup2;{{ breakdownArrow('pricePerM2') }}
+                  Median &euro;/m²{{ breakdownArrow('pricePerM2') }}
                 </th>
                 <th
                   class="num sortable"
@@ -313,10 +327,10 @@
                 Median price{{ typologyArrow('price') }}
               </th>
               <th class="num sortable" (click)="toggleTypologySort('area')">
-                Median m&sup2;{{ typologyArrow('area') }}
+                Median m²{{ typologyArrow('area') }}
               </th>
               <th class="num sortable" (click)="toggleTypologySort('pricePerM2')">
-                Median &euro;/m&sup2;{{ typologyArrow('pricePerM2') }}
+                Median &euro;/m²{{ typologyArrow('pricePerM2') }}
               </th>
             </tr>
           </thead>

@@ -5,17 +5,19 @@
 
 /* ---- The list ---------------------------------------------------------- */
 
-/* The whole row is the button, so it has to look like one. */
-.portfolio tr.row {
+/* The whole row is the button, so it has to look like one. Deliberately not
+   called `.row`: that is a global flex utility, and it turned every <tr> into a
+   flex box, which tore the cells off the header columns. */
+.portfolio tr.portfolio-row {
   cursor: pointer;
 }
 
-.portfolio tr.row:hover {
-  background: var(--row-hover, rgba(127, 127, 127, 0.08));
+.portfolio tr.portfolio-row:hover {
+  background: var(--surface-hover);
 }
 
-.portfolio tr.row.open {
-  background: var(--row-hover, rgba(127, 127, 127, 0.08));
+.portfolio tr.portfolio-row.open {
+  background: var(--surface-hover);
   font-weight: 500;
 }
 
@@ -24,7 +26,7 @@
 .chevron {
   width: 1.5rem;
   text-align: center;
-  color: var(--muted, #777);
+  color: var(--text-muted);
   user-select: none;
 }
 
@@ -33,7 +35,7 @@
   display: block;
   font-size: 0.82em;
   font-weight: 400;
-  color: var(--muted, #777);
+  color: var(--text-muted);
 }
 
 .place {
@@ -74,7 +76,7 @@
 
 .demand-balanced {
   background: rgba(120, 120, 120, 0.16);
-  color: var(--muted, #666);
+  color: var(--text-muted);
 }
 
 .demand-soft {
@@ -89,8 +91,8 @@
 
 /* Not measured must not look like a band. No fill, dashed outline, muted text. */
 .demand-unknown {
-  border: 1px dashed var(--border, #ccc);
-  color: var(--muted, #888);
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
   font-weight: 400;
 }
 
@@ -103,7 +105,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.72em;
-  color: var(--muted, #888);
+  color: var(--text-muted);
   margin-bottom: 0.2rem;
 }
 
@@ -120,8 +122,8 @@
   width: 0.28rem;
   height: 0.9rem;
   border-radius: 2px;
-  background: var(--fg, #222);
-  border: 1px solid var(--bg, #fff);
+  background: var(--text);
+  border: 1px solid var(--bg);
   transform: translateX(-50%);
 }
 
@@ -138,7 +140,7 @@
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.7rem 0.8rem;
-  border: 1px solid var(--border, #e3e3e3);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
@@ -146,7 +148,7 @@
   font-size: 0.78em;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--muted, #888);
+  color: var(--text-muted);
 }
 
 .half-value {
@@ -156,7 +158,7 @@
 
 .half-note {
   font-size: 0.84em;
-  color: var(--muted, #777);
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
@@ -164,7 +166,7 @@
   margin-top: 0.3rem;
   font-size: 0.78em;
   font-weight: 600;
-  color: var(--muted, #777);
+  color: var(--text-muted);
 }
 
 /* ---- Forecast ---------------------------------------------------------- */
@@ -183,13 +185,13 @@
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.7rem 0.8rem;
-  border: 1px solid var(--border, #e3e3e3);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
 /* The blend is what the numbers below actually run on, so it is the one with weight. */
 .rate-blend {
-  border-color: var(--fg, #333);
+  border-color: var(--text);
 }
 
 .rate-value {
@@ -204,7 +206,7 @@
 
 .rate-note {
   font-size: 0.8em;
-  color: var(--muted, #777);
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
@@ -216,10 +218,14 @@
 /* ---- The expanded panel ------------------------------------------------ */
 
 /* The panel spans the table, so it must not inherit the row's centred cells or
-   its hover. It is a page, not a cell. */
+   its hover. It is a page, not a cell -- which includes wrapping: .data-table cells are
+   nowrap, and inheriting that turned every paragraph in here into one endless line and
+   dragged the table far wider than its card. The inner tables put nowrap back on their
+   own cells, which is what they want. */
 .panel-row > td {
   padding: 0;
-  background: var(--panel-bg, rgba(127, 127, 127, 0.04));
+  background: var(--surface-2);
+  white-space: normal;
 }
 
 .panel {
@@ -227,7 +233,7 @@
   flex-direction: column;
   gap: 1.4rem;
   padding: 1.2rem 1.4rem 1.6rem;
-  border-top: 1px solid var(--border, #e3e3e3);
+  border-top: 1px solid var(--border);
 }
 
 .panel-block h3 {
@@ -235,7 +241,7 @@
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted, #777);
+  color: var(--text-muted);
 }
 
 /* A second heading inside one block (features, after the comps) needs air above it. */
@@ -251,7 +257,7 @@
 
 /* "Not measured" is a caveat, not an error — it gets a rule, not a red box. */
 .hint.warn {
-  border-left: 3px solid var(--border, #ccc);
+  border-left: 3px solid var(--border);
   padding-left: 0.6rem;
 }
 

@@ -2,7 +2,7 @@ name: BuildDev                             # the name you see in the Actions tab
 
 on:                                        # when does this workflow run?
   pull_request:                            # only for pull requests...
-    branches: [ master ]                   # ...aimed at master — the gate you pass before merging
+    branches: [ master, stable, release ]  # gate you pass before merging
 
 jobs:                                      # jobs run at the same time, each on its own machine
   backend:                                 # job 1 — the .NET side
