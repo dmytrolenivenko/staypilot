@@ -70,7 +70,7 @@ jobs:
 
             - name: Apply EF migrations
               env:                               # variables for this step only
-                ConnectionStrings__DefaultConnection: 'Server=tcp:srv-staypilot-$TARGET.database.windows.net,1433;Initial Catalog=db-staypilot-$TARGET;User ID=dmytrolenivenko;Password=${{ secrets.SQL_ADMIN_PASSWORD }};Encrypt=True;TrustServerCertificate=False;'   # which DB to migrate; password from GitHub secrets
+                ConnectionStrings__DefaultConnection: 'Server=tcp:srv-staypilot-${{ env.TARGET }}.database.windows.net,1433;Initial Catalog=db-staypilot-${{ env.TARGET }};User ID=dmytrolenivenko;Password=${{ secrets.SQL_ADMIN_PASSWORD }};Encrypt=True;TrustServerCertificate=False;'   # which DB to migrate; password from GitHub secrets
               run: |
                 dotnet tool install --global dotnet-ef        # the machine is bare — install the EF tool
                 export PATH="$PATH:$HOME/.dotnet/tools"       # tell the shell where that tool landed
