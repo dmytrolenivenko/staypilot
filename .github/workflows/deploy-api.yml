@@ -70,5 +70,5 @@ jobs:
             - name: Deploy to Azure App Service
               uses: azure/webapps-deploy@v3      # upload that folder into the running App Service
               with:
-                  app-name: api-staypilot-dev    # WHICH app (the App Service "app-", not the plan "asp-")
+                  app-name: api-staypilot-dev    # WHICH app (the App Service "api-", not the plan "asp-")
                   package: ./publish             # WHAT to upload (the folder the step above created)
