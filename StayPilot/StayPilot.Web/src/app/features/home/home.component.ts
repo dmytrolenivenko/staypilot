@@ -109,7 +109,7 @@ export class HomeComponent {
         },
         {
           title: 'Build cost',
-          description: 'Rough €/m² cost to build from scratch, by quality tier and region.',
+          description: 'Project a build from scratch — shell, pool, garage, fees, VAT — and hold it against local asking prices.',
           link: '/build-cost',
           live: true
         }

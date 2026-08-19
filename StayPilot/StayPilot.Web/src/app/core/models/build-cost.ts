@@ -1,28 +1,54 @@
-// Build-cost estimator reference data.
+// Build-cost types.
 //
-// These are STATIC baselines, not live prices. No Portuguese building retailer
-// (Leroy Merlin PT, Maxmat, ...) exposes a public product/price API, so we use
-// €/m² baselines grounded in public figures: INE's construction cost index and
-// widely-cited 2026 private-build ranges (~€1,100–1,700/m² for a mid-range house,
-// excluding land, taxes and professional fees).
+// There are no construction prices in this file, and that is the point. Every rate the screen
+// shows comes from the API, which derives it from INE's construction cost index — public,
+// monthly, not stored anywhere. A price list written down here would start rotting the day it
+// was typed.
 //
-// Tune these numbers in one place as the market moves — nothing else needs to change.
+// What is left is the arithmetic that runs over what the *user* picks, which stays in the
+// browser so the screen keeps recomputing as you go.
 
-// A build quality tier and its all-in construction rate per m².
-export interface QualityTier {
+/** One priced choice, already escalated to today. Read whichever of `ratePerM2` and `cost` is present. */
+export interface BuildCostOption {
   key: string;
   label: string;
-  ratePerM2: number; // € per m² of built area, standard finishes for the tier
+  ratePerM2?: number;
+  cost?: number;
+  /** Pools only: the price stops falling below this, because the plant room does not. */
+  minCost?: number;
+  /** Garden sizes and garage bays: the area the option stands for. */
+  areaM2?: number;
+  /** Solar only. Never netted off `cost` — it gets its own line on the receipt. */
+  grant?: number;
+  note: string;
 }
 
-export const QUALITY_TIERS: QualityTier[] = [
-  { key: 'economy', label: 'Economy (basic finishes)', ratePerM2: 1000 },
-  { key: 'standard', label: 'Standard (mid-range)', ratePerM2: 1300 },
-  { key: 'premium', label: 'Premium (high-end finishes)', ratePerM2: 1700 },
-  { key: 'luxury', label: 'Luxury (bespoke)', ratePerM2: 2300 }
-];
+/** Mirrors BuildCostBasisResponse on the API. */
+export interface BuildCostBasis {
+  /** The month behind these rates. Empty when INE was unreachable and the rates are at 2021 prices. */
+  indexPeriod: string;
+  sinceBasePercent: number;
+  tiers: BuildCostOption[];
+  pools: BuildCostOption[];
+  poolAddons: BuildCostOption[];
+  garages: BuildCostOption[];
+  elevators: BuildCostOption[];
+  automation: BuildCostOption[];
+  gardens: BuildCostOption[];
+  solar: BuildCostOption[];
+  extras: BuildCostOption[];
+  gardenRatePerM2: number;
+  vatPercent: number;
+}
 
-// Regional cost multiplier — labour and logistics vary across Portugal.
+// --- What the browser owns ---------------------------------------------------------------
+
+/**
+ * A rough regional adjustment on the work done on site — labour and logistics do vary across
+ * Portugal. Stays a plain choice rather than something derived: INE publishes house prices per
+ * município, not build costs, and turning one into the other would be a guess dressed up as a
+ * measurement.
+ */
 export interface Region {
   key: string;
   label: string;
@@ -37,18 +63,25 @@ export const REGIONS: Region[] = [
   { key: 'interior', label: 'Interior / rural', multiplier: 1.0 }
 ];
 
-// Optional fixed-cost extras added on top of the per-m² construction cost.
-export interface BuildExtra {
-  key: string;
-  label: string;
-  cost: number; // fixed € (rough turnkey figure)
-}
+// Soft costs, as percentages of the works. Architecture and engineering run 3–6% of the contract
+// on a normal moradia; municipal licences and taxes land near 2%.
+export const DEFAULT_DESIGN_PERCENT = 6;
+export const DEFAULT_LICENCE_PERCENT = 2;
+export const DEFAULT_CONTINGENCY_PERCENT = 10;
 
-export const BUILD_EXTRAS: BuildExtra[] = [
-  { key: 'pool', label: 'Swimming pool', cost: 25000 },
-  { key: 'garage', label: 'Garage', cost: 15000 },
-  { key: 'elevator', label: 'Elevator', cost: 20000 },
-  { key: 'solar', label: 'Solar panels', cost: 8000 },
-  { key: 'automation', label: 'Home automation', cost: 5000 },
-  { key: 'landscaping', label: 'Landscaping / garden', cost: 6000 }
-];
+// How wrong this whole thing can be. Estimates of this kind miss low more often than high —
+// scope grows, ground conditions surprise, finishes get upgraded mid-build — so the band is
+// deliberately asymmetric rather than a tidy ±20%.
+export const ESTIMATE_LOW_FACTOR = 0.85;
+export const ESTIMATE_HIGH_FACTOR = 1.25;
+
+/**
+ * How long the build runs. A T3 of 120–150 m² takes 12–18 months from first stone to the licença
+ * de utilização: a fixed run of paperwork and groundwork, plus time proportional to size, plus a
+ * month each for the two things that need a trade of their own on site.
+ */
+export function estimatedMonths(areaM2: number, hasPool: boolean, hasElevator: boolean): number {
+  const months = 9 + Math.max(0, areaM2) / 30 + (hasPool ? 1 : 0) + (hasElevator ? 1 : 0);
+
+  return Math.min(30, Math.max(10, Math.round(months)));
+}

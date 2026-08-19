@@ -1,17 +1,88 @@
 /* The breakdown reads as a receipt: label, working, amount. */
 .breakdown th {
-  width: 14rem;
+  width: 16rem;
   color: var(--text);
   font-weight: 550;
 }
 
-.breakdown .subtotal-row th,
-.breakdown .subtotal-row td {
-  border-top: 1px solid var(--border-strong);
+/* Fees, tax and land are not works — they sit slightly back so the eye can find the line
+   where the building stops and the paperwork starts. */
+.breakdown .soft-row th {
+  font-weight: 450;
+  color: var(--text-muted);
+}
+
+.breakdown .grant-row .num {
+  color: var(--success);
 }
 
 .breakdown .total-row th,
 .breakdown .total-row .num {
   font-weight: 700;
   font-size: var(--fs-md);
+}
+
+.breakdown .total-row th,
+.breakdown .total-row td {
+  border-top: 1px solid var(--border-strong);
+}
+
+/* --- Composition bar ------------------------------------------------------ */
+
+/* Where the money goes, in one glance, before anyone reads a line of the receipt.
+   Works is the accent because it is the part you can actually decide about. */
+.composition {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.composition-bar {
+  display: flex;
+  overflow: hidden;
+  height: 0.75rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+
+.slice {
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+.slice-works {
+  background: var(--accent);
+}
+
+.slice-soft {
+  background: var(--warn);
+}
+
+
+.slice-tax {
+  background: var(--error);
+}
+
+.slice-land {
+  background: var(--success);
+}
+
+.composition-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.key-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: var(--r-pill);
 }
