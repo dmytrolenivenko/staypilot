@@ -3,7 +3,7 @@ name: deploy-web                                  # the name you see in the Acti
 
 on:                                               # when does this workflow run?
     push:                                         # after a commit lands on...
-        branches: [ master ]                      # ...master — this is the "CD" (deploy) half
+        branches: [ master, stable, release ]     # ...any of the three environment branches
         paths:                                    # and only if one of these changed
         - 'StayPilot/StayPilot.Web/**'            # the Angular project
         - '.github/workflows/deploy-web.yml'      # ...or this workflow itself
@@ -14,8 +14,30 @@ permissions:                                     # what this workflow is allowed
     id-token: write                              # create the short-lived token used to log into Azure
 
 jobs:
-    deploy:                                      # one job, called "deploy"
-        runs-on: ubuntu-latest                   # brand-new Linux machine (note: file names are case-sensitive here)
+    resolve:                                      # job 1: turn the branch name into an environment name
+        runs-on: ubuntu-latest
+        outputs:
+            target: ${{ steps.map.outputs.target }}   # this is how job 2 receives the answer
+        steps:
+            - name: Map branch to environment
+              id: map
+              run: |
+                case "${{ github.ref_name }}" in
+                  master)  echo "target=dev"  >> "$GITHUB_OUTPUT" ;;
+                  stable)  echo "target=qa"   >> "$GITHUB_OUTPUT" ;;
+                  release) echo "target=prod" >> "$GITHUB_OUTPUT" ;;
+                  *)
+                    echo "::error::Branch '${{ github.ref_name }}' has no environment mapped"
+                    exit 1
+                    ;;
+                esac
+
+    deploy:                                            # job 2: build that environment's site
+        needs: resolve                                 # wait for resolve to finish and hand us its answer
+        environment: ${{ needs.resolve.outputs.target }}   # dev/qa/prod — picks the right secrets + prod's approval gate
+        runs-on: ubuntu-latest                         # brand-new Linux machine (note: file names are case-sensitive here)
+        env:
+            TARGET: ${{ needs.resolve.outputs.target }}     # same value, as a plain shell var for later steps
         steps:
             - name: Checkout code                # copy the repo onto the machine
               uses: actions/checkout@v4
@@ -47,8 +69,8 @@ jobs:
                 # Why: a stored key goes stale the moment the site is recreated.
                 # This always gets the current one, so there is nothing to rotate.
                 TOKEN=$(az staticwebapp secrets list \
-                  --name web-staypilot-dev \
-                  --resource-group rg-staypilot-dev \
+                  --name "web-staypilot-$TARGET" \
+                  --resource-group "rg-staypilot-$TARGET" \
                   --query "properties.apiKey" -o tsv)
                 echo "::add-mask::$TOKEN"                 # hide it everywhere in the logs
                 echo "token=$TOKEN" >> $GITHUB_OUTPUT     # hand it to the next step (each step is its own shell)
