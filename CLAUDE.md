@@ -8,8 +8,10 @@ StayPilot Comps — a personal real-estate comparable-listings tool for the Alga
 It stores scraped Idealista apartment listings with price history, and will eventually support
 market analysis and valuation of owned properties against comparables. This is an early-stage,
 single-developer project (see commit history) — a lot of the design is intentionally minimal
-(no AutoMapper, no repository abstraction over EF Core, no auth) and should stay that way unless
-a milestone specifically calls for more.
+(no AutoMapper, no repository abstraction over EF Core) and should stay that way unless a
+milestone specifically calls for more. There is Azure AD auth (`Microsoft.Identity.Web`), but it
+only gates a handful of write/recalculate actions — see *API conventions* below; most read
+endpoints have no `[Authorize]` at all.
 
 This repo holds the Web API (`StayPilot/`, `StayPilot.slnx`) and, as of 2026-07-14, a minimal
 Angular front end at `StayPilot/StayPilot.Web/` — see its own `README.md` for how to run it. It's
@@ -96,6 +98,44 @@ alongside its service.
 > retrofitted incrementally, service by service — check current session logs in the vault for which
 > services have been converted before assuming this pattern is uniformly in place everywhere yet.
 
+### API conventions
+
+- **Routing:** `[Route("api/[controller]/[action]")]` on every controller — the action name is
+  part of the URL, and ASP.NET's default action-name resolution drops an `Async` suffix (so
+  `AddOwnedPropertyAsync` routes as `POST /api/OwnedProperty/AddOwnedProperty`). No route ever
+  carries a version segment or a verb attribute beyond `[HttpGet]`/`[HttpPost]`.
+- **Response shape:** every response class extends `ResponseBase`
+  (`StayPilot.Application/Contracts/Response/Base/ResponseBase.cs`) — a nullable `Errors` list plus
+  a computed `Succeeded`. Services call `response.AddError(ErrorCode.X, ...params)` instead of
+  throwing; controllers call `this.ToActionResult(response)`
+  (`StayPilot.Api/Extensions/ControllerExtensions.cs`), which maps `Succeeded` → 200,
+  an error whose `ErrorCode` is `[NotFound]`-tagged → 404, anything else → 400. There is no
+  try/catch in controllers or services for expected failures — only `ErrorCode`.
+- **Error codes:** one `enum` (`ErrorCode` in the same file as `ResponseBase`), grouped in bands
+  per domain (`-1..-99` general, `-100..-199` market areas, `-200..-299` property listings,
+  `-300..-399` snapshots, `-400..-499` owned properties, `-500..-599` valuation/premium features).
+  Each value carries a `[Display(Description = "...")]` template with `{0}`, `{1}`... placeholders,
+  and optionally `[NotFound]` to mark it as a 404. **Append new codes at the end of their band;
+  never renumber or reuse one** — callers (including the separate scraper repo) key on the number.
+- **Authorization:** no controller has a class-level `[Authorize]`. Individual actions that write
+  bulk data or trigger an expensive recalculation carry `[Authorize(Roles = "Api.Write")]`:
+  `PropertyListingController.BulkAddPropertyListing`, `ListingSnapshotController.CreateListingSnapshotAsync`,
+  `MarketAreaController.RecalculateMarketAreaStats`, `PremiumFeatureController.ReCalculatePremiumFeaturesValue`.
+  Everything else — including all of `OwnedPropertyController` (My Properties CRUD) and every
+  `GET` — is open. This is a deliberate current state for a personal, single-tenant deployment, not
+  an oversight; tighten it before treating this as a multi-user product.
+- **Controller inventory** (all under `StayPilot.Api/Controllers/`):
+
+  | Controller | Actions |
+  |---|---|
+  | `PropertyListingController` | `BulkAddPropertyListing` (POST, `Api.Write`), `GetById`, `FilterPropertyAsync` (POST — browse/filter/page) |
+  | `ListingSnapshotController` | `CreateListingSnapshotAsync` (POST, `Api.Write`), `GetListingSnapshotByPropertyIdAsync` |
+  | `MarketAreaController` | `GetAll`, `GetOptions` (place picker), `GetLeaderboard`, `GetBudgetRanking`, `GetNeighbourGaps`, `RecalculateMarketAreaStats` (POST, `Api.Write`) |
+  | `MarketOverviewController` | `GetMarketOverview` — live-computed slice by place + property type + typology, no recalculation step |
+  | `OwnedPropertyController` | `GetOwnedPropertyAsync`, `GetAllOwnedPropertyAsync`, `AddOwnedPropertyAsync` (POST), `DeleteOwnedPropertyAsync`, `UpdateOwnedPropertyAsync`, `EstimateEvaluationsOwnedpropertyAsync` (single-property valuation), `ListValuationsOwnedpropertyAsync` (portfolio valuation — see below) |
+  | `PremiumFeatureController` | `GetAllPremiumFeatures`, `ReCalculatePremiumFeaturesValue` (POST, `Api.Write`) |
+  | `BuildCostController` | `GetBasis` — build-cost rates, see *Build cost* below |
+
 ### Domain model
 
 - `MarketAreaStats` — one precomputed row per place per level, rebuilt wholesale by
@@ -103,7 +143,10 @@ alongside its service.
   a recalculation runs**, and that endpoint is `[Authorize(Roles = "Api.Write")]` — so a new stats
   column cannot be backfilled from a dev machine without a token. Design the read side to degrade
   honestly in the meantime (the renovation confidence treats a missing spread as fully overlapping,
-  i.e. "not measurable", rather than as a clean separation).
+  i.e. "not measurable", rather than as a clean separation). Each row owns a collection of
+  `MarketAreaTypologyStats` — the same median/€/m²/area numbers broken down per Typology (T0, T1,
+  T2...), which is what makes "what does €300k buy me here" answerable instead of one blended
+  median across studios and villas.
 - `MarketArea` — a geographic zone (District/Municipality/Town/Zone). Seeded via EF migrations
   from real-world Algarve data; matched by exact normalized-string lookup (`GetMarketId` in
   `PropertyListingService`), not by ID, when a scraped listing doesn't supply a `MarketAreaId`.
@@ -136,6 +179,25 @@ alongside its service.
   every listing looks young because collection is young), and supply needs two full 90 day
   windows of history. An unmeasurable place reports `IsMeasurable = false`, never the middle
   of the scale — "not measured" and "average" must not render the same.
+- `PremiumFeature` — the average price premium of one feature (sea view, garage, …), fitted once
+  across the whole listing table by `FeaturePremiumCalculator` and reused until the next
+  `ReCalculatePremiumFeaturesValue` call. Carries a 95% confidence range (`LowerBoundPercent`/
+  `UpperBoundPercent` — if these straddle zero, the headline `PremiumPercent` is not a finding) and
+  `ListingsWithFeature`, which is *not* the same as `SampleSize`: the latter is the same for every
+  feature, so on its own it made a rarely-measured feature look as solid as a common one. A couple
+  of features (sea view, lift) also carry a conditional `MaximumPercent` + `MaximumBasis` — the
+  best case under a stated condition — because their flat average hides a huge spread (a sea view
+  bought inland vs. beachfront) that one number would otherwise misrepresent.
+- Build cost (`BuildCostService`, `IIneRepository`) has **no entity or migration** — it is priced
+  live from one external number (Portugal's INE construction cost index) rather than a stored
+  price list. A 2021 €/m² anchor plus a set of dimensionless ratios (a concrete pool is 0.82× the
+  house rate per m² of water, a garage bay 0.55×, …) are escalated by the latest published index;
+  a few machine-like extras (lift, KNX bus, borehole) are anchored in 2021 euros and escalated by
+  the materials-only half of the index instead of the blended one, because labour and materials
+  drift apart over time. If INE is unreachable, everything degrades to plain 2021 prices with an
+  empty `IndexPeriod` rather than a 500 — see `BuildCostService`'s class doc for the full rationale
+  and the quotes it was cross-checked against. `IneRepository` exists purely because INE's site
+  sends no CORS headers, so the browser cannot call it directly — this API is a proxy.
 
 Known scaling caveats (documented, not yet fixed — see the vault's Session-08 log for full
 reasoning before touching these): `GetMarketId` and the nearest-beach lookup both do a full
