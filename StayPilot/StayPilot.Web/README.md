@@ -37,16 +37,16 @@ Real screens (all backed by a live endpoint):
   filter by and pointless to read as a list, so it is no longer in the nav or the routes
   (`market-area-list.component.*` is still on disk but unreferenced).
 - **Listing Lookup** — one listing by id. `GET /api/PropertyListing/GetById/{id}`.
-- **Add Listing** — create a listing with its initial price snapshot.
-  `POST /api/PropertyListing/AddPropertyListing`. Note: the API requires
-  `latitude`/`longitude` on create (used to compute nearest-beach distance) even
-  though they're optional on the DTO — a service-level rule, not in the contract.
 - **Listing Browser** — filter/sort/page over listings. `POST /api/PropertyListing/FilterProperty`.
-- **Price Snapshots** — view the current snapshot for a property and record a new one.
-  `GET /api/ListingSnapshot/GetListingSnapshotByPropertyId/{id}` + `POST /api/ListingSnapshot/CreateListingSnapshot`.
 - **My Properties** — CRUD over owned apartments. `GET/POST/PUT/DELETE /api/OwnedProperty/...`.
 - **Feature Impact** — per-feature price premium %, with a Recalculate button.
   `GET /api/PremiumFeature/GetAllPremiumFeatures` + `POST /api/PremiumFeature/ReCalculatePremiumFeaturesValue`.
+
+**Add Listing and Price Snapshots were removed** (2026-08-18): they were data-entry screens for
+the scraper's job, not something a customer of this tool should see. `PropertyListingService`
+still has an unused `create()` method calling `POST /api/PropertyListing/AddPropertyListing` —
+dead code kept around from before the removal, not a bug. There is no `listing-snapshot.service.ts`
+or `snapshots/` folder any more; both were deleted outright, not just unwired.
 
 Still placeholders (no backend endpoint yet) — a `ComingSoonComponent` stating
 which endpoint is missing (see `app.routes.ts`):
@@ -59,7 +59,11 @@ which endpoint is missing (see `app.routes.ts`):
   same server-side stats. `GET /api/MarketArea/GetLeaderboard`, `GetBudgetRanking`,
   `GetNeighbourGaps`, plus `POST /api/MarketArea/RecalculateMarketAreaStats`. These read a
   precomputed table, so they are only as fresh as the last recalculation — unlike Market Overview.
-- **Build Cost** — client-side only, over static €/m² baselines in `core/models/build-cost.ts`.
+- **Build Cost** — project a build from scratch (shell, pool, garage, fees, VAT) and hold it
+  against local asking prices. Rates come from the API (`GET /api/BuildCost/GetBasis`, live off
+  INE's construction cost index — no stored price list); the receipt for *your* chosen
+  configuration is computed client-side from those rates as you type, and the "build vs buy"
+  comparison reuses `MarketAreaStatsService.getLeaderboard` against the selected area.
 
 ## Structure
 
@@ -76,8 +80,8 @@ src/app/
     home/            Module dashboard, grouped the same way the sidebar is
     market-overview/  Real screen (also the place picker that replaced the area list)
     market-areas/     Real screens (leaderboard, budget, neighbours, renovation)
-    listings/         Real screens (browser, lookup, create, + shared detail view)
-    owned/ valuation/ snapshots/ premium-features/ build-cost/   Real screens
+    listings/         Real screens (browser, lookup + shared detail view — no create screen)
+    owned/ valuation/ premium-features/ build-cost/   Real screens
     coming-soon/      One reusable placeholder, driven by route `data`
   app.routes.ts     All routes + the "needs" text for each placeholder
   app.component.*   Sidebar nav + router-outlet shell

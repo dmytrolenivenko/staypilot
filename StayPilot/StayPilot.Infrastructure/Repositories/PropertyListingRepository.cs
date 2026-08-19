@@ -544,6 +544,9 @@ namespace StayPilot.Infrastructure.Repositories
             }
 
             return await query
+                // Nothing here is written back, and a broad slice is tens of thousands of listings
+                // with an area and a snapshot each. Tracking that graph costs more than reading it.
+                .AsNoTracking()
                 // The area comes along because the overview now also breaks the slice into the
                 // places inside it, and that needs a district/município/freguesia per listing.
                 .Include(x => x.MarketArea)

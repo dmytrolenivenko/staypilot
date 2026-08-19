@@ -53,7 +53,12 @@ jobs:
 
             - name: Build                        # turn Angular into plain HTML/CSS/JS
               working-directory: './StayPilot/StayPilot.Web'
-              run: npm run build                 # uses the "production" config, so it picks up environment.ts
+              run: |
+                if [ "$TARGET" = "dev" ]; then
+                  npm run build                                          # no extra config — dev IS the default
+                else
+                  npm run build -- --configuration=production,$TARGET    # layer qa/prod's file-swap on top
+                fi
 
             - name: Log into Azure (OIDC)        # sign in with NO stored password
               uses: azure/login@v2               # GitHub proves who it is; Azure hands back an access token

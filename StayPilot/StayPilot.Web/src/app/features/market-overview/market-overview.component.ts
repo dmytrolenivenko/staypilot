@@ -25,6 +25,15 @@ type BreakdownSort = 'place' | 'listings' | 'price' | 'area' | 'pricePerM2' | 'v
 // itself. Collapsed to this with a button to see the rest — trimmed, never silently.
 const BREAKDOWN_PREVIEW_ROWS = 12;
 
+// Stands in for a figure the response did not carry. A dash reads as "no number here"; the
+// alternative, "€NaN", reads as a number we worked out and got wrong.
+const UNREADABLE = '—';
+
+// One price written out in full, for the tooltip that backs up the short label on a bar.
+function fullPrice(price: number): string {
+  return Number.isFinite(price) ? `€${Math.round(price).toLocaleString('en-GB')}` : UNREADABLE;
+}
+
 // Above this the price labels on the distribution are written short (€1.2M rather than
 // €1,200,000), because at full length they are wider than the column that holds them.
 const COMPACT_PRICE_FROM = 1_000_000;
@@ -100,7 +109,19 @@ export class MarketOverviewComponent implements OnInit {
   private busiestShare = computed(() => {
     const buckets = this.overview()?.distribution ?? [];
 
-    return buckets.reduce((most, bucket) => Math.max(most, bucket.sharePercent), 0);
+    return buckets.reduce(
+      (most, bucket) => (Number.isFinite(bucket.sharePercent) ? Math.max(most, bucket.sharePercent) : most),
+      0
+    );
+  });
+
+  // The distribution came back with bars, but not one of them carries a readable share. That only
+  // happens when the response is shaped differently from the contract — an API a version behind,
+  // typically. Worth saying out loud: the alternative is a row of empty bars and no explanation.
+  distributionUnreadable = computed(() => {
+    const buckets = this.overview()?.distribution ?? [];
+
+    return buckets.length > 0 && this.busiestShare() <= 0;
   });
 
   // Too few listings to lean on. Marked, never hidden.
@@ -140,7 +161,11 @@ export class MarketOverviewComponent implements OnInit {
   ngOnInit(): void {
     this.marketAreas.getOptions().subscribe({
       next: districts => this.districtOptions.set(districts),
-      error: () => this.districtOptions.set([])
+      // An empty dropdown and no message reads as "there are no distritos", which is never true.
+      error: () => {
+        this.districtOptions.set([]);
+        this.error.set('Could not load the list of places. Check the API is running.');
+      }
     });
   }
 
@@ -213,10 +238,19 @@ export class MarketOverviewComponent implements OnInit {
   }
 
   // Bar width as a share of the busiest bar, so the tallest bar always fills the row.
+  //
+  // Anything that is not a real share comes out as 0%, never as a width the browser cannot parse:
+  // an unparseable width is dropped, the fill then paints its natural full width, and a bucket we
+  // know nothing about ends up drawn as the busiest one on the screen. That is how this screen
+  // failed against a response whose buckets it could not read — ten full bars, all confident.
   barWidth(sharePercent: number): string {
-    const busiest = this.busiestShare();
+    const share = (sharePercent / this.busiestShare()) * 100;
 
-    return busiest <= 0 ? '0%' : `${(sharePercent / busiest) * 100}%`;
+    if (!Number.isFinite(share) || share <= 0) {
+      return '0%';
+    }
+
+    return `${Math.min(share, 100)}%`;
   }
 
   // --- Distribution labels -------------------------------------------------
@@ -224,6 +258,10 @@ export class MarketOverviewComponent implements OnInit {
   // than the column holding it — it used to spill across the bar and take the row with it.
   // Short form above a million, full number in the tooltip.
   priceLabel(price: number): string {
+    if (!Number.isFinite(price)) {
+      return UNREADABLE;
+    }
+
     if (price < COMPACT_PRICE_FROM) {
       return `€${Math.round(price).toLocaleString('en-GB')}`;
     }
@@ -238,7 +276,7 @@ export class MarketOverviewComponent implements OnInit {
 
   // The unabbreviated range, for the title attribute — the exact figures stay reachable.
   bucketRangeFull(fromPrice: number, toPrice: number): string {
-    return `€${Math.round(fromPrice).toLocaleString('en-GB')} – €${Math.round(toPrice).toLocaleString('en-GB')}`;
+    return `${fullPrice(fromPrice)} – ${fullPrice(toPrice)}`;
   }
 
   // --- Breakdown by the places inside the slice ----------------------------
