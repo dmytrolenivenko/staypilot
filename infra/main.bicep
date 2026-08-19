@@ -1,12 +1,15 @@
+@allowed(['dev', 'qa', 'prod'])
+param env string 
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-    name: 'asp-staypilot-dev'
+    name: 'asp-staypilot-${env}'
     location: 'swedencentral'
     sku: { name: 'F1' }   // the tier/size
     properties: { reserved: true }   // the resource-spesific settings
 }
 
 resource appService 'Microsoft.Web/sites@2023-12-01' = {
-    name: 'api-staypilot-dev'
+    name: 'api-staypilot-${env}'
     location: 'swedencentral'
     properties: {
         serverFarmId: appServicePlan.id
@@ -15,7 +18,7 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
             appSettings: [
                 {
                     name: 'ConnectionStrings__DefaultConnection'
-                    value: 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=db-staypilot-dev;User ID=dmytrolenivenko;Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=False;'
+                    value: 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=db-staypilot-${env};User ID=dmytrolenivenko;Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=False;'
                 }
             ]
             cors: {
@@ -31,7 +34,7 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
 param sqlAdminPassword string
 
 resource sqlServer 'Microsoft.Sql/servers@2025-02-01-preview' = {
-    name: 'srv-staypilot-dev'
+    name: 'srv-staypilot-${env}'
     location: 'swedencentral'
     properties: {
         administratorLogin: 'dmytrolenivenko'
@@ -40,7 +43,7 @@ resource sqlServer 'Microsoft.Sql/servers@2025-02-01-preview' = {
 }
 
 resource sqlDatabase 'Microsoft.Sql/servers/databases@2025-02-01-preview' = {
-    name: 'db-staypilot-dev'
+    name: 'db-staypilot-${env}'
     location: 'swedencentral'
     parent: sqlServer
     sku: {
@@ -67,7 +70,7 @@ resource sqlFirewallRule 'Microsoft.Sql/servers/firewallRules@2025-02-01-preview
 }
 
 resource staticWebApp 'Microsoft.Web/staticSites@2025-03-01' = {
-    name: 'web-staypilot-dev'
+    name: 'web-staypilot-${env}'
     location: 'centralus'
     sku: {
         name: 'Free'
