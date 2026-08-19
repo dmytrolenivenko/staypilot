@@ -3,7 +3,7 @@ name: deploy api                                  # the name you see in the Acti
 
 on:                                               # when does this workflow run?
     push:                                         # after a commit lands on...
-        branches: [ master ]                      # ...master — this is the "CD" (deploy) half
+        branches: [ master, stable, release ]     # ...any of the three environment branches
         paths:                                    # and only if one of these changed
         - 'StayPilot/StayPilot.Api/**'            # the API project
         - 'StayPilot/StayPilot.Application/**'    # ...and the projects it is built from
@@ -17,8 +17,29 @@ permissions:                                     # what this workflow is allowed
     id-token: write                              # create the short-lived token used to log into Azure
 
 jobs:
-    deploy:                                      # one job, called "deploy"
+    resolve:                                      # job 1: turn the branch name into an environment name
+        runs-on: ubuntu-latest
+        outputs:
+            target: ${{ steps.map.outputs.target }}   # this is how job 2 receives the answer
+        steps:
+            - name: Map branch to environment
+              id: map
+              run: |
+                case "${{ github.ref_name }}" in
+                  master)  echo "target=dev"  >> "$GITHUB_OUTPUT" ;;
+                  stable)  echo "target=qa"   >> "$GITHUB_OUTPUT" ;;
+                  release) echo "target=prod" >> "$GITHUB_OUTPUT" ;;
+                  *)
+                    echo "::error::Branch '${{ github.ref_name }}' has no environment mapped"
+                    exit 1
+                    ;;
+                esac
+    deploy:                                            # job 2: build that environment's code
+        needs: resolve                                 # wait for resolve to finish and hand us its answer
+        environment: ${{ needs.resolve.outputs.target }}   # dev/qa/prod — picks the right secrets + prod's approval gate
         runs-on: ubuntu-latest                   # brand-new Linux machine (note: file names are case-sensitive here)
+        env:
+            TARGET: ${{ needs.resolve.outputs.target }}     # same value, as a plain shell var for later steps
         steps:
             - name: Checkout the Repo            # copy the repo onto the machine
               uses: actions/checkout@v4
@@ -45,11 +66,11 @@ jobs:
             - name: Open SQL Server firewall for runner IP
               run: |
                 RUNNER_IP=$(curl -s https://api.ipify.org)   # ask a public site "what is my IP?"
-                az sql server firewall-rule create --resource-group rg-staypilot-dev --server srv-staypilot-dev --name "gh-runner-${{ github.run_id }}" --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP"   # allow just that one IP (rule name is unique per run)
+                az sql server firewall-rule create --resource-group "rg-staypilot-$TARGET" --server "srv-staypilot-$TARGET" --name "gh-runner-${{ github.run_id }}" --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP"   # allow just that one IP (rule name is unique per run)
 
             - name: Apply EF migrations
               env:                               # variables for this step only
-                ConnectionStrings__DefaultConnection: 'Server=tcp:srv-staypilot-dev.database.windows.net,1433;Initial Catalog=db-staypilot-dev;User ID=dmytrolenivenko;Password=${{ secrets.SQL_ADMIN_PASSWORD }};Encrypt=True;TrustServerCertificate=False;'   # which DB to migrate; password from GitHub secrets
+                ConnectionStrings__DefaultConnection: 'Server=tcp:srv-staypilot-$TARGET.database.windows.net,1433;Initial Catalog=db-staypilot-$TARGET;User ID=dmytrolenivenko;Password=${{ secrets.SQL_ADMIN_PASSWORD }};Encrypt=True;TrustServerCertificate=False;'   # which DB to migrate; password from GitHub secrets
               run: |
                 dotnet tool install --global dotnet-ef        # the machine is bare — install the EF tool
                 export PATH="$PATH:$HOME/.dotnet/tools"       # tell the shell where that tool landed
@@ -58,7 +79,7 @@ jobs:
             - name: Close SQL Server firewall for runner IP
               if: always()                       # run even if the migration failed — never leave the hole open
               run: |
-                az sql server firewall-rule delete --resource-group rg-staypilot-dev --server srv-staypilot-dev --name "gh-runner-${{ github.run_id }}"   # remove this run's rule
+                az sql server firewall-rule delete --resource-group "rg-staypilot-$TARGET" --server "srv-staypilot-$TARGET" --name "gh-runner-${{ github.run_id }}"
 
             # --- ship the code -------------------------------------------------------
 
@@ -70,5 +91,5 @@ jobs:
             - name: Deploy to Azure App Service
               uses: azure/webapps-deploy@v3      # upload that folder into the running App Service
               with:
-                  app-name: api-staypilot-dev    # WHICH app (the App Service "api-", not the plan "asp-")
+                  app-name: api-staypilot-${{ env.TARGET }}    # WHICH app (the App Service "api-", not the plan "asp-")
                   package: ./publish             # WHAT to upload (the folder the step above created)
