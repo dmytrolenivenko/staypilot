@@ -1,11 +1,176 @@
-/* The anchor is the main control on this screen — give it the slack in the toolbar. */
+/* --- Choosing what to look at -------------------------------------------- */
+
+/* The two questions this screen answers, as two things you press. Both of them used to be
+   options in one dropdown of place names, where the first option silently meant "no place". */
+.mode-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.mode-switch button {
+  flex: 1 1 18rem;
+  /* Overrides the global button, which is a compact accent pill — this is a panel you choose. */
+  display: block;
+  text-align: left;
+  white-space: normal;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.mode-switch button small {
+  display: block;
+  margin-top: var(--sp-1);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+}
+
+.mode-switch button.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.mode-switch button.on small {
+  color: var(--text);
+}
+
+/* Each row of the picker reads as a sentence — "compare municípios inside Faro" — so the dropdowns
+   say what they are for by where they sit. As a flat toolbar of eight controls they all looked
+   equally important and none of them said how they related to each other. */
+.picker-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.picker-label {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* The place being asked about is the widest choice on the screen. */
 .anchor-picker {
-  flex: 1;
-  min-width: 240px;
+  flex: 1 1 18rem;
   max-width: 26rem;
+}
+
+.anchor-picker select {
+  width: 100%;
+}
+
+/* Numbers that decide what qualifies, kept out of the way of the choices above but never hidden:
+   the summary states all three, so a filtered-out place is never a mystery. */
+.thresholds {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.thresholds > summary {
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 550;
+  cursor: pointer;
+  list-style: none;
+}
+
+.thresholds > summary::-webkit-details-marker {
+  display: none;
+}
+
+.thresholds > summary::before {
+  content: '›';
+  display: inline-block;
+  margin-right: var(--sp-2);
+  transition: transform 0.15s ease;
+}
+
+.thresholds[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.thresholds > summary:hover {
+  color: var(--text);
+}
+
+.thresholds > .toolbar {
+  padding: 0 var(--sp-3) var(--sp-3);
 }
 
 /* The gap is the headline of every row in the all-pairs table. */
 .gap {
   font-weight: 650;
+}
+
+/* --- The opened row ------------------------------------------------------- */
+/* Same drill-down as What money buys: the wide row carries the numbers, the panel under it
+   carries the comparison laid out so it can be read without scanning sideways. */
+
+.drillable {
+  cursor: pointer;
+}
+
+.drillable:hover {
+  background: var(--surface-hover);
+}
+
+.expansion > td {
+  background: var(--surface-2);
+  padding: var(--sp-4);
+  /* .data-table cells are nowrap; the panel is prose and has to wrap inside the card. */
+  white-space: normal;
+}
+
+/* The two places side by side, then the money underneath at full width. Two explicit columns
+   rather than auto-fit: the panel cell is as wide as the whole table, and auto-fit spent that
+   on five tracks and left the two blocks huddled in the first two. */
+.compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4) var(--sp-8);
+}
+
+/* Same width the shell drops the sidebar at, so the whole screen turns single-column at once. */
+@media (max-width: 860px) {
+  .compare {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Key and value belong to each other. Left to fill half the table they drift to opposite
+   ends of the row and stop reading as a pair. */
+.compare-block .kv {
+  max-width: 26rem;
+}
+
+.compare-block.wide {
+  grid-column: 1 / -1;
+}
+
+.compare-block h4 {
+  margin: 0 0 var(--sp-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* The place name sits above its numbers, so it needs air between the two. */
+.compare-block app-place-name {
+  display: block;
+  margin-bottom: var(--sp-2);
+}
+
+.note-inline {
+  margin-top: var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  max-width: 82ch;
 }

@@ -118,3 +118,10 @@
   align-items: center;
   gap: var(--sp-2);
 }
+
+/* The margin is the line the whole block adds up to, so it reads at the size of an
+   answer rather than as one more row of the list. */
+.figures .lead {
+  font-size: var(--fs-md);
+  font-weight: 700;
+}

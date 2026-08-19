@@ -149,7 +149,7 @@
           </thead>
           <tbody>
             @for (item of sortedItems(); track item.id) {
-              <tr class="row" [class.open]="expandedId() === item.id" (click)="toggle(item.id)">
+              <tr class="portfolio-row" [class.open]="expandedId() === item.id" (click)="toggle(item.id)">
                 <td class="chevron">{{ expandedId() === item.id ? '▾' : '▸' }}</td>
 
                 <td>

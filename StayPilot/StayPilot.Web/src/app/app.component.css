@@ -124,7 +124,12 @@ nav {
   flex: 1;
   min-width: 0;
   padding: var(--sp-8) var(--sp-8) var(--sp-8);
-  max-width: 1280px;
+  /* Wide enough for the widest table (Renovation upside runs to eleven columns). At
+     1280px its Verdict column fell off the end of the card and could only be reached
+     by scrolling, while a third of the window sat empty beside it. Centred, so the
+     empty space is shared rather than all piled on the right. */
+  max-width: 1440px;
+  margin-inline: auto;
 }
 
 /* Narrow windows: the sidebar becomes a scrolling strip on top. */
