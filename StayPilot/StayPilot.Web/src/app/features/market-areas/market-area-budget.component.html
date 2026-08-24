@@ -128,7 +128,7 @@
               <th class="sortable" (click)="toggleSort('typology')">Best fit{{ arrow('typology') }}</th>
               <th class="num sortable" (click)="toggleSort('area')">Median m²{{ arrow('area') }}</th>
               <th class="num sortable" (click)="toggleSort('price')">Typical price{{ arrow('price') }}</th>
-              <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+              <th class="num sortable" (click)="toggleSort('pricePerM2')"  title="Each column is its own median across the listings, so typical price ÷ median m² will not equal this exactly.">€/m²{{ arrow('pricePerM2') }}</th>
               <th class="num sortable" (click)="toggleSort('listings')">Listings{{ arrow('listings') }}</th>
             </tr>
           </thead>
@@ -180,7 +180,7 @@
                             <th>Layout</th>
                             <th class="num">Median m²</th>
                             <th class="num">Typical price</th>
-                            <th class="num">€/m²</th>
+                            <th class="num" title="Its own median, not typical price ÷ median m².">€/m²</th>
                             <th class="num">Listings</th>
                           </tr>
                         </thead>
@@ -208,6 +208,9 @@
             }
           </tbody>
         </table>
+        <p class="note-inline faint">
+          Each column is its own median across the listings here, so a typical price divided by median m² will not land exactly on the €/m² beside it. Both are true of the place; neither is derived from the other.
+        </p>
       </div>
     }
   </section>

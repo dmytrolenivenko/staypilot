@@ -67,6 +67,22 @@ namespace StayPilot.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        /// <inheritdoc/>
+        public void DiscardPendingChanges()
+        {
+            // Only the rows waiting to be inserted. The ones we read from the database stay
+            // tracked: we still hold them in memory and they were never the problem.
+            var pending = _context.ChangeTracker
+                .Entries()
+                .Where(x => x.State == EntityState.Added)
+                .ToList();
+
+            foreach (var entry in pending)
+            {
+                entry.State = EntityState.Detached;
+            }
+        }
+
         /// <summary>
         /// Turns a blank filter into null, so "not chosen" is one value and not three.
         /// </summary>
@@ -390,9 +406,9 @@ namespace StayPilot.Infrastructure.Repositories
         /// <summary>
         /// Finds properties that can be compared to the given one: same property type,
         /// a room layout within one step (a T2 is a fair comp for a T1), a floor area within
-        /// a quarter either way, and either in the same market area or within radiusMeters of
-        /// the given lat/lon. Only keeps a listing if its newest snapshot is not older than
-        /// the cutoff. Ordered best first: same market area, then nearest.
+        /// a quarter either way, and within radiusMeters of the given lat/lon. Only keeps a
+        /// listing if its newest snapshot is no older than the cutoff. Ordered best first:
+        /// same market area, then nearest.
         /// When the property has no coordinates it falls back to the market area alone.
         /// </summary>
         public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months)
@@ -456,11 +472,17 @@ namespace StayPilot.Infrastructure.Repositories
                 var radiusDegrees = (decimal)(radiusMeters / metersPerDegree);
                 var radiusDegreesSquared = radiusDegrees * radiusDegrees;
 
-                // Same market area, or close enough on the map. Distances are kept squared
-                // so there is no square root to take - it does not change the ordering.
-                query = query.Where(x => x.MarketAreaId == marketId
-                    || (x.Latitude - lat) * (x.Latitude - lat)
-                     + (x.Longitude - lon) * lonScale * (x.Longitude - lon) * lonScale <= radiusDegreesSquared);
+                // Inside the circle, and nothing else. Distances are kept squared so there is
+                // no square root to take - it does not change the ordering.
+                //
+                // This used to also admit anything sharing the property's market area, whatever
+                // the distance, which made "comparables within 2km" untrue the moment that area
+                // was larger than the circle - and nothing in the response said which comps had
+                // come in through which door. Same-area listings inside the radius still arrive,
+                // and still sort first below; the clause only ever added the ones beyond it.
+                query = query.Where(x =>
+                    (x.Latitude - lat) * (x.Latitude - lat)
+                  + (x.Longitude - lon) * lonScale * (x.Longitude - lon) * lonScale <= radiusDegreesSquared);
 
                 // Own market area first, because a zone 800 m away can be a completely
                 // different market (a beachfront zone against an old town). Only then the

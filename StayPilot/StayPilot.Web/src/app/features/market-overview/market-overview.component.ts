@@ -9,6 +9,9 @@ import { AreaLevel } from '../../core/models/market-area-stats';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 import { PlaceNameComponent, placeLevelLabel } from '../../shared/place-name.component';
+import { Subscription } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { apiErrorMessage } from '../../core/api-error';
 
 // Bars offered for the distribution. Ten reads well on a normal window; the API caps at 20.
 const BUCKET_CHOICES = [6, 10, 14, 20];
@@ -40,7 +43,7 @@ const COMPACT_PRICE_FROM = 1_000_000;
 
 // Compare on the number after the T, so T10 sorts above T9 rather than next to T1.
 function typologyRooms(typology: string): number {
-  return Number(typology.replace(/^T/i, '')) || 0;
+  return Number(String(typology ?? '').replace(/^T/i, '')) || 0;
 }
 
 // Distrito/Distritos, Município/Municípios, Freguesia/Freguesias — all three take a plain -s.
@@ -103,6 +106,12 @@ export class MarketOverviewComponent implements OnInit {
   overview = signal<MarketOverviewResponse | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
+
+  // The scope selects reload on change and the Show button submits, so one interaction can
+  // start a second request while the first is still open - two identical calls over a table of
+  // thousands of rows, and whichever answered last won. Cancelling the open one leaves exactly
+  // one in flight and makes the newest request the one that renders.
+  private inFlight?: Subscription;
 
   // The busiest bar, so every other bar can be drawn as a share of it. Scaling to the busiest
   // bar rather than to 100% is what makes the shape of a market visible at all.
@@ -208,7 +217,9 @@ export class MarketOverviewComponent implements OnInit {
     // a 40-row freguesia list because a district list was expanded a moment ago.
     this.showAllBreakdown.set(false);
 
-    this.service
+    this.inFlight?.unsubscribe();
+
+    this.inFlight = this.service
       .getMarketOverview({
         district: this.form.district || undefined,
         municipality: this.form.municipality || undefined,
@@ -222,11 +233,21 @@ export class MarketOverviewComponent implements OnInit {
           this.overview.set(response);
           this.loading.set(false);
         },
-        error: () => {
-          this.error.set('Could not load the market overview. Check the API is running.');
+        error: (err: HttpErrorResponse) => {
+          // The whole screen reads off this, so a stale slice would sit under the error.
+          this.overview.set(null);
+          this.error.set(apiErrorMessage(err, 'Could not load the market overview.'));
           this.loading.set(false);
         }
       });
+  }
+
+  // A district picked with nothing narrowed under it. Then an empty answer means we have
+  // collected nothing there at all - and telling the reader to widen the slice is advice that
+  // cannot work, because there is nothing below it to widen into.
+  nothingNarrowedBelowDistrict(): boolean {
+    return !!this.form.district && !this.form.municipality && !this.form.town
+      && !this.form.propertyType && !this.form.typology;
   }
 
   reset(): void {

@@ -39,11 +39,18 @@ namespace StayPilot.Application.Interfaces.Repositories
         Task SaveChangesAsync();
 
         /// <summary>
-        /// Finds properties comparable to a given one: same property type, a room layout
-        /// within one step, and either in the same market area or within radiusMeters of
-        /// the given lat/lon. Only counts as fresh if its newest snapshot is not older
-        /// than the cutoff. Returns at most 100, same market area first, then nearest.
-        /// Falls back to the market area alone when the property has no coordinates.
+        /// Forget the rows that are queued to be inserted but have not been saved.
+        /// Call it after a failed save, or the same rows are sent again with the next one and
+        /// fail again.
+        /// </summary>
+        void DiscardPendingChanges();
+
+        /// <summary>
+        /// Finds properties comparable to a given one: same property type, a room layout within
+        /// one step, a floor area within a quarter either way, and within radiusMeters of the
+        /// given lat/lon. Only counts a listing if its newest snapshot is no older than the
+        /// cutoff. Every match is returned, not a top slice - ordered same market area first,
+        /// then nearest. Falls back to the market area alone when the property has no coordinates.
         /// </summary>
         Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months);
 
