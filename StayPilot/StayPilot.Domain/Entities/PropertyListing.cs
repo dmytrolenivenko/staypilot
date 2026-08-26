@@ -155,14 +155,14 @@ namespace StayPilot.Domain.Entities
         public string? DistanceToBeachMethod { get; set; }
 
         /// <summary>
-        /// Location: north-south position. Can be empty.
+        /// Location: north-south position.
         /// </summary>
-        public decimal? Latitude { get; set; }
+        public decimal Latitude { get; set; }
 
         /// <summary>
-        /// Location: east-west position. Can be empty.
+        /// Location: east-west position.
         /// </summary>
-        public decimal? Longitude { get; set; }
+        public decimal Longitude { get; set; }
 
         /// <summary>
         /// Energy rating letter (for example "A" or "C"). Can be empty.

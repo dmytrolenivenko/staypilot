@@ -4,7 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-StayPilot Comps — a personal real-estate comparable-listings tool for the Algarve (Portugal).
+StayPilot Comps — a personal real-estate comparable-listings tool for Portugal. It began as an
+Algarve-only tool and the collection has since widened: as of 2026-08-24 the database holds 36,464
+listings across 18 districts, led by Lisboa, Faro and Setúbal but reaching down to Portalegre and
+Bragança with about a hundred each. That range is the main thing to hold in mind when changing
+anything in the valuation path — a rule calibrated on Algarve prices (an absolute EUR/m² floor,
+say) is wrong in both directions once Bragança is in the same table, which is why admission and
+confidence are both judged against a property's own município rather than against a constant.
 It stores scraped Idealista apartment listings with price history, and will eventually support
 market analysis and valuation of owned properties against comparables. This is an early-stage,
 single-developer project (see commit history) — a lot of the design is intentionally minimal
@@ -59,8 +65,11 @@ dotnet ef database update --project StayPilot.Infrastructure --startup-project S
 Local DB is SQL Server **LocalDB** (`(localdb)\MSSQLLocalDB`), configured in
 `StayPilot.Api/appsettings.Development.json`. No Docker/Azure SQL setup exists yet.
 
-There is no CI configured (`.github/workflows/` is empty) and no lint tooling beyond the C#
-compiler/analyzers.
+CI/CD (`.github/workflows/`): `ci.yml` builds+tests both API and Angular on every PR into
+`master`/`stable`/`release`. `deploy-api.yml`, `deploy-web.yml` and `infra.yml` each push on
+merge to one of those branches, mapped to an environment (`master`→dev, `stable`→qa,
+`release`→prod) — `deploy-api.yml` also runs `dotnet ef database update` against that
+environment's Azure SQL before publishing. No lint tooling beyond the C# compiler/analyzers.
 
 ## Architecture
 
@@ -148,7 +157,8 @@ alongside its service.
   T2...), which is what makes "what does €300k buy me here" answerable instead of one blended
   median across studios and villas.
 - `MarketArea` — a geographic zone (District/Municipality/Town/Zone). Seeded via EF migrations
-  from real-world Algarve data; matched by exact normalized-string lookup (`GetMarketId` in
+  from real-world Portuguese data (all districts, not only the Algarve); matched by exact
+  normalized-string lookup (`GetMarketId` in
   `PropertyListingService`), not by ID, when a scraped listing doesn't supply a `MarketAreaId`.
 - `PropertyListing` — one row per property, uniquely identified by `SourceUrl` (unique index;
   `AddPropertyListingAsync` is idempotent on `SourceUrl` — re-posting the same URL returns the

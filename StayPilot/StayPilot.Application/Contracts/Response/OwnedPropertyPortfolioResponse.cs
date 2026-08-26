@@ -5,35 +5,35 @@ using StayPilot.Domain.Enums;
 namespace StayPilot.Application.Contracts.Response
 {
     /// <summary>
-    /// Every owned property priced in one go, with what its place is doing and where its value is
-    /// heading. The Valuation screen reads this and nothing else to draw its list.
+    /// Every owned property priced in one go, with what its place is doing and where its asking
+    /// price is heading. The Valuation screen reads this and nothing else to draw its list.
     ///
-    /// One request rather than one per property because the valuation model is fitted over the
-    /// whole listing table: fitting it once and pricing ten properties against it is the same work
-    /// as pricing one, while ten separate calls is ten fits.
+    /// Every price on this response is an ASKING price - what the adverts around the property
+    /// want, not what anyone paid. See <see cref="AskSpreadSummary"/> for why that distinction
+    /// is kept in the field names rather than left to a tooltip.
     /// </summary>
     public class OwnedPropertyPortfolioResponse : ResponseBase
     {
-        /// <summary>The properties, most valuable first. Empty when the user has none.</summary>
+        /// <summary>The properties, dearest first. Empty when the user has none.</summary>
         public List<OwnedPropertyPortfolioItemResponse> Items { get; set; } = new();
 
         /// <summary>How many properties were priced.</summary>
         public int PropertyCount { get; set; }
 
         /// <summary>The estimates added up. Only the ones that could be priced count.</summary>
-        public decimal TotalEstimatedValue { get; set; }
+        public decimal TotalEstimatedAskingPrice { get; set; }
 
         /// <summary>What was paid for them, added up. Zero for any with no purchase price.</summary>
         public decimal TotalPurchasePrice { get; set; }
 
-        /// <summary>Estimated value less what was paid.</summary>
-        public decimal TotalGainAmount { get; set; }
+        /// <summary>Estimated asking price less what was paid. Not a realised gain.</summary>
+        public decimal TotalAskSpreadAmount { get; set; }
 
-        /// <summary>That gain against what was paid, in percent.</summary>
-        public decimal TotalGainPercent { get; set; }
+        /// <summary>That spread against what was paid, in percent.</summary>
+        public decimal TotalAskSpreadPercent { get; set; }
 
         /// <summary>The Base path total at the end of the projection, across every property.</summary>
-        public decimal TotalProjectedValue { get; set; }
+        public decimal TotalProjectedAskingPrice { get; set; }
 
         /// <summary>How many years the projections run for.</summary>
         public int ProjectionYears { get; set; }
@@ -43,8 +43,8 @@ namespace StayPilot.Application.Contracts.Response
     }
 
     /// <summary>
-    /// One owned property: what it is, what it is worth, what its place is doing, and where its
-    /// value is heading. Everything the list row and its expanded panel need except the comps and
+    /// One owned property: what it is, what it would be advertised at, what its place is doing,
+    /// and where that ask is heading. Everything the list row and its expanded panel need except the comps and
     /// the feature breakdown, which stay on the estimate endpoint because they are per property
     /// and large.
     /// </summary>
@@ -82,18 +82,18 @@ namespace StayPilot.Application.Contracts.Response
         /// <summary>True when the coordinates decided the zone rather than the saved address.</summary>
         public bool LocatedByCoordinates { get; set; }
 
-        // --- What it is worth -------------------------------------------------------------
+        // --- What it would be advertised at ------------------------------------------------
 
         /// <summary>The headline estimate: what it would be advertised at today.</summary>
         public decimal MidPrice { get; set; }
 
-        /// <summary>Low end of the model's own typical error.</summary>
+        /// <summary>Low end of the range, from the P25 asking price of the nearest comps.</summary>
         public decimal MinPrice { get; set; }
 
-        /// <summary>High end of the model's own typical error.</summary>
+        /// <summary>High end of the range, from the P75 asking price of the nearest comps.</summary>
         public decimal MaxPrice { get; set; }
 
-        /// <summary>The estimate divided by the floor area.</summary>
+        /// <summary>The estimated ask divided by the floor area.</summary>
         public decimal PricePerM2 { get; set; }
 
         /// <summary>How much to trust the estimate.</summary>
@@ -105,15 +105,15 @@ namespace StayPilot.Application.Contracts.Response
         /// </summary>
         public string ConfidenceNote { get; set; } = string.Empty;
 
-        /// <summary>What was paid, what it is worth now, and the gain between them.</summary>
-        public EquitySummary Equity { get; set; } = new();
+        /// <summary>What was paid, what it would be advertised at now, and the spread between them.</summary>
+        public AskSpreadSummary AskSpread { get; set; } = new();
 
         // --- What its place is doing ------------------------------------------------------
 
         /// <summary>How keen buyers are around it, with the working.</summary>
         public AreaDemandResponse Demand { get; set; } = new();
 
-        /// <summary>Where its value is heading, with both rates behind it kept apart.</summary>
+        /// <summary>Where its asking price is heading, with both rates behind it kept apart.</summary>
         public GrowthForecastResponse Forecast { get; set; } = new();
     }
 }

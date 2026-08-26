@@ -65,6 +65,13 @@ function rate(value: number): string {
   return `€${Math.round(value).toLocaleString('en-GB')}/m²`;
 }
 
+// Lowercases only the first letter, so a label reads as part of the sentence around it
+// ("Pool — concrete") without flattening the units inside it. A blanket toLowerCase() turned
+// "6 kWp + 10 kWh battery" into "6 kwp + 10 kwh battery".
+function sentenceCase(label: string): string {
+  return label.charAt(0).toLowerCase() + label.slice(1);
+}
+
 // Build Cost — "what would it cost to build this from scratch, and would I be better off just
 // buying one?"
 //
@@ -228,7 +235,7 @@ export class BuildCostComponent implements OnInit {
       rows.push({
         key: 'pool',
         group: 'works',
-        label: `Pool — ${pool.label.toLowerCase()}`,
+        label: `Pool — ${sentenceCase(pool.label)}`,
         working: atFloor
           ? `minimum ${euros(pool.minCost ?? 0)} (${surface} m² × ${rate(pool.ratePerM2 ?? 0)} is below it) × ${site}`
           : `${surface} m² water × ${rate(pool.ratePerM2 ?? 0)} × ${site}`,
@@ -360,8 +367,12 @@ export class BuildCostComponent implements OnInit {
   // for the comparison against what a finished house asks.
   buildOnlyTotal = computed(() => this.total() - this.landCost());
 
-  low = computed(() => this.total() * ESTIMATE_LOW_FACTOR);
-  high = computed(() => this.total() * ESTIMATE_HIGH_FACTOR);
+  // The band is uncertainty in the BUILD - what a builder might actually quote against a formula.
+  // Land carries none of that: it is a price you typed in because you already know it. Widening
+  // it by -15/+25% invents doubt about the one figure here that has none, so band the
+  // construction and add the plot back at face value.
+  low = computed(() => this.buildOnlyTotal() * ESTIMATE_LOW_FACTOR + this.landCost());
+  high = computed(() => this.buildOnlyTotal() * ESTIMATE_HIGH_FACTOR + this.landCost());
 
   allInRatePerM2 = computed(() => (this.builtArea() > 0 ? this.total() / this.builtArea() : 0));
   buildRatePerM2 = computed(() => (this.builtArea() > 0 ? this.buildOnlyTotal() / this.builtArea() : 0));
@@ -512,7 +523,7 @@ export class BuildCostComponent implements OnInit {
     rows.push({
       key: option.key,
       group: 'works',
-      label: `${label} — ${option.label.toLowerCase()}`,
+      label: `${label} — ${sentenceCase(option.label)}`,
       working: working ?? `${euros(option.cost)} × ${multiplier}`,
       amount: option.cost * multiplier
     });

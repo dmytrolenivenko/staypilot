@@ -136,5 +136,6 @@ namespace StayPilot.UnitTests
             Assert.Equal(3, fit.Coefficients[1], precision: 5);
             Assert.Equal(0, fit.Coefficients[2], precision: 5);
         }
+
     }
 }

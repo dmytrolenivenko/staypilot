@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Response;
@@ -11,10 +12,13 @@ namespace StayPilot.Api.Controllers
     public class OwnedPropertyController : ControllerBase
     {
         private readonly IOwnedPropertyService _ownedPropertyService;
+        private readonly IOwnedPropertyValuationService _ownedPropertyValuationService;
 
-        public OwnedPropertyController(IOwnedPropertyService ownedPropertyService)
+        public OwnedPropertyController(
+            IOwnedPropertyService ownedPropertyService, IOwnedPropertyValuationService ownedPropertyValuationService)
         {
             _ownedPropertyService = ownedPropertyService;
+            _ownedPropertyValuationService = ownedPropertyValuationService;
         }
 
         /// <summary>
@@ -89,10 +93,12 @@ namespace StayPilot.Api.Controllers
         /// </summary>
         // radiusMeters has a default because a missing query string value would otherwise
         // bind to 0, which silently shrinks the search circle to nothing.
+        // The bounds mirror what the UI already enforces - months=0 and a negative radius
+        // were both accepted before.
         [HttpPost]
-        public async Task<ActionResult<OwnedPropertyAnalysisResponse>> EstimateEvaluationsOwnedpropertyAsync(int id, int months, int radiusMeters = 2000)
+        public async Task<ActionResult<OwnedPropertyAnalysisResponse>> EstimateEvaluationsOwnedpropertyAsync(int id, [Range(1, 120)] int months, [Range(100, 20_000)] int radiusMeters = 2000)
         {
-            var result = await _ownedPropertyService.EstimateOwnedPropertyValue(id, radiusMeters, months);
+            var result = await _ownedPropertyValuationService.EstimateOwnedPropertyValue(id, radiusMeters, months);
 
             return this.ToActionResult(result);
         }
@@ -105,10 +111,12 @@ namespace StayPilot.Api.Controllers
         /// </summary>
         // Every parameter defaults, because a missing query string value binds to 0 - which
         // would shrink the comparable search to nothing and project zero years forward.
+        // The bounds mirror what the UI already enforces. Without them years=999 ran the
+        // compounding loop until decimal overflowed and answered 500 after half a minute.
         [HttpGet]
-        public async Task<ActionResult<OwnedPropertyPortfolioResponse>> ListValuationsOwnedpropertyAsync(int months = 12, int radiusMeters = 2000, int years = 10)
+        public async Task<ActionResult<OwnedPropertyPortfolioResponse>> ListValuationsOwnedpropertyAsync([Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
         {
-            var result = await _ownedPropertyService.GetPortfolioAsync(radiusMeters, months, years);
+            var result = await _ownedPropertyValuationService.GetPortfolioAsync(radiusMeters, months, years);
 
             return this.ToActionResult(result);
         }

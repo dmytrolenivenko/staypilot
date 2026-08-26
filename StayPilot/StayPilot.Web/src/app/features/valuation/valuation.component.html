@@ -1,7 +1,7 @@
 <div class="page">
   <app-page-header
     title="Valuation"
-    sub="Every property you own, priced against the adverts around it, with how keen buyers are in each place and where the value goes from here."
+    sub="Every property you own, priced against the ASKING prices of the adverts around it, with how keen buyers are in each place and where those asks go from here. These are advertised prices, not sale prices — nothing here has been checked against a recorded transaction."
   >
     <button actions type="button" (click)="reload()" [disabled]="loading()">
       {{ loading() ? 'Pricing…' : 'Re-price' }}
@@ -72,10 +72,10 @@
         <div class="card-body">
           <div class="stat-grid">
             <div class="stat">
-              <span class="stat-value" [title]="'€' + (p.totalEstimatedValue | number: '1.0-0')">
-                {{ money(p.totalEstimatedValue) }}
+              <span class="stat-value" [title]="'€' + (p.totalEstimatedAskingPrice | number: '1.0-0')">
+                {{ money(p.totalEstimatedAskingPrice) }}
               </span>
-              <span class="stat-label">Advertised value today</span>
+              <span class="stat-label">Advertised at today</span>
             </div>
             <div class="stat">
               <span class="stat-value" [title]="'€' + (p.totalPurchasePrice | number: '1.0-0')">
@@ -86,23 +86,23 @@
             <div class="stat">
               <span
                 class="stat-value"
-                [class.pos]="p.totalGainAmount > 0"
-                [class.neg]="p.totalGainAmount < 0"
-                [title]="'€' + (p.totalGainAmount | number: '1.0-0')"
+                [class.pos]="p.totalAskSpreadAmount > 0"
+                [class.neg]="p.totalAskSpreadAmount < 0"
+                [title]="'€' + (p.totalAskSpreadAmount | number: '1.0-0')"
               >
-                {{ p.totalGainAmount > 0 ? '+' : '' }}{{ money(p.totalGainAmount) }}
+                {{ p.totalAskSpreadAmount > 0 ? '+' : '' }}{{ money(p.totalAskSpreadAmount) }}
               </span>
-              <span class="stat-label">Gain</span>
+              <span class="stat-label">Ask spread</span>
             </div>
             <div class="stat">
-              <span class="stat-value" [class.pos]="p.totalGainPercent > 0" [class.neg]="p.totalGainPercent < 0">
-                {{ p.totalGainPercent > 0 ? '+' : '' }}{{ p.totalGainPercent | number: '1.0-1' }}%
+              <span class="stat-value" [class.pos]="p.totalAskSpreadPercent > 0" [class.neg]="p.totalAskSpreadPercent < 0">
+                {{ p.totalAskSpreadPercent > 0 ? '+' : '' }}{{ p.totalAskSpreadPercent | number: '1.0-1' }}%
               </span>
-              <span class="stat-label">Gain %</span>
+              <span class="stat-label">Ask spread %</span>
             </div>
             <div class="stat">
-              <span class="stat-value" [title]="'€' + (p.totalProjectedValue | number: '1.0-0')">
-                {{ money(p.totalProjectedValue) }}
+              <span class="stat-value" [title]="'€' + (p.totalProjectedAskingPrice | number: '1.0-0')">
+                {{ money(p.totalProjectedAskingPrice) }}
               </span>
               <span class="stat-label">Base path in {{ p.projectionYears }} years</span>
             </div>
@@ -140,7 +140,7 @@
               <th class="sortable" (click)="toggleSort('place')">Where{{ arrow('place') }}</th>
               <th class="num sortable" (click)="toggleSort('value')">Advertised at{{ arrow('value') }}</th>
               <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
-              <th class="num sortable" (click)="toggleSort('gain')">Gain{{ arrow('gain') }}</th>
+              <th class="num sortable" (click)="toggleSort('spread')">Ask spread{{ arrow('spread') }}</th>
               <th class="sortable" (click)="toggleSort('demand')">Demand{{ arrow('demand') }}</th>
               <th class="num sortable" (click)="toggleSort('projected')">
                 In {{ portfolio()?.projectionYears }} yrs{{ arrow('projected') }}
@@ -180,9 +180,9 @@
                 <td class="num">€{{ item.pricePerM2 | number: '1.0-0' }}</td>
 
                 <td class="num">
-                  @if (item.equity.purchasePrice > 0) {
-                    <span [class.pos]="item.equity.gainPercent > 0" [class.neg]="item.equity.gainPercent < 0">
-                      {{ item.equity.gainPercent > 0 ? '+' : '' }}{{ item.equity.gainPercent | number: '1.0-0' }}%
+                  @if (item.askSpread.purchasePrice > 0) {
+                    <span [class.pos]="item.askSpread.spreadPercent > 0" [class.neg]="item.askSpread.spreadPercent < 0">
+                      {{ item.askSpread.spreadPercent > 0 ? '+' : '' }}{{ item.askSpread.spreadPercent | number: '1.0-0' }}%
                     </span>
                   } @else {
                     <span class="muted">—</span>
@@ -262,31 +262,36 @@
                             <span class="stat-value">€{{ item.pricePerM2 | number: '1.0-0' }}</span>
                             <span class="stat-label">Per m²</span>
                           </div>
-                          @if (item.equity.purchasePrice > 0) {
+                          @if (item.askSpread.purchasePrice > 0) {
                             <div class="stat">
-                              <span class="stat-value">€{{ item.equity.purchasePrice | number: '1.0-0' }}</span>
+                              <span class="stat-value">€{{ item.askSpread.purchasePrice | number: '1.0-0' }}</span>
                               <span class="stat-label">Paid</span>
                             </div>
                             <div class="stat">
-                              <span class="stat-value" [class.pos]="item.equity.gainAmount > 0" [class.neg]="item.equity.gainAmount < 0">
-                                {{ item.equity.gainAmount > 0 ? '+' : '' }}€{{ item.equity.gainAmount | number: '1.0-0' }}
+                              <span class="stat-value" [class.pos]="item.askSpread.spreadAmount > 0" [class.neg]="item.askSpread.spreadAmount < 0">
+                                {{ item.askSpread.spreadAmount > 0 ? '+' : '' }}€{{ item.askSpread.spreadAmount | number: '1.0-0' }}
                               </span>
-                              <span class="stat-label">Gain</span>
+                              <span class="stat-label">Ask spread</span>
                             </div>
                             <div class="stat">
-                              <span class="stat-value">{{ item.equity.yearsHeld }}</span>
+                              <span class="stat-value">{{ item.askSpread.yearsHeld }}</span>
                               <span class="stat-label">Years held</span>
                             </div>
                             <div class="stat">
-                              <span class="stat-value" [class.pos]="item.equity.roiPerYear > 0" [class.neg]="item.equity.roiPerYear < 0">
-                                {{ item.equity.roiPerYear | number: '1.0-1' }}%
-                              </span>
-                              <span class="stat-label">Return / year</span>
+                              @if (item.askSpread.spreadPerYearPercent === null) {
+                                <span class="stat-value faint">—</span>
+                                <span class="stat-label">Ask spread / year (under a year held)</span>
+                              } @else {
+                                <span class="stat-value" [class.pos]="item.askSpread.spreadPerYearPercent > 0" [class.neg]="item.askSpread.spreadPerYearPercent < 0">
+                                  {{ item.askSpread.spreadPerYearPercent | number: '1.0-1' }}%
+                                </span>
+                                <span class="stat-label">Ask spread / year</span>
+                              }
                             </div>
                           }
                         </div>
 
-                        @if (item.equity.purchasePrice <= 0) {
+                        @if (item.askSpread.purchasePrice <= 0) {
                           <p class="hint">
                             No purchase price saved on this property, so there is nothing to compare
                             the estimate against.
@@ -376,7 +381,7 @@
 
                       <!-- 3. Forecast -->
                       <div class="panel-block">
-                        <h3>Where the value goes from here</h3>
+                        <h3>Where the asking price goes from here</h3>
 
                         <div class="rates">
                           <div class="rate">
@@ -484,9 +489,9 @@
                                 </div>
                                 <div class="stat">
                                   <span class="stat-value">
-                                    €{{ d.minCompPricePerM2 | number: '1.0-0' }} – €{{ d.maxCompPricePerM2 | number: '1.0-0' }}
+                                    €{{ d.compPricePerM2P25 | number: '1.0-0' }} – €{{ d.compPricePerM2P75 | number: '1.0-0' }}
                                   </span>
-                                  <span class="stat-label">Comp €/m² spread</span>
+                                  <span class="stat-label">Comp €/m² middle half</span>
                                 </div>
                               </div>
 

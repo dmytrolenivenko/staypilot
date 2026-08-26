@@ -2,6 +2,7 @@ using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Domain.Entities;
+using StayPilot.Domain.Enums;
 using System.Globalization;
 using System.Text;
 using StayPilot.Application.Helpers.Mappers;
@@ -100,21 +101,28 @@ namespace StayPilot.Application.Services
 
                     var result = await AddPropertyListingAsync(item, marketAreas, beaches, existingByUrl);
 
-                    readyToSave.Add(item);
-
+                    // Only the listings we actually queued for the database. An unchanged one
+                    // wrote nothing, so a failed batch must not report it as a listing we lost.
                     if (result.IsNew)
                     {
                         added++;
+                        readyToSave.Add(item);
                     }
                     else if (result.IsSnapshotUpdated)
                     {
                         snapshotUpdated++;
+                        readyToSave.Add(item);
                     }
                     else
                     {
                         unchanged++;
                     }
                 }
+
+                // These queued nothing for the database, so whether the save works cannot change
+                // them. Counted straight away, or a failed batch would leave them out of every
+                // number in the response and the totals would not add up to what was sent.
+                response.Unchanged += unchanged;
 
                 try
                 {
@@ -123,7 +131,6 @@ namespace StayPilot.Application.Services
 
                     response.TotalAdded += added;
                     response.SnapShotUpdated += snapshotUpdated;
-                    response.Unchanged += unchanged;
                 }
                 catch (Exception ex)
                 {
@@ -131,6 +138,12 @@ namespace StayPilot.Application.Services
                     // exception kill the whole request. This catch stays on purpose: only the
                     // database can tell us a row it already accepted cannot be written, and the
                     // batches after this one still deserve their chance to save.
+                    //
+                    // For that to be true we have to undo this batch first. Its rows are still
+                    // queued in the context, so the next save would send them again and fail on
+                    // the same one, taking the rest of the upload down with it.
+                    UndoFailedBatch(existingByUrl);
+
                     foreach (var item in readyToSave)
                     {
                         response.AddError(ErrorCode.ListingNotSaved, item.SourceUrl, ex.Message);
@@ -139,6 +152,34 @@ namespace StayPilot.Application.Services
             }
 
             return response;
+        }
+
+        /// <summary>
+        /// Put memory back to what the database really holds, after a batch failed to save.
+        ///
+        /// A row that was never written still has Id 0, and that is how we find what this batch
+        /// added: the snapshots queued against listings we already had, and the listings we only
+        /// knew about because this batch created them. Leaving either behind would make the next
+        /// batch believe a price was saved when it was not.
+        /// </summary>
+        private void UndoFailedBatch(Dictionary<string, PropertyListing> existingByUrl)
+        {
+            _propertyListingRepo.DiscardPendingChanges();
+
+            foreach (var listing in existingByUrl.Values)
+            {
+                listing.ListingSnapshots.RemoveAll(x => x.Id == 0);
+            }
+
+            var neverSaved = existingByUrl
+                .Where(x => x.Value.Id == 0)
+                .Select(x => x.Key)
+                .ToList();
+
+            foreach (var url in neverSaved)
+            {
+                existingByUrl.Remove(url);
+            }
         }
 
         /// <summary>
@@ -154,9 +195,11 @@ namespace StayPilot.Application.Services
                 return null;
             }
 
-            if (propertyListing.Latitude is null || propertyListing.Longitude is null)
+            // Typology 0 means nothing was sent, or a name we do not know. Stored, it serialises
+            // as a bare number instead of a name and blanks whole screens on the way out.
+            if (propertyListing.Typology == Typology.Unknown)
             {
-                return new Error(ErrorCode.ListingLocationRequired, propertyListing.SourceUrl);
+                return new Error(ErrorCode.ListingTypologyRequired, propertyListing.SourceUrl);
             }
 
             // Use the market area the caller sent, or find it from the address. We keep it on
@@ -231,7 +274,7 @@ namespace StayPilot.Application.Services
             // If we found a beach, save its name and how far it is (in meters).
             if (closesBeach is not null)
             {
-                var distanceToBeachMeters = Calculator.CalculateDistanceMeters((double)propertyListing.Latitude!.Value, (double)propertyListing.Longitude!.Value, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
+                var distanceToBeachMeters = Calculator.CalculateDistanceMeters((double)propertyListing.Latitude, (double)propertyListing.Longitude, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
 
                 property.NearestBeachName = closesBeach.Name;
                 property.NearestBeachMarkerId = closesBeach.Id;
@@ -264,10 +307,33 @@ namespace StayPilot.Application.Services
         /// </summary>
         public async Task<FilterPropertyListingResponse> FilterPropertyListingAsync(FilterPropertyListingRequest request)
         {
+            var response = new FilterPropertyListingResponse();
+
+            // An inverted bound matches nothing, so without this the screen shows the same
+            // "No listings match" it shows for a search that ran fine and found nothing - and
+            // the user has no way to tell a typo from a genuinely empty market.
+            if (request.MinPrice > request.MaxPrice)
+            {
+                response.AddError(ErrorCode.FilterRangeInverted, "price");
+            }
+
+            if (request.MinAreaM2 > request.MaxAreaM2)
+            {
+                response.AddError(ErrorCode.FilterRangeInverted, "area");
+            }
+
+            if (request.MinPricePerM2 > request.MaxPricePerM2)
+            {
+                response.AddError(ErrorCode.FilterRangeInverted, "price per m2");
+            }
+
+            if (!response.Succeeded)
+            {
+                return response;
+            }
+
             // Ask the database for this page of properties and the total number of matches.
             var (items, totalRecords) = await _propertyListingRepo.FilterPropertyAsync(request);
-
-            var response = new FilterPropertyListingResponse();
 
             // For each property, take its snapshot and build one item for the response.
             foreach(var property in items)

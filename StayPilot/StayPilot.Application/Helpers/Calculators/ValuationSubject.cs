@@ -25,9 +25,9 @@ namespace StayPilot.Application.Helpers.Calculators
         public string Municipality { get; set; } = string.Empty;
 
         /// <summary>
-        /// The town and the zone within it. Carried only so the fit can spot the areas that are
-        /// not really places - see <see cref="ValuationModel.CatchAllAreasIn"/>. Empty on an owned
-        /// property, which knows only its area id; the fit looks those up by id instead.
+        /// The town and the zone within it. Carried so a fit over these subjects can spot the
+        /// areas that are not really places (a catch-all zone named after the whole town). Empty
+        /// on an owned property, which knows only its area id; a fit looks those up by id instead.
         /// </summary>
         public string Town { get; set; } = string.Empty;
 
@@ -70,10 +70,10 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>Walking-line distance to the nearest beach, or null when unknown.</summary>
         public int? DistanceToBeachMeters { get; set; }
 
-        /// <summary>Coordinates. Needed for the neighbourhood correction; null just skips it.</summary>
-        public decimal? Latitude { get; set; }
+        /// <summary>Coordinates, used for the neighbourhood correction.</summary>
+        public decimal Latitude { get; set; }
 
-        public decimal? Longitude { get; set; }
+        public decimal Longitude { get; set; }
 
         public bool HasElevator { get; set; }
 
@@ -310,6 +310,13 @@ namespace StayPilot.Application.Helpers.Calculators
         private const int MaximumAreaM2 = 1_000;
 
         /// <summary>
+        /// How far price per m2 may sit from price over area before the row is treated as broken.
+        /// Five percent absorbs rounding and the gross-versus-net area the adverts are loose
+        /// about; the rows this actually catches are out by a factor, not a few percent.
+        /// </summary>
+        private const decimal PricePerM2Tolerance = 0.05m;
+
+        /// <summary>
         /// The smallest floor area a property of this typology could really have. The enum
         /// counts from T0 = 1, so bedrooms is one less than the stored value.
         /// </summary>
@@ -333,7 +340,32 @@ namespace StayPilot.Application.Helpers.Calculators
             if (listing.AreaM2 < MinimumPlausibleAreaM2(listing.Typology) || listing.AreaM2 > MaximumAreaM2)
                 return false;
 
+            if (!AgreesWithItself(listing, snapshot))
+                return false;
+
             return snapshot.PricePerM2 >= MinimumPricePerM2 && snapshot.PricePerM2 <= MaximumPricePerM2;
+        }
+
+        /// <summary>
+        /// Does the row agree with itself? Price per m2 should be the price over the floor area,
+        /// and when it is not, one of the three numbers is wrong and there is no way to tell
+        /// which. A Portimão listing asking EUR 123,123 over 91 m2 carried EUR 123/m2; a Loulé
+        /// one asking EUR 229,000 over 45 m2 carried EUR 233. Both passed every bound above,
+        /// because each field is plausible on its own - it is only the three together that are
+        /// impossible.
+        ///
+        /// Both fields get used downstream: the fit learns from price per m2, the comps table
+        /// prints the price. A row where they disagree teaches one thing and displays another.
+        /// </summary>
+        private static bool AgreesWithItself(PropertyListing listing, ListingSnapshot snapshot)
+        {
+            if (listing.AreaM2 <= 0 || snapshot.Price <= 0)
+                return false;
+
+            var impliedPricePerM2 = snapshot.Price / listing.AreaM2;
+
+            // Room for honest rounding and for an advert quoting gross area against net, no more.
+            return Math.Abs(snapshot.PricePerM2 - impliedPricePerM2) <= impliedPricePerM2 * PricePerM2Tolerance;
         }
 
         /// <summary>The newest snapshot, which is the one every price decision is made on.</summary>
@@ -369,6 +401,11 @@ namespace StayPilot.Application.Helpers.Calculators
                     usable.Add(listing);
             }
 
+            // A row can be structurally sound and still be describing something other than a
+            // home. That only shows up against the local market, so it needs the admitted set
+            // in hand - which is why it sits here rather than inside IsUsable.
+            usable = RejectLocallyImplausible(usable);
+
             // Admission first, then duplicates: done the other way round, a broken row could be
             // the copy we keep and the sound one the copy we throw away.
             var distinct = DistinctProperties(usable);
@@ -387,6 +424,15 @@ namespace StayPilot.Application.Helpers.Calculators
         /// nearest neighbours" can be the same advert ten times - which is how a valuation
         /// reports High confidence off one flat.
         ///
+        /// Two passes, because there are two kinds of copy and one key cannot catch both:
+        ///
+        /// 1. <see cref="DuplicateKeyOf"/> - byte-identical re-posts. Cheap, exact, safe.
+        /// 2. <see cref="CollapseBySourceReference"/> - the same agency reference re-advertised
+        ///    with the coordinates or the price moved. Measured on this database, pass 1 alone
+        ///    caught 11 of 293 such groups: it demands identical coordinates, and a re-listed
+        ///    flat is usually re-geocoded a few hundred metres away. 380 of the 417 pairs it
+        ///    misses sit within 500m of each other, which is the same flat, not a neighbour.
+        ///
         /// Deliberately NOT collapsed: a development advertising many units at one price. Those
         /// rows share a price and a floor area but sit at different coordinates, and they are real
         /// separate flats - measured on this data, 1,625 of 1,823 same-price groups are that
@@ -396,10 +442,207 @@ namespace StayPilot.Application.Helpers.Calculators
         /// </summary>
         public static List<PropertyListing> DistinctProperties(IEnumerable<PropertyListing> listings)
         {
-            return listings
+            var exact = listings
                 .GroupBy(DuplicateKeyOf)
                 .Select(x => x.OrderBy(listing => listing.Id).First())
                 .ToList();
+
+            return CollapseBySourceReference(exact);
+        }
+
+        /// <summary>
+        /// How far apart two adverts carrying the same agency reference can sit and still be one
+        /// flat. Generous on purpose: the reference already did the identifying, and distance is
+        /// only here to throw out reference COLLISIONS - two agencies that both call something
+        /// "002". Measured on this database, pairs are either under 2km (407 of 417) or tens of
+        /// kilometres apart with nothing in between, so the threshold sits in an empty gap and
+        /// its exact value changes nothing.
+        /// </summary>
+        private const double DuplicateReferenceMeters = 2_000;
+
+        /// <summary>
+        /// Collapses adverts that carry the same agency reference AND describe the same physical
+        /// thing - same floor area, same layout, same kind of property - and sit close enough
+        /// together to be one flat rather than a reference collision.
+        ///
+        /// All four conditions are needed. The reference on its own is NOT unique: it is the
+        /// agency's own filing number, not a portal id, so short ones repeat across agencies.
+        /// Measured on this database, 447 same-reference groups hold properties of different
+        /// floor areas in different municípios - "002" is a Faro flat and a Setúbal one. Keeping
+        /// area, typology and property type in the key throws those out without losing a single
+        /// real duplicate.
+        ///
+        /// Why this does not eat the developments <see cref="DistinctProperties"/> protects: a
+        /// reference identifies a UNIT, which is what a reference is for, so a development's
+        /// flats carry distinct ones. The largest groups in this database bear that out - five
+        /// adverts under "123891235-27" all share the -27 unit suffix, so they are one flat
+        /// posted five times, not units 27 through 31. Different portal ids, one reference.
+        ///
+        /// The exposure if that reading is ever wrong is bounded and small: groups of four or
+        /// more - the only ones a development could plausibly be - account for 31 rows in 20,684.
+        /// </summary>
+        private static List<PropertyListing> CollapseBySourceReference(List<PropertyListing> listings)
+        {
+            var kept = new List<PropertyListing>(listings.Count);
+
+            foreach (var group in listings.GroupBy(SourceReferenceKeyOf))
+            {
+                // No usable reference, or nothing to compare it against: keep every row as it is.
+                if (group.Key is null || !group.Skip(1).Any())
+                {
+                    kept.AddRange(group);
+                    continue;
+                }
+
+                // Oldest first, so the row that survives a collapse is the one already known to
+                // everything downstream rather than whichever copy the scraper saw most recently.
+                var candidates = group.OrderBy(x => x.Id).ToList();
+                var survivors = new List<PropertyListing>();
+
+                foreach (var listing in candidates)
+                {
+                    var isCopyOfSurvivor = survivors.Any(survivor => IsWithinDuplicateReferenceRange(survivor, listing));
+
+                    if (!isCopyOfSurvivor)
+                        survivors.Add(listing);
+                }
+
+                kept.AddRange(survivors);
+            }
+
+            // The grouping above scrambles the caller's order; everything downstream that cares
+            // about order sorts for itself, but a stable return keeps results reproducible.
+            return kept.OrderBy(x => x.Id).ToList();
+        }
+
+        /// <summary>
+        /// Whether two adverts with the same reference are close enough to be one flat.
+        /// </summary>
+        private static bool IsWithinDuplicateReferenceRange(PropertyListing left, PropertyListing right)
+        {
+            var metres = Calculator.CalculateDistanceMeters(
+                (double)left.Latitude, (double)left.Longitude,
+                (double)right.Latitude, (double)right.Longitude);
+
+            return metres <= DuplicateReferenceMeters;
+        }
+
+        /// <summary>
+
+        /// <summary>
+        /// The share of its own município's asking rate below which a listing stops being a cheap
+        /// example of the local market and starts being a different kind of asset altogether.
+        ///
+        /// A fifth. Deliberately far below anything a bargain hunter would call a bargain - a
+        /// genuine underpriced flat is 10% or 30% under, not 80%. What sits down there is
+        /// timeshare weeks, garages filed as studios, land, and adverts whose price lost a digit:
+        /// a 27 m2 studio in Albufeira asking EUR 13,500, where the município asks EUR 4,781/m2.
+        /// </summary>
+        private const decimal LocallyImplausibleFraction = 0.20m;
+
+        /// <summary>
+        /// How many listings a município needs before its median is steady enough to reject
+        /// anything on. Below this the floor is not applied at all - a handful of adverts cannot
+        /// establish what a place charges, and guessing would delete the thin markets first.
+        /// </summary>
+        private const int MinimumForLocalFloor = 30;
+
+        /// <summary>
+        /// Drops listings priced so far below their own município that they cannot be describing
+        /// the same kind of property as everything around them.
+        ///
+        /// The absolute floor above cannot do this job on a national dataset, and raising it
+        /// would be worse than leaving it. EUR 400/m2 is a data fault in Albufeira and an
+        /// ordinary asking price in Bragança; one number cannot be right in both, so the
+        /// comparison has to be local. Município rather than district on purpose - a district
+        /// median blends the coast with the interior, and a genuine ruin in inland Faro would
+        /// look like a fault measured against Vilamoura.
+        ///
+        /// This is a judgement, not a measurement, and it is set where it costs almost nothing:
+        /// it removes on the order of 0.1% of rows, all of them at the bottom of the distribution
+        /// where the model's worst misses live.
+        /// </summary>
+        private static List<PropertyListing> RejectLocallyImplausible(List<PropertyListing> listings)
+        {
+            var floorByMunicipality = listings
+                .Where(x => !string.IsNullOrWhiteSpace(x.MarketArea?.Municipality))
+                .GroupBy(x => Calculator.NormalizeText(x.MarketArea!.Municipality))
+                .Where(x => x.Count() >= MinimumForLocalFloor)
+                .ToDictionary(
+                    x => x.Key,
+                    x => MedianPricePerM2(x) * LocallyImplausibleFraction);
+
+            return listings.Where(x => IsLocallyPlausible(x, floorByMunicipality)).ToList();
+        }
+
+        /// <summary>
+        /// Kept unless its own município has a floor and this listing sits under it. A listing
+        /// whose município we do not know, or which we have too few listings to judge, is always
+        /// kept: no evidence is a reason to leave a row alone, not to delete it.
+        /// </summary>
+        private static bool IsLocallyPlausible(PropertyListing listing, Dictionary<string, decimal> floorByMunicipality)
+        {
+            var municipality = listing.MarketArea?.Municipality;
+
+            if (string.IsNullOrWhiteSpace(municipality))
+                return true;
+
+            if (!floorByMunicipality.TryGetValue(Calculator.NormalizeText(municipality), out var floor))
+                return true;
+
+            return NewestSnapshot(listing) is not { } snapshot || snapshot.PricePerM2 >= floor;
+        }
+
+        /// <summary>The middle asking rate of a group, used to set its floor.</summary>
+        private static decimal MedianPricePerM2(IEnumerable<PropertyListing> listings)
+        {
+            var sorted = listings
+                .Select(x => NewestSnapshot(x)?.PricePerM2 ?? 0m)
+                .OrderBy(x => x)
+                .ToList();
+
+            if (sorted.Count == 0)
+                return 0m;
+
+            return sorted.Count % 2 != 0
+                ? sorted[sorted.Count / 2]
+                : (sorted[sorted.Count / 2] + sorted[(sorted.Count / 2) - 1]) / 2m;
+        }
+        /// The agency reference plus what the advert says the property physically is. Null when
+        /// there is no reference to key on, which keeps the row out of the second pass entirely.
+        /// </summary>
+        private static string? SourceReferenceKeyOf(PropertyListing listing)
+        {
+            var reference = SourceReferenceOf(listing);
+
+            return reference is null
+                ? null
+                : $"{reference}|{(int)listing.Typology}|{listing.AreaM2}|{(int)listing.PropertyType}";
+        }
+
+        /// <summary>
+        /// The agency's own reference for a listing. The scraper writes it as the first field of
+        /// <see cref="PropertyListing.Notes"/> - <c>"Ref: 26960236 | Area basis: bruta | ..."</c> -
+        /// so it is read back out rather than stored in a column of its own.
+        ///
+        /// Read through this one method: when the reference does get promoted to a real column,
+        /// this is the only body that has to change.
+        /// </summary>
+        internal static string? SourceReferenceOf(PropertyListing listing)
+        {
+            const string prefix = "Ref:";
+
+            var notes = listing.Notes;
+
+            if (string.IsNullOrWhiteSpace(notes) || !notes.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            var afterPrefix = notes.AsSpan(prefix.Length);
+            var end = afterPrefix.IndexOf('|');
+
+            var reference = (end < 0 ? afterPrefix : afterPrefix[..end]).Trim();
+
+            return reference.IsEmpty ? null : reference.ToString();
         }
 
         /// <summary>
@@ -409,18 +652,18 @@ namespace StayPilot.Application.Helpers.Calculators
         /// them this key merges genuinely different flats, because asking prices cluster hard on
         /// figures like EUR 350,000.
         ///
-        /// A row with no price, or no coordinates, keeps a key of its own and is never merged:
-        /// we cannot tell whether it is a copy, and guessing loses real listings.
+        /// A row with no price keeps a key of its own and is never merged: we cannot tell whether
+        /// it is a copy, and guessing loses real listings.
         /// </summary>
         private static string DuplicateKeyOf(PropertyListing listing)
         {
             var price = NewestSnapshot(listing)?.Price;
 
-            if (price is null || listing.Latitude is null || listing.Longitude is null)
+            if (price is null)
                 return $"listing:{listing.Id}";
 
             return $"{listing.MarketAreaId}|{(int)listing.Typology}|{listing.AreaM2}|{price.Value}|" +
-                   $"{listing.Latitude.Value}|{listing.Longitude.Value}";
+                   $"{listing.Latitude}|{listing.Longitude}";
         }
     }
 }

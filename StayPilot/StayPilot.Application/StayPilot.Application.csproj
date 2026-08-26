@@ -19,4 +19,5 @@
     <InternalsVisibleTo Include="StayPilot.UnitTests" />
   </ItemGroup>
 
+
 </Project>

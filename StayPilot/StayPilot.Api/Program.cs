@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Infrastructure.Persistence;
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IPropertyListingService, PropertyListingService>();
 builder.Services.AddScoped<IMarketAreaService, MarketAreaService>();
 builder.Services.AddScoped<IListingSnapshotService, ListingSnapshotService>();
 builder.Services.AddScoped<IOwnedPropertyService, OwnedPropertyService>();
+builder.Services.AddScoped<IOwnedPropertyValuationService, OwnedPropertyValuationService>();
 builder.Services.AddScoped<IPremiumFeatureService, PremiumFeatureService>();
 builder.Services.AddScoped<IMarketAreaStatsService, MarketAreaStatsService>();
 builder.Services.AddScoped<IMarketOverviewService, MarketOverviewService>();
@@ -65,6 +67,24 @@ builder.Services.AddHttpClient<IIneRepository, IneRepository>(client =>
 
 // Turn on ProblemDetails: send errors back in a standard shape.
 builder.Services.AddProblemDetails();
+
+// [ApiController] answers a bad [Range]/[Required] parameter with ASP.NET's own ProblemDetails
+// shape by default - a different payload from every other error this API sends, so a client
+// keying on errors[].errorCode sees an unrecognised response just because validation caught the
+// problem before the service was even called.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value is not null && entry.Value.Errors.Count > 0)
+            .SelectMany(entry => entry.Value!.Errors.Select(error =>
+                new Error { ErrorCode = (int)ErrorCode.InvalidParameter, ErrorMessage = error.ErrorMessage }))
+            .ToList();
+
+        return new BadRequestObjectResult(new { errors });
+    };
+});
 
 var app = builder.Build();
 

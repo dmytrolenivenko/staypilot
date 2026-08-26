@@ -1,4 +1,9 @@
 // Price numbers per place, worked out on the server and read back.
+
+// Below this many adverts a median is a lead rather than a finding. One number, shared, because
+// a place flagged thin on one screen and quoted without comment on another is the app
+// disagreeing with itself about the same nine listings.
+export const RELIABLE_LISTINGS = 15;
 // Mirrors MarketAreaStatsResponse / MarketAreaLeaderboardResponse on the API.
 
 // Which grain a row measures. Sent as its name, matching the AreaLevel enum on the API.

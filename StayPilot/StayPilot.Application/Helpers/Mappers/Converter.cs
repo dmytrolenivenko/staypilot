@@ -180,8 +180,8 @@ namespace StayPilot.Application.Helpers.Mappers
             if (request.IsFurnished is not null) entity.IsFurnished = request.IsFurnished.Value;
             if (request.HasSeaView is not null) entity.HasSeaView = request.HasSeaView.Value;
             if (request.HasCityView is not null) entity.HasCityView = request.HasCityView.Value;
-            if (request.Latitude is not null) entity.Latitude = request.Latitude;
-            if (request.Longitude is not null) entity.Longitude = request.Longitude;
+            entity.Latitude = request.Latitude;
+            entity.Longitude = request.Longitude;
             if (request.EnergyCertificate is not null) entity.EnergyCertificate = request.EnergyCertificate;
             if (request.Notes is not null) entity.Notes = request.Notes;
             if (request.PurchasePrice is not null) entity.PurchasePrice = request.PurchasePrice.Value;
@@ -273,8 +273,7 @@ namespace StayPilot.Application.Helpers.Mappers
                 MaximumPercent = entity.MaximumPercent,
                 MaximumBasis = entity.MaximumBasis,
                 Basis = entity.Basis,
-                // Measurable only when the whole confidence range sits on one side of zero.
-                IsMeasurable = entity.LowerBoundPercent > 0 || entity.UpperBoundPercent < 0,
+                IsMeasurable = entity.IsMeasurable,
 
                 CalculatedAtUtc = entity.CalculatedAtUtc,
             };
@@ -324,6 +323,18 @@ namespace StayPilot.Application.Helpers.Mappers
         /// </summary>
         public static MarketAreaStatsResponse MapToResponse(MarketAreaStats stats)
         {
+            // Rounded once, here, and the discount below derives from this rounded pair. Every
+            // screen prints these to the euro, so subtracting the unrounded originals is how
+            // "5,794 - 2,869" gets displayed as 2,926 - arithmetic a reader can check by eye
+            // and find wrong. Same rule the build-cost receipt already follows.
+            var moveInPerM2 = stats.MoveInMedianPricePerM2 is null
+                ? (decimal?)null
+                : Math.Round(stats.MoveInMedianPricePerM2.Value);
+
+            var projectPerM2 = stats.ProjectMedianPricePerM2 is null
+                ? (decimal?)null
+                : Math.Round(stats.ProjectMedianPricePerM2.Value);
+
             return new MarketAreaStatsResponse
             {
                 Level = stats.Level,
@@ -338,12 +349,12 @@ namespace StayPilot.Application.Helpers.Mappers
                 ProjectCount = stats.ProjectCount,
                 ProjectByConditionCount = stats.ProjectByConditionCount,
                 ProjectByEnergyCount = stats.ProjectByEnergyCount,
-                ProjectMedianPricePerM2 = stats.ProjectMedianPricePerM2,
+                ProjectMedianPricePerM2 = projectPerM2,
                 ProjectMedianAreaM2 = stats.ProjectMedianAreaM2,
                 ProjectP25PricePerM2 = stats.ProjectP25PricePerM2,
                 ProjectP75PricePerM2 = stats.ProjectP75PricePerM2,
                 MoveInCount = stats.MoveInCount,
-                MoveInMedianPricePerM2 = stats.MoveInMedianPricePerM2,
+                MoveInMedianPricePerM2 = moveInPerM2,
                 MoveInMedianAreaM2 = stats.MoveInMedianAreaM2,
                 MoveInP25PricePerM2 = stats.MoveInP25PricePerM2,
                 MoveInP75PricePerM2 = stats.MoveInP75PricePerM2,
@@ -351,9 +362,9 @@ namespace StayPilot.Application.Helpers.Mappers
 
                 // Only a discount when we measured both sides. One side alone tells you nothing
                 // about the gap, and a zero here would read as "no discount" instead of "unknown".
-                RenovationDiscountPerM2 = stats.MoveInMedianPricePerM2 is null || stats.ProjectMedianPricePerM2 is null
+                RenovationDiscountPerM2 = moveInPerM2 is null || projectPerM2 is null
                     ? null
-                    : stats.MoveInMedianPricePerM2 - stats.ProjectMedianPricePerM2,
+                    : moveInPerM2 - projectPerM2,
 
                 RenovationEvidence = BuildRenovationEvidence(stats),
 
@@ -514,15 +525,6 @@ namespace StayPilot.Application.Helpers.Mappers
                 MedianPricePerM2 = typology.MedianPricePerM2,
                 ListingCount = typology.ListingCount
             };
-        }
-
-        /// <summary>
-        /// The place written out for a human, without the parent in brackets. Used where the
-        /// parent is already obvious from the row, like both halves of a neighbour pair.
-        /// </summary>
-        public static string PlaceName(MarketAreaStats stats)
-        {
-            return BuildPlaceName(stats);
         }
 
         /// <summary>
