@@ -180,8 +180,8 @@ namespace StayPilot.Application.Helpers.Mappers
             if (request.IsFurnished is not null) entity.IsFurnished = request.IsFurnished.Value;
             if (request.HasSeaView is not null) entity.HasSeaView = request.HasSeaView.Value;
             if (request.HasCityView is not null) entity.HasCityView = request.HasCityView.Value;
-            if (request.Latitude is not null) entity.Latitude = request.Latitude;
-            if (request.Longitude is not null) entity.Longitude = request.Longitude;
+            entity.Latitude = request.Latitude;
+            entity.Longitude = request.Longitude;
             if (request.EnergyCertificate is not null) entity.EnergyCertificate = request.EnergyCertificate;
             if (request.Notes is not null) entity.Notes = request.Notes;
             if (request.PurchasePrice is not null) entity.PurchasePrice = request.PurchasePrice.Value;
@@ -273,8 +273,7 @@ namespace StayPilot.Application.Helpers.Mappers
                 MaximumPercent = entity.MaximumPercent,
                 MaximumBasis = entity.MaximumBasis,
                 Basis = entity.Basis,
-                // Measurable only when the whole confidence range sits on one side of zero.
-                IsMeasurable = entity.LowerBoundPercent > 0 || entity.UpperBoundPercent < 0,
+                IsMeasurable = entity.IsMeasurable,
 
                 CalculatedAtUtc = entity.CalculatedAtUtc,
             };
@@ -526,15 +525,6 @@ namespace StayPilot.Application.Helpers.Mappers
                 MedianPricePerM2 = typology.MedianPricePerM2,
                 ListingCount = typology.ListingCount
             };
-        }
-
-        /// <summary>
-        /// The place written out for a human, without the parent in brackets. Used where the
-        /// parent is already obvious from the row, like both halves of a neighbour pair.
-        /// </summary>
-        public static string PlaceName(MarketAreaStats stats)
-        {
-            return BuildPlaceName(stats);
         }
 
         /// <summary>

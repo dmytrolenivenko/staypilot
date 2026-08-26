@@ -195,11 +195,6 @@ namespace StayPilot.Application.Services
                 return null;
             }
 
-            if (propertyListing.Latitude is null || propertyListing.Longitude is null)
-            {
-                return new Error(ErrorCode.ListingLocationRequired, propertyListing.SourceUrl);
-            }
-
             // Typology 0 means nothing was sent, or a name we do not know. Stored, it serialises
             // as a bare number instead of a name and blanks whole screens on the way out.
             if (propertyListing.Typology == Typology.Unknown)
@@ -279,7 +274,7 @@ namespace StayPilot.Application.Services
             // If we found a beach, save its name and how far it is (in meters).
             if (closesBeach is not null)
             {
-                var distanceToBeachMeters = Calculator.CalculateDistanceMeters((double)propertyListing.Latitude!.Value, (double)propertyListing.Longitude!.Value, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
+                var distanceToBeachMeters = Calculator.CalculateDistanceMeters((double)propertyListing.Latitude, (double)propertyListing.Longitude, (double)closesBeach.Latitude, (double)closesBeach.Longitude);
 
                 property.NearestBeachName = closesBeach.Name;
                 property.NearestBeachMarkerId = closesBeach.Id;

@@ -35,8 +35,8 @@ export interface OwnedPropertyRequest {
   isFurnished?: boolean | null;
   hasSeaView?: boolean | null;
   hasCityView?: boolean | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude: number;
+  longitude: number;
   energyCertificate?: string | null;
   notes?: string | null;
 }
@@ -71,8 +71,8 @@ export interface OwnedPropertyResponse {
   distanceToBeachMeters?: number | null;
   nearestBeachMarkerId?: number | null;
   nearestBeachName?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude: number;
+  longitude: number;
   energyCertificate?: string | null;
   notes?: string | null;
 }

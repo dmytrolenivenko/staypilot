@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StayPilot.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using StayPilot.Infrastructure.Persistence;
 namespace StayPilot.Infrastructure.Migrations
 {
     [DbContext(typeof(StayPilotDbContext))]
-    partial class StayPilotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825153214_FixMisfiledGuardaSeiaZones")]
+    partial class FixMisfiledGuardaSeiaZones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53406,11 +53409,11 @@ namespace StayPilot.Infrastructure.Migrations
                     b.Property<bool>("IsFurnished")
                         .HasColumnType("bit");
 
-                    b.Property<decimal>("Latitude")
+                    b.Property<decimal?>("Latitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 
-                    b.Property<decimal>("Longitude")
+                    b.Property<decimal?>("Longitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 
@@ -53581,11 +53584,11 @@ namespace StayPilot.Infrastructure.Migrations
                     b.Property<bool>("IsFurnished")
                         .HasColumnType("bit");
 
-                    b.Property<decimal>("Latitude")
+                    b.Property<decimal?>("Latitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 
-                    b.Property<decimal>("Longitude")
+                    b.Property<decimal?>("Longitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 

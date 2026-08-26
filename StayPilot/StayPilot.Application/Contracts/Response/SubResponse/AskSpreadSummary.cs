@@ -1,16 +1,14 @@
 namespace StayPilot.Application.Contracts.Response.SubResponse
 {
     /// <summary>
-    /// The distance between what was paid for a property and what the model thinks it would be
-    /// <em>advertised</em> at today.
+    /// The distance between what was paid for a property and what the comps around it say it
+    /// would be <em>advertised</em> at today.
     ///
     /// This is deliberately not called a gain, a return or equity. Every number in here is built
     /// from asking prices scraped off portal adverts - what sellers want, never what buyers paid.
     /// Asks in Portugal are negotiated down before a deed is signed, so this spread carries that
     /// gap plus whatever the market has actually done, and the two are not separated. Read it as
-    /// "the adverts have moved this far since I bought", not "I have made this much".
-    ///
-    /// Until <c>PropertyValuation</c> is calibrated against INE's recorded sale prices, no field
+    /// "the adverts have moved this far since I bought", not "I have made this much" - no field
     /// on this class may honestly be presented as realised value.
     /// </summary>
     public class AskSpreadSummary

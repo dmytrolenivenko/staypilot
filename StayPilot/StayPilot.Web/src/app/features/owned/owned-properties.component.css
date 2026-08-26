@@ -5,3 +5,9 @@
   align-items: center;
   white-space: nowrap;
 }
+
+/* Inline message under a required field left empty. */
+.field-error {
+  color: var(--error);
+  font-size: var(--fs-xs);
+}

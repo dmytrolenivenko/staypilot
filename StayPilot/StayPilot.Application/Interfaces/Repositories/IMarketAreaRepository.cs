@@ -16,6 +16,12 @@ namespace StayPilot.Application.Interfaces.Repositories
         Task<List<MarketArea>> GetAllMarketAreasAsync();
 
         /// <summary>
+        /// Get one market area by id, or null when there is no such area. For callers that only
+        /// need a single row - pulling the whole table for one lookup is real, avoidable cost.
+        /// </summary>
+        Task<MarketArea?> GetMarketAreaByIdAsync(int id);
+
+        /// <summary>
         /// Get market areas saved in the database, one page at a time.
         /// Returns the page of items and the total number of matches.
         /// </summary>

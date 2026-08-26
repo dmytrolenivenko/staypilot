@@ -48,9 +48,8 @@ namespace StayPilot.Domain.Enums
         /// <c>ValuationSubject.CloseToBeachMeters</c>. A plain yes/no like a garage: either the
         /// flat is close to the beach or it is not.
         ///
-        /// Note this is the reported premium only. The price estimate itself still uses the
-        /// exact distance on a smooth curve, so nothing is rounded off where the € figure is
-        /// decided - see <c>ValuationModel.BuildRow</c>.
+        /// Note this is the reported premium only - pricing itself works off nearby comps, which
+        /// already carry each listing's own distance to the beach.
         /// </summary>
         CloseToBeach = 18
     }

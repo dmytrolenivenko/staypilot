@@ -11,10 +11,6 @@ namespace StayPilot.Application.Contracts.Response
     /// Every price on this response is an ASKING price - what the adverts around the property
     /// want, not what anyone paid. See <see cref="AskSpreadSummary"/> for why that distinction
     /// is kept in the field names rather than left to a tooltip.
-    ///
-    /// One request rather than one per property because the valuation model is fitted over the
-    /// whole listing table: fitting it once and pricing ten properties against it is the same work
-    /// as pricing one, while ten separate calls is ten fits.
     /// </summary>
     public class OwnedPropertyPortfolioResponse : ResponseBase
     {
@@ -91,10 +87,10 @@ namespace StayPilot.Application.Contracts.Response
         /// <summary>The headline estimate: what it would be advertised at today.</summary>
         public decimal MidPrice { get; set; }
 
-        /// <summary>Low end of the model's own typical error.</summary>
+        /// <summary>Low end of the range, from the P25 asking price of the nearest comps.</summary>
         public decimal MinPrice { get; set; }
 
-        /// <summary>High end of the model's own typical error.</summary>
+        /// <summary>High end of the range, from the P75 asking price of the nearest comps.</summary>
         public decimal MaxPrice { get; set; }
 
         /// <summary>The estimated ask divided by the floor area.</summary>

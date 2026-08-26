@@ -1,4 +1,3 @@
-﻿
 using StayPilot.Domain.Entities;
 using System.Globalization;
 using System.Text;
@@ -6,12 +5,13 @@ using System.Text;
 namespace StayPilot.Application.Helpers.Calculators
 {
     /// <summary>
-    /// General-purpose maths: text matching, market areas, beaches, distance, statistics.
-    /// Valuations and premium features do NOT belong here - see
-    /// <see cref="PropertyValuation"/> and <see cref="FeaturePremiumCalculator"/>.
+    /// Shared calculation helpers used across the valuation pipeline: address matching,
+    /// geo distance, and basic statistics (median, percentile, weighted average).
     /// </summary>
     public class Calculator
     {
+        // ----- Address matching -----------------------------------------------------------
+
         /// <summary>
         /// Clean text so two names can be compared safely.
         /// It makes the text lower case, removes accents (á becomes a), and trims spaces.
@@ -105,34 +105,10 @@ namespace StayPilot.Application.Helpers.Calculators
             return string.Join(", ", parts);
         }
 
-        /// <summary>
-        /// Find the beach nearest to the property.
-        /// Returns null if the property has no location.
-        /// </summary>
-        public static BeachMarker? GetTheClosestBeach(List<BeachMarker> beaches, decimal? lat, decimal? lon)
-        {
-            // Fix: Lat/Lon were "double" before, so this null check could never work
-            // (a double can never be null). We use "decimal?" here so we can check
-            // for a missing location, and only turn it into "double" later, for the math.
-            if (lat is null || lon is null)
-            {
-                return null;
-            }
+        // ----- Geo distance -----------------------------------------------------------------
 
-            var propertyLat = (double)lat.Value;
-            var propertyLon = (double)lon.Value;
-
-            // Sort all beaches by distance to the property and take the closest one.
-            var closestBeach = beaches
-                .OrderBy(beach => CalculateDistanceMeters(
-                    propertyLat,
-                    propertyLon,
-                    (double)beach.Latitude,
-                    (double)beach.Longitude))
-                .FirstOrDefault();
-
-            return closestBeach;
-        }
+        /// <summary>How many metres one degree of latitude covers, anywhere on Earth.</summary>
+        public const double MetersPerDegreeLatitude = 111_320;
 
         /// <summary>
         /// Distance in meters between two points on Earth (given as latitude/longitude).
@@ -163,11 +139,75 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
+        /// Find the beach nearest to the property.
+        /// Returns null if the property has no location.
+        /// </summary>
+        public static BeachMarker? GetTheClosestBeach(List<BeachMarker> beaches, decimal? lat, decimal? lon)
+        {
+            // Fix: Lat/Lon were "double" before, so this null check could never work
+            // (a double can never be null). We use "decimal?" here so we can check
+            // for a missing location, and only turn it into "double" later, for the math.
+            if (lat is null || lon is null)
+            {
+                return null;
+            }
+
+            var propertyLat = (double)lat.Value;
+            var propertyLon = (double)lon.Value;
+
+            // Sort all beaches by distance to the property and take the closest one.
+            var closestBeach = beaches
+                .OrderBy(beach => CalculateDistanceMeters(
+                    propertyLat,
+                    propertyLon,
+                    (double)beach.Latitude,
+                    (double)beach.Longitude))
+                .FirstOrDefault();
+
+            return closestBeach;
+        }
+
+        /// <summary>
+        /// How much a degree of longitude shrinks at this latitude, relative to a degree of
+        /// latitude - multiply a longitude delta in degrees by this before comparing it against a
+        /// latitude delta, so a circle measured in metres doesn't come out an ellipse in degrees.
+        /// </summary>
+        public static decimal LongitudeDegreeScale(decimal atLatitude) =>
+            (decimal)Math.Cos((double)atLatitude * Math.PI / 180);
+
+        /// <summary>
+        /// A radius in metres, converted to degrees of latitude and squared - ready to compare
+        /// against <c>(Δlat)² + (Δlon × <see cref="LongitudeDegreeScale"/>)²</c> without ever
+        /// taking a square root.
+        /// </summary>
+        public static decimal RadiusDegreesSquared(double radiusMeters)
+        {
+            var radiusDegrees = (decimal)(radiusMeters / MetersPerDegreeLatitude);
+
+            return radiusDegrees * radiusDegrees;
+        }
+
+        // ----- Statistics --------------------------------------------------------------------
+
+        /// <summary>
         /// Middle value of an ascending-sorted list. 0 when empty.
         /// </summary>
         public static decimal Median(IReadOnlyList<decimal> sortedAscending)
         {
             return Percentile(sortedAscending, 0.5);
+        }
+
+        /// <inheritdoc cref="Median(IReadOnlyList{decimal})"/>
+        public static double Median(IEnumerable<double> values)
+        {
+            var sorted = values.OrderBy(x => x).ToList();
+
+            if (sorted.Count == 0)
+                return 0;
+
+            return sorted.Count % 2 != 0
+                ? sorted[sorted.Count / 2]
+                : (sorted[sorted.Count / 2] + sorted[(sorted.Count / 2) - 1]) / 2;
         }
 
         /// <summary>

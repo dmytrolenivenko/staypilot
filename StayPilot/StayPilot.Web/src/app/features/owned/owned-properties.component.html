@@ -169,11 +169,17 @@
 
         <label class="field">
           <span>Latitude *</span>
-          <input type="number" step="any" [(ngModel)]="form.latitude" name="latitude" />
+          <input type="number" step="any" [(ngModel)]="form.latitude" name="latitude" required #latitudeModel="ngModel" />
+          @if (latitudeModel.invalid && latitudeModel.touched) {
+            <small class="field-error">Latitude is required.</small>
+          }
         </label>
         <label class="field">
           <span>Longitude *</span>
-          <input type="number" step="any" [(ngModel)]="form.longitude" name="longitude" />
+          <input type="number" step="any" [(ngModel)]="form.longitude" name="longitude" required #longitudeModel="ngModel" />
+          @if (longitudeModel.invalid && longitudeModel.touched) {
+            <small class="field-error">Longitude is required.</small>
+          }
         </label>
 
         <label class="field">

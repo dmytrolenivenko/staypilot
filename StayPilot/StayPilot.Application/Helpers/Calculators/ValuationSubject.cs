@@ -25,9 +25,9 @@ namespace StayPilot.Application.Helpers.Calculators
         public string Municipality { get; set; } = string.Empty;
 
         /// <summary>
-        /// The town and the zone within it. Carried only so the fit can spot the areas that are
-        /// not really places - see <see cref="ValuationModel.CatchAllAreasIn"/>. Empty on an owned
-        /// property, which knows only its area id; the fit looks those up by id instead.
+        /// The town and the zone within it. Carried so a fit over these subjects can spot the
+        /// areas that are not really places (a catch-all zone named after the whole town). Empty
+        /// on an owned property, which knows only its area id; a fit looks those up by id instead.
         /// </summary>
         public string Town { get; set; } = string.Empty;
 
@@ -70,10 +70,10 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>Walking-line distance to the nearest beach, or null when unknown.</summary>
         public int? DistanceToBeachMeters { get; set; }
 
-        /// <summary>Coordinates. Needed for the neighbourhood correction; null just skips it.</summary>
-        public decimal? Latitude { get; set; }
+        /// <summary>Coordinates, used for the neighbourhood correction.</summary>
+        public decimal Latitude { get; set; }
 
-        public decimal? Longitude { get; set; }
+        public decimal Longitude { get; set; }
 
         public bool HasElevator { get; set; }
 
@@ -349,7 +349,7 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>
         /// Does the row agree with itself? Price per m2 should be the price over the floor area,
         /// and when it is not, one of the three numbers is wrong and there is no way to tell
-        /// which. A Portim„o listing asking EUR 123,123 over 91 m2 carried EUR 123/m2; a LoulÈ
+        /// which. A Portim√£o listing asking EUR 123,123 over 91 m2 carried EUR 123/m2; a Loul√©
         /// one asking EUR 229,000 over 45 m2 carried EUR 233. Both passed every bound above,
         /// because each field is plausible on its own - it is only the three together that are
         /// impossible.
@@ -516,19 +516,13 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// Whether two adverts with the same reference are close enough to be one flat. A row
-        /// with no coordinates cannot be placed, so it is never merged on distance - the same
-        /// rule <see cref="DuplicateKeyOf"/> follows, for the same reason: guessing loses real
-        /// listings.
+        /// Whether two adverts with the same reference are close enough to be one flat.
         /// </summary>
         private static bool IsWithinDuplicateReferenceRange(PropertyListing left, PropertyListing right)
         {
-            if (left.Latitude is null || left.Longitude is null || right.Latitude is null || right.Longitude is null)
-                return false;
-
             var metres = Calculator.CalculateDistanceMeters(
-                (double)left.Latitude.Value, (double)left.Longitude.Value,
-                (double)right.Latitude.Value, (double)right.Longitude.Value);
+                (double)left.Latitude, (double)left.Longitude,
+                (double)right.Latitude, (double)right.Longitude);
 
             return metres <= DuplicateReferenceMeters;
         }
@@ -658,18 +652,18 @@ namespace StayPilot.Application.Helpers.Calculators
         /// them this key merges genuinely different flats, because asking prices cluster hard on
         /// figures like EUR 350,000.
         ///
-        /// A row with no price, or no coordinates, keeps a key of its own and is never merged:
-        /// we cannot tell whether it is a copy, and guessing loses real listings.
+        /// A row with no price keeps a key of its own and is never merged: we cannot tell whether
+        /// it is a copy, and guessing loses real listings.
         /// </summary>
         private static string DuplicateKeyOf(PropertyListing listing)
         {
             var price = NewestSnapshot(listing)?.Price;
 
-            if (price is null || listing.Latitude is null || listing.Longitude is null)
+            if (price is null)
                 return $"listing:{listing.Id}";
 
             return $"{listing.MarketAreaId}|{(int)listing.Typology}|{listing.AreaM2}|{price.Value}|" +
-                   $"{listing.Latitude.Value}|{listing.Longitude.Value}";
+                   $"{listing.Latitude}|{listing.Longitude}";
         }
     }
 }

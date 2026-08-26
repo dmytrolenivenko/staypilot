@@ -7,7 +7,7 @@ using StayPilot.Domain.Enums;
 
 namespace StayPilot.UnitTests
 {
-    // Hand-written fakes - this project has no Moq dependency (see CalculatorTests / ValuationModelTests).
+    // Hand-written fakes - this project has no Moq dependency (see CalculatorTests).
     file class FakePropertyListingRepo : IPropertyListingRepository
     {
         public List<PropertyListing> Saved = new();
@@ -49,9 +49,10 @@ namespace StayPilot.UnitTests
 
         public void DiscardPendingChanges() => DiscardPendingChangesCalls++;
 
-        public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal latitude, decimal longitude, int radiusMeters, int months) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync() => throw new NotImplementedException();
-        public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
+        public Task<List<MarketAreaStatsListingRow>> GetAllListingsForMarketAreaStatsAsync() => throw new NotImplementedException();
+        public Task<List<MarketOverviewListingRow>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
 
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
     }
@@ -61,6 +62,7 @@ namespace StayPilot.UnitTests
         private readonly List<MarketArea> _areas;
         public FakeMarketAreaRepo(List<MarketArea> areas) => _areas = areas;
         public Task<List<MarketArea>> GetAllMarketAreasAsync() => Task.FromResult(_areas);
+        public Task<MarketArea?> GetMarketAreaByIdAsync(int id) => Task.FromResult(_areas.FirstOrDefault(x => x.Id == id));
         public Task<(List<MarketArea> Items, int TotalRecords)> GetMarketAreasPageAsync(MarketAreaRequest request) => throw new NotImplementedException();
         public Task<List<string>> GetMarketAreaOptionsAsync(string? distrinct, string? municipality, string? town) => throw new NotImplementedException();
     }
@@ -246,27 +248,6 @@ namespace StayPilot.UnitTests
 
             var snapshot = Assert.Single(snapshotRepo.Saved);
             Assert.Equal(90_000m, snapshot.Price);
-        }
-
-        [Fact]
-        public async Task BulkAdd_ListingWithoutCoordinates_IsReportedAndNeverSaved()
-        {
-            var propertyRepo = new FakePropertyListingRepo(new List<PropertyListing>());
-            var service = new PropertyListingService(propertyRepo, new FakeMarketAreaRepo(new List<MarketArea> { MarketArea }), new FakeBeachMarkerRepo(), new FakeListingSnapshotRepo());
-
-            var noLocation = NewListingRequest("https://example.com/listing-1", 100_000m);
-            noLocation.Latitude = null;
-            noLocation.Longitude = null;
-
-            var request = new BulkAddPropertyListingRequest { Items = new List<PropertyListingRequest> { noLocation } };
-
-            var response = await service.BulkAddPropertyListingAsync(request);
-
-            Assert.Empty(propertyRepo.Saved);
-            Assert.Equal(0, response.TotalAdded);
-
-            var error = Assert.Single(response.Errors!);
-            Assert.Equal((int)ErrorCode.ListingLocationRequired, error.ErrorCode);
         }
 
         [Fact]

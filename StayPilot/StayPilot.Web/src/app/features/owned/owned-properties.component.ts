@@ -310,8 +310,8 @@ export class OwnedPropertiesComponent implements OnInit {
       constructionYear: null,
       renovationYear: null,
       renovationInvestment: null,
-      latitude: null,
-      longitude: null,
+      latitude: 0,
+      longitude: 0,
       hasElevator: false,
       hasAirConditioning: false,
       hasGarage: false,
@@ -375,8 +375,8 @@ export class OwnedPropertiesComponent implements OnInit {
       constructionYear: p.constructionYear ?? null,
       renovationYear: p.renovationYear ?? null,
       renovationInvestment: p.renovationInvestment ?? null,
-      latitude: p.latitude ?? null,
-      longitude: p.longitude ?? null,
+      latitude: p.latitude,
+      longitude: p.longitude,
       hasElevator: p.hasElevator ?? false,
       hasAirConditioning: p.hasAirConditioning ?? false,
       hasGarage: p.hasGarage ?? false,
@@ -423,6 +423,10 @@ export class OwnedPropertiesComponent implements OnInit {
     // area on, so both must be chosen or the save fails server-side.
     if (!this.form.district || !this.form.municipality) {
       problems.push('Pick at least a District and a Municipality.');
+    }
+
+    if (!this.form.latitude || !this.form.longitude) {
+      problems.push('Latitude and Longitude are required.');
     }
 
     if (problems.length > 0) {

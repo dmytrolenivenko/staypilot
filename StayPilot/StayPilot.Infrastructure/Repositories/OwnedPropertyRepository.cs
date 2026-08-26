@@ -7,7 +7,7 @@ namespace StayPilot.Infrastructure.Repositories
 {
     public class OwnedPropertyRepository : IOwnedPropertyRepository
     {
-        private StayPilotDbContext _context;
+        private readonly StayPilotDbContext _context;
 
         public OwnedPropertyRepository(StayPilotDbContext context) 
         {

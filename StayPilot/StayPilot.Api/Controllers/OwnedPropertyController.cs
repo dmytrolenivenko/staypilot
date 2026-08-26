@@ -12,10 +12,13 @@ namespace StayPilot.Api.Controllers
     public class OwnedPropertyController : ControllerBase
     {
         private readonly IOwnedPropertyService _ownedPropertyService;
+        private readonly IOwnedPropertyValuationService _ownedPropertyValuationService;
 
-        public OwnedPropertyController(IOwnedPropertyService ownedPropertyService)
+        public OwnedPropertyController(
+            IOwnedPropertyService ownedPropertyService, IOwnedPropertyValuationService ownedPropertyValuationService)
         {
             _ownedPropertyService = ownedPropertyService;
+            _ownedPropertyValuationService = ownedPropertyValuationService;
         }
 
         /// <summary>
@@ -95,7 +98,7 @@ namespace StayPilot.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<OwnedPropertyAnalysisResponse>> EstimateEvaluationsOwnedpropertyAsync(int id, [Range(1, 120)] int months, [Range(100, 20_000)] int radiusMeters = 2000)
         {
-            var result = await _ownedPropertyService.EstimateOwnedPropertyValue(id, radiusMeters, months);
+            var result = await _ownedPropertyValuationService.EstimateOwnedPropertyValue(id, radiusMeters, months);
 
             return this.ToActionResult(result);
         }
@@ -113,7 +116,7 @@ namespace StayPilot.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<OwnedPropertyPortfolioResponse>> ListValuationsOwnedpropertyAsync([Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
         {
-            var result = await _ownedPropertyService.GetPortfolioAsync(radiusMeters, months, years);
+            var result = await _ownedPropertyValuationService.GetPortfolioAsync(radiusMeters, months, years);
 
             return this.ToActionResult(result);
         }

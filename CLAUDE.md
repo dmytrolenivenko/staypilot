@@ -65,8 +65,11 @@ dotnet ef database update --project StayPilot.Infrastructure --startup-project S
 Local DB is SQL Server **LocalDB** (`(localdb)\MSSQLLocalDB`), configured in
 `StayPilot.Api/appsettings.Development.json`. No Docker/Azure SQL setup exists yet.
 
-There is no CI configured (`.github/workflows/` is empty) and no lint tooling beyond the C#
-compiler/analyzers.
+CI/CD (`.github/workflows/`): `ci.yml` builds+tests both API and Angular on every PR into
+`master`/`stable`/`release`. `deploy-api.yml`, `deploy-web.yml` and `infra.yml` each push on
+merge to one of those branches, mapped to an environment (`master`→dev, `stable`→qa,
+`release`→prod) — `deploy-api.yml` also runs `dotnet ef database update` against that
+environment's Azure SQL before publishing. No lint tooling beyond the C# compiler/analyzers.
 
 ## Architecture
 
