@@ -17,10 +17,12 @@ namespace StayPilot.Api.Controllers
     public class PropertyListingController : ControllerBase
     {
         private readonly IPropertyListingService _service;
+        private readonly IMarketAreaStatsService _statsService;
 
-        public PropertyListingController(IPropertyListingService service)
+        public PropertyListingController(IPropertyListingService service, IMarketAreaStatsService statsService)
         {
             _service = service;
+            _statsService = statsService;
         }
 
         /// <summary>
@@ -58,6 +60,19 @@ namespace StayPilot.Api.Controllers
         public async Task<ActionResult<FilterPropertyListingResponse>> FilterPropertyAsync(FilterPropertyListingRequest request)
         {
             var result = await _service.FilterPropertyListingAsync(request);
+
+            return this.ToActionResult(result);
+        }
+
+        /// <summary>
+        /// Return the best-priced active listings in one place, ranked by how far below their
+        /// own town's median euro per square meter they ask. Reads numbers worked out earlier -
+        /// call MarketArea/RecalculateMarketAreaStats after an import to refresh them.
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<TopDealsResponse>> GetTopDeals([FromQuery] TopDealsRequest request)
+        {
+            var result = await _statsService.GetTopDealsAsync(request);
 
             return this.ToActionResult(result);
         }

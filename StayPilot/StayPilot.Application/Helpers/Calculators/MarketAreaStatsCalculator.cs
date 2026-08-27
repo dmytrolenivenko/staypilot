@@ -223,15 +223,19 @@ namespace StayPilot.Application.Helpers.Calculators
         /// of listings, so most places would have two or three and no measurable discount. A poor
         /// energy certificate covers roughly ten times as many and is the more objective signal -
         /// a grade is measured, "needs work" is whatever the agent felt like typing.
+        ///
+        /// Public: also used to decide which median to grade a listing against outside this
+        /// calculator (see TopDeals) - a project's low €/m² reflects the work it needs, not a
+        /// bargain, so it must never be graded against the same median as move-in-ready stock.
         /// </summary>
-        private static bool IsProject(PropertyListing listing)
+        public static bool IsProject(PropertyCondition condition, string? energyCertificate)
         {
-            if (listing.Condition == PropertyCondition.NeedsRenovation)
+            if (condition == PropertyCondition.NeedsRenovation)
             {
                 return true;
             }
 
-            return EnergyGradeLetter(listing.EnergyCertificate) is 'D' or 'E' or 'F' or 'G';
+            return EnergyGradeLetter(energyCertificate) is 'D' or 'E' or 'F' or 'G';
         }
 
         /// <summary>
@@ -239,17 +243,21 @@ namespace StayPilot.Application.Helpers.Calculators
         /// against. Anything neither project nor move-in (an unknown condition with no
         /// certificate) counts for neither, so the comparison stays between two clear groups.
         /// </summary>
-        private static bool IsMoveInReady(PropertyListing listing)
+        public static bool IsMoveInReady(PropertyCondition condition, string? energyCertificate)
         {
-            if (IsProject(listing))
+            if (IsProject(condition, energyCertificate))
             {
                 return false;
             }
 
-            return listing.Condition is PropertyCondition.Good
+            return condition is PropertyCondition.Good
                 or PropertyCondition.Renovated
                 or PropertyCondition.NewBuild;
         }
+
+        private static bool IsProject(PropertyListing listing) => IsProject(listing.Condition, listing.EnergyCertificate);
+
+        private static bool IsMoveInReady(PropertyListing listing) => IsMoveInReady(listing.Condition, listing.EnergyCertificate);
 
         /// <summary>
         /// The grade letter off a certificate, so "A+", "A" and "B-" read as A, A and B.

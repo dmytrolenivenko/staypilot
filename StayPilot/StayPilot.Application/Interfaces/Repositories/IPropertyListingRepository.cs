@@ -72,6 +72,23 @@ namespace StayPilot.Application.Interfaces.Repositories
         Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology);
 
         /// <summary>
+        /// Gets every active listing in one place, optionally narrowed to one condition, with its
+        /// newest snapshot and market area loaded. Not paged: ranking the best deals needs every
+        /// listing in the place at once, not one page of them. Pass null or an empty string for
+        /// any level you do not want applied.
+        /// </summary>
+        Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition);
+
+        /// <summary>
+        /// Gets every listing whose newest snapshot is Active, with just that snapshot loaded.
+        /// Used to work out which listings a fresh sweep no longer saw, so they can be marked
+        /// sold - see ReconcileActiveListingsAsync. Not paged and not by place: the sweep that
+        /// feeds it covers the whole site, so the comparison has to be against every active
+        /// listing in the database, not one page or one market area of them.
+        /// </summary>
+        Task<List<PropertyListing>> GetActiveListingsAsync();
+
+        /// <summary>
         /// Gets every listing in one place with its WHOLE snapshot history loaded, newest first.
         ///
         /// The overview read only ever loads the newest snapshot, which is enough to price a

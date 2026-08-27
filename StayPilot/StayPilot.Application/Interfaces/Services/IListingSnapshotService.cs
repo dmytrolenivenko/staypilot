@@ -18,5 +18,14 @@ namespace StayPilot.Application.Interfaces.Services
         /// Comes back carrying SnapshotNotFound when the property has no snapshot.
         /// </summary>
         Task<ListingSnapshotResponse> GetListingSnapshotByPropertyIdAsync(int propertyListingId);
+
+        /// <summary>
+        /// Compares ActiveUrls against every listing this API holds as Active, and adds a new
+        /// Sold snapshot for each one missing from that list. Meant to run right after a full
+        /// sweep of the source site, using the URLs it actually saw - nothing is deleted, the
+        /// listing and its price history stay, only a new snapshot records it as sold.
+        /// Comes back carrying ReconcileActiveUrlsRequired, unchanged, if ActiveUrls is empty.
+        /// </summary>
+        Task<ReconcileActiveListingsResponse> ReconcileActiveListingsAsync(ReconcileActiveListingsRequest request);
     }
 }

@@ -126,7 +126,8 @@ alongside its service.
 - **Authorization:** no controller has a class-level `[Authorize]`. Individual actions that write
   bulk data or trigger an expensive recalculation carry `[Authorize(Roles = "Api.Write")]`:
   `PropertyListingController.BulkAddPropertyListing`, `ListingSnapshotController.CreateListingSnapshotAsync`,
-  `MarketAreaController.RecalculateMarketAreaStats`, `PremiumFeatureController.ReCalculatePremiumFeaturesValue`.
+  `ListingSnapshotController.ReconcileActiveListingsAsync`, `MarketAreaController.RecalculateMarketAreaStats`,
+  `PremiumFeatureController.ReCalculatePremiumFeaturesValue`.
   Everything else — including all of `OwnedPropertyController` (My Properties CRUD) and every
   `GET` — is open. This is a deliberate current state for a personal, single-tenant deployment, not
   an oversight; tighten it before treating this as a multi-user product.
@@ -135,7 +136,7 @@ alongside its service.
   | Controller | Actions |
   |---|---|
   | `PropertyListingController` | `BulkAddPropertyListing` (POST, `Api.Write`), `GetById`, `FilterPropertyAsync` (POST — browse/filter/page) |
-  | `ListingSnapshotController` | `CreateListingSnapshotAsync` (POST, `Api.Write`), `GetListingSnapshotByPropertyIdAsync` |
+  | `ListingSnapshotController` | `CreateListingSnapshotAsync` (POST, `Api.Write`), `GetListingSnapshotByPropertyIdAsync`, `ReconcileActiveListingsAsync` (POST, `Api.Write` — marks listings missing from a caller's URL list as sold) |
   | `MarketAreaController` | `GetAll`, `GetOptions` (place picker), `GetLeaderboard`, `GetBudgetRanking`, `GetNeighbourGaps`, `RecalculateMarketAreaStats` (POST, `Api.Write`) |
   | `MarketOverviewController` | `GetMarketOverview` — live-computed slice by place + property type + typology, no recalculation step |
   | `OwnedPropertyController` | `GetOwnedPropertyAsync`, `GetAllOwnedPropertyAsync`, `AddOwnedPropertyAsync` (POST), `DeleteOwnedPropertyAsync`, `UpdateOwnedPropertyAsync`, `EstimateEvaluationsOwnedpropertyAsync` (single-property valuation), `ListValuationsOwnedpropertyAsync` (portfolio valuation — see below) |
@@ -215,8 +216,10 @@ the work — don't "fix" this speculatively.
 ### Scraper (now a separate repo)
 
 The `AddProperty` scraper that feeds this API lives in its own repo now:
-https://github.com/dmytrolenivenko/AddProperty. It POSTs to this API's `PropertyListing`
-endpoints and keeps its **own copies** of `PropertyListingRequest`/`ListingSnapshotRequest` and
+https://github.com/dmytrolenivenko/AddProperty. It POSTs to this API's `PropertyListing` and
+`ListingSnapshot` endpoints — including `ReconcileActiveListingsAsync`, called once after
+`dotnet run upload` finishes with an empty `new\` folder, using the newest `checkdeleted-reports\`
+file's `SeenUrls` as `ActiveUrls` — and keeps its **own copies** of `PropertyListingRequest`/`ListingSnapshotRequest` and
 the enums (`PropertyType`, `Typology`, `PropertyCondition`, `ListingStatus`) — it does not
 reference `StayPilot.Application` or `StayPilot.Domain`. If you change a contract or enum values
 in this API, update the matching copy in that repo too, and double check enum **numeric values**
