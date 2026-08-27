@@ -7,6 +7,7 @@ import { MarketAreaNeighboursComponent } from './features/market-areas/market-ar
 import { MarketAreaRenovationComponent } from './features/market-areas/market-area-renovation.component';
 import { ListingLookupComponent } from './features/listings/listing-lookup.component';
 import { ListingBrowserComponent } from './features/listings/listing-browser.component';
+import { TopDealsComponent } from './features/listings/top-deals.component';
 import { PremiumFeaturesComponent } from './features/premium-features/premium-features.component';
 import { OwnedPropertiesComponent } from './features/owned/owned-properties.component';
 import { ValuationComponent } from './features/valuation/valuation.component';
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: 'market-areas/neighbours', component: MarketAreaNeighboursComponent },
   { path: 'market-areas/renovation', component: MarketAreaRenovationComponent },
   { path: 'listings/lookup', component: ListingLookupComponent },
+  { path: 'listings/top-deals', component: TopDealsComponent },
   { path: 'listing-browser', component: ListingBrowserComponent },
   { path: 'feature-impact', component: PremiumFeaturesComponent },
   { path: 'my-properties', component: OwnedPropertiesComponent },

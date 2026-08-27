@@ -5,6 +5,8 @@ using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
+using StayPilot.Domain.Entities;
+using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Services
 {
@@ -14,10 +16,12 @@ namespace StayPilot.Application.Services
     public class ListingSnapshotService : IListingSnapshotService
     {
         private readonly IListingSnapshotRepository _listingSnapshotRepo;
+        private readonly IPropertyListingRepository _propertyListingRepo;
 
-        public ListingSnapshotService(IListingSnapshotRepository listingSnapshotRepo)
+        public ListingSnapshotService(IListingSnapshotRepository listingSnapshotRepo, IPropertyListingRepository propertyListingRepo)
         {
             _listingSnapshotRepo = listingSnapshotRepo;
+            _propertyListingRepo = propertyListingRepo;
         }
 
         /// <inheritdoc/>
@@ -51,5 +55,54 @@ namespace StayPilot.Application.Services
             return Helpers.Mappers.Converter.MapToResponse(snapshot);
         }
 
+        /// <inheritdoc/>
+        public async Task<ReconcileActiveListingsResponse> ReconcileActiveListingsAsync(ReconcileActiveListingsRequest request)
+        {
+            var response = new ReconcileActiveListingsResponse();
+
+            // An empty list would read as "nothing is live any more" and mark every active
+            // listing sold in one call - almost certainly a caller bug (an empty sweep, a
+            // truncated report), never a real outcome. Refuse it instead of honouring it.
+            if (request.ActiveUrls.Count == 0)
+            {
+                response.AddError(ErrorCode.ReconcileActiveUrlsRequired);
+                return response;
+            }
+
+            var stillLive = new HashSet<string>(request.ActiveUrls, StringComparer.OrdinalIgnoreCase);
+            var activeListings = await _propertyListingRepo.GetActiveListingsAsync();
+
+            response.ActiveListingsChecked = activeListings.Count;
+
+            foreach (var listing in activeListings)
+            {
+                if (stillLive.Contains(listing.SourceUrl))
+                {
+                    continue;
+                }
+
+                // Carries the last known price forward - this snapshot records a status change,
+                // not a new asking price, so there is no other price to give it.
+                var lastSnapshot = listing.ListingSnapshots.OrderByDescending(x => x.SnapshotDateUtc).FirstOrDefault();
+
+                var soldSnapshot = new ListingSnapshot
+                {
+                    PropertyListingId = listing.Id,
+                    PropertyListing = listing,
+                    Price = lastSnapshot?.Price ?? 0,
+                    PricePerM2 = lastSnapshot?.PricePerM2 ?? 0,
+                    Status = ListingStatus.Sold
+                };
+
+                await _listingSnapshotRepo.AddListingSnapshotAsync(soldSnapshot);
+
+                response.MarkedSoldCount++;
+                response.MarkedSoldUrls.Add(listing.SourceUrl);
+            }
+
+            await _listingSnapshotRepo.SaveChangesAsync();
+
+            return response;
+        }
     }
 }

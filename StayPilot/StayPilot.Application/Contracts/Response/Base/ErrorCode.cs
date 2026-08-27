@@ -118,6 +118,14 @@ namespace StayPilot.Application.Contracts.Response.Base
         [Display(Description = "Cannot add a price snapshot: the property with id '{0}' does not exist.")]
         SnapshotPropertyNotFound = -301,
 
+        /// <summary>
+        /// A reconciliation call sent an empty ActiveUrls list. Refused rather than honoured:
+        /// an empty list is indistinguishable from a caller bug, and honouring it would mark
+        /// every currently active listing sold in one call.
+        /// </summary>
+        [Display(Description = "ActiveUrls must not be empty — refusing to mark every active listing sold.")]
+        ReconcileActiveUrlsRequired = -302,
+
         // ---------- Owned properties ----------
 
         [NotFound]

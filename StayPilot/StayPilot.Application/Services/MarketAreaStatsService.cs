@@ -184,6 +184,77 @@ namespace StayPilot.Application.Services
             return response;
         }
 
+        /// <inheritdoc/>
+        public async Task<TopDealsResponse> GetTopDealsAsync(TopDealsRequest request)
+        {
+            // Same sample gate as the leaderboard - a median from a handful of listings is not
+            // a market to grade a deal against.
+            var townStats = await _marketAreaStatsRepo.GetLeaderboardAsync(
+                AreaLevel.Town, minListings: 5, request.District, request.Municipality);
+
+            var statsByTown = townStats.ToDictionary(x => (x.District, x.Municipality, x.Town), x => x);
+
+            var listings = await _propertyListingRepo.GetActiveListingsForTopDealsAsync(
+                request.District, request.Municipality, request.Town, request.Zone, request.Condition);
+
+            var deals = new List<TopDealResponse>();
+
+            foreach (var listing in listings)
+            {
+                var snapshot = listing.ListingSnapshots.FirstOrDefault();
+
+                if (snapshot is null || snapshot.PricePerM2 <= 0)
+                {
+                    continue;
+                }
+
+                var key = (listing.MarketArea.District, listing.MarketArea.Municipality, listing.MarketArea.Town);
+
+                // No trustworthy stats for this listing's town -> nothing to grade it against.
+                if (!statsByTown.TryGetValue(key, out var stats))
+                {
+                    continue;
+                }
+
+                // A renovation project and move-in-ready stock are different markets: a project's
+                // low €/m² reflects the work it needs, not a bargain. Grading it against the
+                // blended median would call every fixer-upper a steal for needing work, so each
+                // listing is graded against its own bucket's median instead. Unclassified listings
+                // (neither, and thin buckets with too few listings) have no fair median and drop out.
+                var medianPricePerM2 = MarketAreaStatsCalculator.IsProject(listing.Condition, listing.EnergyCertificate)
+                    ? stats.ProjectMedianPricePerM2
+                    : MarketAreaStatsCalculator.IsMoveInReady(listing.Condition, listing.EnergyCertificate)
+                        ? stats.MoveInMedianPricePerM2
+                        : null;
+
+                if (medianPricePerM2 is not > 0)
+                {
+                    continue;
+                }
+
+                var discountPercent = (medianPricePerM2.Value - snapshot.PricePerM2) / medianPricePerM2.Value * 100m;
+
+                // Asking at or above the median is not a deal.
+                if (discountPercent <= 0)
+                {
+                    continue;
+                }
+
+                deals.Add(new TopDealResponse
+                {
+                    Listing = Converter.MapToResponse(listing, snapshot),
+                    TownMedianPricePerM2 = medianPricePerM2.Value,
+                    DiscountPercent = decimal.Round(discountPercent, 1)
+                });
+            }
+
+            return new TopDealsResponse
+            {
+                Items = deals.OrderByDescending(x => x.DiscountPercent).Take(request.Count).ToList(),
+                CalculatedAtUtc = LastCalculatedAt(townStats)
+            };
+        }
+
         /// <summary>
         /// The most rooms this place usually sells for the budget, or null when nothing does.
         ///

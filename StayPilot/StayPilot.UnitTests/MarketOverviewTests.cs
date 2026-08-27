@@ -18,7 +18,10 @@ namespace StayPilot.UnitTests
         public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) =>
             Task.FromResult(_listings);
 
+        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
 
         public Task<PropertyListing?> GetPropertyListingByIdAsync(int id) => throw new NotImplementedException();
         public Task<List<PropertyListing>?> GetBulkPropertyListingByUrlAsync(List<string> urls) => throw new NotImplementedException();

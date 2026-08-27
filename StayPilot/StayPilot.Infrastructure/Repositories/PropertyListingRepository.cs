@@ -55,8 +55,36 @@ namespace StayPilot.Infrastructure.Repositories
         /// </summary>
         public async Task<PropertyListing> AddPropertyListingAsync(PropertyListing propertyListing)
         {
+            AttachExistingMarketArea(propertyListing);
+
             var entry = await _context.PropertyListings.AddAsync(propertyListing);
             return entry.Entity;
+        }
+
+        /// <summary>
+        /// The market area on this listing came from an untracked, whole-table read. Reuse it
+        /// if the context already tracks that Id (another listing pulled it in first);
+        /// otherwise attach it as Unchanged, so EF treats it as an existing row instead of one
+        /// to insert.
+        /// </summary>
+        private void AttachExistingMarketArea(PropertyListing propertyListing)
+        {
+            if (propertyListing.MarketArea is null)
+            {
+                return;
+            }
+
+            var tracked = _context.ChangeTracker.Entries<MarketArea>()
+                .FirstOrDefault(x => x.Entity.Id == propertyListing.MarketArea.Id);
+
+            if (tracked is not null)
+            {
+                propertyListing.MarketArea = tracked.Entity;
+            }
+            else
+            {
+                _context.Attach(propertyListing.MarketArea);
+            }
         }
 
         /// <summary>
@@ -143,6 +171,49 @@ namespace StayPilot.Infrastructure.Repositories
             }
 
             return (latitude.Value, longitude.Value);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition)
+        {
+            var query = _context.PropertyListings.AsQueryable();
+
+            district = NullIfBlank(district);
+            municipality = NullIfBlank(municipality);
+            town = NullIfBlank(town);
+            zone = NullIfBlank(zone);
+
+            if (district is not null)
+            {
+                query = query.Where(x => x.MarketArea.District == district);
+            }
+
+            if (municipality is not null)
+            {
+                query = query.Where(x => x.MarketArea.Municipality == municipality);
+            }
+
+            if (town is not null)
+            {
+                query = query.Where(x => x.MarketArea.Town == town);
+            }
+
+            if (zone is not null)
+            {
+                query = query.Where(x => x.MarketArea.Zone == zone);
+            }
+
+            query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status == ListingStatus.Active);
+
+            if (condition is not null)
+            {
+                query = query.Where(x => x.Condition == condition);
+            }
+
+            return await query
+                .Include(x => x.MarketArea)
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .ToListAsync();
         }
 
         /// <summary>
@@ -572,6 +643,15 @@ namespace StayPilot.Infrastructure.Repositories
                 // The area comes along because the overview now also breaks the slice into the
                 // places inside it, and that needs a district/município/freguesia per listing.
                 .Include(x => x.MarketArea)
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .ToListAsync();
+        }
+
+        /// <inheritdoc cref="IPropertyListingRepository.GetActiveListingsAsync"/>
+        public async Task<List<PropertyListing>> GetActiveListingsAsync()
+        {
+            return await _context.PropertyListings
+                .Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status == ListingStatus.Active)
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
                 .ToListAsync();
         }
