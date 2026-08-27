@@ -7,7 +7,7 @@
   </app-page-header>
 
   @if (error()) {
-    <p class="error">{{ error() }}</p>
+    <p class="error" role="alert">{{ error() }}</p>
   }
   @if (message()) {
     <p class="success">{{ message() }}</p>
@@ -51,7 +51,7 @@
             @for (p of sortedProperties(); track p.id) {
               <tr [class.row-selected]="isSelected(p.id)" [class.row-editing]="editingId() === p.id">
                 <td class="pick">
-                  <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" />
+                  <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" [attr.aria-label]="'Select ' + p.name" />
                 </td>
                 <td class="num">#{{ p.id }}</td>
                 <td>{{ p.name }}</td>
@@ -106,7 +106,7 @@
         <label class="field">
           <span>Condition</span>
           <select [(ngModel)]="form.condition" name="condition">
-            @for (c of conditions; track c) { <option [value]="c">{{ c }}</option> }
+            @for (c of conditions; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
           </select>
         </label>
 

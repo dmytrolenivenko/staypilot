@@ -92,6 +92,22 @@ namespace StayPilot.Application.Contracts.Response.Base
         [Display(Description = "The listing '{0}' could not be placed: no market area matches the address '{1}'.")]
         ListingMarketAreaNotFound = -203,
 
+        /// <summary>
+        /// Typology 0 is not a room count - it is the gap left when a caller sends nothing, or a
+        /// name we do not know. It reaches the front end as a bare number instead of a name and
+        /// breaks every screen that reads it as text, so it is refused at the door. {0} is the url.
+        /// </summary>
+        [Display(Description = "The listing '{0}' needs a typology (T0 to T10).")]
+        ListingTypologyRequired = -204,
+
+        /// <summary>
+        /// A search whose lowest bound sits above its highest one. It matches nothing, which the
+        /// screen used to report as a plain "No listings match" - indistinguishable from a search
+        /// that ran correctly and found nothing. {0} names which pair is inverted.
+        /// </summary>
+        [Display(Description = "The smallest {0} asked for is larger than the largest.")]
+        FilterRangeInverted = -205,
+
         // ---------- Listing snapshots ----------
 
         [NotFound]

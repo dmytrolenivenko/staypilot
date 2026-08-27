@@ -76,7 +76,9 @@ namespace StayPilot.UnitTests
 
             // The whole reason the two halves are read separately: labour is 18 points ahead of
             // materials, and a lift is a bought machine rather than a job.
-            Assert.Equal(Math.Round(12675m * 1.2624m), Cost(basis.Elevators, "two"));
+            // One-off fees round to the nearest EUR 10, so this compares on that grid; the point
+            // of the test is which index was applied, and the blended one lands elsewhere.
+            Assert.Equal(Math.Round(12675m * 1.2624m / 10m) * 10m, Cost(basis.Elevators, "two"));
         }
 
         [Theory]

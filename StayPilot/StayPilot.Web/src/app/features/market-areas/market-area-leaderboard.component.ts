@@ -2,13 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
-import { AreaLevel, MarketAreaStatsResponse } from '../../core/models/market-area-stats';
+import { AreaLevel, MarketAreaStatsResponse, RELIABLE_LISTINGS } from '../../core/models/market-area-stats';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 import { PlaceNameComponent, placeLevelLabel, placeOwnName } from '../../shared/place-name.component';
 import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
 
 // The columns you can sort by. Client-side only — the API never sees these.
+import { HttpErrorResponse } from '@angular/common/http';
+import { apiErrorMessage } from '../../core/api-error';
 type SortColumn = 'place' | 'listings' | 'pricePerM2' | 'area' | 'deals';
 type SortDirection = 'asc' | 'desc';
 
@@ -21,7 +23,6 @@ function dealShare(area: MarketAreaStatsResponse): number {
 // Below this many listings a median is worth reading with suspicion, so the row is marked.
 // Not hidden: hiding them is what made the cheapest place on the board (Beja, 1,937) far from
 // the cheapest place in the data (Póvoa de São Miguel, 419) — true, just thinly evidenced.
-const RELIABLE_LISTINGS = 15;
 
 // Leaderboard — places ranked on the middle price per m².
 //
@@ -224,8 +225,12 @@ export class MarketAreaLeaderboardComponent implements OnInit {
           this.calculatedAtUtc.set(response.calculatedAtUtc);
           this.loading.set(false);
         },
-        error: () => {
-          this.error.set('Could not load the leaderboard. Check the API is running.');
+        error: (err: HttpErrorResponse) => {
+          // Clear the rows too: the header counts them, so leaving them up prints
+          // "47 places · 5 thinly evidenced" directly above a red box saying it failed.
+          this.areas.set([]);
+          this.calculatedAtUtc.set(null);
+          this.error.set(apiErrorMessage(err, 'Could not load the leaderboard.'));
           this.loading.set(false);
         }
       });

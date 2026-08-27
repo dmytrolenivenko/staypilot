@@ -8,7 +8,7 @@ import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketArea } from '../../core/models/market-area';
 import { OwnedPropertyRequest, OwnedPropertyResponse } from '../../core/models/owned-property';
 import {
-  PROPERTY_CONDITIONS,
+  PROPERTY_CONDITION_OPTIONS,
   PROPERTY_TYPES,
   TYPOLOGIES
 } from '../../core/models/enums';
@@ -31,7 +31,7 @@ type SortDirection = 'asc' | 'desc';
 export class OwnedPropertiesComponent implements OnInit {
   readonly propertyTypes = PROPERTY_TYPES;
   readonly typologies = TYPOLOGIES;
-  readonly conditions = PROPERTY_CONDITIONS;
+  readonly conditions = PROPERTY_CONDITION_OPTIONS;
 
   // Every seeded market area, loaded once. Drives the location cascade below
   // (District → Municipality → Town → Zone) so you pick from real places
@@ -406,19 +406,31 @@ export class OwnedPropertiesComponent implements OnInit {
     this.zoneOptions.set([]);
   }
 
+  // Every problem at once, not just the first: the form is long, and fixing one field only to
+  // be told about the next one is three round trips through the same button.
   save(): void {
+    const problems: string[] = [];
+
     if (!this.form.name.trim()) {
-      this.error.set('Name is required.');
-      return;
+      problems.push('Name is required.');
     }
+
     if (!this.form.areaM2 || this.form.areaM2 < 1) {
-      this.error.set('Area (m²) must be at least 1.');
-      return;
+      problems.push('Area (m²) must be at least 1.');
     }
+
     // District + Municipality are what the server matches a property to a market
     // area on, so both must be chosen or the save fails server-side.
     if (!this.form.district || !this.form.municipality) {
-      this.error.set('Pick at least a District and a Municipality.');
+      problems.push('Pick at least a District and a Municipality.');
+    }
+
+    if (problems.length > 0) {
+      this.error.set(problems.join(' '));
+
+      // The banner lives at the top of the page and Save is at the bottom of a long form, so
+      // without this the click looks like it did nothing at all.
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 

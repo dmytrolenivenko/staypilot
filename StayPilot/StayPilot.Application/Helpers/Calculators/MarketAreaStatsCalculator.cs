@@ -24,11 +24,11 @@ namespace StayPilot.Application.Helpers.Calculators
     public static class MarketAreaStatsCalculator
     {
         /// <summary>
-        /// How far below the model's estimate a listing has to be asking before we call it a
-        /// deal. Ten percent because the model's own median error is 10.4% - anything smaller
-        /// than its error is noise, and counting it would fill the deals column with rounding.
+        /// The smallest discount worth calling a deal, whatever the model says. A figure below
+        /// this is inside anyone's rounding, and a deals column full of 3% is a deals column
+        /// nobody reads.
         /// </summary>
-        private const decimal BargainDiscountPercent = 10m;
+        private const decimal MinimumBargainDiscountPercent = 10m;
 
         /// <summary>
         /// The fewest listings needed before a median is worth saving for one of the smaller
@@ -189,7 +189,31 @@ namespace StayPilot.Application.Helpers.Calculators
 
             var discountPercent = (prediction.PricePerM2 - snapshot.PricePerM2) / prediction.PricePerM2 * 100m;
 
-            return discountPercent >= BargainDiscountPercent;
+            return discountPercent >= BargainThresholdFor(prediction);
+        }
+
+        /// <summary>
+        /// How far below the estimate this particular listing has to be asking before it counts.
+        ///
+        /// Taken from the model rather than written down, because the number has to mean "bigger
+        /// than the model's own error" and that error moves - with every refit, and from place to
+        /// place. It used to be a flat 10%, justified in a comment by a measured median error of
+        /// 10.4%: true when it was written, tied to nothing, and silently wrong the next time the
+        /// data changed.
+        ///
+        /// Per prediction, not per model, and that is the point. A prediction carries a spread
+        /// already widened where the evidence is thin, so a listing in a market the model barely
+        /// knows has to be further below the line before we are willing to call it underpriced.
+        /// Otherwise the thinnest markets produce the most deals, which is exactly backwards.
+        /// </summary>
+        private static decimal BargainThresholdFor(ValuationPrediction prediction)
+        {
+            // Residuals are fitted on the log scale, so the spread is a multiplier, not a
+            // percentage. 0.6745 standard deviations is the median of a normal distribution
+            // either side of centre - the model's own typical miss, expressed as a percentage.
+            var typicalMissPercent = (decimal)(Math.Exp(0.6745 * prediction.Spread) - 1) * 100m;
+
+            return Math.Max(MinimumBargainDiscountPercent, typicalMissPercent);
         }
 
         /// <summary>

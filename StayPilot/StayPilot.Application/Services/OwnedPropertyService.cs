@@ -272,9 +272,9 @@ namespace StayPilot.Application.Services
 
                 // The spread stays unweighted on purpose: it answers "what is the range of asking
                 // prices around here", which every comparable has an equal say in.
-                MinCompPricePerM2 = Calculator.Percentile(sortedCompPricesPerM2, 0.25),
+                CompPricePerM2P25 = Calculator.Percentile(sortedCompPricesPerM2, 0.25),
                 MedianCompPricePerM2 = Calculator.Median(sortedCompPricesPerM2),
-                MaxCompPricePerM2 = Calculator.Percentile(sortedCompPricesPerM2, 0.75),
+                CompPricePerM2P75 = Calculator.Percentile(sortedCompPricesPerM2, 0.75),
                 AverageCompPricePerM2 = averageCompPricePerM2,
 
                 Adjustments = estimate.Adjustments,
@@ -289,7 +289,7 @@ namespace StayPilot.Application.Services
                     : string.IsNullOrWhiteSpace(locatedArea.Zone) ? locatedArea.Town : locatedArea.Zone,
                 LocatedByCoordinates = estimate.LocatedByCoordinates,
 
-                Equity = estimate.Equity,
+                AskSpread = estimate.AskSpread,
             };
         }
 
@@ -349,17 +349,17 @@ namespace StayPilot.Application.Services
             response.Items = response.Items.OrderByDescending(x => x.MidPrice).ToList();
 
             response.PropertyCount = response.Items.Count;
-            response.TotalEstimatedValue = response.Items.Sum(x => x.MidPrice);
-            response.TotalPurchasePrice = response.Items.Sum(x => x.Equity.PurchasePrice);
-            response.TotalGainAmount = response.TotalEstimatedValue - response.TotalPurchasePrice;
+            response.TotalEstimatedAskingPrice = response.Items.Sum(x => x.MidPrice);
+            response.TotalPurchasePrice = response.Items.Sum(x => x.AskSpread.PurchasePrice);
+            response.TotalAskSpreadAmount = response.TotalEstimatedAskingPrice - response.TotalPurchasePrice;
 
-            response.TotalGainPercent = response.TotalPurchasePrice <= 0m
+            response.TotalAskSpreadPercent = response.TotalPurchasePrice <= 0m
                 ? 0m
-                : Math.Round(response.TotalGainAmount / response.TotalPurchasePrice * 100m, 1);
+                : Math.Round(response.TotalAskSpreadAmount / response.TotalPurchasePrice * 100m, 1);
 
             // The Base path only. Adding up the optimistic paths would produce a portfolio total
             // that assumes every district has its best decade at once.
-            response.TotalProjectedValue = response.Items.Sum(x =>
+            response.TotalProjectedAskingPrice = response.Items.Sum(x =>
                 x.Forecast.Scenarios.FirstOrDefault(s => s.Name == BaseScenarioName)?.FinalYearValue ?? x.MidPrice);
 
             return response;
@@ -416,7 +416,7 @@ namespace StayPilot.Application.Services
                 MaxPrice = estimate.MaxPrice,
                 PricePerM2 = entity.AreaM2 <= 0 ? 0m : Math.Round(estimate.MidPrice / entity.AreaM2, 0),
                 ConfidenceLevel = estimate.Confidence,
-                Equity = estimate.Equity,
+                AskSpread = estimate.AskSpread,
             };
 
             // Cross-checked against what the immediate neighbours ask, exactly as the detail panel
