@@ -6,43 +6,6 @@ using StayPilot.Domain.Enums;
 namespace StayPilot.Application.Interfaces.Repositories
 {
     /// <summary>
-    /// One listing, cut down to what the market overview measures: its newest asking price, its
-    /// area, and the place it sits in. A read model for that query, not an entity - nothing stores
-    /// it. It exists so the query can select exactly these columns instead of hydrating a full
-    /// listing/snapshot/market-area graph for every row in the slice, which is real, avoidable
-    /// cost once the slice runs to tens of thousands of listings.
-    /// </summary>
-    public readonly record struct MarketOverviewListingRow(
-        decimal Price,
-        decimal PricePerM2,
-        int AreaM2,
-        Typology Typology,
-        string District,
-        string Municipality,
-        string Town);
-
-    /// <summary>
-    /// One listing, cut down to what the market area stats roll-up measures: its newest price,
-    /// its place, and the handful of fields that decide its renovation split and its centroid. A
-    /// read model for that query, not an entity - nothing stores it. Built for the same reason as
-    /// <see cref="MarketOverviewListingRow"/>: the recalculation walks every listing in the
-    /// database, and hydrating a full listing/snapshot/market-area graph for each one is real,
-    /// avoidable cost this admin action pays for nothing.
-    /// </summary>
-    public readonly record struct MarketAreaStatsListingRow(
-        decimal Price,
-        decimal PricePerM2,
-        int AreaM2,
-        Typology Typology,
-        PropertyCondition Condition,
-        string? EnergyCertificate,
-        decimal Latitude,
-        decimal Longitude,
-        string District,
-        string Municipality,
-        string Town);
-
-    /// <summary>
     /// Reads and saves property listings in the database.
     /// </summary>
     public interface IPropertyListingRepository
@@ -76,46 +39,30 @@ namespace StayPilot.Application.Interfaces.Repositories
         Task SaveChangesAsync();
 
         /// <summary>
-        /// Forget the rows that are queued to be inserted but have not been saved.
-        /// Call it after a failed save, or the same rows are sent again with the next one and
-        /// fail again.
+        /// Finds properties comparable to a given one: same property type, a room layout
+        /// within one step, and either in the same market area or within radiusMeters of
+        /// the given lat/lon. Only counts as fresh if its newest snapshot is not older
+        /// than the cutoff. Returns at most 100, same market area first, then nearest.
+        /// Falls back to the market area alone when the property has no coordinates.
         /// </summary>
-        void DiscardPendingChanges();
-
-        /// <summary>
-        /// Finds properties comparable to a given one: same property type, a room layout within
-        /// one step, a floor area within a quarter either way, and within radiusMeters of the
-        /// given lat/lon. Only counts a listing if its newest snapshot is no older than the
-        /// cutoff. Every match is returned, not a top slice - ordered same market area first,
-        /// then nearest.
-        /// </summary>
-        Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal latitude, decimal longitude, int radiusMeters, int months);
+        Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months);
 
         /// <summary>
         /// Gets every property listing across the whole dataset, with just its newest
-        /// snapshot loaded. Used to calculate feature price premiums, which reads nearly every
-        /// scalar column a listing has — no market area filter and no pagination, this is a bulk
-        /// read for analysis, not a UI-facing list.
+        /// snapshot loaded. Used to calculate feature price premiums — no market area
+        /// filter and no pagination, this is a bulk read for analysis, not a UI-facing list.
         /// </summary>
         Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync();
 
         /// <summary>
-        /// Gets every property listing across the whole dataset, cut down to what the market area
-        /// stats roll-up measures. Same bulk read as <see cref="GetAllListingsForFeaturePremiumCalculationAsync"/>,
-        /// projected instead of hydrated: the stats roll-up needs a handful of fields, not the
-        /// whole listing.
-        /// </summary>
-        Task<List<MarketAreaStatsListingRow>> GetAllListingsForMarketAreaStatsAsync();
-
-        /// <summary>
         /// Gets every listing in one slice of the market - a place, optionally narrowed to one
-        /// property type and one room layout - cut down to its newest asking price and its place.
+        /// property type and one room layout - with just its newest snapshot loaded.
         ///
         /// Not paged: the market overview takes medians and a distribution over the whole slice,
         /// and a page of twenty would summarise the page rather than the market. Pass null or an
         /// empty string for any filter you do not want applied.
         /// </summary>
-        Task<List<MarketOverviewListingRow>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology);
+        Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology);
 
         /// <summary>
         /// Gets every listing in one place with its WHOLE snapshot history loaded, newest first.

@@ -7,8 +7,8 @@ import { MarketAreaService } from '../../core/services/market-area.service';
 import { FilterPropertyListingRequest } from '../../core/models/filter-property-listing';
 import { PropertyListingResponse } from '../../core/models/property-listing';
 import {
-  LISTING_STATUS_OPTIONS,
-  PROPERTY_CONDITION_OPTIONS,
+  LISTING_STATUSES,
+  PROPERTY_CONDITIONS,
   PROPERTY_TYPES,
   TYPOLOGIES
 } from '../../core/models/enums';
@@ -76,8 +76,8 @@ export class ListingBrowserComponent implements OnInit {
   // Dropdown options (reused from the enums file).
   readonly propertyTypes = PROPERTY_TYPES;
   readonly typologies = TYPOLOGIES;
-  readonly conditions = PROPERTY_CONDITION_OPTIONS;
-  readonly listingStatuses = LISTING_STATUS_OPTIONS;
+  readonly conditions = PROPERTY_CONDITIONS;
+  readonly listingStatuses = LISTING_STATUSES;
 
   // The dropdown choices, each level loaded from the backend as you pick the one above.
   districtOptions = signal<string[]>([]);
@@ -96,10 +96,6 @@ export class ListingBrowserComponent implements OnInit {
   error = signal<string | null>(null);
   hasSearched = signal(false);
   capped = signal(false); // true when there were more than 1000 matches on the server
-
-  // What the SERVER says matched, which is not what we hold once the fetch hits its cap. Kept
-  // separate so the header can say "first 1,000 of 7,390" instead of calling the cap a total.
-  serverTotal = signal(0);
 
   // Client-side sorting (set by clicking a column header).
   sortColumn = signal<SortColumn | null>(null);
@@ -218,14 +214,12 @@ export class ListingBrowserComponent implements OnInit {
       next: result => {
         this.allRows.set(result.items);
         this.capped.set(result.capped);
-        this.serverTotal.set(result.totalRecords);
         this.loading.set(false);
       },
       error: () => {
         this.error.set('Could not reach the API.');
         this.allRows.set([]);
         this.capped.set(false);
-        this.serverTotal.set(0);
         this.loading.set(false);
       }
     });
@@ -242,7 +236,6 @@ export class ListingBrowserComponent implements OnInit {
     this.hasSearched.set(false);
     this.error.set(null);
     this.capped.set(false);
-    this.serverTotal.set(0);
   }
 
   // --- Client-side sorting (no API call) -----------------------------------

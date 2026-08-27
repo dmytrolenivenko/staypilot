@@ -130,7 +130,7 @@ namespace StayPilot.Application.Helpers.Calculators
             _training = training;
             _typicalLogArea = training.Average(x => Math.Log(Math.Max(1, x.Subject.AreaM2)));
 
-            var typicalFloor = Calculator.Median(training.Where(x => x.Subject.Floor.HasValue)
+            var typicalFloor = Median(training.Where(x => x.Subject.Floor.HasValue)
                                               .Select(x => (double)x.Subject.Floor!.Value));
 
             var typicalEnergyGrade = training.Where(x => x.Subject.EnergyGradeScore.HasValue)
@@ -243,8 +243,9 @@ namespace StayPilot.Application.Helpers.Calculators
 
                 // Walking distance to the sea, as a plain yes/no. This replaced a "per halving of
                 // the distance" figure that was correct and unreadable: nobody could say what
-                // "+4.6% per halving" meant for their own flat without doing logarithms. It is
-                // only the reported premium that is a threshold - pricing itself works off comps.
+                // "+4.6% per halving" meant for their own flat without doing logarithms. The
+                // smooth distance still drives the price estimate itself (see ValuationModel);
+                // it is only the reported premium that is a threshold.
                 new Measured(PremiumFeatures.CloseToBeach,
                     x => ValuationSubject.IsCloseToBeach(x) ? 1 : 0,
                     ValuationSubject.IsCloseToBeach,
@@ -447,7 +448,9 @@ namespace StayPilot.Application.Helpers.Calculators
         /// </summary>
         private static string GroupKeyFor(ValuationSubject subject)
         {
-            var patch = $"{Math.Floor(subject.Latitude / PatchLatitude)}:{Math.Floor(subject.Longitude / PatchLongitude)}";
+            var patch = subject.Latitude.HasValue && subject.Longitude.HasValue
+                ? $"{Math.Floor(subject.Latitude.Value / PatchLatitude)}:{Math.Floor(subject.Longitude.Value / PatchLongitude)}"
+                : "nowhere";
 
             return $"{subject.MarketAreaId}|{patch}|{(int)subject.Typology}|{(int)subject.PropertyType}"
                  + $"|{subject.AreaM2 / SizeBandM2}";
@@ -490,6 +493,18 @@ namespace StayPilot.Application.Helpers.Calculators
                 return 0;
 
             return (decimal)((Math.Exp(Math.Clamp(coefficient, -5, 5)) - 1) * 100);
+        }
+
+        private static double Median(IEnumerable<double> values)
+        {
+            var sorted = values.OrderBy(x => x).ToList();
+
+            if (sorted.Count == 0)
+                return 0;
+
+            return sorted.Count % 2 != 0
+                ? sorted[sorted.Count / 2]
+                : (sorted[sorted.Count / 2] + sorted[(sorted.Count / 2) - 1]) / 2;
         }
 
         /// <summary>

@@ -108,17 +108,12 @@ namespace StayPilot.Application.Contracts.Request
         /// <summary>Filter by listing state (for example active or sold).</summary>
         public ListingStatus? ListingStatus { get; set; }
 
-        /// <summary>
-        /// Which page to return. Starts at 1. Allowed values: 1 to 5,000 - together with
-        /// <see cref="PageSize"/>, enough to reach 500,000 listings; the old ceiling of 50 capped
-        /// the whole database at 1,000 reachable rows, which every município above that size
-        /// (Lisboa, Porto, Sintra...) had already passed.
-        /// </summary>
-        [Range(1, 5000)]
+        /// <summary>Which page to return. Starts at 1. Allowed values: 1 to 50.</summary>
+        [Range(1, 50)]
         public int PageNumber { get; set; } = 1;
 
-        /// <summary>How many items per page. Allowed values: 1 to 100.</summary>
-        [Range(1, 100)]
+        /// <summary>How many items per page. Allowed values: 1 to 20.</summary>
+        [Range(1,20)]
         public int PageSize { get; set; } = 20;
 
         /// <summary>Which field to sort by. Defaults to Id.</summary>

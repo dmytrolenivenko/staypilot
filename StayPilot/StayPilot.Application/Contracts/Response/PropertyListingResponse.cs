@@ -93,10 +93,10 @@ namespace StayPilot.Application.Contracts.Response
         public bool HasCityView { get; set; }
 
         /// <summary>Latitude of the property.</summary>
-        public decimal Latitude { get; set; }
+        public decimal? Latitude { get; set; }
 
         /// <summary>Longitude of the property.</summary>
-        public decimal Longitude { get; set; }
+        public decimal? Longitude { get; set; }
 
         /// <summary>Energy rating of the property (for example A, B, C).</summary>
         public string? EnergyCertificate { get; set; }

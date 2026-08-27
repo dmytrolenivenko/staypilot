@@ -1,5 +1,5 @@
 using StayPilot.Application.Contracts.Response;
-using StayPilot.Application.Interfaces.Repositories;
+using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Helpers.Calculators
@@ -40,7 +40,7 @@ namespace StayPilot.Application.Helpers.Calculators
         /// listing count promise more evidence than there is.
         /// </summary>
         public static MarketOverviewResponse Calculate(
-            IEnumerable<MarketOverviewListingRow> listings, int bucketCount, AreaLevel? breakdownLevel = null)
+            IEnumerable<PropertyListing> listings, int bucketCount, AreaLevel? breakdownLevel = null)
         {
             var measurable = CollectMeasurable(listings);
 
@@ -70,15 +70,35 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// The listings we can measure. The repository already loaded just the newest asking
-        /// price - a listing with no snapshot arrives here already zeroed, so it drops out the
-        /// same way one with no area does.
+        /// The listings we can measure, cut down to the four numbers the screen needs. Cut down
+        /// here so the maths below never has to reach back into an entity or its snapshots.
         /// </summary>
-        private static List<MarketOverviewListingRow> CollectMeasurable(IEnumerable<MarketOverviewListingRow> listings)
+        private static List<MeasuredListing> CollectMeasurable(IEnumerable<PropertyListing> listings)
         {
-            return listings
-                .Where(x => x.Price > 0 && x.PricePerM2 > 0 && x.AreaM2 > 0)
-                .ToList();
+            var measurable = new List<MeasuredListing>();
+
+            foreach (var listing in listings)
+            {
+                var snapshot = NewestSnapshot(listing);
+
+                if (snapshot is null || snapshot.Price <= 0 || snapshot.PricePerM2 <= 0 || listing.AreaM2 <= 0)
+                {
+                    continue;
+                }
+
+                var area = listing.MarketArea;
+
+                measurable.Add(new MeasuredListing(
+                    snapshot.Price,
+                    snapshot.PricePerM2,
+                    listing.AreaM2,
+                    listing.Typology,
+                    area?.District ?? string.Empty,
+                    area?.Municipality ?? string.Empty,
+                    area?.Town ?? string.Empty));
+            }
+
+            return measurable;
         }
 
         /// <summary>
@@ -153,7 +173,7 @@ namespace StayPilot.Application.Helpers.Calculators
         /// in its own column on this screen, so a thin row reads as thin, and "there are two T5s
         /// here at all" is part of what an overview is for.
         /// </summary>
-        private static List<MarketOverviewTypologyResponse> BuildTypologyRows(List<MarketOverviewListingRow> measurable)
+        private static List<MarketOverviewTypologyResponse> BuildTypologyRows(List<MeasuredListing> measurable)
         {
             var rows = new List<MarketOverviewTypologyResponse>();
 
@@ -184,7 +204,7 @@ namespace StayPilot.Application.Helpers.Calculators
         /// blank name: a row called "" is not a place, and its median would be read as one.
         /// </summary>
         private static MarketOverviewBreakdownResponse? BuildBreakdown(
-            List<MarketOverviewListingRow> measurable, AreaLevel? level, decimal slicePricePerM2)
+            List<MeasuredListing> measurable, AreaLevel? level, decimal slicePricePerM2)
         {
             if (level is null)
             {
@@ -232,18 +252,13 @@ namespace StayPilot.Application.Helpers.Calculators
         /// Which place one listing counts into at this grain. Also the row's display name, so the
         /// grouping key and the label can never drift apart.
         /// </summary>
-        private static string PlaceKeyFor(MarketOverviewListingRow listing, AreaLevel level)
+        private static string PlaceKeyFor(MeasuredListing listing, AreaLevel level)
         {
             return level switch
             {
                 AreaLevel.District => listing.District,
                 AreaLevel.Municipality => listing.Municipality,
-
-                // A Town that repeats its own município's name is not a real freguesia - it is
-                // where a listing landed when only the município, not the freguesia, was known
-                // (see "Loulé" duplicating município Loulé). Nothing finer to report for it, so it
-                // is dropped the same way a listing with no market area at all is dropped below.
-                _ => listing.Town == listing.Municipality ? string.Empty : listing.Town
+                _ => listing.Town
             };
         }
 
@@ -258,6 +273,17 @@ namespace StayPilot.Application.Helpers.Calculators
             };
         }
 
+        /// <summary>
+        /// The newest snapshot on this listing, or null when it has none. The newest one is the
+        /// current asking price; the older ones are the price history screen's business.
+        /// </summary>
+        private static ListingSnapshot? NewestSnapshot(PropertyListing listing)
+        {
+            return listing.ListingSnapshots
+                .OrderByDescending(x => x.SnapshotDateUtc)
+                .FirstOrDefault();
+        }
+
         private static List<decimal> Sorted(IEnumerable<decimal> values)
         {
             var sorted = values.ToList();
@@ -265,5 +291,18 @@ namespace StayPilot.Application.Helpers.Calculators
 
             return sorted;
         }
+
+        /// <summary>
+        /// One listing cut down to what the overview measures. A record, so the grouping and the
+        /// medians above read as plain maths over plain values.
+        /// </summary>
+        private readonly record struct MeasuredListing(
+            decimal Price,
+            decimal PricePerM2,
+            int AreaM2,
+            Typology Typology,
+            string District,
+            string Municipality,
+            string Town);
     }
 }

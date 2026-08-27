@@ -36,12 +36,10 @@ export class ListingFilterService {
   }
 
   // All matching rows, gathered across however many pages of 20 it takes.
-  // Result carries both how many we actually hold and how many the server says match, because
-  // once the fetch is capped those are different numbers and the header must not print the cap
-  // as if it were the total.
+  // Result also tells us if the set was capped at 1000 (more matches exist on the server).
   filterAll(
     request: FilterPropertyListingRequest
-  ): Observable<{ items: PropertyListingResponse[]; capped: boolean; totalRecords: number }> {
+  ): Observable<{ items: PropertyListingResponse[]; capped: boolean }> {
     return this.page(request, 1).pipe(
       switchMap(first => {
         const neededPages = Math.ceil(first.totalRecords / API_PAGE_SIZE);
@@ -49,7 +47,7 @@ export class ListingFilterService {
 
         // Everything fit on page 1 — nothing more to fetch.
         if (pagesToFetch <= 1) {
-          return of({ items: first.items, capped: neededPages > MAX_PAGES, totalRecords: first.totalRecords });
+          return of({ items: first.items, capped: neededPages > MAX_PAGES });
         }
 
         // Fetch pages 2..N in parallel and stitch them onto page 1.
@@ -61,7 +59,7 @@ export class ListingFilterService {
         return forkJoin(rest).pipe(
           map(responses => {
             const items = first.items.concat(...responses.map(r => r.items));
-            return { items, capped: neededPages > MAX_PAGES, totalRecords: first.totalRecords };
+            return { items, capped: neededPages > MAX_PAGES };
           })
         );
       })

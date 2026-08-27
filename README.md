@@ -80,9 +80,7 @@ dotnet ef migrations add <Name> --project StayPilot.Infrastructure --startup-pro
 dotnet ef database update --project StayPilot.Infrastructure --startup-project StayPilot.Api
 ```
 
-CI builds+tests both projects on every PR (`.github/workflows/ci.yml`); merges to
-`master`/`stable`/`release` auto-deploy to dev/qa/prod respectively. No lint tooling beyond the
-C# compiler/analyzers. Full details in [`CLAUDE.md`](CLAUDE.md).
+There is no CI configured yet and no lint tooling beyond the C# compiler/analyzers.
 
 ## API surface
 

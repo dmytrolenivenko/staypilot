@@ -14,7 +14,7 @@ import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 
 // Columns of the list. Sorted in the browser — a portfolio is a handful of rows.
-type PortfolioSort = 'name' | 'place' | 'value' | 'pricePerM2' | 'spread' | 'demand' | 'projected';
+type PortfolioSort = 'name' | 'place' | 'value' | 'pricePerM2' | 'gain' | 'demand' | 'projected';
 type SortDirection = 'asc' | 'desc';
 
 // Columns of the two tables inside an expanded property.
@@ -32,7 +32,7 @@ const DEMAND_ORDER: Record<DemandLevel, number> = {
 
 // Compare on the number after the T, so T10 sorts above T9 rather than next to T1.
 function typologyRooms(typology: string): number {
-  return Number(String(typology ?? '').replace(/^T/i, '')) || 0;
+  return Number(typology.replace(/^T/i, '')) || 0;
 }
 
 // The Base path is what the list column and the portfolio total quote. Named rather than
@@ -108,9 +108,9 @@ export class ValuationComponent implements OnInit {
           result = a.pricePerM2 - b.pricePerM2;
           break;
 
-        case 'spread':
+        case 'gain':
           // On the percentage, not the amount: otherwise this just re-sorts by property value.
-          result = a.askSpread.spreadPercent - b.askSpread.spreadPercent;
+          result = a.equity.gainPercent - b.equity.gainPercent;
           break;
 
         case 'demand':

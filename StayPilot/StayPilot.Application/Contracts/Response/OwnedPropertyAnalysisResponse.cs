@@ -21,13 +21,11 @@ namespace StayPilot.Application.Contracts.Response
         public decimal MarketRatePerM2 { get; set; }  // median €/m² across the comps
         public decimal EstimateBeforeAdjustments { get; set; }  // MarketRatePerM2 × your AreaM2, before Adjustments are applied
 
-        // The middle half of the comps, not the full range. Deliberately quartiles rather than
-        // the true min and max: one 2 m2 advert at EUR 174,500/m2 would otherwise define the band.
-        // Named for what they are, because "Min"/"Max" holding P25/P75 is a trap for the next reader.
-        public decimal CompPricePerM2P25 { get; set; }
+        // raw comp spread, for convenience (same info is in Comps, this just saves scanning it)
+        public decimal MinCompPricePerM2 { get; set; }  // cheapest comp's €/m²
 
         public decimal MedianCompPricePerM2 { get; set; }  // median comp's €/m²
-        public decimal CompPricePerM2P75 { get; set; }
+        public decimal MaxCompPricePerM2 { get; set; }  // priciest comp's €/m²
         public decimal AverageCompPricePerM2 { get; set; }  // mean comp's €/m² (vs the median above)
 
         public List<ValuationAdjustment> Adjustments { get; set; } = new List<ValuationAdjustment>();
@@ -41,7 +39,7 @@ namespace StayPilot.Application.Contracts.Response
         public string LocatedAreaName { get; set; } = string.Empty;
         public bool LocatedByCoordinates { get; set; }  // true = the coordinates overrode the stored zone
 
-        public AskSpreadSummary AskSpread { get; set; } = new AskSpreadSummary();
+        public EquitySummary Equity { get; set; } = new EquitySummary();
 
     }
 }

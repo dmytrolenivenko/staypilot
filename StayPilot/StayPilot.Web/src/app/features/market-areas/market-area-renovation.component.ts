@@ -173,21 +173,6 @@ export class MarketAreaRenovationComponent implements OnInit {
           break;
       }
 
-      // Low-trust rows sort last whatever the column, unless trust IS the column being sorted.
-      //
-      // They are never hidden - that is what the trust filter is for, and it stays off by
-      // default on purpose. But leading the table with "EUR 607,192 on a typical flat" drawn
-      // from 4 of 79 projects, wearing the same badge as a 692-project row, tells the reader the
-      // opposite of what the trust column says two columns to its right. Demoted, not removed.
-      if (column !== 'trust') {
-        const trustGap = confidenceRank(b.renovationEvidence?.confidence)
-          - confidenceRank(a.renovationEvidence?.confidence);
-
-        if (trustGap !== 0) {
-          return trustGap;
-        }
-      }
-
       return direction === 'desc' ? -result : result;
     });
 
@@ -238,16 +223,6 @@ export class MarketAreaRenovationComponent implements OnInit {
 
   // The size the project stock here actually comes in, so a rate can become a sum of money.
   // Falls back to the place's overall median when the project side has no size of its own.
-  //
-  // Used for BOTH sides of the profit on purpose, and it is not a bug: a flat does not grow when
-  // you renovate it, so the finished value of THIS flat is the finished rate applied to the size
-  // it already is.
-  //
-  // What is worth knowing is that the two RATES are measured on differently sized stock -
-  // finished stock is larger in 143 of 194 places, 107 m2 against 88 m2 - and EUR/m2 falls as
-  // flats get bigger. So the finished rate is measured a little low for a flat this size, which
-  // understates the discount rather than flattering it. Fixing that means segmenting the rates
-  // by size, not swapping the footprint here.
   typicalFlatM2(area: MarketAreaStatsResponse): number {
     return area.projectMedianAreaM2 ?? area.medianAreaM2;
   }

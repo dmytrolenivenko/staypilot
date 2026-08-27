@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StayPilot.Application.Contracts.Request;
-using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
@@ -68,22 +67,6 @@ namespace StayPilot.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        /// <inheritdoc/>
-        public void DiscardPendingChanges()
-        {
-            // Only the rows waiting to be inserted. The ones we read from the database stay
-            // tracked: we still hold them in memory and they were never the problem.
-            var pending = _context.ChangeTracker
-                .Entries()
-                .Where(x => x.State == EntityState.Added)
-                .ToList();
-
-            foreach (var entry in pending)
-            {
-                entry.State = EntityState.Detached;
-            }
-        }
-
         /// <summary>
         /// Turns a blank filter into null, so "not chosen" is one value and not three.
         /// </summary>
@@ -93,40 +76,10 @@ namespace StayPilot.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Narrows a query to one place, level by level. Any blank part is skipped, so passing
-        /// only a district matches every listing in it.
-        /// </summary>
-        private static IQueryable<PropertyListing> ByPlace(
-            IQueryable<PropertyListing> query, string? district, string? municipality, string? town, string? zone = null)
-        {
-            if (!string.IsNullOrWhiteSpace(district))
-            {
-                query = query.Where(x => x.MarketArea.District == district);
-            }
-
-            if (!string.IsNullOrWhiteSpace(municipality))
-            {
-                query = query.Where(x => x.MarketArea.Municipality == municipality);
-            }
-
-            if (!string.IsNullOrWhiteSpace(town))
-            {
-                query = query.Where(x => x.MarketArea.Town == town);
-            }
-
-            if (!string.IsNullOrWhiteSpace(zone))
-            {
-                query = query.Where(x => x.MarketArea.Zone == zone);
-            }
-
-            return query;
-        }
-
-        /// <summary>
         /// Works out the middle point of a place's listings, to use as the centre of a radius
         /// search. Returns null when no radius was asked for, when no place was chosen (a
-        /// circle needs a centre), or when nothing is advertised there — in every one of
-        /// those cases the caller falls back to matching the place exactly.
+        /// circle needs a centre), or when nothing advertised there carries coordinates —
+        /// in every one of those cases the caller falls back to matching the place exactly.
         /// The middle point of the adverts, not of the place: we hold no real borders, which
         /// is the same approximation the neighbour gaps screen is built on.
         /// </summary>
@@ -142,19 +95,38 @@ namespace StayPilot.Infrastructure.Repositories
                 return null;
             }
 
-            var placed = ByPlace(_context.PropertyListings.AsQueryable(), district, municipality, town, zone);
+            var placed = _context.PropertyListings.Where(x => x.Latitude != null && x.Longitude != null);
 
-            // Average() throws on an empty sequence, so check first rather than relying on a
-            // nullable column to turn "nothing advertised there" into a null average.
-            if (!await placed.AnyAsync())
+            if (district is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.District == district);
+            }
+
+            if (municipality is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.Municipality == municipality);
+            }
+
+            if (town is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.Town == town);
+            }
+
+            if (zone is not null)
+            {
+                placed = placed.Where(x => x.MarketArea.Zone == zone);
+            }
+
+            // Averaging a nullable column gives null back on an empty set instead of throwing.
+            var latitude = await placed.AverageAsync(x => x.Latitude);
+            var longitude = await placed.AverageAsync(x => x.Longitude);
+
+            if (latitude is null || longitude is null)
             {
                 return null;
             }
 
-            var latitude = await placed.AverageAsync(x => x.Latitude);
-            var longitude = await placed.AverageAsync(x => x.Longitude);
-
-            return (latitude, longitude);
+            return (latitude.Value, longitude.Value);
         }
 
         /// <summary>
@@ -163,75 +135,72 @@ namespace StayPilot.Infrastructure.Repositories
         /// </summary>
         public async Task<(List<PropertyListing> Items, int TotalRecords)> FilterPropertyAsync(FilterPropertyListingRequest request)
         {
+            // Start with all properties. We add one filter below for each value the caller sent.
+            var query = _context.PropertyListings.AsQueryable();
+
+            #region Filters
+
             // Blank means "not chosen", and null reads better than "" in the query below.
             var district = NullIfBlank(request.District);
             var municipality = NullIfBlank(request.Municipality);
             var town = NullIfBlank(request.Town);
             var zone = NullIfBlank(request.Zone);
 
-            var query = await ApplyLocationFilter(
-                _context.PropertyListings.AsQueryable(), district, municipality, town, zone, request.WithinKm);
-
-            query = ApplyAttributeFilters(query, request);
-
-            // Count all matches BEFORE paging, so the caller knows the real total.
-            var totalResults = await query.CountAsync();
-
-            // Order the results. The price sorts use the newest snapshot, same as the filters above.
-            query = ApplySort(query, request);
-
-            var items = await query
-                .Include(x => x.MarketArea) // also load the market area
-                // Also load only the newest snapshot of each property (we do not need the older ones).
-                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
-                .Skip((request.PageNumber - 1) * request.PageSize) // jump over the earlier pages
-                .Take(request.PageSize)                            // take only this page
-                .ToListAsync();
-
-            return (items, totalResults);
-        }
-
-        /// <summary>
-        /// With a radius the place stops being a border and becomes a circle around it, so a
-        /// search for Lisboa also brings back Oeiras and Amadora. Without one, the place is
-        /// matched exactly, level by level, as it always was.
-        /// </summary>
-        private async Task<IQueryable<PropertyListing>> ApplyLocationFilter(
-            IQueryable<PropertyListing> query, string? district, string? municipality, string? town, string? zone, double? withinKm)
-        {
-            var centre = await GetPlaceCentreAsync(district, municipality, town, zone, withinKm);
+            // With a radius the place stops being a border and becomes a circle around it,
+            // so a search for Lisboa also brings back Oeiras and Amadora. Without one, the
+            // place is matched exactly, level by level, as it always was.
+            var centre = await GetPlaceCentreAsync(district, municipality, town, zone, request.WithinKm);
 
             if (centre is null)
             {
-                return ByPlace(query, district, municipality, town, zone);
+                if (district is not null)
+                {
+                    query = query.Where(x => x.MarketArea.District == district);
+                }
+
+                if (municipality is not null)
+                {
+                    query = query.Where(x => x.MarketArea.Municipality == municipality);
+                }
+
+                if (town is not null)
+                {
+                    query = query.Where(x => x.MarketArea.Town == town);
+                }
+
+                if (zone is not null)
+                {
+                    query = query.Where(x => x.MarketArea.Zone == zone);
+                }
+            }
+            else
+            {
+                var latitude = centre.Value.Latitude;
+                var longitude = centre.Value.Longitude;
+
+                // Degrees, not metres, because that is what the columns hold. One degree of
+                // latitude is always about 111320 m; degrees of longitude get shorter away
+                // from the equator, so they are scaled by cos(latitude). Same conversion as
+                // the comparables query - keep the two in step if either ever changes.
+                const double metersPerDegree = 111_320;
+
+                var longitudeScale = (decimal)Math.Cos((double)latitude * Math.PI / 180);
+                var radiusDegrees = (decimal)(request.WithinKm!.Value * 1000 / metersPerDegree);
+                var radiusDegreesSquared = radiusDegrees * radiusDegrees;
+
+                // Inside the place, or close enough to it on the map. Distances stay squared
+                // so there is no square root to take; it does not change what falls inside.
+                // The place half also keeps listings with no coordinates, which a circle
+                // alone would silently drop.
+                query = query.Where(x =>
+                    ((district == null || x.MarketArea.District == district)
+                        && (municipality == null || x.MarketArea.Municipality == municipality)
+                        && (town == null || x.MarketArea.Town == town)
+                        && (zone == null || x.MarketArea.Zone == zone))
+                    || (x.Latitude - latitude) * (x.Latitude - latitude)
+                     + (x.Longitude - longitude) * longitudeScale * (x.Longitude - longitude) * longitudeScale <= radiusDegreesSquared);
             }
 
-            var latitude = centre.Value.Latitude;
-            var longitude = centre.Value.Longitude;
-
-            // Degrees, not metres, because that is what the columns hold. Same conversion as
-            // the comparables query - keep the two in step if either ever changes.
-            var longitudeScale = Calculator.LongitudeDegreeScale(latitude);
-            var radiusDegreesSquared = Calculator.RadiusDegreesSquared(withinKm!.Value * 1000);
-
-            // Inside the place, or close enough to it on the map. Distances stay squared
-            // so there is no square root to take; it does not change what falls inside.
-            return query.Where(x =>
-                ((district == null || x.MarketArea.District == district)
-                    && (municipality == null || x.MarketArea.Municipality == municipality)
-                    && (town == null || x.MarketArea.Town == town)
-                    && (zone == null || x.MarketArea.Zone == zone))
-                || (x.Latitude - latitude) * (x.Latitude - latitude)
-                 + (x.Longitude - longitude) * longitudeScale * (x.Longitude - longitude) * longitudeScale <= radiusDegreesSquared);
-        }
-
-        /// <summary>
-        /// Every plain field filter and the price/status ones, which look at the NEWEST snapshot
-        /// (sorted by date, first one) since price and status live there, not on the property.
-        /// </summary>
-        private static IQueryable<PropertyListing> ApplyAttributeFilters(
-            IQueryable<PropertyListing> query, FilterPropertyListingRequest request)
-        {
             if (request.PropertyType is not null)
             {
                 query = query.Where(x => x.PropertyType == request.PropertyType);
@@ -343,6 +312,9 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.DistanceToBeachMeters <= request.DistanceToBeachMeters);
             }
 
+            // Price and status live on the snapshot, not the property.
+            // So each filter below looks at the NEWEST snapshot (sorted by date, first one).
+
             if (request.MaxPrice is not null)
             {
                 query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Price <= request.MaxPrice);
@@ -368,12 +340,13 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status == request.ListingStatus);
             }
 
-            return query;
-        }
+            #endregion
 
-        private static IQueryable<PropertyListing> ApplySort(IQueryable<PropertyListing> query, FilterPropertyListingRequest request)
-        {
-            return request.SortBy switch
+            // Count all matches BEFORE paging, so the caller knows the real total.
+            var totalResults = await query.CountAsync();
+
+            // Order the results. The price sorts use the newest snapshot, same as the filters above.
+            query = request.SortBy switch
             {
                 SortBy.Price => request.SortDescending
                 ? query.OrderByDescending(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Price)
@@ -402,16 +375,27 @@ namespace StayPilot.Infrastructure.Repositories
                 // No sort asked (or unknown) -> sort by Id.
                 _ => query.OrderBy(x => x.Id)
             };
+
+            var items = await query
+                .Include(x => x.MarketArea) // also load the market area
+                // Also load only the newest snapshot of each property (we do not need the older ones).
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .Skip((request.PageNumber - 1) * request.PageSize) // jump over the earlier pages
+                .Take(request.PageSize)                            // take only this page
+                .ToListAsync();
+
+            return (items, totalResults);
         }
 
         /// <summary>
         /// Finds properties that can be compared to the given one: same property type,
         /// a room layout within one step (a T2 is a fair comp for a T1), a floor area within
-        /// a quarter either way, and within radiusMeters of the given lat/lon. Only keeps a
-        /// listing if its newest snapshot is no older than the cutoff. Ordered best first:
-        /// same market area, then nearest.
+        /// a quarter either way, and either in the same market area or within radiusMeters of
+        /// the given lat/lon. Only keeps a listing if its newest snapshot is not older than
+        /// the cutoff. Ordered best first: same market area, then nearest.
+        /// When the property has no coordinates it falls back to the market area alone.
         /// </summary>
-        public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal latitude, decimal longitude, int radiusMeters, int months)
+        public async Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months)
         {
             var query = _context.PropertyListings.AsQueryable();
 
@@ -455,33 +439,46 @@ namespace StayPilot.Infrastructure.Repositories
                                       && x.DistanceToBeachMeters <= farthestComparableBeach);
             }
 
-            // The database stores degrees but the caller asks in metres, so the radius
-            // has to be converted first. Degrees of longitude get shorter the further you are
-            // from the equator, so they are scaled by cos(latitude) - in the Algarve (37N) a
-            // degree of longitude is about 89 km, not 111 km.
-            var lonScale = Calculator.LongitudeDegreeScale(latitude);
-            var radiusDegreesSquared = Calculator.RadiusDegreesSquared(radiusMeters);
+            IOrderedQueryable<PropertyListing> ordered;
 
-            // Inside the circle, and nothing else. Distances are kept squared so there is
-            // no square root to take - it does not change the ordering.
-            //
-            // This used to also admit anything sharing the property's market area, whatever
-            // the distance, which made "comparables within 2km" untrue the moment that area
-            // was larger than the circle - and nothing in the response said which comps had
-            // come in through which door. Same-area listings inside the radius still arrive,
-            // and still sort first below; the clause only ever added the ones beyond it.
-            query = query.Where(x =>
-                (x.Latitude - latitude) * (x.Latitude - latitude)
-              + (x.Longitude - longitude) * lonScale * (x.Longitude - longitude) * lonScale <= radiusDegreesSquared);
+            if (latitude.HasValue && longitude.HasValue)
+            {
+                // The database stores degrees but the caller asks in metres, so the radius
+                // has to be converted first. One degree of latitude is always about 111320 m.
+                // Degrees of longitude get shorter the further you are from the equator, so
+                // they are scaled by cos(latitude) - in the Algarve (37N) a degree of
+                // longitude is about 89 km, not 111 km.
+                const double metersPerDegree = 111_320;
 
-            // Own market area first, because a zone 800 m away can be a completely
-            // different market (a beachfront zone against an old town). Only then the
-            // nearest ones, so a comp next door beats one at the edge of the circle.
-            // This distance must stay identical to the one used in the filter above.
-            var ordered = query
-                .OrderByDescending(x => x.MarketAreaId == marketId)
-                .ThenBy(x => (x.Latitude - latitude) * (x.Latitude - latitude)
-                           + (x.Longitude - longitude) * lonScale * (x.Longitude - longitude) * lonScale);
+                var lat = latitude.Value;
+                var lon = longitude.Value;
+                var lonScale = (decimal)Math.Cos((double)lat * Math.PI / 180);
+                var radiusDegrees = (decimal)(radiusMeters / metersPerDegree);
+                var radiusDegreesSquared = radiusDegrees * radiusDegrees;
+
+                // Same market area, or close enough on the map. Distances are kept squared
+                // so there is no square root to take - it does not change the ordering.
+                query = query.Where(x => x.MarketAreaId == marketId
+                    || (x.Latitude - lat) * (x.Latitude - lat)
+                     + (x.Longitude - lon) * lonScale * (x.Longitude - lon) * lonScale <= radiusDegreesSquared);
+
+                // Own market area first, because a zone 800 m away can be a completely
+                // different market (a beachfront zone against an old town). Only then the
+                // nearest ones, so a comp next door beats one at the edge of the circle.
+                // This distance must stay identical to the one used in the filter above.
+                ordered = query
+                    .OrderByDescending(x => x.MarketAreaId == marketId)
+                    .ThenBy(x => (x.Latitude - lat) * (x.Latitude - lat)
+                               + (x.Longitude - lon) * lonScale * (x.Longitude - lon) * lonScale);
+            }
+            else
+            {
+                // No coordinates on the property, so a radius means nothing here. Fall back
+                // to the market area on its own, closest in size first.
+                query = query.Where(x => x.MarketAreaId == marketId);
+
+                ordered = query.OrderBy(x => Math.Abs(x.AreaM2 - areaM2));
+            }
 
             // Every comp that fits, not a top slice of them: the old cap of 100 quietly decided
             // WHICH comps counted, because the ordering puts the whole market area ahead of
@@ -489,9 +486,6 @@ namespace StayPilot.Infrastructure.Repositories
             // worth returning in full. ThenBy(Id) only settles ties, so the order is stable.
             var items = await ordered
                 .ThenBy(x => x.Id)
-                // Every result here is read-only: shown as comps, never saved back through
-                // this query. Tracking the whole graph costs more than reading it.
-                .AsNoTracking()
                 .Include(x => x.MarketArea)
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
                 .ToListAsync();
@@ -507,47 +501,8 @@ namespace StayPilot.Infrastructure.Repositories
         public async Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync()
         {
             return await _context.PropertyListings
-                .AsNoTracking()
                 .Include(x => x.MarketArea) // needed so the premium calc can filter by town name
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
-                .ToListAsync();
-        }
-
-        /// <inheritdoc cref="IPropertyListingRepository.GetAllListingsForMarketAreaStatsAsync"/>
-        public async Task<List<MarketAreaStatsListingRow>> GetAllListingsForMarketAreaStatsAsync()
-        {
-            // Projected straight to the handful of columns the stats roll-up measures, not
-            // hydrated into full listing/snapshot/market-area entities: this walks every listing
-            // in the database, and building an object graph for each one is real, avoidable cost.
-            return await _context.PropertyListings
-                .Select(x => new
-                {
-                    x.AreaM2,
-                    x.Typology,
-                    x.Condition,
-                    x.EnergyCertificate,
-                    x.Latitude,
-                    x.Longitude,
-                    x.MarketArea.District,
-                    x.MarketArea.Municipality,
-                    x.MarketArea.Town,
-                    Snapshot = x.ListingSnapshots
-                        .OrderByDescending(s => s.SnapshotDateUtc)
-                        .Select(s => new { s.Price, s.PricePerM2 })
-                        .FirstOrDefault()
-                })
-                .Select(x => new MarketAreaStatsListingRow(
-                    x.Snapshot == null ? 0 : x.Snapshot.Price,
-                    x.Snapshot == null ? 0 : x.Snapshot.PricePerM2,
-                    x.AreaM2,
-                    x.Typology,
-                    x.Condition,
-                    x.EnergyCertificate,
-                    x.Latitude,
-                    x.Longitude,
-                    x.District,
-                    x.Municipality,
-                    x.Town))
                 .ToListAsync();
         }
 
@@ -559,9 +514,24 @@ namespace StayPilot.Infrastructure.Repositories
         /// The market area is filtered on but not loaded: the overview counts and prices listings,
         /// it never prints their address, so pulling the area rows would be paid for nothing.
         /// </summary>
-        public async Task<List<MarketOverviewListingRow>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology)
+        public async Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology)
         {
-            var query = ByPlace(_context.PropertyListings.AsQueryable(), district, municipality, town);
+            var query = _context.PropertyListings.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(district))
+            {
+                query = query.Where(x => x.MarketArea.District == district);
+            }
+
+            if (!string.IsNullOrWhiteSpace(municipality))
+            {
+                query = query.Where(x => x.MarketArea.Municipality == municipality);
+            }
+
+            if (!string.IsNullOrWhiteSpace(town))
+            {
+                query = query.Where(x => x.MarketArea.Town == town);
+            }
 
             if (propertyType is not null)
             {
@@ -573,31 +543,14 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.Typology == typology);
             }
 
-            // Projected straight to the handful of columns the overview measures, not hydrated
-            // into full listing/snapshot/market-area entities: a broad slice is tens of thousands
-            // of rows, and building an object graph for each one is real, avoidable cost the
-            // overview - which recomputes on every call - pays for nothing.
             return await query
-                .Select(x => new
-                {
-                    x.AreaM2,
-                    x.Typology,
-                    x.MarketArea.District,
-                    x.MarketArea.Municipality,
-                    x.MarketArea.Town,
-                    Snapshot = x.ListingSnapshots
-                        .OrderByDescending(s => s.SnapshotDateUtc)
-                        .Select(s => new { s.Price, s.PricePerM2 })
-                        .FirstOrDefault()
-                })
-                .Select(x => new MarketOverviewListingRow(
-                    x.Snapshot == null ? 0 : x.Snapshot.Price,
-                    x.Snapshot == null ? 0 : x.Snapshot.PricePerM2,
-                    x.AreaM2,
-                    x.Typology,
-                    x.District,
-                    x.Municipality,
-                    x.Town))
+                // Nothing here is written back, and a broad slice is tens of thousands of listings
+                // with an area and a snapshot each. Tracking that graph costs more than reading it.
+                .AsNoTracking()
+                // The area comes along because the overview now also breaks the slice into the
+                // places inside it, and that needs a district/município/freguesia per listing.
+                .Include(x => x.MarketArea)
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
                 .ToListAsync();
         }
 
@@ -610,10 +563,24 @@ namespace StayPilot.Infrastructure.Repositories
         /// </summary>
         public async Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town)
         {
-            var query = ByPlace(_context.PropertyListings.AsQueryable(), district, municipality, town);
+            var query = _context.PropertyListings.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(district))
+            {
+                query = query.Where(x => x.MarketArea.District == district);
+            }
+
+            if (!string.IsNullOrWhiteSpace(municipality))
+            {
+                query = query.Where(x => x.MarketArea.Municipality == municipality);
+            }
+
+            if (!string.IsNullOrWhiteSpace(town))
+            {
+                query = query.Where(x => x.MarketArea.Town == town);
+            }
 
             return await query
-                .AsNoTracking()
                 // Every snapshot, not just the newest - see the interface for why.
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc))
                 .ToListAsync();

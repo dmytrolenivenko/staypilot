@@ -25,24 +25,6 @@ export type ListingStatus = 'Sold' | 'Active' | 'PriceChanged';
 
 export const LISTING_STATUSES: ListingStatus[] = ['Sold', 'Active', 'PriceChanged'];
 
-// value = what we send to the API, label = what the user reads. Same shape as SORT_OPTIONS.
-// The wire names are C# identifiers - "NeedsRenovation", "NewBuild", "PriceChanged" - and
-// putting them straight into a dropdown shows the user our enum rather than their language.
-export const PROPERTY_CONDITION_OPTIONS: { value: PropertyCondition; label: string }[] = [
-  { value: 'Unknown', label: 'Not stated' },
-  { value: 'NeedsRenovation', label: 'Needs renovation' },
-  { value: 'Used', label: 'Used' },
-  { value: 'Good', label: 'Good' },
-  { value: 'Renovated', label: 'Renovated' },
-  { value: 'NewBuild', label: 'New build' }
-];
-
-export const LISTING_STATUS_OPTIONS: { value: ListingStatus; label: string }[] = [
-  { value: 'Sold', label: 'Sold' },
-  { value: 'Active', label: 'Active' },
-  { value: 'PriceChanged', label: 'Price changed' }
-];
-
 // The field the API can sort the listing browser by. Names match StayPilot.Domain/Enums/SortBy.cs.
 export type SortBy = 'Id' | 'Price' | 'PricePerM2' | 'AreaM2' | 'CreatedAtUtc' | 'DistanceToBeachMeters';
 

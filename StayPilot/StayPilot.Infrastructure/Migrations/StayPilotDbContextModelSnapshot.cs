@@ -29898,8 +29898,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1967,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Amial"
                         },
@@ -29908,8 +29908,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1968,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Arca d'Água - Campo Lindo - Vale Formoso"
                         },
@@ -29918,8 +29918,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1969,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Areosa - Fernão de Magalhães"
                         },
@@ -29928,8 +29928,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1970,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Combatentes - Costa Cabral"
                         },
@@ -29938,8 +29938,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1971,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Covelo - Monte de São João"
                         },
@@ -29948,8 +29948,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1972,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Hospital São João - Pólo Universitário"
                         },
@@ -29958,8 +29958,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1973,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Monte dos Burgos - Carvalhido"
                         },
@@ -29968,8 +29968,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1974,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Porto",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Paranhos",
                             Zone = "Salgueiros"
                         },
@@ -30023,8 +30023,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1980,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Vila Nova de Gaia",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Santa Marinha",
                             Zone = "Barrosa - Devesas - Telheira do Meio"
                         },
@@ -30033,8 +30033,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1981,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Vila Nova de Gaia",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Santa Marinha",
                             Zone = "Candal - Regadas"
                         },
@@ -30043,8 +30043,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1982,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Vila Nova de Gaia",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Santa Marinha",
                             Zone = "Centro Histórico"
                         },
@@ -30053,8 +30053,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1983,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Vila Nova de Gaia",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Santa Marinha",
                             Zone = "Coimbrões"
                         },
@@ -30063,8 +30063,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1984,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Porto",
-                            Municipality = "Vila Nova de Gaia",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "Santa Marinha",
                             Zone = "General Torres"
                         },
@@ -30082,8 +30082,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1986,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Madeira",
-                            Municipality = "Funchal",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "São Martinho",
                             Zone = "Ajuda - Amparo - Piornais"
                         },
@@ -30092,8 +30092,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1987,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Madeira",
-                            Municipality = "Funchal",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "São Martinho",
                             Zone = "Casa Branca"
                         },
@@ -30102,8 +30102,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1988,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Madeira",
-                            Municipality = "Funchal",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "São Martinho",
                             Zone = "Nazaré - Centro de São Martinho "
                         },
@@ -30112,8 +30112,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1989,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Madeira",
-                            Municipality = "Funchal",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "São Martinho",
                             Zone = "Santa Rita - Pico do Funcho"
                         },
@@ -30122,8 +30122,8 @@ namespace StayPilot.Infrastructure.Migrations
                             Id = 1990,
                             Country = "Portugal",
                             CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            District = "Madeira",
-                            Municipality = "Funchal",
+                            District = "Guarda",
+                            Municipality = "Seia",
                             Town = "São Martinho",
                             Zone = "Virtudes - Barreiros"
                         },
@@ -53406,11 +53406,11 @@ namespace StayPilot.Infrastructure.Migrations
                     b.Property<bool>("IsFurnished")
                         .HasColumnType("bit");
 
-                    b.Property<decimal>("Latitude")
+                    b.Property<decimal?>("Latitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 
-                    b.Property<decimal>("Longitude")
+                    b.Property<decimal?>("Longitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 
@@ -53581,11 +53581,11 @@ namespace StayPilot.Infrastructure.Migrations
                     b.Property<bool>("IsFurnished")
                         .HasColumnType("bit");
 
-                    b.Property<decimal>("Latitude")
+                    b.Property<decimal?>("Latitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 
-                    b.Property<decimal>("Longitude")
+                    b.Property<decimal?>("Longitude")
                         .HasPrecision(9, 6)
                         .HasColumnType("decimal(9,6)");
 

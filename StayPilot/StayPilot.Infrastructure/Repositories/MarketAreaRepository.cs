@@ -24,17 +24,7 @@ namespace StayPilot.Infrastructure.Repositories
         /// </summary>
         public async Task<List<MarketArea>> GetAllMarketAreasAsync()
         {
-            // Nothing here is written back through this read - tracking the whole table costs
-            // more than reading it.
-            return await _context.MarketAreas.AsNoTracking().ToListAsync();
-        }
-
-        /// <summary>
-        /// Reads one market area by id.
-        /// </summary>
-        public async Task<MarketArea?> GetMarketAreaByIdAsync(int id)
-        {
-            return await _context.MarketAreas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            return await _context.MarketAreas.ToListAsync();
         }
 
         /// <summary>
@@ -136,17 +126,7 @@ namespace StayPilot.Infrastructure.Repositories
             // Municipality is picked -> its towns.
             if (!string.IsNullOrWhiteSpace(municipality))
             {
-                var towns = await query.Select(x => x.Town).Distinct().OrderBy(x => x).ToListAsync();
-
-                // A Town that repeats its own município's name is not a real freguesia - it is
-                // what the geocoder wrote down when it could only place a listing inside the
-                // município, not inside one of its actual freguesias ("Loulé" duplicating município
-                // Loulé, when the city is really split across São Clemente and São Sebastião).
-                // Only dropped when a real freguesia is on offer instead - if it were the only Town
-                // on record we would have nothing better to show.
-                var realTowns = towns.Where(t => !string.Equals(t, municipality, StringComparison.OrdinalIgnoreCase)).ToList();
-
-                return realTowns.Count > 0 ? realTowns : towns;
+                return await query.Select(x => x.Town).Distinct().OrderBy(x => x).ToListAsync();
             }
             // District is picked -> its municipalities.
             if (!string.IsNullOrWhiteSpace(district))

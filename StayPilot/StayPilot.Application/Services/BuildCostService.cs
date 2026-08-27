@@ -205,7 +205,7 @@ namespace StayPilot.Application.Services
                     {
                         Key = addon.Key,
                         Label = addon.Label,
-                        Cost = RoundToTen(addon.CostIn2021 * materials)
+                        Cost = Round(addon.CostIn2021 * materials)
                     })
                     .ToList(),
 
@@ -273,7 +273,7 @@ namespace StayPilot.Application.Services
                 {
                     Key = stops switch { 2 => "two", 3 => "three", _ => "four" },
                     Label = stops == 2 ? "2 stops (ground + 1)" : $"{stops} stops",
-                    Cost = RoundToTen((ElevatorTwoStopIn2021 + ElevatorExtraStopIn2021 * (stops - 2)) * materials)
+                    Cost = Round((ElevatorTwoStopIn2021 + ElevatorExtraStopIn2021 * (stops - 2)) * materials)
                 });
             }
 
@@ -295,25 +295,13 @@ namespace StayPilot.Application.Services
             {
                 Key = extra.Key,
                 Label = extra.Label,
-                Cost = RoundToTen(extra.CostIn2021 * (extra.IsEquipment ? materials : blended)),
+                Cost = Round(extra.CostIn2021 * (extra.IsEquipment ? materials : blended)),
                 Note = extra.Note
             }));
 
             return extras;
         }
 
-
-        /// <summary>
-        /// Rounds a one-off fee to the nearest EUR 10. A fee is a price, not a measurement, and
-        /// escalation lands them on EUR 6,001 and EUR 1,199 - which reads as precision nobody has.
-        /// Rates per m2 keep their euro because they get multiplied by an area afterwards; these
-        /// are terminal, and the working shown on screen derives from this rounded figure, so the
-        /// receipt still adds up.
-        /// </summary>
-        private static decimal RoundToTen(decimal value)
-        {
-            return Math.Round(value / 10m, 0, MidpointRounding.AwayFromZero) * 10m;
-        }
         private static decimal Round(decimal value, int decimals = 0)
         {
             return Math.Round(value, decimals, MidpointRounding.AwayFromZero);

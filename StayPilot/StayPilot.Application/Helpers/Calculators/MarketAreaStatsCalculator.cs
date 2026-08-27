@@ -1,4 +1,3 @@
-using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
@@ -25,6 +24,13 @@ namespace StayPilot.Application.Helpers.Calculators
     public static class MarketAreaStatsCalculator
     {
         /// <summary>
+        /// How far below the model's estimate a listing has to be asking before we call it a
+        /// deal. Ten percent because the model's own median error is 10.4% - anything smaller
+        /// than its error is noise, and counting it would fill the deals column with rounding.
+        /// </summary>
+        private const decimal BargainDiscountPercent = 10m;
+
+        /// <summary>
         /// The fewest listings needed before a median is worth saving for one of the smaller
         /// splits (a single typology, the project stock). The parent row has no such limit -
         /// it saves whatever it found and the reader decides, see the repository.
@@ -33,13 +39,19 @@ namespace StayPilot.Application.Helpers.Calculators
 
         /// <summary>
         /// Works out the stats for every place found in these listings.
-        /// Listings with no price or no area are ignored - they cannot be placed.
+        /// Listings with no price, no area or no market area are ignored - they cannot be placed.
         /// </summary>
-        public static List<MarketAreaStats> Calculate(IEnumerable<MarketAreaStatsListingRow> listings)
+        public static List<MarketAreaStats> Calculate(IEnumerable<PropertyListing> listings)
         {
             var allListings = listings.ToList();
 
-            var placesFound = CollectByPlace(allListings);
+            // The valuation model, used only to count the deals. Null when there are too few
+            // listings to fit one, in which case every deals count stays at zero rather than
+            // being guessed at.
+            var usableListings = 0;
+            var valuationModel = ValuationModel.TryFit(allListings, out usableListings);
+
+            var placesFound = CollectByPlace(allListings, valuationModel);
 
             var rows = new List<MarketAreaStats>();
             var calculatedAtUtc = DateTime.UtcNow;
@@ -56,21 +68,32 @@ namespace StayPilot.Application.Helpers.Calculators
         /// Step 1. Walks the listings once and drops each one into its district bucket, its
         /// municipality bucket and its town bucket.
         /// </summary>
-        private static Dictionary<PlaceKey, PlaceListings> CollectByPlace(List<MarketAreaStatsListingRow> listings)
+        private static Dictionary<PlaceKey, PlaceListings> CollectByPlace(
+            List<PropertyListing> listings, ValuationModel? valuationModel)
         {
             var placesFound = new Dictionary<PlaceKey, PlaceListings>();
 
             foreach (var listing in listings)
             {
-                if (listing.PricePerM2 <= 0 || listing.AreaM2 <= 0)
+                if (listing.MarketArea is null)
                 {
                     continue;
                 }
 
+                var snapshot = NewestSnapshot(listing);
+
+                if (snapshot is null || snapshot.PricePerM2 <= 0 || listing.AreaM2 <= 0)
+                {
+                    continue;
+                }
+
+                var isBargain = IsPricedBelowEstimate(listing, snapshot, valuationModel);
+                var area = listing.MarketArea;
+
                 // Here is the rolling up. The same listing goes into three buckets.
-                AddToPlace(placesFound, new PlaceKey(AreaLevel.District, listing.District, string.Empty, string.Empty), listing);
-                AddToPlace(placesFound, new PlaceKey(AreaLevel.Municipality, listing.District, listing.Municipality, string.Empty), listing);
-                AddToPlace(placesFound, new PlaceKey(AreaLevel.Town, listing.District, listing.Municipality, listing.Town), listing);
+                AddToPlace(placesFound, new PlaceKey(AreaLevel.District, area.District, string.Empty, string.Empty), listing, snapshot, isBargain);
+                AddToPlace(placesFound, new PlaceKey(AreaLevel.Municipality, area.District, area.Municipality, string.Empty), listing, snapshot, isBargain);
+                AddToPlace(placesFound, new PlaceKey(AreaLevel.Town, area.District, area.Municipality, area.Town), listing, snapshot, isBargain);
             }
 
             return placesFound;
@@ -90,10 +113,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 ListingCount = collected.PricesPerM2.Count,
                 MedianPricePerM2 = Median(collected.PricesPerM2),
                 MedianAreaM2 = Median(collected.Areas),
-
-                // No pricing model backs a "below estimate" flag any more - a comp-median-based
-                // deals check can replace this later if it's wanted back.
-                BelowEstimateCount = 0,
+                BelowEstimateCount = collected.BargainCount,
                 CentroidLatitude = collected.AverageLatitude(),
                 CentroidLongitude = collected.AverageLongitude(),
                 ProjectCount = collected.ProjectPricesPerM2.Count,
@@ -149,6 +169,30 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
+        /// True when the listing is asking clearly less than the model thinks it is worth.
+        /// False whenever we cannot tell - no model, or the model has no view on this property.
+        /// </summary>
+        private static bool IsPricedBelowEstimate(
+            PropertyListing listing, ListingSnapshot snapshot, ValuationModel? valuationModel)
+        {
+            if (valuationModel is null)
+            {
+                return false;
+            }
+
+            var prediction = valuationModel.PredictPricePerM2(ValuationSubject.FromListing(listing));
+
+            if (prediction.PricePerM2 <= 0)
+            {
+                return false;
+            }
+
+            var discountPercent = (prediction.PricePerM2 - snapshot.PricePerM2) / prediction.PricePerM2 * 100m;
+
+            return discountPercent >= BargainDiscountPercent;
+        }
+
+        /// <summary>
         /// True when the listing looks like a renovation project.
         ///
         /// The advert's own "needs renovation" is not enough on its own: it is set on about 1.4%
@@ -156,7 +200,7 @@ namespace StayPilot.Application.Helpers.Calculators
         /// energy certificate covers roughly ten times as many and is the more objective signal -
         /// a grade is measured, "needs work" is whatever the agent felt like typing.
         /// </summary>
-        private static bool IsProject(MarketAreaStatsListingRow listing)
+        private static bool IsProject(PropertyListing listing)
         {
             if (listing.Condition == PropertyCondition.NeedsRenovation)
             {
@@ -171,7 +215,7 @@ namespace StayPilot.Application.Helpers.Calculators
         /// against. Anything neither project nor move-in (an unknown condition with no
         /// certificate) counts for neither, so the comparison stays between two clear groups.
         /// </summary>
-        private static bool IsMoveInReady(MarketAreaStatsListingRow listing)
+        private static bool IsMoveInReady(PropertyListing listing)
         {
             if (IsProject(listing))
             {
@@ -200,13 +244,25 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
+        /// The newest snapshot on this listing, or null when it has none.
+        /// </summary>
+        private static ListingSnapshot? NewestSnapshot(PropertyListing listing)
+        {
+            return listing.ListingSnapshots
+                .OrderByDescending(x => x.SnapshotDateUtc)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
         /// Adds one listing to one place's bucket, making the bucket if it is the first one.
         /// Places with a blank name are skipped: an empty name is missing data, not a place.
         /// </summary>
         private static void AddToPlace(
             Dictionary<PlaceKey, PlaceListings> placesFound,
             PlaceKey place,
-            MarketAreaStatsListingRow listing)
+            PropertyListing listing,
+            ListingSnapshot snapshot,
+            bool isBargain)
         {
             if (place.HasBlankName)
             {
@@ -219,7 +275,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 placesFound[place] = collected;
             }
 
-            collected.Add(listing);
+            collected.Add(listing, snapshot, isBargain);
         }
 
         /// <summary>
@@ -292,6 +348,9 @@ namespace StayPilot.Application.Helpers.Calculators
 
             public List<decimal> Areas { get; } = new();
 
+            /// <summary>Listings asking clearly under the model's estimate.</summary>
+            public int BargainCount { get; private set; }
+
             /// <summary>Price for each square meter of the stock that needs work.</summary>
             public List<decimal> ProjectPricesPerM2 { get; } = new();
 
@@ -318,14 +377,19 @@ namespace StayPilot.Application.Helpers.Calculators
             private readonly List<decimal> _latitudes = new();
             private readonly List<decimal> _longitudes = new();
 
-            public void Add(MarketAreaStatsListingRow listing)
+            public void Add(PropertyListing listing, ListingSnapshot snapshot, bool isBargain)
             {
-                PricesPerM2.Add(listing.PricePerM2);
+                PricesPerM2.Add(snapshot.PricePerM2);
                 Areas.Add(listing.AreaM2);
+
+                if (isBargain)
+                {
+                    BargainCount++;
+                }
 
                 if (IsProject(listing))
                 {
-                    ProjectPricesPerM2.Add(listing.PricePerM2);
+                    ProjectPricesPerM2.Add(snapshot.PricePerM2);
                     ProjectAreas.Add(listing.AreaM2);
 
                     // Which of the two signals caught it. The advert's own word wins when both
@@ -341,7 +405,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 }
                 else if (IsMoveInReady(listing))
                 {
-                    MoveInPricesPerM2.Add(listing.PricePerM2);
+                    MoveInPricesPerM2.Add(snapshot.PricePerM2);
                     MoveInAreas.Add(listing.AreaM2);
                 }
                 else
@@ -351,8 +415,11 @@ namespace StayPilot.Application.Helpers.Calculators
                     UnclassifiedCount++;
                 }
 
-                _latitudes.Add(listing.Latitude);
-                _longitudes.Add(listing.Longitude);
+                if (listing.Latitude.HasValue && listing.Longitude.HasValue)
+                {
+                    _latitudes.Add(listing.Latitude.Value);
+                    _longitudes.Add(listing.Longitude.Value);
+                }
 
                 if (!ByTypology.TryGetValue(listing.Typology, out var forTypology))
                 {
@@ -360,13 +427,13 @@ namespace StayPilot.Application.Helpers.Calculators
                     ByTypology[listing.Typology] = forTypology;
                 }
 
-                forTypology.Prices.Add(listing.Price);
-                forTypology.PricesPerM2.Add(listing.PricePerM2);
+                forTypology.Prices.Add(snapshot.Price);
+                forTypology.PricesPerM2.Add(snapshot.PricePerM2);
                 forTypology.Areas.Add(listing.AreaM2);
             }
 
             /// <summary>
-            /// Middle point of the listings, or null when there are none.
+            /// Middle point of the listings that carry coordinates, or null when none do.
             /// </summary>
             public decimal? AverageLatitude()
             {

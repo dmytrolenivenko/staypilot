@@ -19,7 +19,7 @@
         <dt>Zone</dt>
         <dd>{{ listing.marketAreaZone || '—' }}</dd>
         <dt>Coordinates</dt>
-        <dd>{{ listing.latitude }}, {{ listing.longitude }}</dd>
+        <dd>{{ listing.latitude ?? '—' }}, {{ listing.longitude ?? '—' }}</dd>
         <dt>Nearest beach</dt>
         <dd>
           @if (listing.nearestBeachName) {

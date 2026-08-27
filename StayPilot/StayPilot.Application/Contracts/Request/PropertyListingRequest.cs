@@ -85,12 +85,10 @@ namespace StayPilot.Application.Contracts.Request
         public bool HasCityView { get; set; }
 
         /// <summary>Latitude of the property. Needed to find the nearest beach.</summary>
-        [Range(-90, 90)]
-        public decimal Latitude { get; set; }
+        public decimal? Latitude { get; set; }
 
         /// <summary>Longitude of the property. Needed to find the nearest beach.</summary>
-        [Range(-180, 180)]
-        public decimal Longitude { get; set; }
+        public decimal? Longitude { get; set; }
 
         /// <summary>Energy rating of the property (for example A, B, C).</summary>
         public string? EnergyCertificate { get; set; }

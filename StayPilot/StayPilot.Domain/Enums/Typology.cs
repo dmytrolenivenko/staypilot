@@ -7,7 +7,6 @@ namespace StayPilot.Domain.Enums
     /// </summary>
     public enum Typology
     {
-        Unknown = 0, // Not supplied or not recognised. Rejected on write; only pre-existing rows carry it.
         T0 = 1, // Studio: no separate bedroom.
         T1 = 2, // One bedroom.
         T2 = 3, // Two bedrooms.

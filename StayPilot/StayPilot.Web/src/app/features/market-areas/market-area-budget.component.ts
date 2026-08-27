@@ -9,8 +9,6 @@ import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 import { PlaceNameComponent, placeLevelLabel, placeOwnName } from '../../shared/place-name.component';
 import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
-import { HttpErrorResponse } from '@angular/common/http';
-import { apiErrorMessage } from '../../core/api-error';
 
 // The columns you can sort by. Client-side only — the API never sees these.
 type SortColumn = 'place' | 'typology' | 'area' | 'price' | 'pricePerM2' | 'listings';
@@ -156,13 +154,8 @@ export class MarketAreaBudgetComponent implements OnInit {
           this.calculatedAtUtc.set(response.calculatedAtUtc);
           this.loading.set(false);
         },
-        error: (err: HttpErrorResponse) => {
-          // The header reads off these, so a stale set prints "44 places · up to €360,000 with
-          // the stretch · 21 need it" above a red box about a request that returned nothing.
-          this.areas.set([]);
-          this.reach.set(0);
-          this.calculatedAtUtc.set(null);
-          this.error.set(apiErrorMessage(err, 'Could not work out what the budget buys.'));
+        error: () => {
+          this.error.set('Could not work out what the budget buys. Check the API is running.');
           this.loading.set(false);
         }
       });
@@ -239,5 +232,5 @@ export class MarketAreaBudgetComponent implements OnInit {
 
 // How many bedrooms a typology means, so "T10" sorts above "T9".
 function typologyRooms(typology: string): number {
-  return Number(String(typology ?? '').replace(/^T/i, '')) || 0;
+  return Number(typology.replace('T', ''));
 }

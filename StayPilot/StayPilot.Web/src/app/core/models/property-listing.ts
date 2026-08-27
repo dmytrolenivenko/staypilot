@@ -45,8 +45,8 @@ export interface PropertyListingRequest {
   isFurnished: boolean;
   hasSeaView: boolean;
   hasCityView: boolean;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   energyCertificate: string | null;
   notes: string | null;
   listingSnapshot: ListingSnapshotRequest;
@@ -83,8 +83,8 @@ export interface PropertyListingResponse {
   isFurnished: boolean;
   hasSeaView: boolean;
   hasCityView: boolean;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   energyCertificate: string | null;
   notes: string | null;
   // Populated on the create (POST) response; null on GET /{id} today —

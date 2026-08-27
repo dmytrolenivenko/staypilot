@@ -151,14 +151,14 @@ namespace StayPilot.Domain.Entities
         public string? NearestBeachName { get; set; }
 
         /// <summary>
-        /// Location: north-south position.
+        /// Location: north-south position. Can be empty.
         /// </summary>
-        public decimal Latitude { get; set; }
+        public decimal? Latitude { get; set; }
 
         /// <summary>
-        /// Location: east-west position.
+        /// Location: east-west position. Can be empty.
         /// </summary>
-        public decimal Longitude { get; set; }
+        public decimal? Longitude { get; set; }
 
         /// <summary>
         /// Energy rating letter (for example "A" or "C"). Can be empty.

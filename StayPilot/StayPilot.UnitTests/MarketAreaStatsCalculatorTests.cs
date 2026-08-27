@@ -1,5 +1,4 @@
 using StayPilot.Application.Helpers.Calculators;
-using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
@@ -15,7 +14,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_OneListing_CountsIntoAllThreeLevels()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 3000m)
             };
@@ -34,7 +33,7 @@ namespace StayPilot.UnitTests
         {
             // Albufeira has three listings, Loulé has one. A plain average of the two
             // municipality medians would read 3000; the district must follow the listings.
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 2000m),
                 Listing("Faro", "Albufeira", "Guia", 2000m),
@@ -52,7 +51,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_OneVeryExpensiveVilla_DoesNotDragTheMedianUp()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 2000m),
                 Listing("Faro", "Albufeira", "Guia", 2100m),
@@ -68,7 +67,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_EvenNumberOfListings_SplitsTheTwoMiddleValues()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 1000m),
                 Listing("Faro", "Albufeira", "Guia", 2000m),
@@ -86,7 +85,7 @@ namespace StayPilot.UnitTests
         {
             // The Odivelas case: a town in Beja and another in Lisboa. Merging them would
             // average two places hundreds of kilometres apart into one number.
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Beja", "Ferreira do Alentejo", "Odivelas", 800m),
                 Listing("Lisboa", "Odivelas", "Odivelas", 3500m)
@@ -99,13 +98,33 @@ namespace StayPilot.UnitTests
         }
 
         [Fact]
+        public void Calculate_UsesTheNewestSnapshot()
+        {
+            var listing = Listing("Faro", "Albufeira", "Guia", 2000m);
+
+            listing.ListingSnapshots.Add(new ListingSnapshot
+            {
+                PricePerM2 = 2500m,
+                Price = 250000m,
+                SnapshotDateUtc = new DateTime(2026, 8, 10, 0, 0, 0, DateTimeKind.Utc)
+            });
+
+            var rows = MarketAreaStatsCalculator.Calculate(new List<PropertyListing> { listing });
+
+            Assert.Equal(2500m, Row(rows, AreaLevel.Town, "Faro", "Albufeira", "Guia").MedianPricePerM2);
+        }
+
+        [Fact]
         public void Calculate_ListingsWithNoUsablePrice_AreIgnored()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var noSnapshot = Listing("Faro", "Albufeira", "Guia", 2000m);
+            noSnapshot.ListingSnapshots.Clear();
+
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 2000m),
-                Listing("Faro", "Albufeira", "Guia", 0m) // no price - the repository sends the same
-                                                          // zero when a listing has no snapshot at all
+                noSnapshot,
+                Listing("Faro", "Albufeira", "Guia", 0m)
             };
 
             var rows = MarketAreaStatsCalculator.Calculate(listings);
@@ -114,11 +133,12 @@ namespace StayPilot.UnitTests
         }
 
         [Fact]
-        public void Calculate_ListingWithNoPlaceRecorded_IsIgnoredEntirely()
+        public void Calculate_ListingWithNoMarketArea_IsIgnored()
         {
-            var orphan = Listing(string.Empty, string.Empty, string.Empty, 2000m);
+            var orphan = Listing("Faro", "Albufeira", "Guia", 2000m);
+            orphan.MarketArea = null!;
 
-            var rows = MarketAreaStatsCalculator.Calculate(new List<MarketAreaStatsListingRow> { orphan });
+            var rows = MarketAreaStatsCalculator.Calculate(new List<PropertyListing> { orphan });
 
             Assert.Empty(rows);
         }
@@ -126,7 +146,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_BlankTownName_StillCountsTowardsTheLevelsAboveIt()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", string.Empty, 2000m)
             };
@@ -142,7 +162,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_NoListings_ReturnsNoRows()
         {
-            var rows = MarketAreaStatsCalculator.Calculate(new List<MarketAreaStatsListingRow>());
+            var rows = MarketAreaStatsCalculator.Calculate(new List<PropertyListing>());
 
             Assert.Empty(rows);
         }
@@ -150,7 +170,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_ListingWithNoArea_IsIgnored()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 2000m, areaM2: 0)
             };
@@ -163,7 +183,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_MedianAreaM2_IsTheMiddleArea()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 2000m, areaM2: 50),
                 Listing("Faro", "Albufeira", "Guia", 2000m, areaM2: 80),
@@ -180,7 +200,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_TypologyWithFewerThanThreeListings_GetsNoRow()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 2000m, typology: Typology.T1),
                 Listing("Faro", "Albufeira", "Guia", 2000m, typology: Typology.T1)
@@ -304,12 +324,13 @@ namespace StayPilot.UnitTests
         // --- Centroids: what the neighbour screen needs -------------------------------
 
         [Fact]
-        public void Calculate_Centroid_IsTheMiddleOfTheListings()
+        public void Calculate_Centroid_IsTheMiddleOfTheListingsThatHaveCoordinates()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 2000m, latitude: 37.0m, longitude: -8.0m),
                 Listing("Faro", "Albufeira", "Guia", 2000m, latitude: 37.2m, longitude: -8.4m),
+                Listing("Faro", "Albufeira", "Guia", 2000m) // no coordinates, must not count
             };
 
             var rows = MarketAreaStatsCalculator.Calculate(listings);
@@ -319,13 +340,23 @@ namespace StayPilot.UnitTests
             Assert.Equal(-8.2m, row.CentroidLongitude);
         }
 
+        [Fact]
+        public void Calculate_NoCoordinatesAtAll_LeavesTheCentroidNull()
+        {
+            var rows = MarketAreaStatsCalculator.Calculate(ThreeListings(2000m));
+            var row = Row(rows, AreaLevel.Town, "Faro", "Albufeira", "Guia");
+
+            Assert.Null(row.CentroidLatitude);
+            Assert.Null(row.CentroidLongitude);
+        }
+
         // --- Deals --------------------------------------------------------------------
 
         [Fact]
-        public void Calculate_AnyListings_CountsNoDeals()
+        public void Calculate_TooFewListingsToFitTheModel_CountsNoDeals()
         {
-            // No pricing model backs a "below estimate" flag any more, so the count stays at
-            // zero rather than falling back to something like "cheaper than its neighbours".
+            // Without a model there is no estimate to be below, so the count stays at zero
+            // rather than falling back to something like "cheaper than its neighbours".
             var rows = MarketAreaStatsCalculator.Calculate(ThreeListings(2000m));
 
             Assert.Equal(0, Row(rows, AreaLevel.Town, "Faro", "Albufeira", "Guia").BelowEstimateCount);
@@ -336,7 +367,7 @@ namespace StayPilot.UnitTests
         /// and the two never disagree. Everything past the price is optional: pass only what the
         /// test is actually about.
         /// </summary>
-        private static MarketAreaStatsListingRow Listing(
+        private static PropertyListing Listing(
             string district,
             string municipality,
             string town,
@@ -345,16 +376,37 @@ namespace StayPilot.UnitTests
             Typology typology = Typology.T2,
             PropertyCondition condition = PropertyCondition.Good,
             string? energyCertificate = "B",
-            decimal latitude = 37.08m,
-            decimal longitude = -8.10m)
+            decimal? latitude = null,
+            decimal? longitude = null)
         {
-            return new MarketAreaStatsListingRow(
-                pricePerM2 * areaM2, pricePerM2, areaM2, typology, condition, energyCertificate,
-                latitude, longitude, district, municipality, town);
+            return new PropertyListing
+            {
+                MarketArea = new MarketArea
+                {
+                    District = district,
+                    Municipality = municipality,
+                    Town = town
+                },
+                AreaM2 = areaM2,
+                Typology = typology,
+                Condition = condition,
+                EnergyCertificate = energyCertificate,
+                Latitude = latitude,
+                Longitude = longitude,
+                ListingSnapshots = new List<ListingSnapshot>
+                {
+                    new ListingSnapshot
+                    {
+                        PricePerM2 = pricePerM2,
+                        Price = pricePerM2 * areaM2,
+                        SnapshotDateUtc = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
+                    }
+                }
+            };
         }
 
         /// <summary>Three alike listings, the fewest a typology or a split row needs.</summary>
-        private static List<MarketAreaStatsListingRow> ThreeListings(
+        private static List<PropertyListing> ThreeListings(
             decimal pricePerM2,
             int areaM2 = 100,
             Typology typology = Typology.T2,
@@ -369,7 +421,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_ProjectStock_SplitsWhyEachOneWasFlaggedAndCountsWhatItCouldNotJudge()
         {
-            var listings = new List<MarketAreaStatsListingRow>();
+            var listings = new List<PropertyListing>();
 
             // Three the advert itself calls out, three caught only by a poor energy grade.
             listings.AddRange(ThreeListings(1_500m, condition: PropertyCondition.NeedsRenovation, energyCertificate: "B"));
@@ -396,7 +448,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_ProjectStock_CarriesTheSpreadAndTheSizeItWasMeasuredOn()
         {
-            var listings = new List<MarketAreaStatsListingRow>();
+            var listings = new List<PropertyListing>();
 
             listings.AddRange(ThreeListings(1_000m, areaM2: 80, condition: PropertyCondition.NeedsRenovation));
             listings.AddRange(ThreeListings(2_000m, areaM2: 80, condition: PropertyCondition.NeedsRenovation));
@@ -416,7 +468,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_TooFewProjects_LeavesTheSpreadUnmeasuredRatherThanGuessing()
         {
-            var listings = new List<MarketAreaStatsListingRow>
+            var listings = new List<PropertyListing>
             {
                 Listing("Faro", "Albufeira", "Guia", 1_500m, condition: PropertyCondition.NeedsRenovation)
             };

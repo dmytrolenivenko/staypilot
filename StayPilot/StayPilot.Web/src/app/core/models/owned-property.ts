@@ -35,8 +35,8 @@ export interface OwnedPropertyRequest {
   isFurnished?: boolean | null;
   hasSeaView?: boolean | null;
   hasCityView?: boolean | null;
-  latitude: number;
-  longitude: number;
+  latitude?: number | null;
+  longitude?: number | null;
   energyCertificate?: string | null;
   notes?: string | null;
 }
@@ -71,15 +71,15 @@ export interface OwnedPropertyResponse {
   distanceToBeachMeters?: number | null;
   nearestBeachMarkerId?: number | null;
   nearestBeachName?: string | null;
-  latitude: number;
-  longitude: number;
+  latitude?: number | null;
+  longitude?: number | null;
   energyCertificate?: string | null;
   notes?: string | null;
 }
 
 // --- Valuation ------------------------------------------------------------
 // Mirrors StayPilot.Application.Contracts.Response.OwnedPropertyAnalysisResponse
-// and its sub-responses (ValuationAdjustment, ValuationComp, AskSpreadSummary).
+// and its sub-responses (ValuationAdjustment, ValuationComp, EquitySummary).
 
 // One comparable listing that fed the estimate.
 export interface ValuationComp {
@@ -105,16 +105,14 @@ export interface ValuationAdjustment {
 }
 
 // Purchase-vs-now block. Only meaningful when the property has a purchase price/date.
-export interface AskSpreadSummary {
+export interface EquitySummary {
   purchasePrice: number;
-  estimatedAskingPrice: number;
-  spreadAmount: number;
-  spreadPercent: number;
+  currentEstimate: number;
+  gainAmount: number;
+  gainPercent: number;
   yearsHeld: number;
-  // Null under a year held: annualising weeks of movement is noise, and the screen says so
-  // rather than printing 0, which reads as "returned nothing".
-  spreadPerYearPercent: number | null;
-  spreadPerMonthPercent: number;
+  roiPerYear: number;
+  roiPerMonth: number;
 }
 
 // The full valuation result for one owned property.
@@ -135,10 +133,9 @@ export interface OwnedPropertyAnalysisResponse {
   marketRatePerM2: number;
   estimateBeforeAdjustments: number;
 
-  // The middle half of the comps (P25-P75), not the full range - see the API contract.
-  compPricePerM2P25: number;
+  minCompPricePerM2: number;
   medianCompPricePerM2: number;
-  compPricePerM2P75: number;
+  maxCompPricePerM2: number;
   averageCompPricePerM2: number;
 
   adjustments: ValuationAdjustment[];
@@ -153,7 +150,7 @@ export interface OwnedPropertyAnalysisResponse {
   locatedAreaName: string;
   locatedByCoordinates: boolean;
 
-  askSpread: AskSpreadSummary;
+  equity: EquitySummary;
 }
 
 // How keen buyers are in a place. Mirrors StayPilot.Domain.Enums.DemandLevel.
@@ -226,7 +223,7 @@ export interface OwnedPropertyPortfolioItemResponse {
   pricePerM2: number;
   confidenceLevel: ValuationConfidence;
   confidenceNote: string;
-  askSpread: AskSpreadSummary;
+  equity: EquitySummary;
 
   demand: AreaDemandResponse;
   forecast: GrowthForecastResponse;
@@ -237,11 +234,11 @@ export interface OwnedPropertyPortfolioItemResponse {
 export interface OwnedPropertyPortfolioResponse {
   items: OwnedPropertyPortfolioItemResponse[];
   propertyCount: number;
-  totalEstimatedAskingPrice: number;
+  totalEstimatedValue: number;
   totalPurchasePrice: number;
-  totalAskSpreadAmount: number;
-  totalAskSpreadPercent: number;
-  totalProjectedAskingPrice: number;
+  totalGainAmount: number;
+  totalGainPercent: number;
+  totalProjectedValue: number;
   projectionYears: number;
   generatedAtUtc: string;
 }

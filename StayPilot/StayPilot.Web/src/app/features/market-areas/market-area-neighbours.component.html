@@ -401,7 +401,7 @@
                       [municipality]="gap.expensive.municipality"
                       [town]="gap.expensive.town"
                     >
-                      <span class="faint">n={{ gap.expensive.listingCount }}</span>@if (isThin(gap.expensive)) { <span class="tag tag-quiet">thin</span> }
+                      <span class="faint">n={{ gap.expensive.listingCount }}</span>
                     </app-place-name>
                   </td>
                   <td class="num">{{ gap.expensive.medianPricePerM2 | number: '1.0-0' }}</td>
@@ -415,7 +415,7 @@
                       [municipality]="gap.cheaper.municipality"
                       [town]="gap.cheaper.town"
                     >
-                      <span class="faint">n={{ gap.cheaper.listingCount }}</span>@if (isThin(gap.cheaper)) { <span class="tag tag-quiet">thin</span> }
+                      <span class="faint">n={{ gap.cheaper.listingCount }}</span>
                     </app-place-name>
                   </td>
                   <td class="num">{{ gap.cheaper.medianPricePerM2 | number: '1.0-0' }}</td>

@@ -1,3 +1,4 @@
+﻿
 using StayPilot.Domain.Entities;
 using System.Globalization;
 using System.Text;
@@ -5,13 +6,12 @@ using System.Text;
 namespace StayPilot.Application.Helpers.Calculators
 {
     /// <summary>
-    /// Shared calculation helpers used across the valuation pipeline: address matching,
-    /// geo distance, and basic statistics (median, percentile, weighted average).
+    /// General-purpose maths: text matching, market areas, beaches, distance, statistics.
+    /// Valuations and premium features do NOT belong here - see
+    /// <see cref="PropertyValuation"/> and <see cref="FeaturePremiumCalculator"/>.
     /// </summary>
     public class Calculator
     {
-        // ----- Address matching -----------------------------------------------------------
-
         /// <summary>
         /// Clean text so two names can be compared safely.
         /// It makes the text lower case, removes accents (á becomes a), and trims spaces.
@@ -105,39 +105,6 @@ namespace StayPilot.Application.Helpers.Calculators
             return string.Join(", ", parts);
         }
 
-        // ----- Geo distance -----------------------------------------------------------------
-
-        /// <summary>How many metres one degree of latitude covers, anywhere on Earth.</summary>
-        public const double MetersPerDegreeLatitude = 111_320;
-
-        /// <summary>
-        /// Distance in meters between two points on Earth (given as latitude/longitude).
-        /// </summary>
-        public static double CalculateDistanceMeters(double lat1, double lon1, double lat2, double lon2)
-        {
-            // Haversine formula: the standard way to measure distance on a globe.
-            const double earthRadiusMeters = 6371000;
-
-            double ToRadians(double degrees)
-            {
-                return degrees * Math.PI / 180;
-            }
-
-            var dLat = ToRadians(lat2 - lat1);
-            var dLon = ToRadians(lon2 - lon1);
-
-            var a =
-                Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(ToRadians(lat1)) *
-                Math.Cos(ToRadians(lat2)) *
-                Math.Sin(dLon / 2) *
-                Math.Sin(dLon / 2);
-
-            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-
-            return earthRadiusMeters * c;
-        }
-
         /// <summary>
         /// Find the beach nearest to the property.
         /// Returns null if the property has no location.
@@ -168,26 +135,32 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// How much a degree of longitude shrinks at this latitude, relative to a degree of
-        /// latitude - multiply a longitude delta in degrees by this before comparing it against a
-        /// latitude delta, so a circle measured in metres doesn't come out an ellipse in degrees.
+        /// Distance in meters between two points on Earth (given as latitude/longitude).
         /// </summary>
-        public static decimal LongitudeDegreeScale(decimal atLatitude) =>
-            (decimal)Math.Cos((double)atLatitude * Math.PI / 180);
-
-        /// <summary>
-        /// A radius in metres, converted to degrees of latitude and squared - ready to compare
-        /// against <c>(Δlat)² + (Δlon × <see cref="LongitudeDegreeScale"/>)²</c> without ever
-        /// taking a square root.
-        /// </summary>
-        public static decimal RadiusDegreesSquared(double radiusMeters)
+        public static double CalculateDistanceMeters(double lat1, double lon1, double lat2, double lon2)
         {
-            var radiusDegrees = (decimal)(radiusMeters / MetersPerDegreeLatitude);
+            // Haversine formula: the standard way to measure distance on a globe.
+            const double earthRadiusMeters = 6371000;
 
-            return radiusDegrees * radiusDegrees;
+            double ToRadians(double degrees)
+            {
+                return degrees * Math.PI / 180;
+            }
+
+            var dLat = ToRadians(lat2 - lat1);
+            var dLon = ToRadians(lon2 - lon1);
+
+            var a =
+                Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(ToRadians(lat1)) *
+                Math.Cos(ToRadians(lat2)) *
+                Math.Sin(dLon / 2) *
+                Math.Sin(dLon / 2);
+
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return earthRadiusMeters * c;
         }
-
-        // ----- Statistics --------------------------------------------------------------------
 
         /// <summary>
         /// Middle value of an ascending-sorted list. 0 when empty.
@@ -195,19 +168,6 @@ namespace StayPilot.Application.Helpers.Calculators
         public static decimal Median(IReadOnlyList<decimal> sortedAscending)
         {
             return Percentile(sortedAscending, 0.5);
-        }
-
-        /// <inheritdoc cref="Median(IReadOnlyList{decimal})"/>
-        public static double Median(IEnumerable<double> values)
-        {
-            var sorted = values.OrderBy(x => x).ToList();
-
-            if (sorted.Count == 0)
-                return 0;
-
-            return sorted.Count % 2 != 0
-                ? sorted[sorted.Count / 2]
-                : (sorted[sorted.Count / 2] + sorted[(sorted.Count / 2) - 1]) / 2;
         }
 
         /// <summary>

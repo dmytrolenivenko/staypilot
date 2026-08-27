@@ -27,7 +27,9 @@ namespace StayPilot.Application.Services
         {
             var response = new RecalculateMarketAreaStatsResponse();
 
-            var allListings = await _propertyListingRepo.GetAllListingsForMarketAreaStatsAsync();
+            // Same load the feature premiums use: every listing, with its market area and its
+            // newest price. Reused rather than copied - the shape needed is identical.
+            var allListings = await _propertyListingRepo.GetAllListingsForFeaturePremiumCalculationAsync();
 
             var rows = MarketAreaStatsCalculator.Calculate(allListings);
 

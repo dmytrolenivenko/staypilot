@@ -1,0 +1,12 @@
+/* The search box takes the slack in the toolbar; the Rows select stays small. */
+.search {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+}
+
+/* Notes are free text — the only column allowed to wrap. */
+.notes {
+  white-space: normal;
+  max-width: 22rem;
+}

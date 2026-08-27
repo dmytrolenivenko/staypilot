@@ -75,8 +75,5 @@ namespace StayPilot.Domain.Entities
         /// When this premium was last calculated (UTC time).
         /// </summary>
         public DateTime CalculatedAtUtc { get; set; } = DateTime.UtcNow;
-
-        /// <summary>Measurable only when the whole confidence range sits on one side of zero.</summary>
-        public bool IsMeasurable => LowerBoundPercent > 0 || UpperBoundPercent < 0;
     }
 }

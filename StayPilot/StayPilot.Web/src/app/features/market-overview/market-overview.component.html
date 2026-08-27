@@ -110,14 +110,8 @@
   } @else if (overview()!.listingCount === 0) {
     <section class="card">
       <p class="empty">
-        @if (nothingNarrowedBelowDistrict()) {
-          No listings have been collected in {{ form.district }} yet. Collection so far covers the
-          Algarve and Lisboa &mdash; widening the slice will not help here, because there is
-          nothing underneath it to widen into.
-        } @else {
-          No listings match this slice. Widen it &mdash; drop the typology, or step back up to the
-          município. An empty market is an answer too.
-        }
+        No listings match this slice. Widen it &mdash; drop the typology, or step back up to the
+        município. An empty market is an answer too.
       </p>
     </section>
   } @else {
