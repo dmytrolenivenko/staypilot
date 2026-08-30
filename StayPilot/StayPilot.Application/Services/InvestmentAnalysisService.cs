@@ -60,15 +60,31 @@ namespace StayPilot.Application.Services
                 return response;
             }
 
-            // Town-level rows for the whole município, same read TopDeals uses. minListings: 0
-            // because we grade the sample size ourselves via Confidence rather than have the
-            // leaderboard gate silently drop a thin town before we get a chance to say so.
-            var townStats = await _marketAreaStatsRepo.GetLeaderboardAsync(
+            // Town-level rows for the whole município, with their typology children - a T2 and a
+            // T5 do not sell for the same €/m², so resale value is priced off this property's own
+            // typology bucket, not the town-wide blend. minListings: 0 because we grade the
+            // sample size ourselves via Confidence rather than have the leaderboard gate silently
+            // drop a thin town before we get a chance to say so.
+            var townStats = await _marketAreaStatsRepo.GetWithTypologiesAsync(
                 AreaLevel.Town, minListings: 0, listing.MarketArea.District, listing.MarketArea.Municipality);
 
             var stats = townStats.FirstOrDefault(x => x.Town == listing.MarketArea.Town);
+            var typologyStats = stats?.TypologyStats.FirstOrDefault(x => x.Typology == listing.Typology);
 
-            if (stats?.MoveInMedianPricePerM2 is null)
+            if (typologyStats is null)
+            {
+                response.AddError(ErrorCode.InvestmentAnalysisNotEnoughData, listing.MarketArea.Town);
+                return response;
+            }
+
+            // Same size effect as across typologies, just inside one: a "T5" here can be anything
+            // from a modest house to a five-bed villa twice the size. Same +-25% band
+            // GetComparablePropertyListingAsync uses for a fair comp.
+            const decimal areaBand = 0.25m;
+            var isTypicalSizeForTypology = listing.AreaM2 >= typologyStats.MedianAreaM2 * (1 - areaBand)
+                && listing.AreaM2 <= typologyStats.MedianAreaM2 * (1 + areaBand);
+
+            if (!isTypicalSizeForTypology)
             {
                 response.AddError(ErrorCode.InvestmentAnalysisNotEnoughData, listing.MarketArea.Town);
                 return response;
@@ -78,11 +94,11 @@ namespace StayPilot.Application.Services
 
             var renovationCost = renovationCostOverride
                 ?? InvestmentAnalysisCalculator.EstimateRenovationCost(listing.Condition, listing.AreaM2, buildCostBasis);
-            var resaleValue = InvestmentAnalysisCalculator.EstimateResaleValue(stats.MoveInMedianPricePerM2.Value, listing.AreaM2);
+            var resaleValue = InvestmentAnalysisCalculator.EstimateResaleValue(typologyStats.MedianPricePerM2, listing.AreaM2);
             var totalInvestment = InvestmentAnalysisCalculator.EstimateTotalInvestment(snapshot.Price, renovationCost);
             var profit = InvestmentAnalysisCalculator.EstimateProfit(resaleValue, totalInvestment);
             var profitMarginPercent = InvestmentAnalysisCalculator.EstimateProfitMarginPercent(profit, totalInvestment);
-            var confidence = InvestmentAnalysisCalculator.DetermineConfidence(stats.MoveInCount);
+            var confidence = InvestmentAnalysisCalculator.DetermineConfidence(typologyStats.ListingCount);
 
             response.PropertyListingId = listing.Id;
             response.AskPrice = snapshot.Price;
@@ -91,8 +107,8 @@ namespace StayPilot.Application.Services
             response.District = listing.MarketArea.District;
             response.Municipality = listing.MarketArea.Municipality;
             response.Town = listing.MarketArea.Town;
-            response.TownMoveInMedianPricePerM2 = stats.MoveInMedianPricePerM2.Value;
-            response.TownMoveInListingCount = stats.MoveInCount;
+            response.TownMoveInMedianPricePerM2 = typologyStats.MedianPricePerM2;
+            response.TownMoveInListingCount = typologyStats.ListingCount;
             response.EstimatedRenovationCost = renovationCost;
             response.RenovationCostIsOverride = renovationCostOverride.HasValue;
             response.RenovationOptions = InvestmentAnalysisCalculator.GetRenovationScopeOptions(listing.AreaM2, buildCostBasis);
@@ -141,12 +157,26 @@ namespace StayPilot.Application.Services
                 return response;
             }
 
-            var townStats = await _marketAreaStatsRepo.GetLeaderboardAsync(
+            var townStats = await _marketAreaStatsRepo.GetWithTypologiesAsync(
                 AreaLevel.Town, minListings: 0, marketArea.District, marketArea.Municipality);
 
             var stats = townStats.FirstOrDefault(x => x.Town == marketArea.Town);
+            var typologyStats = stats?.TypologyStats.FirstOrDefault(x => x.Typology == property.Typology);
 
-            if (stats?.MoveInMedianPricePerM2 is null)
+            if (typologyStats is null)
+            {
+                response.AddError(ErrorCode.InvestmentAnalysisNotEnoughData, marketArea.Town);
+                return response;
+            }
+
+            // Same size effect as across typologies, just inside one: a "T5" here can be anything
+            // from a modest house to a five-bed villa twice the size. Same +-25% band
+            // GetComparablePropertyListingAsync uses for a fair comp.
+            const decimal areaBand = 0.25m;
+            var isTypicalSizeForTypology = property.AreaM2 >= typologyStats.MedianAreaM2 * (1 - areaBand)
+                && property.AreaM2 <= typologyStats.MedianAreaM2 * (1 + areaBand);
+
+            if (!isTypicalSizeForTypology)
             {
                 response.AddError(ErrorCode.InvestmentAnalysisNotEnoughData, marketArea.Town);
                 return response;
@@ -156,11 +186,11 @@ namespace StayPilot.Application.Services
 
             var renovationCost = renovationCostOverride
                 ?? InvestmentAnalysisCalculator.EstimateRenovationCost(property.Condition, property.AreaM2, buildCostBasis);
-            var resaleValue = InvestmentAnalysisCalculator.EstimateResaleValue(stats.MoveInMedianPricePerM2.Value, property.AreaM2);
+            var resaleValue = InvestmentAnalysisCalculator.EstimateResaleValue(typologyStats.MedianPricePerM2, property.AreaM2);
             var totalInvestment = InvestmentAnalysisCalculator.EstimateTotalInvestment(property.PurchasePrice, renovationCost);
             var profit = InvestmentAnalysisCalculator.EstimateProfit(resaleValue, totalInvestment);
             var profitMarginPercent = InvestmentAnalysisCalculator.EstimateProfitMarginPercent(profit, totalInvestment);
-            var confidence = InvestmentAnalysisCalculator.DetermineConfidence(stats.MoveInCount);
+            var confidence = InvestmentAnalysisCalculator.DetermineConfidence(typologyStats.ListingCount);
 
             response.OwnedPropertyId = property.Id;
             response.AskPrice = property.PurchasePrice;
@@ -169,8 +199,8 @@ namespace StayPilot.Application.Services
             response.District = marketArea.District;
             response.Municipality = marketArea.Municipality;
             response.Town = marketArea.Town;
-            response.TownMoveInMedianPricePerM2 = stats.MoveInMedianPricePerM2.Value;
-            response.TownMoveInListingCount = stats.MoveInCount;
+            response.TownMoveInMedianPricePerM2 = typologyStats.MedianPricePerM2;
+            response.TownMoveInListingCount = typologyStats.ListingCount;
             response.EstimatedRenovationCost = renovationCost;
             response.RenovationCostIsOverride = renovationCostOverride.HasValue;
             response.RenovationOptions = InvestmentAnalysisCalculator.GetRenovationScopeOptions(property.AreaM2, buildCostBasis);

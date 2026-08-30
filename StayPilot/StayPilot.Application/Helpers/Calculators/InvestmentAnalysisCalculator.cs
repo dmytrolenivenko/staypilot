@@ -44,14 +44,16 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// What this property would sell for once brought to move-in condition, at the town's
-        /// current move-in median €/m². The caller is expected to have already checked that
-        /// median exists — see <see cref="Services.InvestmentAnalysisService"/>'s "not enough
-        /// data" gate — so this never has to decide what a missing median means.
+        /// What this property would sell for once brought to move-in condition, at this
+        /// property's own typology median €/m² in its town — a T2 and a T5 do not sell for the
+        /// same €/m², so a blended, town-wide figure would misprice either one. The caller is
+        /// expected to have already checked that median exists — see
+        /// <see cref="Services.InvestmentAnalysisService"/>'s "not enough data" gate — so this
+        /// never has to decide what a missing median means.
         /// </summary>
-        public static decimal EstimateResaleValue(decimal moveInMedianPricePerM2, int areaM2)
+        public static decimal EstimateResaleValue(decimal typologyMedianPricePerM2, int areaM2)
         {
-            return moveInMedianPricePerM2 * areaM2;
+            return typologyMedianPricePerM2 * areaM2;
         }
 
         /// <summary>Ask price plus whatever renovation it takes to reach move-in condition.</summary>
@@ -113,26 +115,26 @@ namespace StayPilot.Application.Helpers.Calculators
                 .ToList();
         }
 
-        /// <summary>Below this many move-in comps, the town median is real but still thin.</summary>
+        /// <summary>Below this many comps of the property's typology, the median is real but still thin.</summary>
         private const int MediumConfidenceMoveInCount = 8;
 
-        /// <summary>At or above this many move-in comps, the median is well supported.</summary>
+        /// <summary>At or above this many comps of the property's typology, the median is well supported.</summary>
         private const int HighConfidenceMoveInCount = 15;
 
         /// <summary>
-        /// How much to trust <see cref="EstimateResaleValue"/>, judged on how many move-in-ready
-        /// comps the town's median actually rests on. The caller only reaches here once that
-        /// count has already cleared MarketAreaStatsCalculator's own minimum of 3 for a median to
-        /// exist at all — this just grades how far past that floor it is.
+        /// How much to trust <see cref="EstimateResaleValue"/>, judged on how many comps of the
+        /// property's own typology the median actually rests on. The caller only reaches here
+        /// once that count has already cleared MarketAreaStatsCalculator's own minimum of 3 for a
+        /// typology median to exist at all — this just grades how far past that floor it is.
         /// </summary>
-        public static ValuationConfidence DetermineConfidence(int moveInListingCount)
+        public static ValuationConfidence DetermineConfidence(int typologyListingCount)
         {
-            if (moveInListingCount >= HighConfidenceMoveInCount)
+            if (typologyListingCount >= HighConfidenceMoveInCount)
             {
                 return ValuationConfidence.High;
             }
 
-            if (moveInListingCount >= MediumConfidenceMoveInCount)
+            if (typologyListingCount >= MediumConfidenceMoveInCount)
             {
                 return ValuationConfidence.Medium;
             }

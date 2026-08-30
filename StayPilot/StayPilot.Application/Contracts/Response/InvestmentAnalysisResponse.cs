@@ -30,10 +30,10 @@ namespace StayPilot.Application.Contracts.Response
 
         public string Town { get; set; } = string.Empty;
 
-        /// <summary>The town's move-in-ready median €/m², the price basis behind <see cref="EstimatedResaleValue"/>.</summary>
+        /// <summary>This property's own typology median €/m² in this town, the price basis behind <see cref="EstimatedResaleValue"/>.</summary>
         public decimal TownMoveInMedianPricePerM2 { get; set; }
 
-        /// <summary>How many move-in-ready comps that median rests on. Drives <see cref="Confidence"/>.</summary>
+        /// <summary>How many comps of this typology that median rests on. Drives <see cref="Confidence"/>.</summary>
         public int TownMoveInListingCount { get; set; }
 
         /// <summary>What renovating this property to move-in condition would cost. Calculated from today's build rates, or the caller's own estimate — see <see cref="RenovationCostIsOverride"/>.</summary>

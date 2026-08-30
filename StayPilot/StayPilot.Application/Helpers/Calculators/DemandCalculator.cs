@@ -45,7 +45,11 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>
         /// A measured median only counts while it stays well inside the collection window. At 0.6
         /// a place whose homes "sit 100 days" needs 167 days of collection behind it before we
-        /// believe the 100 - otherwise we are measuring our own start date.
+        /// believe the 100 - otherwise we are measuring our own start date. The check is run
+        /// against at least <see cref="FastestDays"/> even when the actual median is lower (or
+        /// zero): a young collection window makes every listing look brand new regardless of what
+        /// the true median is, so a suspiciously fast reading needs exactly as much collection
+        /// history behind it as a merely fast one would.
         /// </summary>
         private const decimal UsableShareOfCollectionWindow = 0.6m;
 
@@ -156,8 +160,10 @@ namespace StayPilot.Application.Helpers.Calculators
                 : $"homes still up have been up {median:0} days";
 
             // The measurement has run into the edge of what we have collected. Reporting it would
-            // be reporting our own start date dressed up as a market fact.
-            if (median > collectionSpanDays * UsableShareOfCollectionWindow)
+            // be reporting our own start date dressed up as a market fact. Floored at FastestDays
+            // so a median of 0 (or anything below it) can't slip past this guard just because it
+            // is small - a window too young to trust "30 days" is too young to trust "0" as well.
+            if (Math.Max(median, FastestDays) > collectionSpanDays * UsableShareOfCollectionWindow)
             {
                 return new DaysOutcome(median, onSold, null,
                     $"{basis}, too close to the {collectionSpanDays} days of history we hold to mean anything yet");
