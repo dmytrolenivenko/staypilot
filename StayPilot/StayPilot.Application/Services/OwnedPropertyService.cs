@@ -2,6 +2,7 @@
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.Base;
+using StayPilot.Application.Contracts.Response.SubResponse;
 using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
@@ -19,6 +20,7 @@ namespace StayPilot.Application.Services
         private readonly IPropertyListingRepository _propertyListingRepository;
         private readonly IPremiumFeatureRepository _premiumFeatureRepository;
         private readonly IHousePriceGrowthRepository _housePriceGrowthRepository;
+        private readonly IOwnedPropertyValuationRepository _ownedPropertyValuationRepository;
 
         // The stored PremiumFeature rows are back: the breakdown quotes the percentages already
         // measured, so a second bathroom cannot read as +4% on the Feature Impact screen and
@@ -26,7 +28,7 @@ namespace StayPilot.Application.Services
         // features are worth. The cost is that a valuation reflects the last recalculation rather
         // than a fresh one - which is the trade we want, because two different answers for the
         // same feature is worse than one answer that is a recalculation behind.
-        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository, IPremiumFeatureRepository premiumFeatureRepository, IHousePriceGrowthRepository housePriceGrowthRepository)
+        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository, IPremiumFeatureRepository premiumFeatureRepository, IHousePriceGrowthRepository housePriceGrowthRepository, IOwnedPropertyValuationRepository ownedPropertyValuationRepository)
         {
             _ownedPropertyRepository = ownedPropertyRepository;
             _marketAreaRepository = marketAreaRepository;
@@ -34,6 +36,7 @@ namespace StayPilot.Application.Services
             _propertyListingRepository = propertyListingRepository;
             _premiumFeatureRepository = premiumFeatureRepository;
             _housePriceGrowthRepository = housePriceGrowthRepository;
+            _ownedPropertyValuationRepository = ownedPropertyValuationRepository;
         }
 
         public async Task<OwnedPropertyResponse> AddOwnedPropertyAsync(OwnedPropertyRequest request)
@@ -293,12 +296,78 @@ namespace StayPilot.Application.Services
             };
         }
 
-        /// <summary>
-        /// The comparables, nearest first. A property with no coordinates has no distances to sort
-        /// by, so it keeps the order the repository chose - its own market area, closest in size.
-        /// </summary>
         /// <inheritdoc/>
-        public async Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync(int radiusMeters, int months, int years)
+        public async Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync()
+        {
+            var response = new OwnedPropertyPortfolioResponse
+            {
+                GeneratedAtUtc = DateTime.UtcNow,
+            };
+
+            var owned = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+
+            // No properties is not an error - it is what the screen shows before you add one.
+            if (owned.Count == 0)
+            {
+                return response;
+            }
+
+            // Plain read of what the last recalculation wrote down - no model fit, no comps
+            // query. A property with no row yet (never recalculated) still shows up below,
+            // just with nothing priced.
+            var valuationsByPropertyId = (await _ownedPropertyValuationRepository.GetAllAsync())
+                .ToDictionary(x => x.OwnedPropertyId);
+
+            foreach (var entity in owned)
+            {
+                if (valuationsByPropertyId.TryGetValue(entity.Id, out var valuation))
+                {
+                    response.Items.Add(Converter.MapToPortfolioItem(entity, valuation));
+
+                    continue;
+                }
+
+                response.Items.Add(new OwnedPropertyPortfolioItemResponse
+                {
+                    Id = entity.Id,
+                    Name = entity.Name,
+                    PropertyType = entity.PropertyType,
+                    Typology = entity.Typology,
+                    AreaM2 = entity.AreaM2,
+                    ConfidenceNote = "not yet calculated - recalculate to price this property",
+                    Demand = new AreaDemandResponse { Reason = "not yet calculated" },
+                });
+            }
+
+            // Most valuable first: the list is read to decide what to do next, and the biggest
+            // number on the page is where that decision usually starts. Never-calculated
+            // properties price at zero and sink to the bottom, which is where "needs attention"
+            // belongs.
+            response.Items = response.Items.OrderByDescending(x => x.MidPrice).ToList();
+
+            response.ProjectionYears = response.Items
+                .Select(x => x.Forecast.Years)
+                .FirstOrDefault(x => x > 0);
+
+            response.PropertyCount = response.Items.Count;
+            response.TotalEstimatedAskingPrice = response.Items.Sum(x => x.MidPrice);
+            response.TotalPurchasePrice = response.Items.Sum(x => x.AskSpread.PurchasePrice);
+            response.TotalAskSpreadAmount = response.TotalEstimatedAskingPrice - response.TotalPurchasePrice;
+
+            response.TotalAskSpreadPercent = response.TotalPurchasePrice <= 0m
+                ? 0m
+                : Math.Round(response.TotalAskSpreadAmount / response.TotalPurchasePrice * 100m, 1);
+
+            // The Base path only. Adding up the optimistic paths would produce a portfolio total
+            // that assumes every district has its best decade at once.
+            response.TotalProjectedAskingPrice = response.Items.Sum(x =>
+                x.Forecast.Scenarios.FirstOrDefault(s => s.Name == BaseScenarioName)?.FinalYearValue ?? x.MidPrice);
+
+            return response;
+        }
+
+        /// <inheritdoc/>
+        public async Task<OwnedPropertyPortfolioResponse> RecalculateAllValuationsAsync(int radiusMeters, int months, int years)
         {
             var response = new OwnedPropertyPortfolioResponse
             {
@@ -338,11 +407,29 @@ namespace StayPilot.Application.Services
             // same município share one answer and one read of that município's history.
             var outlooks = new Dictionary<string, AreaOutlook>(StringComparer.OrdinalIgnoreCase);
 
+            var storedValuationsByPropertyId = (await _ownedPropertyValuationRepository.GetAllAsync())
+                .ToDictionary(x => x.OwnedPropertyId);
+
             foreach (var entity in owned)
             {
-                response.Items.Add(await BuildPortfolioItemAsync(
-                    entity, valuation, featureEffects, marketAreas, outlooks, radiusMeters, months, years, response.GeneratedAtUtc));
+                var item = await BuildPortfolioItemAsync(
+                    entity, valuation, featureEffects, marketAreas, outlooks, radiusMeters, months, years, response.GeneratedAtUtc);
+
+                if (!storedValuationsByPropertyId.TryGetValue(entity.Id, out var storedValuation))
+                {
+                    storedValuation = new OwnedPropertyValuation { OwnedPropertyId = entity.Id };
+
+                    await _ownedPropertyValuationRepository.AddAsync(storedValuation);
+                }
+
+                Converter.ApplyValuation(storedValuation, item, response.GeneratedAtUtc);
+
+                item.CalculatedAtUtc = response.GeneratedAtUtc;
+
+                response.Items.Add(item);
             }
+
+            await _ownedPropertyValuationRepository.SaveChangesAsync();
 
             // Most valuable first: the list is read to decide what to do next, and the biggest
             // number on the page is where that decision usually starts.
@@ -361,6 +448,62 @@ namespace StayPilot.Application.Services
             // that assumes every district has its best decade at once.
             response.TotalProjectedAskingPrice = response.Items.Sum(x =>
                 x.Forecast.Scenarios.FirstOrDefault(s => s.Name == BaseScenarioName)?.FinalYearValue ?? x.MidPrice);
+
+            return response;
+        }
+
+        /// <inheritdoc/>
+        public async Task<OwnedPropertyValuationResponse> RecalculateOwnedPropertyValuationAsync(int id, int radiusMeters, int months, int years)
+        {
+            var response = new OwnedPropertyValuationResponse();
+
+            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
+
+            if (entity is null)
+            {
+                response.AddError(ErrorCode.OwnedPropertyNotFound, id.ToString());
+
+                return response;
+            }
+
+            var premiumFeatureRepo = await _premiumFeatureRepository.GetAllPremiumFeaturesAsync();
+
+            var featureEffects = premiumFeatureRepo.Select(x => Converter.MapToFeatureEffect(x)).ToList();
+
+            var allListings = await _propertyListingRepository.GetAllListingsForFeaturePremiumCalculationAsync();
+
+            var valuation = PropertyValuation.TryFit(allListings, out var usableListings);
+
+            if (valuation is null)
+            {
+                response.AddError(ErrorCode.NotEnoughListingsToFitModel, usableListings.ToString(), PropertyValuation.MinimumListings.ToString());
+
+                return response;
+            }
+
+            var marketAreas = await _marketAreaRepository.GetAllMarketAreasAsync();
+            var outlooks = new Dictionary<string, AreaOutlook>(StringComparer.OrdinalIgnoreCase);
+            var calculatedAtUtc = DateTime.UtcNow;
+
+            var item = await BuildPortfolioItemAsync(
+                entity, valuation, featureEffects, marketAreas, outlooks, radiusMeters, months, years, calculatedAtUtc);
+
+            var storedValuation = await _ownedPropertyValuationRepository.GetByOwnedPropertyIdAsync(id);
+
+            if (storedValuation is null)
+            {
+                storedValuation = new OwnedPropertyValuation { OwnedPropertyId = id };
+
+                await _ownedPropertyValuationRepository.AddAsync(storedValuation);
+            }
+
+            Converter.ApplyValuation(storedValuation, item, calculatedAtUtc);
+
+            await _ownedPropertyValuationRepository.SaveChangesAsync();
+
+            item.CalculatedAtUtc = calculatedAtUtc;
+
+            response.Item = item;
 
             return response;
         }

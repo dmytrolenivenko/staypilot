@@ -101,19 +101,46 @@ namespace StayPilot.Api.Controllers
         }
 
         /// <summary>
-        /// Price every owned property at once, each with how keen buyers are in its place and
-        /// where its value is heading.
-        /// 400 Bad Request when we hold too few listings to price anything; an empty list is a
-        /// normal 200 for a user who owns nothing yet.
+        /// Every owned property, priced as of the last recalculation. A plain read - no model
+        /// fit, no comps query - so it stays fast no matter how many listings the database holds.
+        /// A property never recalculated still shows up, just with nothing priced yet.
+        /// An empty list is a normal 200 for a user who owns nothing yet.
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<OwnedPropertyPortfolioResponse>> ListValuationsOwnedpropertyAsync()
+        {
+            var result = await _ownedPropertyService.GetPortfolioAsync();
+
+            return this.ToActionResult(result);
+        }
+
+        /// <summary>
+        /// Recalculates every owned property's valuation and stores it, so the next
+        /// ListValuationsOwnedproperty call is a plain read instead of refitting the model.
+        /// 400 Bad Request when we hold too few listings to price anything - nothing stored
+        /// changes in that case.
         /// </summary>
         // Every parameter defaults, because a missing query string value binds to 0 - which
         // would shrink the comparable search to nothing and project zero years forward.
         // The bounds mirror what the UI already enforces. Without them years=999 ran the
         // compounding loop until decimal overflowed and answered 500 after half a minute.
-        [HttpGet]
-        public async Task<ActionResult<OwnedPropertyPortfolioResponse>> ListValuationsOwnedpropertyAsync([Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
+        [HttpPost]
+        public async Task<ActionResult<OwnedPropertyPortfolioResponse>> RecalculateAllValuationsAsync([Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
         {
-            var result = await _ownedPropertyService.GetPortfolioAsync(radiusMeters, months, years);
+            var result = await _ownedPropertyService.RecalculateAllValuationsAsync(radiusMeters, months, years);
+
+            return this.ToActionResult(result);
+        }
+
+        /// <summary>
+        /// Recalculates one owned property's valuation and stores it.
+        /// 404 Not Found when there is no such property, 400 Bad Request when we hold too few
+        /// listings to price anything.
+        /// </summary>
+        [HttpPost("{id}")]
+        public async Task<ActionResult<OwnedPropertyValuationResponse>> RecalculateValuationAsync(int id, [Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
+        {
+            var result = await _ownedPropertyService.RecalculateOwnedPropertyValuationAsync(id, radiusMeters, months, years);
 
             return this.ToActionResult(result);
         }

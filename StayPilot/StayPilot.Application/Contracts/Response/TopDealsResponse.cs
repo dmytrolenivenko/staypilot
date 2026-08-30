@@ -28,10 +28,9 @@ namespace StayPilot.Application.Contracts.Response
         public PropertyListingResponse Listing { get; set; } = null!;
 
         /// <summary>
-        /// Median euro per square meter this listing was graded against: its own town's median
-        /// for renovation projects, or for move-in-ready stock, whichever bucket it falls in.
-        /// Never the blended median - mixing the two would call every fixer-upper a steal just
-        /// for needing work.
+        /// Median euro per square meter this listing was graded against: its own typology's
+        /// median in this town. Never the town-wide blended median - mixing typologies of very
+        /// different sizes would call every large property a steal just for being large.
         /// </summary>
         public decimal TownMedianPricePerM2 { get; set; }
 

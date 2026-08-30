@@ -230,6 +230,10 @@ export interface OwnedPropertyPortfolioItemResponse {
 
   demand: AreaDemandResponse;
   forecast: GrowthForecastResponse;
+
+  // Null when this property has never been recalculated — it still shows up in the list,
+  // just with nothing priced yet.
+  calculatedAtUtc: string | null;
 }
 
 // Every owned property priced in one pass. One request, because the valuation model is fitted
@@ -244,4 +248,10 @@ export interface OwnedPropertyPortfolioResponse {
   totalProjectedAskingPrice: number;
   projectionYears: number;
   generatedAtUtc: string;
+}
+
+// The result of recalculating one owned property's valuation. item stays null when the API
+// could not price it (not found, or too little market data).
+export interface OwnedPropertyValuationResponse {
+  item: OwnedPropertyPortfolioItemResponse | null;
 }

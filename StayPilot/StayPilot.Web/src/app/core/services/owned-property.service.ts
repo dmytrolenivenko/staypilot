@@ -5,7 +5,8 @@ import {
   OwnedPropertyAnalysisResponse,
   OwnedPropertyPortfolioResponse,
   OwnedPropertyRequest,
-  OwnedPropertyResponse
+  OwnedPropertyResponse,
+  OwnedPropertyValuationResponse
 } from '../models/owned-property';
 import { environment } from '../../../environments/environment';
 
@@ -40,13 +41,37 @@ export class OwnedPropertyService {
     );
   }
 
-  // GET /api/OwnedProperty/ListValuationsOwnedproperty?months=&radiusMeters=&years=
-  // Every owned property priced in one pass, each with how keen buyers are in its place and
-  // where its value is heading. Not unwrapped to a bare array like getAll: the totals on the
-  // response are the portfolio summary the screen puts at the top.
-  portfolio(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
-    return this.http.get<OwnedPropertyPortfolioResponse>(
-      `${this.baseUrl}/ListValuationsOwnedproperty?months=${months}&radiusMeters=${radiusMeters}&years=${years}`
+  // GET /api/OwnedProperty/ListValuationsOwnedproperty
+  // Every owned property priced as of the last recalculation. A plain read - no model fit, no
+  // comps query - so it stays fast regardless of how many listings the database holds. A
+  // property never recalculated still shows up, just with nothing priced yet. Not unwrapped to
+  // a bare array like getAll: the totals on the response are the portfolio summary the screen
+  // puts at the top.
+  portfolio(): Observable<OwnedPropertyPortfolioResponse> {
+    return this.http.get<OwnedPropertyPortfolioResponse>(`${this.baseUrl}/ListValuationsOwnedproperty`);
+  }
+
+  // POST /api/OwnedProperty/RecalculateAllValuations?months=&radiusMeters=&years=
+  // Refits the pricing model once and reprices every owned property, overwriting what
+  // portfolio() will read back next. Slow on purpose - this is the button, not the page load.
+  recalculateAll(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
+    return this.http.post<OwnedPropertyPortfolioResponse>(
+      `${this.baseUrl}/RecalculateAllValuations?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
+      null
+    );
+  }
+
+  // POST /api/OwnedProperty/RecalculateValuation/{id}?months=&radiusMeters=&years=
+  // Reprices one property and overwrites its stored valuation.
+  recalculateOne(
+    id: number,
+    months: number,
+    radiusMeters: number,
+    years: number
+  ): Observable<OwnedPropertyValuationResponse> {
+    return this.http.post<OwnedPropertyValuationResponse>(
+      `${this.baseUrl}/RecalculateValuation/${id}?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
+      null
     );
   }
 

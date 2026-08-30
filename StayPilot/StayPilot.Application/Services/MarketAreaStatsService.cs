@@ -188,8 +188,9 @@ namespace StayPilot.Application.Services
         public async Task<TopDealsResponse> GetTopDealsAsync(TopDealsRequest request)
         {
             // Same sample gate as the leaderboard - a median from a handful of listings is not
-            // a market to grade a deal against.
-            var townStats = await _marketAreaStatsRepo.GetLeaderboardAsync(
+            // a market to grade a deal against. With typology children, because a T5 house and a
+            // T1 apartment do not sell for the same €/m² even in the same town.
+            var townStats = await _marketAreaStatsRepo.GetWithTypologiesAsync(
                 AreaLevel.Town, minListings: 5, request.District, request.Municipality);
 
             var statsByTown = townStats.ToDictionary(x => (x.District, x.Municipality, x.Town), x => x);
@@ -216,23 +217,35 @@ namespace StayPilot.Application.Services
                     continue;
                 }
 
-                // A renovation project and move-in-ready stock are different markets: a project's
-                // low €/m² reflects the work it needs, not a bargain. Grading it against the
-                // blended median would call every fixer-upper a steal for needing work, so each
-                // listing is graded against its own bucket's median instead. Unclassified listings
-                // (neither, and thin buckets with too few listings) have no fair median and drop out.
-                var medianPricePerM2 = MarketAreaStatsCalculator.IsProject(listing.Condition, listing.EnergyCertificate)
-                    ? stats.ProjectMedianPricePerM2
-                    : MarketAreaStatsCalculator.IsMoveInReady(listing.Condition, listing.EnergyCertificate)
-                        ? stats.MoveInMedianPricePerM2
-                        : null;
+                // A T5 house legitimately costs less per m² than a typical apartment in the same
+                // town - grading it against a town-wide blended median would manufacture a "deal"
+                // that is really just a size effect. Each listing is graded against its own
+                // typology's median instead. A typology with too few listings for a median (see
+                // MarketAreaStatsCalculator's own minimum) has no fair basis and drops out.
+                var typologyStats = stats.TypologyStats.FirstOrDefault(x => x.Typology == listing.Typology);
 
-                if (medianPricePerM2 is not > 0)
+                if (typologyStats is null || typologyStats.MedianPricePerM2 <= 0)
                 {
                     continue;
                 }
 
-                var discountPercent = (medianPricePerM2.Value - snapshot.PricePerM2) / medianPricePerM2.Value * 100m;
+                // A typology can still span very different sizes in one town (a "T5" might be a
+                // modest house or a villa twice the size) - comparing a listing far outside its
+                // own typology's usual size here would reproduce the same size distortion
+                // typology banding exists to avoid. Same +-25% band
+                // GetComparablePropertyListingAsync uses for a fair comp.
+                const decimal areaBand = 0.25m;
+                var isTypicalSizeForTypology = listing.AreaM2 >= typologyStats.MedianAreaM2 * (1 - areaBand)
+                    && listing.AreaM2 <= typologyStats.MedianAreaM2 * (1 + areaBand);
+
+                if (!isTypicalSizeForTypology)
+                {
+                    continue;
+                }
+
+                var medianPricePerM2 = typologyStats.MedianPricePerM2;
+
+                var discountPercent = (medianPricePerM2 - snapshot.PricePerM2) / medianPricePerM2 * 100m;
 
                 // Asking at or above the median is not a deal.
                 if (discountPercent <= 0)
@@ -243,7 +256,7 @@ namespace StayPilot.Application.Services
                 deals.Add(new TopDealResponse
                 {
                     Listing = Converter.MapToResponse(listing, snapshot),
-                    TownMedianPricePerM2 = medianPricePerM2.Value,
+                    TownMedianPricePerM2 = medianPricePerM2,
                     DiscountPercent = decimal.Round(discountPercent, 1)
                 });
             }
