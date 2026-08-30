@@ -1,4 +1,5 @@
-﻿using StayPilot.Application.Contracts.Request;
+﻿using System.Text.Json;
+using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.SubResponse;
 using StayPilot.Application.Helpers.Calculators;
@@ -298,6 +299,70 @@ namespace StayPilot.Application.Helpers.Mappers
                 MaximumPercent = entity.MaximumPercent,
                 MaximumBasis = entity.MaximumBasis,
                 Basis = entity.Basis,
+            };
+        }
+
+        /// <summary>
+        /// Copies a freshly computed portfolio item onto the stored valuation row for that
+        /// property, ready to be added (new property) or saved in place (recalculation).
+        /// </summary>
+        public static void ApplyValuation(OwnedPropertyValuation entity, OwnedPropertyPortfolioItemResponse item, DateTime calculatedAtUtc)
+        {
+            entity.District = item.District;
+            entity.Municipality = item.Municipality;
+            entity.Town = item.Town;
+            entity.LocatedAreaName = item.LocatedAreaName;
+            entity.LocatedByCoordinates = item.LocatedByCoordinates;
+
+            entity.MidPrice = item.MidPrice;
+            entity.MinPrice = item.MinPrice;
+            entity.MaxPrice = item.MaxPrice;
+            entity.PricePerM2 = item.PricePerM2;
+
+            entity.ConfidenceLevel = item.ConfidenceLevel;
+            entity.ConfidenceNote = item.ConfidenceNote;
+
+            // Display-only blocks: serialized as-is rather than normalized into their own
+            // tables, since nothing ever filters or sorts a portfolio by what is inside them.
+            entity.AskSpreadJson = JsonSerializer.Serialize(item.AskSpread);
+            entity.DemandJson = JsonSerializer.Serialize(item.Demand);
+            entity.ForecastJson = JsonSerializer.Serialize(item.Forecast);
+
+            entity.CalculatedAtUtc = calculatedAtUtc;
+        }
+
+        /// <summary>
+        /// Rebuilds one portfolio row from the owned property and its stored valuation - no
+        /// model fit, no comps query, just what the last recalculation wrote down.
+        /// </summary>
+        public static OwnedPropertyPortfolioItemResponse MapToPortfolioItem(OwnedProperty entity, OwnedPropertyValuation valuation)
+        {
+            return new OwnedPropertyPortfolioItemResponse
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                PropertyType = entity.PropertyType,
+                Typology = entity.Typology,
+                AreaM2 = entity.AreaM2,
+
+                District = valuation.District,
+                Municipality = valuation.Municipality,
+                Town = valuation.Town,
+                LocatedAreaName = valuation.LocatedAreaName,
+                LocatedByCoordinates = valuation.LocatedByCoordinates,
+
+                MidPrice = valuation.MidPrice,
+                MinPrice = valuation.MinPrice,
+                MaxPrice = valuation.MaxPrice,
+                PricePerM2 = valuation.PricePerM2,
+                ConfidenceLevel = valuation.ConfidenceLevel,
+                ConfidenceNote = valuation.ConfidenceNote,
+
+                AskSpread = JsonSerializer.Deserialize<AskSpreadSummary>(valuation.AskSpreadJson) ?? new AskSpreadSummary(),
+                Demand = JsonSerializer.Deserialize<AreaDemandResponse>(valuation.DemandJson) ?? new AreaDemandResponse(),
+                Forecast = JsonSerializer.Deserialize<GrowthForecastResponse>(valuation.ForecastJson) ?? new GrowthForecastResponse(),
+
+                CalculatedAtUtc = valuation.CalculatedAtUtc,
             };
         }
 

@@ -49,18 +49,44 @@ namespace StayPilot.Application.Interfaces.Services
         Task<OwnedPropertyListResponse> GetAllOwnedPropertiesAsync();
 
         /// <summary>
-        /// Prices every owned property in one pass, and adds what its place is doing around it:
-        /// how keen buyers are there, and where the value is heading over the next few years.
+        /// Every owned property, priced as of the last recalculation. A plain read of the stored
+        /// valuations - no model fit, no comps query, so it stays fast regardless of how many
+        /// listings the database holds.
         ///
-        /// One call rather than one per property because the valuation model is fitted over the
+        /// A property that was never recalculated still shows up, with a null
+        /// <see cref="OwnedPropertyPortfolioItemResponse.CalculatedAtUtc"/> instead of a price -
+        /// use <see cref="RecalculateAllValuationsAsync"/> or
+        /// <see cref="RecalculateOwnedPropertyValuationAsync"/> to price it.
+        ///
+        /// Empty when the user simply owns nothing yet.
+        /// </summary>
+        Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync();
+
+        /// <summary>
+        /// Prices every owned property in one pass and overwrites its stored valuation - adding
+        /// what its place is doing around it: how keen buyers are there, and where the value is
+        /// heading over the next few years.
+        ///
+        /// One fit rather than one per property because the valuation model is fitted over the
         /// whole listing table - fitting once and pricing ten is the work of pricing one.
         ///
         /// Comes back carrying NotEnoughListingsToFitModel when there is too little market data
-        /// to price anything, and an empty list when the user simply owns nothing yet.
+        /// to price anything - nothing stored is changed in that case.
         /// </summary>
         /// <param name="radiusMeters">How far out comparable adverts still count.</param>
         /// <param name="months">How far back a comparable advert may have last been seen.</param>
         /// <param name="years">How many years the projections run for.</param>
-        Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync(int radiusMeters, int months, int years);
+        Task<OwnedPropertyPortfolioResponse> RecalculateAllValuationsAsync(int radiusMeters, int months, int years);
+
+        /// <summary>
+        /// Prices one owned property and overwrites its stored valuation.
+        /// Comes back carrying OwnedPropertyNotFound, or NotEnoughListingsToFitModel when there
+        /// is too little market data to price anything.
+        /// </summary>
+        /// <param name="id">The owned property to recalculate.</param>
+        /// <param name="radiusMeters">How far out comparable adverts still count.</param>
+        /// <param name="months">How far back a comparable advert may have last been seen.</param>
+        /// <param name="years">How many years the projection runs for.</param>
+        Task<OwnedPropertyValuationResponse> RecalculateOwnedPropertyValuationAsync(int id, int radiusMeters, int months, int years);
     }
 }

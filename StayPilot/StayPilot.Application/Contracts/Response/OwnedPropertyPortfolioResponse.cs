@@ -119,5 +119,11 @@ namespace StayPilot.Application.Contracts.Response
 
         /// <summary>Where its asking price is heading, with both rates behind it kept apart.</summary>
         public GrowthForecastResponse Forecast { get; set; } = new();
+
+        /// <summary>
+        /// When this valuation was last calculated. Null when the property has never been
+        /// recalculated - it still shows up in the list, just with nothing priced yet.
+        /// </summary>
+        public DateTime? CalculatedAtUtc { get; set; }
     }
 }

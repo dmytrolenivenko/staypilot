@@ -68,6 +68,13 @@
                     title="Estimate this property's value against comparable listings"
                     >Evaluate →</a
                   >
+                  <a
+                    class="link"
+                    [routerLink]="['/listings/investment-analysis']"
+                    [queryParams]="{ ownedId: p.id }"
+                    title="Renovation cost, resale value and profit for this property"
+                    >Analyze →</a
+                  >
                 </td>
               </tr>
             }
@@ -235,7 +242,16 @@
     <section class="card">
       <div class="card-head">
         <span class="card-title">Resolved by the server</span>
-        <a class="btn" [routerLink]="['/valuation']" [queryParams]="{ propertyId: p.id }">Estimate value →</a>
+        <div class="card-actions">
+          <a class="btn" [routerLink]="['/valuation']" [queryParams]="{ propertyId: p.id }">Estimate value →</a>
+          <a
+            class="btn"
+            [routerLink]="['/listings/investment-analysis']"
+            [queryParams]="{ ownedId: p.id }"
+            title="Renovation cost, resale value and profit for this property"
+            >Analyze →</a
+          >
+        </div>
       </div>
       <div class="card-body stack">
         <dl class="kv">
