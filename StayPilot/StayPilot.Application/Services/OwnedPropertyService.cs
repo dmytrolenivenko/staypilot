@@ -1,4 +1,5 @@
 ﻿
+using System.Text.Json;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.Base;
@@ -298,11 +299,13 @@ namespace StayPilot.Application.Services
         /// by, so it keeps the order the repository chose - its own market area, closest in size.
         /// </summary>
         /// <inheritdoc/>
-        public async Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync(int radiusMeters, int months, int years)
+        public async Task<OwnedPropertyPortfolioResponse> RevalueOwnedPropertiesAsync(int radiusMeters, int months, int years)
         {
+            var asOfUtc = DateTime.UtcNow;
+
             var response = new OwnedPropertyPortfolioResponse
             {
-                GeneratedAtUtc = DateTime.UtcNow,
+                GeneratedAtUtc = asOfUtc,
                 ProjectionYears = years,
             };
 
@@ -340,9 +343,19 @@ namespace StayPilot.Application.Services
 
             foreach (var entity in owned)
             {
-                response.Items.Add(await BuildPortfolioItemAsync(
-                    entity, valuation, featureEffects, marketAreas, outlooks, radiusMeters, months, years, response.GeneratedAtUtc));
+                var item = await BuildPortfolioItemAsync(
+                    entity, valuation, featureEffects, marketAreas, outlooks, radiusMeters, months, years, asOfUtc);
+
+                item.ValuatedAtUtc = asOfUtc;
+
+                response.Items.Add(item);
+
+                // Staged only - one SaveChangesAsync below persists every property's row together.
+                await _ownedPropertyRepository.UpsertValuationAsync(
+                    BuildValuationEntity(entity.Id, item, asOfUtc));
             }
+
+            await _ownedPropertyRepository.SaveChangesAsync();
 
             // Most valuable first: the list is read to decide what to do next, and the biggest
             // number on the page is where that decision usually starts.
@@ -606,15 +619,169 @@ namespace StayPilot.Application.Services
         public async Task<OwnedPropertyListResponse> GetAllOwnedPropertiesAsync()
         {
             var domainOwnedProperties = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+            var valuations = await _ownedPropertyRepository.GetAllValuationsAsync();
 
-            // Reuse the same mapper every other method here uses
+            // Reuse the same mapper every other method here uses, then stamp on whether (and at
+            // what price) each property was last valued - My Properties reads this to show
+            // "not evaluated yet" instead of sending the caller to a second endpoint for it.
             return new OwnedPropertyListResponse
             {
                 Items = domainOwnedProperties
-                    .Select(x => Converter.MapToResponse(x))
+                    .Select(x =>
+                    {
+                        var response = Converter.MapToResponse(x);
+
+                        if (valuations.TryGetValue(x.Id, out var cached))
+                        {
+                            response.ValuatedMidPrice = DeserializeSnapshot(cached).MidPrice;
+                            response.ValuatedAtUtc = cached.ValuatedAtUtc;
+                        }
+
+                        return response;
+                    })
                     .ToList()
             };
         }
 
+        /// <summary>Reads back what a revaluation cached for one property.</summary>
+        private static OwnedPropertyValuationSnapshot DeserializeSnapshot(OwnedPropertyValuation cached)
+        {
+            return JsonSerializer.Deserialize<OwnedPropertyValuationSnapshot>(cached.ResultJson)
+                ?? new OwnedPropertyValuationSnapshot();
+        }
+
+        /// <summary>
+        /// Reads back the last priced result for every owned property, straight from the cache -
+        /// no model fit, no comp search. A property with no cached row yet is priced at zero with
+        /// ValuatedAtUtc null, which the screen reads as "not evaluated yet".
+        /// </summary>
+        /// <inheritdoc/>
+        public async Task<OwnedPropertyPortfolioResponse> GetCachedPortfolioAsync()
+        {
+            var owned = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+
+            var response = new OwnedPropertyPortfolioResponse();
+
+            if (owned.Count == 0)
+            {
+                return response;
+            }
+
+            var valuations = await _ownedPropertyRepository.GetAllValuationsAsync();
+            var marketAreas = await _marketAreaRepository.GetAllMarketAreasAsync();
+
+            foreach (var entity in owned)
+            {
+                response.Items.Add(BuildCachedPortfolioItem(entity, valuations, marketAreas));
+            }
+
+            response.Items = response.Items.OrderByDescending(x => x.MidPrice).ToList();
+
+            response.PropertyCount = response.Items.Count;
+            response.TotalEstimatedAskingPrice = response.Items.Sum(x => x.MidPrice);
+            response.TotalPurchasePrice = response.Items.Sum(x => x.AskSpread.PurchasePrice);
+            response.TotalAskSpreadAmount = response.TotalEstimatedAskingPrice - response.TotalPurchasePrice;
+
+            response.TotalAskSpreadPercent = response.TotalPurchasePrice <= 0m
+                ? 0m
+                : Math.Round(response.TotalAskSpreadAmount / response.TotalPurchasePrice * 100m, 1);
+
+            response.ProjectionYears = response.Items.Select(x => x.Forecast.Years).DefaultIfEmpty(0).Max();
+
+            response.TotalProjectedAskingPrice = response.Items.Sum(x =>
+                x.Forecast.Scenarios.FirstOrDefault(s => s.Name == BaseScenarioName)?.FinalYearValue ?? x.MidPrice);
+
+            // The oldest of the per-property valuation times, not "now" - the cache was not just
+            // computed, and this header would otherwise overstate how fresh the numbers are.
+            // Null when nothing has ever been valued, rather than a fake 0001-01-01.
+            var valuedTimes = response.Items.Where(x => x.ValuatedAtUtc.HasValue).Select(x => x.ValuatedAtUtc!.Value);
+
+            response.GeneratedAtUtc = valuedTimes.Any() ? valuedTimes.Min() : null;
+
+            return response;
+        }
+
+        /// <summary>One property's row for the cached-read path: cached numbers if there are any,
+        /// a "not evaluated yet" placeholder if not.</summary>
+        private static OwnedPropertyPortfolioItemResponse BuildCachedPortfolioItem(
+            OwnedProperty entity,
+            Dictionary<int, OwnedPropertyValuation> valuations,
+            IReadOnlyList<MarketArea> marketAreas)
+        {
+            var item = new OwnedPropertyPortfolioItemResponse
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                PropertyType = entity.PropertyType,
+                Typology = entity.Typology,
+                AreaM2 = entity.AreaM2,
+            };
+
+            if (!valuations.TryGetValue(entity.Id, out var cached))
+            {
+                // Never valued: nothing to price it against yet, but it still has an address.
+                var storedArea = marketAreas.FirstOrDefault(x => x.Id == entity.MarketAreaId);
+
+                item.District = storedArea?.District ?? string.Empty;
+                item.Municipality = storedArea?.Municipality ?? string.Empty;
+                item.Town = storedArea?.Town ?? string.Empty;
+                item.ConfidenceNote = "Not evaluated yet - press Re-price.";
+                item.AskSpread = PropertyValuation.BuildAskSpread(entity.PurchasePrice, entity.PurchaseDate, 0m);
+
+                return item;
+            }
+
+            var snapshot = DeserializeSnapshot(cached);
+
+            item.District = snapshot.District;
+            item.Municipality = snapshot.Municipality;
+            item.Town = snapshot.Town;
+            item.LocatedAreaName = snapshot.LocatedAreaName;
+            item.LocatedByCoordinates = snapshot.LocatedByCoordinates;
+            item.MidPrice = snapshot.MidPrice;
+            item.MinPrice = snapshot.MinPrice;
+            item.MaxPrice = snapshot.MaxPrice;
+            item.PricePerM2 = snapshot.PricePerM2;
+            item.ConfidenceLevel = snapshot.ConfidenceLevel;
+            item.ConfidenceNote = snapshot.ConfidenceNote;
+            item.Demand = snapshot.Demand;
+            item.Forecast = snapshot.Forecast;
+            item.ValuatedAtUtc = cached.ValuatedAtUtc;
+
+            // Rebuilt live, not cached: purchase price/date can change without a revaluation, and
+            // a cached spread would then quietly compare the new price against an old estimate.
+            item.AskSpread = PropertyValuation.BuildAskSpread(entity.PurchasePrice, entity.PurchaseDate, snapshot.MidPrice);
+
+            return item;
+        }
+
+        /// <summary>Turns one freshly computed row into the entity a revaluation persists.</summary>
+        private static OwnedPropertyValuation BuildValuationEntity(
+            int ownedPropertyId, OwnedPropertyPortfolioItemResponse item, DateTime asOfUtc)
+        {
+            var snapshot = new OwnedPropertyValuationSnapshot
+            {
+                District = item.District,
+                Municipality = item.Municipality,
+                Town = item.Town,
+                LocatedAreaName = item.LocatedAreaName,
+                LocatedByCoordinates = item.LocatedByCoordinates,
+                MidPrice = item.MidPrice,
+                MinPrice = item.MinPrice,
+                MaxPrice = item.MaxPrice,
+                PricePerM2 = item.PricePerM2,
+                ConfidenceLevel = item.ConfidenceLevel,
+                ConfidenceNote = item.ConfidenceNote,
+                Demand = item.Demand,
+                Forecast = item.Forecast,
+            };
+
+            return new OwnedPropertyValuation
+            {
+                OwnedPropertyId = ownedPropertyId,
+                ResultJson = JsonSerializer.Serialize(snapshot),
+                ValuatedAtUtc = asOfUtc,
+            };
+        }
     }
 }

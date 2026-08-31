@@ -23,6 +23,9 @@ namespace StayPilot.Infrastructure.Persistence
         /// <summary>The properties we own ourselves.</summary>
         public DbSet<OwnedProperty> OwnedProperties => Set<OwnedProperty>();
 
+        /// <summary>The last priced result for each owned property - a cache, overwritten on revalue.</summary>
+        public DbSet<OwnedPropertyValuation> OwnedPropertyValuations => Set<OwnedPropertyValuation>();
+
         /// <summary>The beaches table (used to find the nearest beach to a property).</summary>
         public DbSet<BeachMarker> BeachMarkers => Set<BeachMarker>();
 

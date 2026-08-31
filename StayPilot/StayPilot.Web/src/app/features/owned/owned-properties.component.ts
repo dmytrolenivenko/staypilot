@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { OwnedPropertyService } from '../../core/services/owned-property.service';
 import { MarketAreaService } from '../../core/services/market-area.service';
@@ -108,8 +108,13 @@ export class OwnedPropertiesComponent implements OnInit {
   constructor(
     private readonly service: OwnedPropertyService,
     private readonly marketAreas: MarketAreaService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly router: Router
   ) {}
+
+  // Id of the property currently being priced via the "Analyse" button, so only that row shows
+  // a spinner rather than disabling the whole table.
+  analysingId = signal<number | null>(null);
 
   ngOnInit(): void {
     this.loadAll();
@@ -133,6 +138,25 @@ export class OwnedPropertiesComponent implements OnInit {
       error: () => {
         // Location pickers just stay empty; the rest of the screen still works.
         this.areas.set([]);
+      }
+    });
+  }
+
+  // Prices every owned property (there is no cheaper single-property path - fitting the pricing
+  // model against every listing is the expensive part, not the count of properties being priced)
+  // and jumps to this one's row on the Valuation screen once it is done.
+  analyse(p: OwnedPropertyResponse): void {
+    this.analysingId.set(p.id);
+    this.error.set(null);
+
+    this.service.revalue(12, 2000, 10).subscribe({
+      next: () => {
+        this.analysingId.set(null);
+        this.router.navigate(['/valuation'], { queryParams: { propertyId: p.id } });
+      },
+      error: () => {
+        this.error.set('Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.');
+        this.analysingId.set(null);
       }
     });
   }

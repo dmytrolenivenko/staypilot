@@ -13,6 +13,17 @@ namespace StayPilot.Application.Services
     /// <inheritdoc/>
     public class MarketAreaStatsService : IMarketAreaStatsService
     {
+        /// <summary>
+        /// How many listings a town's project or move-in bucket needs before its median is
+        /// trusted as a deal baseline. Higher than the calculator's own save-time floor of 3:
+        /// that floor only decides whether a bucket is worth storing at all, not whether it is
+        /// sturdy enough to rank the whole country's listings by how far below it they sit. A
+        /// discount measured against a 3-listing median is mostly luck, and ranking on "biggest
+        /// gap from a noisy number" puts the noisiest towns at the top of Top Deals, not the
+        /// best bargains.
+        /// </summary>
+        private const int MinimumConditionCountForDeal = 8;
+
         private readonly IMarketAreaStatsRepository _marketAreaStatsRepo;
         private readonly IPropertyListingRepository _propertyListingRepo;
 
@@ -221,9 +232,22 @@ namespace StayPilot.Application.Services
                 // blended median would call every fixer-upper a steal for needing work, so each
                 // listing is graded against its own bucket's median instead. Unclassified listings
                 // (neither, and thin buckets with too few listings) have no fair median and drop out.
-                var medianPricePerM2 = MarketAreaStatsCalculator.IsProject(listing.Condition, listing.EnergyCertificate)
+                var isProject = MarketAreaStatsCalculator.IsProject(listing.Condition, listing.EnergyCertificate);
+                var isMoveInReady = MarketAreaStatsCalculator.IsMoveInReady(listing.Condition, listing.EnergyCertificate);
+
+                // A median is only as trustworthy as the bucket it came from. The calculator will
+                // happily save one from as few as 3 listings - fine for a stats screen, not sturdy
+                // enough to be the yardstick every discount in the country gets ranked against.
+                var conditionCount = isProject ? stats.ProjectCount : isMoveInReady ? stats.MoveInCount : 0;
+
+                if (conditionCount < MinimumConditionCountForDeal)
+                {
+                    continue;
+                }
+
+                var medianPricePerM2 = isProject
                     ? stats.ProjectMedianPricePerM2
-                    : MarketAreaStatsCalculator.IsMoveInReady(listing.Condition, listing.EnergyCertificate)
+                    : isMoveInReady
                         ? stats.MoveInMedianPricePerM2
                         : null;
 

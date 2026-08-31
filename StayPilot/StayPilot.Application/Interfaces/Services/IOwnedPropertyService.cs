@@ -49,8 +49,18 @@ namespace StayPilot.Application.Interfaces.Services
         Task<OwnedPropertyListResponse> GetAllOwnedPropertiesAsync();
 
         /// <summary>
+        /// Reads back the last priced result for every owned property - a plain table read, no
+        /// model fit and no comp search. A property never valued yet comes back as a placeholder
+        /// row (ValuatedAtUtc null) rather than being left out, so the list still lines up with
+        /// GetAllOwnedProperty.
+        /// </summary>
+        Task<OwnedPropertyPortfolioResponse> GetCachedPortfolioAsync();
+
+        /// <summary>
         /// Prices every owned property in one pass, and adds what its place is doing around it:
         /// how keen buyers are there, and where the value is heading over the next few years.
+        /// Writes the result into the cache GetCachedPortfolioAsync reads, overwriting whatever
+        /// was there before - this is the "Re-price" action, not a read.
         ///
         /// One call rather than one per property because the valuation model is fitted over the
         /// whole listing table - fitting once and pricing ten is the work of pricing one.
@@ -61,6 +71,6 @@ namespace StayPilot.Application.Interfaces.Services
         /// <param name="radiusMeters">How far out comparable adverts still count.</param>
         /// <param name="months">How far back a comparable advert may have last been seen.</param>
         /// <param name="years">How many years the projections run for.</param>
-        Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync(int radiusMeters, int months, int years);
+        Task<OwnedPropertyPortfolioResponse> RevalueOwnedPropertiesAsync(int radiusMeters, int months, int years);
     }
 }

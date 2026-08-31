@@ -15,6 +15,16 @@ namespace StayPilot.Application.Interfaces.Repositories
 
         Task<List<OwnedProperty>> GetAllOwnedPropertyAsync();
 
+        /// <summary>Every cached valuation, keyed by OwnedPropertyId. A property with no entry
+        /// here has never been valued.</summary>
+        Task<Dictionary<int, OwnedPropertyValuation>> GetAllValuationsAsync();
+
+        /// <summary>
+        /// Saves the latest valuation for one property, replacing whatever was cached before.
+        /// Staged only - call SaveChangesAsync to persist.
+        /// </summary>
+        Task UpsertValuationAsync(OwnedPropertyValuation valuation);
+
         Task SaveChangesAsync();
     }
 }

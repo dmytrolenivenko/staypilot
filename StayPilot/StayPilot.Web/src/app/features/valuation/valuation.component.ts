@@ -229,13 +229,15 @@ export class ValuationComponent implements OnInit {
   }
 
   // Arriving from "My Properties" with ?propertyId=<id> opens that row once the list lands.
+  // Reads the cache - no model fit, no comp search - so this is instant even with hundreds of
+  // listings collected. Only "Re-price" below pays for a fresh computation.
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
 
     const requestedId = Number(this.route.snapshot.queryParamMap.get('propertyId'));
 
-    this.service.portfolio(this.months(), this.radiusMeters(), this.years()).subscribe({
+    this.service.portfolio().subscribe({
       next: response => {
         this.portfolio.set(response);
         this.loading.set(false);
@@ -245,20 +247,33 @@ export class ValuationComponent implements OnInit {
         }
       },
       error: () => {
+        this.error.set('Could not load your cached valuations. Check the API is running.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  // The expensive path: fits the pricing model over every listing and re-runs every comp search,
+  // then saves the result so the next visit (and every "portfolio()" read) is instant again.
+  // Also what "Apply" uses, since changing the settings has nothing to read from the cache with.
+  reload(): void {
+    this.expandedId.set(null);
+    this.details.set({});
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.service.revalue(this.months(), this.radiusMeters(), this.years()).subscribe({
+      next: response => {
+        this.portfolio.set(response);
+        this.loading.set(false);
+      },
+      error: () => {
         this.error.set(
           'Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.'
         );
         this.loading.set(false);
       }
     });
-  }
-
-  // The three settings all change what comes back, so each reloads. The open row closes with
-  // them: its comps were fetched at the old settings and would otherwise sit there stale.
-  reload(): void {
-    this.expandedId.set(null);
-    this.details.set({});
-    this.load();
   }
 
   toggleSort(column: PortfolioSort): void {

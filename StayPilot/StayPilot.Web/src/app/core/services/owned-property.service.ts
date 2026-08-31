@@ -40,13 +40,22 @@ export class OwnedPropertyService {
     );
   }
 
-  // GET /api/OwnedProperty/ListValuationsOwnedproperty?months=&radiusMeters=&years=
-  // Every owned property priced in one pass, each with how keen buyers are in its place and
-  // where its value is heading. Not unwrapped to a bare array like getAll: the totals on the
-  // response are the portfolio summary the screen puts at the top.
-  portfolio(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
-    return this.http.get<OwnedPropertyPortfolioResponse>(
-      `${this.baseUrl}/ListValuationsOwnedproperty?months=${months}&radiusMeters=${radiusMeters}&years=${years}`
+  // GET /api/OwnedProperty/ListValuationsOwnedproperty
+  // Every owned property, read straight from the cache the last "Re-price" wrote - no model fit,
+  // no comp search, so this is what the screen loads on every visit. A property never valued yet
+  // comes back with valuatedAtUtc null rather than being left out. Not unwrapped to a bare array
+  // like getAll: the totals on the response are the portfolio summary the screen puts at the top.
+  portfolio(): Observable<OwnedPropertyPortfolioResponse> {
+    return this.http.get<OwnedPropertyPortfolioResponse>(`${this.baseUrl}/ListValuationsOwnedproperty`);
+  }
+
+  // POST /api/OwnedProperty/RevalueOwnedProperties?months=&radiusMeters=&years=
+  // Prices every owned property again and overwrites the cache "portfolio" reads - the expensive
+  // path, only run when the user presses "Re-price" or changes the pricing settings.
+  revalue(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
+    return this.http.post<OwnedPropertyPortfolioResponse>(
+      `${this.baseUrl}/RevalueOwnedProperties?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
+      null
     );
   }
 
