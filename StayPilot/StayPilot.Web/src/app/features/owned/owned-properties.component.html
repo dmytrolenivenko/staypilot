@@ -44,6 +44,7 @@
               <th class="sortable" (click)="sortBy('typology')">Typology{{ arrow('typology') }}</th>
               <th class="num sortable" (click)="sortBy('areaM2')">Area (m²){{ arrow('areaM2') }}</th>
               <th class="num sortable" (click)="sortBy('purchasePrice')">Paid (€){{ arrow('purchasePrice') }}</th>
+              <th class="num">Valuation</th>
               <th></th>
             </tr>
           </thead>
@@ -59,15 +60,36 @@
                 <td>{{ p.typology }}</td>
                 <td class="num">{{ p.areaM2 | number: '1.0-0' }}</td>
                 <td class="num">{{ p.purchasePrice != null ? ('€' + (p.purchasePrice | number: '1.0-0')) : '—' }}</td>
+                <td class="num">
+                  @if (p.valuatedAtUtc) {
+                    <span [title]="'Last priced ' + (p.valuatedAtUtc | date: 'medium')">
+                      €{{ p.valuatedMidPrice | number: '1.0-0' }}
+                    </span>
+                  } @else {
+                    <span class="muted" title="Press Re-price on the Valuation screen to price it">Not evaluated yet</span>
+                  }
+                </td>
                 <td class="row-actions">
                   <button type="button" class="secondary sm" (click)="select(p)">Edit</button>
-                  <a
-                    class="link"
-                    [routerLink]="['/valuation']"
-                    [queryParams]="{ propertyId: p.id }"
-                    title="Estimate this property's value against comparable listings"
-                    >Evaluate →</a
-                  >
+                  @if (p.valuatedAtUtc) {
+                    <a
+                      class="link"
+                      [routerLink]="['/valuation']"
+                      [queryParams]="{ propertyId: p.id }"
+                      title="See this property's valuation, comps and forecast"
+                      >Evaluate →</a
+                    >
+                  } @else {
+                    <button
+                      type="button"
+                      class="secondary sm"
+                      (click)="analyse(p)"
+                      [disabled]="analysingId() === p.id"
+                      title="Price every owned property and open this one's valuation"
+                    >
+                      {{ analysingId() === p.id ? 'Analysing…' : 'Analyse' }}
+                    </button>
+                  }
                   <a
                     class="link"
                     [routerLink]="['/listings/investment-analysis']"

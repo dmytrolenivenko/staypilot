@@ -62,7 +62,6 @@ builder.Services.AddScoped<IMarketAreaRepository, MarketAreaRepository>();
 builder.Services.AddScoped<IBeachMarkerRepository, BeachMarkerRepository>();
 builder.Services.AddScoped<IListingSnapshotRepository, ListingSnapshotRepository>();
 builder.Services.AddScoped<IOwnedPropertyRepository, OwnedPropertyRepository>();
-builder.Services.AddScoped<IOwnedPropertyValuationRepository, OwnedPropertyValuationRepository>();
 builder.Services.AddScoped<IPremiumFeatureRepository, PremiumFeatureRepository>();
 builder.Services.AddScoped<IMarketAreaStatsRepository, MarketAreaStatsRepository>();
 builder.Services.AddScoped<IHousePriceGrowthRepository, HousePriceGrowthRepository>();

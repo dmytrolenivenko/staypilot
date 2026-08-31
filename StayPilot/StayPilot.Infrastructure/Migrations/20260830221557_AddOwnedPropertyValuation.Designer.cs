@@ -12,7 +12,7 @@ using StayPilot.Infrastructure.Persistence;
 namespace StayPilot.Infrastructure.Migrations
 {
     [DbContext(typeof(StayPilotDbContext))]
-    [Migration("20260828223022_AddOwnedPropertyValuation")]
+    [Migration("20260830221557_AddOwnedPropertyValuation")]
     partial class AddOwnedPropertyValuation
     {
         /// <inheritdoc />
@@ -53470,77 +53470,17 @@ namespace StayPilot.Infrastructure.Migrations
 
             modelBuilder.Entity("StayPilot.Domain.Entities.OwnedPropertyValuation", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AskSpreadJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CalculatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ConfidenceLevel")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ConfidenceNote")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DemandJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("District")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ForecastJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LocatedAreaName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("LocatedByCoordinates")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("MaxPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("MidPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("MinPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Municipality")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("OwnedPropertyId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("PricePerM2")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Town")
+                    b.Property<string>("ResultJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<DateTime>("ValuatedAtUtc")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("OwnedPropertyId")
-                        .IsUnique();
+                    b.HasKey("OwnedPropertyId");
 
                     b.ToTable("OwnedPropertyValuations");
                 });

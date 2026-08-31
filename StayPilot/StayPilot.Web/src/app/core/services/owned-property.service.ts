@@ -42,27 +42,27 @@ export class OwnedPropertyService {
   }
 
   // GET /api/OwnedProperty/ListValuationsOwnedproperty
-  // Every owned property priced as of the last recalculation. A plain read - no model fit, no
-  // comps query - so it stays fast regardless of how many listings the database holds. A
-  // property never recalculated still shows up, just with nothing priced yet. Not unwrapped to
-  // a bare array like getAll: the totals on the response are the portfolio summary the screen
-  // puts at the top.
+  // Every owned property, read straight from the cache the last "Re-price" wrote - no model fit,
+  // no comp search, so this is what the screen loads on every visit. A property never valued yet
+  // comes back with valuatedAtUtc null rather than being left out. Not unwrapped to a bare array
+  // like getAll: the totals on the response are the portfolio summary the screen puts at the top.
   portfolio(): Observable<OwnedPropertyPortfolioResponse> {
     return this.http.get<OwnedPropertyPortfolioResponse>(`${this.baseUrl}/ListValuationsOwnedproperty`);
   }
 
-  // POST /api/OwnedProperty/RecalculateAllValuations?months=&radiusMeters=&years=
-  // Refits the pricing model once and reprices every owned property, overwriting what
-  // portfolio() will read back next. Slow on purpose - this is the button, not the page load.
+  // POST /api/OwnedProperty/RevalueOwnedProperties?months=&radiusMeters=&years=
+  // Prices every owned property again and overwrites the cache "portfolio" reads - the expensive
+  // path, only run when the user presses "Re-price" or changes the pricing settings.
   recalculateAll(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
     return this.http.post<OwnedPropertyPortfolioResponse>(
-      `${this.baseUrl}/RecalculateAllValuations?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
+      `${this.baseUrl}/RevalueOwnedProperties?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
       null
     );
   }
 
-  // POST /api/OwnedProperty/RecalculateValuation/{id}?months=&radiusMeters=&years=
-  // Reprices one property and overwrites its stored valuation.
+  // POST /api/OwnedProperty/RevalueOwnedProperty/{id}?months=&radiusMeters=&years=
+  // Reprices one property and overwrites its stored valuation, the same cache
+  // recalculateAll() overwrites for the whole portfolio.
   recalculateOne(
     id: number,
     months: number,
@@ -70,7 +70,7 @@ export class OwnedPropertyService {
     years: number
   ): Observable<OwnedPropertyValuationResponse> {
     return this.http.post<OwnedPropertyValuationResponse>(
-      `${this.baseUrl}/RecalculateValuation/${id}?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
+      `${this.baseUrl}/RevalueOwnedProperty/${id}?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
       null
     );
   }

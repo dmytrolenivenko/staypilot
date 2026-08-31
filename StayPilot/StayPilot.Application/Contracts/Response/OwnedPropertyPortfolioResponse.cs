@@ -42,8 +42,11 @@ namespace StayPilot.Application.Contracts.Response
         /// <summary>How many years the projections run for.</summary>
         public int ProjectionYears { get; set; }
 
-        /// <summary>When this was worked out.</summary>
-        public DateTime GeneratedAtUtc { get; set; }
+        /// <summary>
+        /// When this was worked out. For a cached read this is the oldest of every property's own
+        /// ValuatedAtUtc, not "now" - null when nothing has ever been valued.
+        /// </summary>
+        public DateTime? GeneratedAtUtc { get; set; }
     }
 
     /// <summary>
@@ -112,6 +115,12 @@ namespace StayPilot.Application.Contracts.Response
         /// <summary>What was paid, what it would be advertised at now, and the spread between them.</summary>
         public AskSpreadSummary AskSpread { get; set; } = new();
 
+        /// <summary>
+        /// When this property was last priced. Null means it has never been valued - every other
+        /// field above is a placeholder (zero/empty) rather than a real estimate in that case.
+        /// </summary>
+        public DateTime? ValuatedAtUtc { get; set; }
+
         // --- What its place is doing ------------------------------------------------------
 
         /// <summary>How keen buyers are around it, with the working.</summary>
@@ -119,11 +128,5 @@ namespace StayPilot.Application.Contracts.Response
 
         /// <summary>Where its asking price is heading, with both rates behind it kept apart.</summary>
         public GrowthForecastResponse Forecast { get; set; } = new();
-
-        /// <summary>
-        /// When this valuation was last calculated. Null when the property has never been
-        /// recalculated - it still shows up in the list, just with nothing priced yet.
-        /// </summary>
-        public DateTime? CalculatedAtUtc { get; set; }
     }
 }

@@ -75,6 +75,11 @@ export interface OwnedPropertyResponse {
   longitude?: number | null;
   energyCertificate?: string | null;
   notes?: string | null;
+
+  // What the last "Re-price" cached for this property. Null valuatedAtUtc means it has never
+  // been valued yet - My Properties reads that as "not evaluated yet" rather than showing €0.
+  valuatedMidPrice?: number | null;
+  valuatedAtUtc?: string | null;
 }
 
 // --- Valuation ------------------------------------------------------------
@@ -228,12 +233,12 @@ export interface OwnedPropertyPortfolioItemResponse {
   confidenceNote: string;
   askSpread: AskSpreadSummary;
 
+  // Null means this property has never been priced - every field above is a placeholder
+  // (zero/empty) rather than a real estimate.
+  valuatedAtUtc: string | null;
+
   demand: AreaDemandResponse;
   forecast: GrowthForecastResponse;
-
-  // Null when this property has never been recalculated — it still shows up in the list,
-  // just with nothing priced yet.
-  calculatedAtUtc: string | null;
 }
 
 // Every owned property priced in one pass. One request, because the valuation model is fitted
@@ -247,7 +252,8 @@ export interface OwnedPropertyPortfolioResponse {
   totalAskSpreadPercent: number;
   totalProjectedAskingPrice: number;
   projectionYears: number;
-  generatedAtUtc: string;
+  // Null when nothing has ever been valued yet.
+  generatedAtUtc: string | null;
 }
 
 // The result of recalculating one owned property's valuation. item stays null when the API

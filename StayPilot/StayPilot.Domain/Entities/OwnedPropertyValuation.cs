@@ -1,59 +1,35 @@
-
-using StayPilot.Domain.Enums;
-
 namespace StayPilot.Domain.Entities
 {
     /// <summary>
-    /// One owned property's valuation, as of the last recalculation.
+    /// The last priced result for one owned property - a cache, not a history. Revaluing a
+    /// property overwrites its row here rather than adding a new one, and a property with no row
+    /// at all has simply never been valued yet.
     ///
-    /// The portfolio list reads this table instead of refitting the pricing model and rescanning
-    /// every listing on each page view. Recalculating overwrites the row for that property - one
-    /// current valuation each, same trade already made for <see cref="PremiumFeature"/>: what is
-    /// shown is a recalculation behind, not necessarily fresh.
+    /// This exists because pricing a portfolio fits the valuation model over every listing in the
+    /// database and then runs a comp search per property - fine once, too slow to redo on every
+    /// visit to the Valuation screen. The screen reads this table; only the explicit "Re-price"
+    /// action recomputes and writes it.
     /// </summary>
     public class OwnedPropertyValuation
     {
-        public int Id { get; set; }
-
-        /// <summary>The property this valuation prices.</summary>
+        /// <summary>
+        /// Id of the owned property this valuation is for. Also the primary key: one row per
+        /// property, sharing its key rather than carrying an identity of its own.
+        /// </summary>
         public int OwnedPropertyId { get; set; }
 
+        /// <summary>The property this valuation is for.</summary>
         public OwnedProperty OwnedProperty { get; set; } = null!;
 
-        public string District { get; set; } = string.Empty;
+        /// <summary>
+        /// Everything the last revaluation computed for this property - place, price, confidence,
+        /// demand, forecast - serialized as JSON. Kept as one blob rather than a column per field
+        /// (or child tables for the nested demand/forecast blocks) because it is never queried by
+        /// its contents: every read either wants the whole thing or nothing.
+        /// </summary>
+        public string ResultJson { get; set; } = string.Empty;
 
-        public string Municipality { get; set; } = string.Empty;
-
-        public string Town { get; set; } = string.Empty;
-
-        /// <summary>The zone the model actually priced it as, which can differ from the above.</summary>
-        public string LocatedAreaName { get; set; } = string.Empty;
-
-        /// <summary>True when the coordinates decided the zone rather than the saved address.</summary>
-        public bool LocatedByCoordinates { get; set; }
-
-        public decimal MidPrice { get; set; }
-
-        public decimal MinPrice { get; set; }
-
-        public decimal MaxPrice { get; set; }
-
-        public decimal PricePerM2 { get; set; }
-
-        public ValuationConfidence ConfidenceLevel { get; set; }
-
-        public string ConfidenceNote { get; set; } = string.Empty;
-
-        /// <summary>AskSpreadSummary, serialized. Display-only - never filtered or sorted on.</summary>
-        public string AskSpreadJson { get; set; } = string.Empty;
-
-        /// <summary>AreaDemandResponse, serialized. Display-only - never filtered or sorted on.</summary>
-        public string DemandJson { get; set; } = string.Empty;
-
-        /// <summary>GrowthForecastResponse, serialized. Display-only - never filtered or sorted on.</summary>
-        public string ForecastJson { get; set; } = string.Empty;
-
-        /// <summary>When this row was calculated (UTC).</summary>
-        public DateTime CalculatedAtUtc { get; set; } = DateTime.UtcNow;
+        /// <summary>When this row was last written by a revaluation.</summary>
+        public DateTime ValuatedAtUtc { get; set; }
     }
 }

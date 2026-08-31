@@ -240,6 +240,8 @@ export class ValuationComponent implements OnInit {
   }
 
   // Arriving from "My Properties" with ?propertyId=<id> opens that row once the list lands.
+  // Reads the cache - no model fit, no comp search - so this is instant even with hundreds of
+  // listings collected. Only "Re-price" below pays for a fresh computation.
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -256,7 +258,7 @@ export class ValuationComponent implements OnInit {
         }
       },
       error: () => {
-        this.error.set('Could not load your properties. Check the API is running.');
+        this.error.set('Could not load your cached valuations. Check the API is running.');
         this.loading.set(false);
       }
     });
@@ -408,7 +410,7 @@ export class ValuationComponent implements OnInit {
 
   // False for a property added since the last Recalculate - it has no price yet, not a €0 one.
   isPriced(item: OwnedPropertyPortfolioItemResponse): boolean {
-    return item.calculatedAtUtc !== null;
+    return item.valuatedAtUtc !== null;
   }
 
   // Where the demand needle sits, 0-100, for the little meter in the panel.
@@ -452,19 +454,6 @@ export class ValuationComponent implements OnInit {
     return [1, 5, total].filter((year, index, all) => year > 0 && year <= total && all.indexOf(year) === index);
   });
 
-  // When the portfolio was last recalculated - the newest of the per-property timestamps, not
-  // when this page happened to load. Null when nothing has ever been recalculated.
-  lastCalculatedAtUtc = computed(() => {
-    const dates = this.items()
-      .map(x => x.calculatedAtUtc)
-      .filter((x): x is string => x !== null);
-
-    if (dates.length === 0) {
-      return null;
-    }
-
-    return dates.reduce((latest, x) => (x > latest ? x : latest));
-  });
 
   // --- Adjustment / comp table sorting -------------------------------------
 

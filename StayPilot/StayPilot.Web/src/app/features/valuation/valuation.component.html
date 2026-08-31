@@ -29,10 +29,12 @@
   <section class="card">
     <div class="card-head">
       <span class="card-title">Settings</span>
-      @if (lastCalculatedAtUtc(); as calculatedAt) {
-        <span class="meta">Last recalculated {{ calculatedAt | date: 'medium' }}</span>
-      } @else {
-        <span class="meta">Never recalculated yet</span>
+      @if (portfolio(); as p) {
+        @if (p.generatedAtUtc) {
+          <span class="meta" title="The oldest of every property's own last-priced time - some rows may be fresher.">
+            Cached as of {{ p.generatedAtUtc | date: 'medium' }}
+          </span>
+        }
       }
     </div>
     <div class="card-body">
@@ -186,6 +188,12 @@
                   }
                 </td>
 
+                @if (item.valuatedAtUtc === null) {
+                  <td class="num" colspan="5">
+                    <span class="muted" title="Press Re-price above to value this one too">Not evaluated yet</span>
+                  </td>
+                } @else {
+
                 <td class="num">
                   @if (isPriced(item)) {
                   <span [title]="'â¬' + (item.midPrice | number: '1.0-0')">{{ money(item.midPrice) }}</span>
@@ -232,6 +240,7 @@
                     </span>
                   }
                 </td>
+                }
               </tr>
 
               <!-- The panel. One row wide, so it reads as a page rather than a wide cell. -->

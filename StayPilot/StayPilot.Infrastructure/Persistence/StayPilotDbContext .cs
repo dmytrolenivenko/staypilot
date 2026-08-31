@@ -23,14 +23,14 @@ namespace StayPilot.Infrastructure.Persistence
         /// <summary>The properties we own ourselves.</summary>
         public DbSet<OwnedProperty> OwnedProperties => Set<OwnedProperty>();
 
+        /// <summary>The last priced result for each owned property - a cache, overwritten on revalue.</summary>
+        public DbSet<OwnedPropertyValuation> OwnedPropertyValuations => Set<OwnedPropertyValuation>();
+
         /// <summary>The beaches table (used to find the nearest beach to a property).</summary>
         public DbSet<BeachMarker> BeachMarkers => Set<BeachMarker>();
 
         ///<summary>The premium feature table holds the features that can influence the base price</summary>
         public DbSet<PremiumFeature> PremiumFeatures => Set<PremiumFeature>();
-
-        /// <summary>One valuation per owned property, as of its last recalculation.</summary>
-        public DbSet<OwnedPropertyValuation> OwnedPropertyValuations => Set<OwnedPropertyValuation>();
 
         /// <summary>The market area stats table: price numbers per district, municipality and town.</summary>
         public DbSet<MarketAreaStats> MarketAreaStats => Set<MarketAreaStats>();
@@ -106,22 +106,6 @@ namespace StayPilot.Infrastructure.Persistence
             // table stays human-readable, and reordering the enum can't silently repoint rows.
             modelBuilder.Entity<PremiumFeature>().Property(x => x.Feature).HasConversion<string>();
 
-            // One valuation per owned property - recalculating overwrites it rather than adding a row.
-            modelBuilder.Entity<OwnedPropertyValuation>().HasIndex(x => x.OwnedPropertyId).IsUnique();
-
-            modelBuilder.Entity<OwnedPropertyValuation>()
-                .HasOne(x => x.OwnedProperty)
-                .WithOne()
-                .HasForeignKey<OwnedPropertyValuation>(x => x.OwnedPropertyId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<OwnedPropertyValuation>().Property(x => x.MidPrice).HasPrecision(18, 2);
-            modelBuilder.Entity<OwnedPropertyValuation>().Property(x => x.MinPrice).HasPrecision(18, 2);
-            modelBuilder.Entity<OwnedPropertyValuation>().Property(x => x.MaxPrice).HasPrecision(18, 2);
-            modelBuilder.Entity<OwnedPropertyValuation>().Property(x => x.PricePerM2).HasPrecision(18, 2);
-
-            // Same reasoning as the Feature enum above: store the name, not the int.
-            modelBuilder.Entity<OwnedPropertyValuation>().Property(x => x.ConfidenceLevel).HasConversion<string>();
         }
     }
 }

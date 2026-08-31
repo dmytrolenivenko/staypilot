@@ -55,5 +55,26 @@ namespace StayPilot.Infrastructure.Repositories
         {
             return await _context.OwnedProperties.ToListAsync();
         }
+
+        public async Task<Dictionary<int, OwnedPropertyValuation>> GetAllValuationsAsync()
+        {
+            return await _context.OwnedPropertyValuations.ToDictionaryAsync(x => x.OwnedPropertyId);
+        }
+
+        public async Task UpsertValuationAsync(OwnedPropertyValuation valuation)
+        {
+            var existing = await _context.OwnedPropertyValuations
+                .FirstOrDefaultAsync(x => x.OwnedPropertyId == valuation.OwnedPropertyId);
+
+            if (existing is null)
+            {
+                await _context.OwnedPropertyValuations.AddAsync(valuation);
+
+                return;
+            }
+
+            existing.ResultJson = valuation.ResultJson;
+            existing.ValuatedAtUtc = valuation.ValuatedAtUtc;
+        }
     }
 }

@@ -49,23 +49,21 @@ namespace StayPilot.Application.Interfaces.Services
         Task<OwnedPropertyListResponse> GetAllOwnedPropertiesAsync();
 
         /// <summary>
-        /// Every owned property, priced as of the last recalculation. A plain read of the stored
-        /// valuations - no model fit, no comps query, so it stays fast regardless of how many
-        /// listings the database holds.
+        /// Reads back the last priced result for every owned property - a plain table read, no
+        /// model fit and no comp search. A property never valued yet comes back as a placeholder
+        /// row (ValuatedAtUtc null) rather than being left out, so the list still lines up with
+        /// GetAllOwnedProperty.
         ///
-        /// A property that was never recalculated still shows up, with a null
-        /// <see cref="OwnedPropertyPortfolioItemResponse.CalculatedAtUtc"/> instead of a price -
-        /// use <see cref="RecalculateAllValuationsAsync"/> or
-        /// <see cref="RecalculateOwnedPropertyValuationAsync"/> to price it.
-        ///
-        /// Empty when the user simply owns nothing yet.
+        /// Empty when the user simply owns nothing yet. Use <see cref="RevalueOwnedPropertiesAsync"/>
+        /// or <see cref="RevalueOwnedPropertyAsync"/> to price what is missing.
         /// </summary>
-        Task<OwnedPropertyPortfolioResponse> GetPortfolioAsync();
+        Task<OwnedPropertyPortfolioResponse> GetCachedPortfolioAsync();
 
         /// <summary>
-        /// Prices every owned property in one pass and overwrites its stored valuation - adding
-        /// what its place is doing around it: how keen buyers are there, and where the value is
-        /// heading over the next few years.
+        /// Prices every owned property in one pass, and adds what its place is doing around it:
+        /// how keen buyers are there, and where the value is heading over the next few years.
+        /// Writes the result into the cache GetCachedPortfolioAsync reads, overwriting whatever
+        /// was there before - this is the "Re-price" action, not a read.
         ///
         /// One fit rather than one per property because the valuation model is fitted over the
         /// whole listing table - fitting once and pricing ten is the work of pricing one.
@@ -76,17 +74,18 @@ namespace StayPilot.Application.Interfaces.Services
         /// <param name="radiusMeters">How far out comparable adverts still count.</param>
         /// <param name="months">How far back a comparable advert may have last been seen.</param>
         /// <param name="years">How many years the projections run for.</param>
-        Task<OwnedPropertyPortfolioResponse> RecalculateAllValuationsAsync(int radiusMeters, int months, int years);
+        Task<OwnedPropertyPortfolioResponse> RevalueOwnedPropertiesAsync(int radiusMeters, int months, int years);
 
         /// <summary>
-        /// Prices one owned property and overwrites its stored valuation.
+        /// Prices one owned property and overwrites its stored valuation, the same way
+        /// <see cref="RevalueOwnedPropertiesAsync"/> does for the whole portfolio.
         /// Comes back carrying OwnedPropertyNotFound, or NotEnoughListingsToFitModel when there
-        /// is too little market data to price anything.
+        /// is too little market data to price anything - nothing stored changes in either case.
         /// </summary>
-        /// <param name="id">The owned property to recalculate.</param>
+        /// <param name="id">The owned property to revalue.</param>
         /// <param name="radiusMeters">How far out comparable adverts still count.</param>
         /// <param name="months">How far back a comparable advert may have last been seen.</param>
         /// <param name="years">How many years the projection runs for.</param>
-        Task<OwnedPropertyValuationResponse> RecalculateOwnedPropertyValuationAsync(int id, int radiusMeters, int months, int years);
+        Task<OwnedPropertyValuationResponse> RevalueOwnedPropertyAsync(int id, int radiusMeters, int months, int years);
     }
 }

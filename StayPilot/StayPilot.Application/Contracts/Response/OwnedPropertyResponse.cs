@@ -100,5 +100,14 @@ namespace StayPilot.Application.Contracts.Response
 
         /// <summary>Free text notes about the property.</summary>
         public string? Notes { get; set; }
+
+        /// <summary>
+        /// What the last valuation priced this at. Null when the property has never been valued -
+        /// the My Properties screen reads that as "not evaluated yet" rather than showing €0.
+        /// </summary>
+        public decimal? ValuatedMidPrice { get; set; }
+
+        /// <summary>When the valuation above was last computed. Null if it never has been.</summary>
+        public DateTime? ValuatedAtUtc { get; set; }
     }
 }

@@ -233,8 +233,12 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>
         /// How far the estimated ask has drifted from what was paid. All zeros without a purchase
         /// price - a spread measured against nothing still renders convincingly on screen.
+        ///
+        /// Public so a cached valuation can rebuild this block from the live OwnedProperty row
+        /// instead of caching it: purchase price/date can change without a revaluation, and a
+        /// stale spread would silently lie about what changed.
         /// </summary>
-        private static AskSpreadSummary BuildAskSpread(
+        public static AskSpreadSummary BuildAskSpread(
             decimal? purchasePrice, DateTime? purchaseDate, decimal estimatedAsk)
         {
             var paid = purchasePrice ?? 0;
