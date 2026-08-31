@@ -5,7 +5,8 @@ import {
   OwnedPropertyAnalysisResponse,
   OwnedPropertyPortfolioResponse,
   OwnedPropertyRequest,
-  OwnedPropertyResponse
+  OwnedPropertyResponse,
+  OwnedPropertyValuationResponse
 } from '../models/owned-property';
 import { environment } from '../../../environments/environment';
 
@@ -52,9 +53,24 @@ export class OwnedPropertyService {
   // POST /api/OwnedProperty/RevalueOwnedProperties?months=&radiusMeters=&years=
   // Prices every owned property again and overwrites the cache "portfolio" reads - the expensive
   // path, only run when the user presses "Re-price" or changes the pricing settings.
-  revalue(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
+  recalculateAll(months: number, radiusMeters: number, years: number): Observable<OwnedPropertyPortfolioResponse> {
     return this.http.post<OwnedPropertyPortfolioResponse>(
       `${this.baseUrl}/RevalueOwnedProperties?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
+      null
+    );
+  }
+
+  // POST /api/OwnedProperty/RevalueOwnedProperty/{id}?months=&radiusMeters=&years=
+  // Reprices one property and overwrites its stored valuation, the same cache
+  // recalculateAll() overwrites for the whole portfolio.
+  recalculateOne(
+    id: number,
+    months: number,
+    radiusMeters: number,
+    years: number
+  ): Observable<OwnedPropertyValuationResponse> {
+    return this.http.post<OwnedPropertyValuationResponse>(
+      `${this.baseUrl}/RevalueOwnedProperty/${id}?months=${months}&radiusMeters=${radiusMeters}&years=${years}`,
       null
     );
   }

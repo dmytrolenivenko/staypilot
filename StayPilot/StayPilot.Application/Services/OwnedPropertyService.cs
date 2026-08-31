@@ -3,6 +3,7 @@ using System.Text.Json;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.Base;
+using StayPilot.Application.Contracts.Response.SubResponse;
 using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
@@ -294,10 +295,6 @@ namespace StayPilot.Application.Services
             };
         }
 
-        /// <summary>
-        /// The comparables, nearest first. A property with no coordinates has no distances to sort
-        /// by, so it keeps the order the repository chose - its own market area, closest in size.
-        /// </summary>
         /// <inheritdoc/>
         public async Task<OwnedPropertyPortfolioResponse> RevalueOwnedPropertiesAsync(int radiusMeters, int months, int years)
         {
@@ -374,6 +371,52 @@ namespace StayPilot.Application.Services
             // that assumes every district has its best decade at once.
             response.TotalProjectedAskingPrice = response.Items.Sum(x =>
                 x.Forecast.Scenarios.FirstOrDefault(s => s.Name == BaseScenarioName)?.FinalYearValue ?? x.MidPrice);
+
+            return response;
+        }
+
+        /// <inheritdoc/>
+        public async Task<OwnedPropertyValuationResponse> RevalueOwnedPropertyAsync(int id, int radiusMeters, int months, int years)
+        {
+            var response = new OwnedPropertyValuationResponse();
+
+            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
+
+            if (entity is null)
+            {
+                response.AddError(ErrorCode.OwnedPropertyNotFound, id.ToString());
+
+                return response;
+            }
+
+            var premiumFeatureRepo = await _premiumFeatureRepository.GetAllPremiumFeaturesAsync();
+
+            var featureEffects = premiumFeatureRepo.Select(x => Converter.MapToFeatureEffect(x)).ToList();
+
+            var allListings = await _propertyListingRepository.GetAllListingsForFeaturePremiumCalculationAsync();
+
+            var valuation = PropertyValuation.TryFit(allListings, out var usableListings);
+
+            if (valuation is null)
+            {
+                response.AddError(ErrorCode.NotEnoughListingsToFitModel, usableListings.ToString(), PropertyValuation.MinimumListings.ToString());
+
+                return response;
+            }
+
+            var marketAreas = await _marketAreaRepository.GetAllMarketAreasAsync();
+            var outlooks = new Dictionary<string, AreaOutlook>(StringComparer.OrdinalIgnoreCase);
+            var asOfUtc = DateTime.UtcNow;
+
+            var item = await BuildPortfolioItemAsync(
+                entity, valuation, featureEffects, marketAreas, outlooks, radiusMeters, months, years, asOfUtc);
+
+            item.ValuatedAtUtc = asOfUtc;
+
+            await _ownedPropertyRepository.UpsertValuationAsync(BuildValuationEntity(id, item, asOfUtc));
+            await _ownedPropertyRepository.SaveChangesAsync();
+
+            response.Item = item;
 
             return response;
         }

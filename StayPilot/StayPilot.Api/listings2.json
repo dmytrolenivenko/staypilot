@@ -1,0 +1,1 @@
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"PageSize":["The field PageSize must be between 1 and 20."]},"traceId":"00-7abd61a65131368ee708ccbe1af18a3d-38dbc66b0622cc68-00"}

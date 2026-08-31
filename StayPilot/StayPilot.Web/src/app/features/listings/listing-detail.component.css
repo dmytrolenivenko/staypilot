@@ -11,6 +11,12 @@
   gap: var(--sp-4);
 }
 
+.listing-head-actions {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+}
+
 /* Four fact blocks side by side, stacking as the window narrows. */
 .fact-grid {
   display: grid;

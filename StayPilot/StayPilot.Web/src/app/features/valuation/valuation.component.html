@@ -3,8 +3,8 @@
     title="Valuation"
     sub="Every property you own, priced against the ASKING prices of the adverts around it, with how keen buyers are in each place and where those asks go from here. These are advertised prices, not sale prices — nothing here has been checked against a recorded transaction."
   >
-    <button actions type="button" (click)="reload()" [disabled]="loading()">
-      {{ loading() ? 'Pricingâ¦' : 'Re-price' }}
+    <button actions type="button" (click)="recalculateAll()" [disabled]="recalculating() || loading()">
+      {{ recalculating() ? 'Recalculatingâ¦' : 'Recalculate all' }}
     </button>
   </app-page-header>
 
@@ -38,6 +38,11 @@
       }
     </div>
     <div class="card-body">
+      <p class="hint">
+        These only take effect when you recalculate - the list above is a plain read of whatever
+        was priced last time, so it stays fast no matter how many listings the database holds.
+      </p>
+
       <div class="toolbar">
         <label class="control">
           Look back (months)
@@ -54,8 +59,14 @@
           <input type="number" min="1" max="30" [ngModel]="years()" (ngModelChange)="years.set(+$event)" />
         </label>
 
-        <button type="button" (click)="reload()" [disabled]="loading()">Apply</button>
+        <button type="button" (click)="recalculateAll()" [disabled]="recalculating() || loading()">
+          {{ recalculating() ? 'Recalculating' : 'Recalculate' }}
+        </button>
       </div>
+
+      @if (recalculateError()) {
+        <p class="error">{{ recalculateError() }}</p>
+      }
     </div>
   </section>
 
@@ -158,6 +169,15 @@
 
                 <td>
                   <strong>{{ item.name }}</strong>
+                  <button
+                    type="button"
+                    class="icon-button"
+                    title="Recalculate this property"
+                    [disabled]="recalculatingId() === item.id"
+                    (click)="recalculateOne(item.id, $event)"
+                  >
+                    {{ recalculatingId() === item.id ? '...' : 'Recalculate' }}
+                  </button>
                   <span class="sub">{{ item.typology }} Â· {{ item.areaM2 }} mÂ²</span>
                 </td>
 
@@ -175,6 +195,7 @@
                 } @else {
 
                 <td class="num">
+                  @if (isPriced(item)) {
                   <span [title]="'â¬' + (item.midPrice | number: '1.0-0')">{{ money(item.midPrice) }}</span>
                   <span
                     class="badge badge-small"
@@ -185,6 +206,9 @@
                   >
                     {{ item.confidenceLevel }}
                   </span>
+                  } @else {
+                    <span class="muted" title="Recalculate to price this property">not priced yet</span>
+                  }
                 </td>
 
                 <td class="num">â¬{{ item.pricePerM2 | number: '1.0-0' }}</td>
@@ -224,6 +248,23 @@
                 <tr class="panel-row">
                   <td colspan="8">
                     <div class="panel">
+                      @if (!isPriced(item)) {
+                        <div class="panel-block">
+                          <h3>Not priced yet</h3>
+                          <p class="hint">
+                            This property was added since the last Recalculate, so there is
+                            nothing here yet.
+                          </p>
+                          <button
+                            type="button"
+                            class="icon-button"
+                            [disabled]="recalculatingId() === item.id"
+                            (click)="recalculateOne(item.id, $event)"
+                          >
+                            {{ recalculatingId() === item.id ? 'Recalculating...' : 'Recalculate this property' }}
+                          </button>
+                        </div>
+                      } @else {
                       <!-- 1. The estimate -->
                       <div class="panel-block">
                         <h3>What it would be advertised at</h3>
@@ -581,8 +622,16 @@
                           <a [routerLink]="['/my-properties']" [queryParams]="{ edit: item.id }">
                             Edit {{ item.name }} â
                           </a>
+                          <a
+                            [routerLink]="['/listings/investment-analysis']"
+                            [queryParams]="{ ownedId: item.id }"
+                            title="Renovation cost, resale value and profit for this property"
+                          >
+                            Analyze {{ item.name }} →
+                          </a>
                         </p>
                       </div>
+                      }
                     </div>
                   </td>
                 </tr>

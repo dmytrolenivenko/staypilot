@@ -61,7 +61,18 @@ export class ValuationComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
+  // Recalculating refits the pricing model and reprices every property - the expensive path,
+  // only run on demand. Loading a page is always the cheap read above.
+  recalculating = signal(false);
+  recalculateError = signal<string | null>(null);
+
+  // Which single row is being recalculated, if any.
+  recalculatingId = signal<number | null>(null);
+  recalculateOneError = signal<string | null>(null);
+
   // How far back a comparable advert may have last been seen, and how far out one still counts.
+  // These now only take effect when Recalculate runs - the list itself is a plain read of
+  // whatever was stored at the last recalculation.
   months = signal(12);
   radiusMeters = signal(2000);
 
@@ -253,25 +264,72 @@ export class ValuationComponent implements OnInit {
     });
   }
 
-  // The expensive path: fits the pricing model over every listing and re-runs every comp search,
-  // then saves the result so the next visit (and every "portfolio()" read) is instant again.
-  // Also what "Apply" uses, since changing the settings has nothing to read from the cache with.
-  reload(): void {
+  // Refits the pricing model and reprices every property with whatever the three settings above
+  // are set to, then stores the result - the next plain load() reads it back without refitting
+  // anything. The open row closes: its comps were fetched against the old numbers and would
+  // otherwise sit there stale.
+  recalculateAll(): void {
+    this.recalculating.set(true);
+    this.recalculateError.set(null);
     this.expandedId.set(null);
     this.details.set({});
-    this.loading.set(true);
-    this.error.set(null);
 
-    this.service.revalue(this.months(), this.radiusMeters(), this.years()).subscribe({
+    this.service.recalculateAll(this.months(), this.radiusMeters(), this.years()).subscribe({
       next: response => {
         this.portfolio.set(response);
-        this.loading.set(false);
+        this.recalculating.set(false);
       },
       error: () => {
-        this.error.set(
-          'Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.'
+        this.recalculateError.set(
+          'Could not recalculate. Check the API is running, and that there are enough listings collected to fit the model.'
         );
-        this.loading.set(false);
+        this.recalculating.set(false);
+      }
+    });
+  }
+
+  // Reprices just one property, with the current Look back / Comp radius / Project settings.
+  // Stops the click reaching the row's own (click), which would otherwise also toggle it open.
+  recalculateOne(id: number, event: Event): void {
+    event.stopPropagation();
+
+    this.recalculatingId.set(id);
+    this.recalculateOneError.set(null);
+
+    this.service.recalculateOne(id, this.months(), this.radiusMeters(), this.years()).subscribe({
+      next: response => {
+        this.recalculatingId.set(null);
+
+        if (!response.item) {
+          this.recalculateOneError.set('Not enough listings collected to price this property yet.');
+
+          return;
+        }
+
+        const priced = response.item;
+
+        this.portfolio.update(current =>
+          current === null
+            ? current
+            : { ...current, items: current.items.map(x => (x.id === id ? priced : x)) }
+        );
+
+        // The comps shown in the open panel were fetched against the old numbers - drop the
+        // cached ones. If this row is open right now, fetch its replacement immediately rather
+        // than leaving the panel blank until it is closed and reopened.
+        this.details.update(current => {
+          const { [id]: _dropped, ...rest } = current;
+
+          return rest;
+        });
+
+        if (this.expandedId() === id) {
+          this.fetchDetail(id);
+        }
+      },
+      error: () => {
+        this.recalculatingId.set(null);
+        this.recalculateOneError.set('Could not recalculate this property.');
       }
     });
   }
@@ -311,6 +369,10 @@ export class ValuationComponent implements OnInit {
       return;
     }
 
+    this.fetchDetail(id);
+  }
+
+  private fetchDetail(id: number): void {
     this.detailLoadingId.set(id);
 
     this.service.estimate(id, this.months(), this.radiusMeters()).subscribe({
@@ -344,6 +406,11 @@ export class ValuationComponent implements OnInit {
   // market screens use so a place reads the same wherever it appears.
   placeLabel(item: OwnedPropertyPortfolioItemResponse): string {
     return [item.town, item.municipality, item.district].filter(part => part).join(' · ');
+  }
+
+  // False for a property added since the last Recalculate - it has no price yet, not a €0 one.
+  isPriced(item: OwnedPropertyPortfolioItemResponse): boolean {
+    return item.valuatedAtUtc !== null;
   }
 
   // Where the demand needle sits, 0-100, for the little meter in the panel.
@@ -386,6 +453,7 @@ export class ValuationComponent implements OnInit {
 
     return [1, 5, total].filter((year, index, all) => year > 0 && year <= total && all.indexOf(year) === index);
   });
+
 
   // --- Adjustment / comp table sorting -------------------------------------
 

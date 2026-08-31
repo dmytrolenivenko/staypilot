@@ -133,5 +133,19 @@ namespace StayPilot.Api.Controllers
 
             return this.ToActionResult(result);
         }
+
+        /// <summary>
+        /// Prices one owned property and overwrites its stored valuation.
+        /// 404 Not Found when there is no such property, 400 Bad Request when we hold too few
+        /// listings to price anything.
+        /// </summary>
+        [Authorize(Roles = "Api.Write")]
+        [HttpPost("{id}")]
+        public async Task<ActionResult<OwnedPropertyValuationResponse>> RevalueOwnedPropertyAsync(int id, [Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
+        {
+            var result = await _ownedPropertyService.RevalueOwnedPropertyAsync(id, radiusMeters, months, years);
+
+            return this.ToActionResult(result);
+        }
     }
 }

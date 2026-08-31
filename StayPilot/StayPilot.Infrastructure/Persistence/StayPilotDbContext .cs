@@ -105,6 +105,7 @@ namespace StayPilot.Infrastructure.Persistence
             // nvarchar so existing rows stay valid (names match the enum members exactly), the
             // table stays human-readable, and reordering the enum can't silently repoint rows.
             modelBuilder.Entity<PremiumFeature>().Property(x => x.Feature).HasConversion<string>();
+
         }
     }
 }

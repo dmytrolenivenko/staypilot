@@ -149,7 +149,7 @@ export class OwnedPropertiesComponent implements OnInit {
     this.analysingId.set(p.id);
     this.error.set(null);
 
-    this.service.revalue(12, 2000, 10).subscribe({
+    this.service.recalculateAll(12, 2000, 10).subscribe({
       next: () => {
         this.analysingId.set(null);
         this.router.navigate(['/valuation'], { queryParams: { propertyId: p.id } });

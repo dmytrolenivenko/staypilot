@@ -255,3 +255,9 @@ export interface OwnedPropertyPortfolioResponse {
   // Null when nothing has ever been valued yet.
   generatedAtUtc: string | null;
 }
+
+// The result of recalculating one owned property's valuation. item stays null when the API
+// could not price it (not found, or too little market data).
+export interface OwnedPropertyValuationResponse {
+  item: OwnedPropertyPortfolioItemResponse | null;
+}

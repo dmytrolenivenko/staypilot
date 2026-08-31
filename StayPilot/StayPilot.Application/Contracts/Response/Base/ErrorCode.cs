@@ -13,6 +13,7 @@ namespace StayPilot.Application.Contracts.Response.Base
     ///   -300 to -399   listing snapshots
     ///   -400 to -499   owned properties
     ///   -500 to -599   valuation and premium features
+    ///   -600 to -699   investment analysis
     ///
     /// Two rules: add new codes at the end of their band, and never reuse a number.
     /// Callers key on the number, so reusing one silently changes what their code means.
@@ -137,6 +138,15 @@ namespace StayPilot.Application.Contracts.Response.Base
         /// <summary>{0} is how many usable listings we have, {1} the minimum the model needs.</summary>
         [Display(Description = "Not enough listings to calculate feature values: found {0}, need at least {1}.")]
         NotEnoughListingsToFitModel = -500,
+
+        // ---------- Investment analysis ----------
+
+        /// <summary>
+        /// The listing's town has no move-in-ready median to compare a resale value against.
+        /// {0} is the town name.
+        /// </summary>
+        [Display(Description = "Not enough move-in-ready listings in '{0}' to estimate a resale value.")]
+        InvestmentAnalysisNotEnoughData = -600,
     }
 
     /// <summary>

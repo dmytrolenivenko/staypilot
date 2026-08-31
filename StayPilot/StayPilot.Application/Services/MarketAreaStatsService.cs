@@ -199,8 +199,9 @@ namespace StayPilot.Application.Services
         public async Task<TopDealsResponse> GetTopDealsAsync(TopDealsRequest request)
         {
             // Same sample gate as the leaderboard - a median from a handful of listings is not
-            // a market to grade a deal against.
-            var townStats = await _marketAreaStatsRepo.GetLeaderboardAsync(
+            // a market to grade a deal against. With typology children, because a T5 house and a
+            // T1 apartment do not sell for the same €/m² even in the same town.
+            var townStats = await _marketAreaStatsRepo.GetWithTypologiesAsync(
                 AreaLevel.Town, minListings: 5, request.District, request.Municipality);
 
             var statsByTown = townStats.ToDictionary(x => (x.District, x.Municipality, x.Town), x => x);

@@ -1,3 +1,4 @@
+using Anthropic;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Infrastructure.Persistence;
@@ -41,6 +42,19 @@ builder.Services.AddScoped<IPremiumFeatureService, PremiumFeatureService>();
 builder.Services.AddScoped<IMarketAreaStatsService, MarketAreaStatsService>();
 builder.Services.AddScoped<IMarketOverviewService, MarketOverviewService>();
 builder.Services.AddScoped<IBuildCostService, BuildCostService>();
+builder.Services.AddScoped<IInvestmentAnalysisService, InvestmentAnalysisService>();
+
+// One shared client for the whole process, same idea as a shared HttpClient. The key comes
+// from Anthropic:ApiKey (User Secrets locally, an Anthropic__ApiKey app setting in prod) rather
+// than the SDK's own ANTHROPIC_API_KEY environment variable, so it goes through the same config
+// path as everything else in this app. Timeout is cut down from the SDK's 10 minute default -
+// this call blocks a single HTTP response, it cannot be allowed to hang that long.
+builder.Services.AddSingleton(new AnthropicClient
+{
+    ApiKey = builder.Configuration["Anthropic:ApiKey"],
+    Timeout = TimeSpan.FromSeconds(20)
+});
+builder.Services.AddScoped<IInvestmentNarrativeClient, ClaudeInvestmentNarrativeClient>();
 
 // Register the repositories (the classes that read and write the database).
 builder.Services.AddScoped<IPropertyListingRepository, PropertyListingRepository>();
