@@ -1,4 +1,5 @@
 using Anthropic;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Infrastructure.Persistence;
@@ -7,6 +8,7 @@ using StayPilot.Infrastructure.Repositories;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
 using Microsoft.Identity.Web;
+using StayPilot.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,22 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd");
 builder.Services.AddAuthorization();
 
+// Entra External ID (CIAM) quirk: this tenant issues tokens under two different issuer
+// hosts depending on how the token was requested - the custom ciamlogin.com domain
+// (Postman's raw Authorization Code POST) or the canonical login.microsoftonline.com
+// host (MSAL.js, used by the Angular app). Same tenant either way, so accepting both is
+// not a validation weakening - PostConfigure so this runs after Microsoft.Identity.Web's
+// own setup, which would otherwise overwrite it back to a single issuer.
+var tenantId = builder.Configuration["AzureAd:TenantId"];
+builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters.ValidIssuers = new[]
+    {
+        $"https://login.microsoftonline.com/{tenantId}/v2.0",
+        $"https://staypilot.ciamlogin.com/{tenantId}/v2.0"
+    };
+});
+
 // Connect to the SQL Server database. The connection string is read from the config.
 // Retry on transient errors - Azure SQL is serverless and pauses when idle, so the first
 // call after a quiet spell can time out while it wakes up.
@@ -43,6 +61,10 @@ builder.Services.AddScoped<IMarketAreaStatsService, MarketAreaStatsService>();
 builder.Services.AddScoped<IMarketOverviewService, MarketOverviewService>();
 builder.Services.AddScoped<IBuildCostService, BuildCostService>();
 builder.Services.AddScoped<IInvestmentAnalysisService, InvestmentAnalysisService>();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+
+// So CurrentUser can read the logged in user's claims off the current request.
+builder.Services.AddHttpContextAccessor();
 
 // One shared client for the whole process, same idea as a shared HttpClient. The key comes
 // from Anthropic:ApiKey (User Secrets locally, an Anthropic__ApiKey app setting in prod) rather
@@ -65,6 +87,7 @@ builder.Services.AddScoped<IOwnedPropertyRepository, OwnedPropertyRepository>();
 builder.Services.AddScoped<IPremiumFeatureRepository, PremiumFeatureRepository>();
 builder.Services.AddScoped<IMarketAreaStatsRepository, MarketAreaStatsRepository>();
 builder.Services.AddScoped<IHousePriceGrowthRepository, HousePriceGrowthRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // The one repository that reads a public statistic instead of the database. Build Cost prices
 // itself from INE's construction cost index rather than from a stored price list - no table and

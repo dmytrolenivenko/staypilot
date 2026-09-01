@@ -38,6 +38,22 @@
       <a class="nav-link planned" routerLink="/beach-proximity" routerLinkActive="active">Beach proximity</a>
     </nav>
 
+    <div class="account-box">
+      @if (isSignedIn()) {
+        <span class="account-info">
+          @if (accountName()) {
+            <span class="account-name">{{ accountName() }}</span>
+          }
+          @if (accountEmail()) {
+            <span class="account-email">{{ accountEmail() }}</span>
+          }
+        </span>
+        <button type="button" class="account-action" (click)="logout()">Sign out</button>
+      } @else {
+        <button type="button" class="account-action" (click)="login()">Sign in</button>
+      }
+    </div>
+
     <button type="button" class="theme-toggle" (click)="toggleTheme()">
       {{ theme() === 'light' ? '◐ Dark' : '◑ Light' }}
     </button>

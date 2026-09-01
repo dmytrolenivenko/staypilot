@@ -16,6 +16,7 @@ namespace StayPilot.Application.Services
         private readonly IMarketAreaStatsRepository _marketAreaStatsRepo;
         private readonly IBuildCostService _buildCostService;
         private readonly IInvestmentNarrativeClient _narrativeClient;
+        private readonly ICurrentUser _currentUser;
 
         public InvestmentAnalysisService(
             IPropertyListingRepository propertyListingRepo,
@@ -23,7 +24,9 @@ namespace StayPilot.Application.Services
             IMarketAreaRepository marketAreaRepo,
             IMarketAreaStatsRepository marketAreaStatsRepo,
             IBuildCostService buildCostService,
-            IInvestmentNarrativeClient narrativeClient)
+            IInvestmentNarrativeClient narrativeClient,
+            ICurrentUser currentUser
+            )
         {
             _propertyListingRepo = propertyListingRepo;
             _ownedPropertyRepo = ownedPropertyRepo;
@@ -31,6 +34,7 @@ namespace StayPilot.Application.Services
             _marketAreaStatsRepo = marketAreaStatsRepo;
             _buildCostService = buildCostService;
             _narrativeClient = narrativeClient;
+            _currentUser = currentUser;
         }
 
         /// <inheritdoc/>
@@ -137,7 +141,10 @@ namespace StayPilot.Application.Services
                 return response;
             }
 
-            var property = await _ownedPropertyRepo.GetOwnedPropertyAsync(ownedPropertyId);
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
+            var property = await _ownedPropertyRepo.GetOwnedPropertyAsync(ownedPropertyId, userId);
 
             if (property is null)
             {

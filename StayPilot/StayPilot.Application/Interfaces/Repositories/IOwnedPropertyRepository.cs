@@ -9,11 +9,11 @@ namespace StayPilot.Application.Interfaces.Repositories
 
         Task<OwnedProperty?> UpdateOwnedPropertyAsync(OwnedProperty entity);
 
-        Task<string?> DeleteOwnedPropertyAsync(int id);
+        Task<string?> DeleteOwnedPropertyAsync(int id, int ownerUserId);
 
-        Task<OwnedProperty?> GetOwnedPropertyAsync(int id);
+        Task<OwnedProperty?> GetOwnedPropertyAsync(int id, int ownerUserId);
 
-        Task<List<OwnedProperty>> GetAllOwnedPropertyAsync();
+        Task<List<OwnedProperty>> GetAllOwnedPropertyAsync(int ownerUserId);
 
         /// <summary>Every cached valuation, keyed by OwnedPropertyId. A property with no entry
         /// here has never been valued.</summary>

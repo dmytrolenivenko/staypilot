@@ -41,6 +41,9 @@ namespace StayPilot.Infrastructure.Persistence
         /// <summary>The seeded per-district house price growth assumptions used by the forecast.</summary>
         public DbSet<HousePriceGrowth> HousePriceGrowth => Set<HousePriceGrowth>();
 
+        /// <summary>The Users table</summary>
+        public DbSet<User> Users => Set<User>();
+
         /// <summary>
         /// Builds the database shape: tables, keys, indexes, and number precision.
         /// EF calls this once when it first needs the model.
