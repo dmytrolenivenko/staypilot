@@ -10,6 +10,7 @@ namespace StayPilot.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
+    [Authorize]
     public class OwnedPropertyController : ControllerBase
     {
         private readonly IOwnedPropertyService _ownedPropertyService;
@@ -125,7 +126,11 @@ namespace StayPilot.Api.Controllers
         // would shrink the comparable search to nothing and project zero years forward.
         // The bounds mirror what the UI already enforces. Without them years=999 ran the
         // compounding loop until decimal overflowed and answered 500 after half a minute.
-        [Authorize(Roles = "Api.Write")]
+        //
+        // Just the class-level [Authorize], not Api.Write - unlike RecalculateMarketAreaStats
+        // and ReCalculatePremiumFeaturesValue, this only ever touches the caller's own
+        // properties (OwnedPropertyService resolves ownerUserId from ICurrentUser), so a
+        // tenant recalculating their own portfolio is fine.
         [HttpPost]
         public async Task<ActionResult<OwnedPropertyPortfolioResponse>> RevalueOwnedPropertiesAsync([Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
         {
@@ -139,7 +144,6 @@ namespace StayPilot.Api.Controllers
         /// 404 Not Found when there is no such property, 400 Bad Request when we hold too few
         /// listings to price anything.
         /// </summary>
-        [Authorize(Roles = "Api.Write")]
         [HttpPost("{id}")]
         public async Task<ActionResult<OwnedPropertyValuationResponse>> RevalueOwnedPropertyAsync(int id, [Range(1, 120)] int months = 12, [Range(100, 20_000)] int radiusMeters = 2000, [Range(1, 30)] int years = 10)
         {

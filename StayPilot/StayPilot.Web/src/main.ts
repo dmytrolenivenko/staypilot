@@ -1,6 +1,9 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
+import { msalInstance } from './app/core/config/msal.config';
 
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
+msalInstance.initialize().then(() => {
+  bootstrapApplication(AppComponent, appConfig)
+    .catch((err) => console.error(err));
+});

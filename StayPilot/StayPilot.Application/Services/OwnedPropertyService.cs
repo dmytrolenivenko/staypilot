@@ -21,6 +21,7 @@ namespace StayPilot.Application.Services
         private readonly IPropertyListingRepository _propertyListingRepository;
         private readonly IPremiumFeatureRepository _premiumFeatureRepository;
         private readonly IHousePriceGrowthRepository _housePriceGrowthRepository;
+        private readonly ICurrentUser _currentUser;
 
         // The stored PremiumFeature rows are back: the breakdown quotes the percentages already
         // measured, so a second bathroom cannot read as +4% on the Feature Impact screen and
@@ -28,7 +29,15 @@ namespace StayPilot.Application.Services
         // features are worth. The cost is that a valuation reflects the last recalculation rather
         // than a fresh one - which is the trade we want, because two different answers for the
         // same feature is worse than one answer that is a recalculation behind.
-        public OwnedPropertyService(IOwnedPropertyRepository ownedPropertyRepository, IMarketAreaRepository marketAreaRepository, IBeachMarkerRepository beachMarkerRepository, IPropertyListingRepository propertyListingRepository, IPremiumFeatureRepository premiumFeatureRepository, IHousePriceGrowthRepository housePriceGrowthRepository)
+        public OwnedPropertyService(
+            IOwnedPropertyRepository ownedPropertyRepository, 
+            IMarketAreaRepository marketAreaRepository, 
+            IBeachMarkerRepository beachMarkerRepository, 
+            IPropertyListingRepository propertyListingRepository, 
+            IPremiumFeatureRepository premiumFeatureRepository, 
+            IHousePriceGrowthRepository housePriceGrowthRepository,
+            ICurrentUser currentUser
+            )
         {
             _ownedPropertyRepository = ownedPropertyRepository;
             _marketAreaRepository = marketAreaRepository;
@@ -36,6 +45,7 @@ namespace StayPilot.Application.Services
             _propertyListingRepository = propertyListingRepository;
             _premiumFeatureRepository = premiumFeatureRepository;
             _housePriceGrowthRepository = housePriceGrowthRepository;
+            _currentUser = currentUser;
         }
 
         public async Task<OwnedPropertyResponse> AddOwnedPropertyAsync(OwnedPropertyRequest request)
@@ -44,6 +54,7 @@ namespace StayPilot.Application.Services
             var beackMarkerRepo = await _beachMarkerRepository.GetAllBeachMarkersAsync();
 
             var ownedPropertyEntity = Converter.MapToEntity(request);
+            ownedPropertyEntity.OwnerUserId = await _currentUser.GetCurrentUserIdAsync();
 
             var marketAreaId = Calculator.GetMarketId(marketAreaRepo, request.Country, request.District, request.Municipality, request.Town, request.Zone);
 
@@ -84,8 +95,11 @@ namespace StayPilot.Application.Services
 
         public async Task<OwnedPropertyResponse> GetOwnedPropertyAsync(int id)
         {
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
             // Reads the row by Id. There may not be one.
-            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
+            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id, userId);
 
             if (entity is null)
             {
@@ -102,8 +116,11 @@ namespace StayPilot.Application.Services
         {
             var response = new DeleteOwnedPropertyResponse { Id = id };
 
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
             // The repository already checks if the row exists (it returns null if not).
-            var deletedName = await _ownedPropertyRepository.DeleteOwnedPropertyAsync(id);
+            var deletedName = await _ownedPropertyRepository.DeleteOwnedPropertyAsync(id, userId);
 
             if (deletedName is null)
             {
@@ -123,10 +140,13 @@ namespace StayPilot.Application.Services
 
         public async Task<OwnedPropertyResponse> UpdateOwnedPropertyAsync(int id, OwnedPropertyRequest request)
         {
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
             // Fix: this used to build a brand new entity from the request, so any
             // field the caller did not send would overwrite the saved value with
             // blank/default. Now we load the real row and only change what was sent.
-            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
+            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id, userId);
 
             if (entity is null)
             {
@@ -181,8 +201,10 @@ namespace StayPilot.Application.Services
 
         public async Task<OwnedPropertyAnalysisResponse> EstimateOwnedPropertyValue(int id, int radiusMeters, int months)
         {
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
 
-            var ownedPropertyRepo = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
+            var ownedPropertyRepo = await _ownedPropertyRepository.GetOwnedPropertyAsync(id, userId);
 
             if (ownedPropertyRepo is null)
             {
@@ -300,13 +322,16 @@ namespace StayPilot.Application.Services
         {
             var asOfUtc = DateTime.UtcNow;
 
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
             var response = new OwnedPropertyPortfolioResponse
             {
                 GeneratedAtUtc = asOfUtc,
                 ProjectionYears = years,
             };
 
-            var owned = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+            var owned = await _ownedPropertyRepository.GetAllOwnedPropertyAsync(userId);
 
             // No properties is not an error - it is what the screen shows before you add one.
             if (owned.Count == 0)
@@ -380,7 +405,10 @@ namespace StayPilot.Application.Services
         {
             var response = new OwnedPropertyValuationResponse();
 
-            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id);
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
+            var entity = await _ownedPropertyRepository.GetOwnedPropertyAsync(id, userId);
 
             if (entity is null)
             {
@@ -661,7 +689,10 @@ namespace StayPilot.Application.Services
 
         public async Task<OwnedPropertyListResponse> GetAllOwnedPropertiesAsync()
         {
-            var domainOwnedProperties = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
+            var domainOwnedProperties = await _ownedPropertyRepository.GetAllOwnedPropertyAsync(userId);
             var valuations = await _ownedPropertyRepository.GetAllValuationsAsync();
 
             // Reuse the same mapper every other method here uses, then stamp on whether (and at
@@ -701,7 +732,10 @@ namespace StayPilot.Application.Services
         /// <inheritdoc/>
         public async Task<OwnedPropertyPortfolioResponse> GetCachedPortfolioAsync()
         {
-            var owned = await _ownedPropertyRepository.GetAllOwnedPropertyAsync();
+            // Getting HttpCaller Id
+            var userId = await _currentUser.GetCurrentUserIdAsync();
+
+            var owned = await _ownedPropertyRepository.GetAllOwnedPropertyAsync(userId);
 
             var response = new OwnedPropertyPortfolioResponse();
 

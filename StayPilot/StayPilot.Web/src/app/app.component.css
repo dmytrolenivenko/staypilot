@@ -102,8 +102,52 @@ nav {
 
 /* --- Footer -------------------------------------------------------------- */
 
-.theme-toggle {
+.account-box {
   margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.account-name,
+.account-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-name {
+  font-size: var(--fs-xs);
+  color: var(--text);
+}
+
+.account-email {
+  font-size: calc(var(--fs-xs) - 1px);
+  color: var(--text-faint);
+}
+
+.account-action {
+  background: transparent;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  filter: none;
+}
+
+.account-action:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  filter: none;
+}
+
+.theme-toggle {
   align-self: flex-start;
   background: transparent;
   color: var(--text-faint);

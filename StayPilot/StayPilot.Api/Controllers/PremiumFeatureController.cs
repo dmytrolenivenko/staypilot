@@ -32,7 +32,7 @@ namespace StayPilot.Api.Controllers
         /// Measure every feature again from the listings we hold.
         /// Returns 400 Bad Request when there is too little data to measure anything.
         /// </summary>
-        [Authorize(Roles = "Api.Write")]
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<PremiumFeatureListResponse>> ReCalculatePremiumFeaturesValue()
         {

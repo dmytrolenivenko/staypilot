@@ -179,5 +179,15 @@ namespace StayPilot.Domain.Entities
         /// When this property was last changed (UTC time). Empty until first change.
         /// </summary>
         public DateTime? UpdatedAtUtc { get; set; }
+
+        /// <summary>
+        /// Id of the user who owns this property.
+        /// </summary>
+        public int OwnerUserId { get; set; }
+
+        /// <summary>
+        /// The user who owns this property.
+        /// </summary>
+        public User Owner { get; set; } = null!;
     }
 }
