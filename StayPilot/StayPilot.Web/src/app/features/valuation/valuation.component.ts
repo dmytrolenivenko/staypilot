@@ -14,7 +14,7 @@ import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 
 // Columns of the list. Sorted in the browser — a portfolio is a handful of rows.
-type PortfolioSort = 'name' | 'place' | 'value' | 'pricePerM2' | 'gain' | 'demand' | 'projected';
+type PortfolioSort = 'name' | 'place' | 'value' | 'pricePerM2' | 'spread' | 'demand' | 'projected';
 type SortDirection = 'asc' | 'desc';
 
 // Columns of the two tables inside an expanded property.
@@ -32,7 +32,7 @@ const DEMAND_ORDER: Record<DemandLevel, number> = {
 
 // Compare on the number after the T, so T10 sorts above T9 rather than next to T1.
 function typologyRooms(typology: string): number {
-  return Number(typology.replace(/^T/i, '')) || 0;
+  return Number(String(typology ?? '').replace(/^T/i, '')) || 0;
 }
 
 // The Base path is what the list column and the portfolio total quote. Named rather than
@@ -61,7 +61,18 @@ export class ValuationComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
+  // Recalculating refits the pricing model and reprices every property - the expensive path,
+  // only run on demand. Loading a page is always the cheap read above.
+  recalculating = signal(false);
+  recalculateError = signal<string | null>(null);
+
+  // Which single row is being recalculated, if any.
+  recalculatingId = signal<number | null>(null);
+  recalculateOneError = signal<string | null>(null);
+
   // How far back a comparable advert may have last been seen, and how far out one still counts.
+  // These now only take effect when Recalculate runs - the list itself is a plain read of
+  // whatever was stored at the last recalculation.
   months = signal(12);
   radiusMeters = signal(2000);
 
@@ -108,9 +119,9 @@ export class ValuationComponent implements OnInit {
           result = a.pricePerM2 - b.pricePerM2;
           break;
 
-        case 'gain':
+        case 'spread':
           // On the percentage, not the amount: otherwise this just re-sorts by property value.
-          result = a.equity.gainPercent - b.equity.gainPercent;
+          result = a.askSpread.spreadPercent - b.askSpread.spreadPercent;
           break;
 
         case 'demand':
@@ -229,13 +240,15 @@ export class ValuationComponent implements OnInit {
   }
 
   // Arriving from "My Properties" with ?propertyId=<id> opens that row once the list lands.
+  // Reads the cache - no model fit, no comp search - so this is instant even with hundreds of
+  // listings collected. Only "Re-price" below pays for a fresh computation.
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
 
     const requestedId = Number(this.route.snapshot.queryParamMap.get('propertyId'));
 
-    this.service.portfolio(this.months(), this.radiusMeters(), this.years()).subscribe({
+    this.service.portfolio().subscribe({
       next: response => {
         this.portfolio.set(response);
         this.loading.set(false);
@@ -245,20 +258,80 @@ export class ValuationComponent implements OnInit {
         }
       },
       error: () => {
-        this.error.set(
-          'Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.'
-        );
+        this.error.set('Could not load your cached valuations. Check the API is running.');
         this.loading.set(false);
       }
     });
   }
 
-  // The three settings all change what comes back, so each reloads. The open row closes with
-  // them: its comps were fetched at the old settings and would otherwise sit there stale.
-  reload(): void {
+  // Refits the pricing model and reprices every property with whatever the three settings above
+  // are set to, then stores the result - the next plain load() reads it back without refitting
+  // anything. The open row closes: its comps were fetched against the old numbers and would
+  // otherwise sit there stale.
+  recalculateAll(): void {
+    this.recalculating.set(true);
+    this.recalculateError.set(null);
     this.expandedId.set(null);
     this.details.set({});
-    this.load();
+
+    this.service.recalculateAll(this.months(), this.radiusMeters(), this.years()).subscribe({
+      next: response => {
+        this.portfolio.set(response);
+        this.recalculating.set(false);
+      },
+      error: () => {
+        this.recalculateError.set(
+          'Could not recalculate. Check the API is running, and that there are enough listings collected to fit the model.'
+        );
+        this.recalculating.set(false);
+      }
+    });
+  }
+
+  // Reprices just one property, with the current Look back / Comp radius / Project settings.
+  // Stops the click reaching the row's own (click), which would otherwise also toggle it open.
+  recalculateOne(id: number, event: Event): void {
+    event.stopPropagation();
+
+    this.recalculatingId.set(id);
+    this.recalculateOneError.set(null);
+
+    this.service.recalculateOne(id, this.months(), this.radiusMeters(), this.years()).subscribe({
+      next: response => {
+        this.recalculatingId.set(null);
+
+        if (!response.item) {
+          this.recalculateOneError.set('Not enough listings collected to price this property yet.');
+
+          return;
+        }
+
+        const priced = response.item;
+
+        this.portfolio.update(current =>
+          current === null
+            ? current
+            : { ...current, items: current.items.map(x => (x.id === id ? priced : x)) }
+        );
+
+        // The comps shown in the open panel were fetched against the old numbers - drop the
+        // cached ones. If this row is open right now, fetch its replacement immediately rather
+        // than leaving the panel blank until it is closed and reopened.
+        this.details.update(current => {
+          const { [id]: _dropped, ...rest } = current;
+
+          return rest;
+        });
+
+        if (this.expandedId() === id) {
+          this.fetchDetail(id);
+        }
+      },
+      error: () => {
+        this.recalculatingId.set(null);
+        this.recalculateOneError.set('Could not recalculate this property.');
+      }
+    });
   }
 
   toggleSort(column: PortfolioSort): void {
@@ -296,6 +369,10 @@ export class ValuationComponent implements OnInit {
       return;
     }
 
+    this.fetchDetail(id);
+  }
+
+  private fetchDetail(id: number): void {
     this.detailLoadingId.set(id);
 
     this.service.estimate(id, this.months(), this.radiusMeters()).subscribe({
@@ -329,6 +406,11 @@ export class ValuationComponent implements OnInit {
   // market screens use so a place reads the same wherever it appears.
   placeLabel(item: OwnedPropertyPortfolioItemResponse): string {
     return [item.town, item.municipality, item.district].filter(part => part).join(' · ');
+  }
+
+  // False for a property added since the last Recalculate - it has no price yet, not a €0 one.
+  isPriced(item: OwnedPropertyPortfolioItemResponse): boolean {
+    return item.valuatedAtUtc !== null;
   }
 
   // Where the demand needle sits, 0-100, for the little meter in the panel.
@@ -371,6 +453,7 @@ export class ValuationComponent implements OnInit {
 
     return [1, 5, total].filter((year, index, all) => year > 0 && year <= total && all.indexOf(year) === index);
   });
+
 
   // --- Adjustment / comp table sorting -------------------------------------
 

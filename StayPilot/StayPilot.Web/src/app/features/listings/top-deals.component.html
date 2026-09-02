@@ -1,0 +1,96 @@
+<div class="page">
+  <app-page-header
+    title="Top deals"
+    sub="Active listings asking the most below their own typology's median €/m² in the same town. Graded against comps of the same room count and a similar size, not the town's blended median — a large property's low €/m² reflects its size, not a bargain."
+  />
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Scope</span>
+      @if (calculatedAtUtc()) {
+        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+      }
+    </div>
+    <div class="card-body">
+      <div class="toolbar">
+        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
+
+        <label class="control">
+          Condition
+          <select [ngModel]="condition()" (ngModelChange)="changeCondition($event)">
+            <option value="">Any (graded separately)</option>
+            @for (c of conditions; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
+          </select>
+        </label>
+
+        <label class="control">
+          How many
+          <select [ngModel]="count()" (ngModelChange)="changeCount($event)">
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="25">25</option>
+            <option [ngValue]="50">50</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Best deals</span>
+      <span class="meta">{{ deals().length }} found</span>
+    </div>
+
+    @if (loading()) {
+      <p class="empty">Loading…</p>
+    } @else if (error()) {
+      <div class="card-body"><p class="error">{{ error() }}</p></div>
+    } @else if (deals().length === 0) {
+      <p class="empty">
+        No active listing here asks below its town's median. Widen the scope, or recalculate the
+        market area stats if you have imported listings since the last run.
+      </p>
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="rank">#</th>
+              <th>Location</th>
+              <th>Type</th>
+              <th>Condition</th>
+              <th class="num">Area</th>
+              <th class="num">Price</th>
+              <th class="num">€/m²</th>
+              <th class="num" title="Median for this listing's own typology and a similar size, in this town">Own median €/m²</th>
+              <th class="num">Discount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (deal of deals(); track deal.listing.id; let i = $index) {
+              <tr>
+                <td class="rank">{{ i + 1 }}</td>
+                <td>
+                  <a [routerLink]="['/listings/lookup']" [queryParams]="{ id: deal.listing.id }">
+                    {{ deal.listing.marketAreaTown || deal.listing.marketAreaMunicipality }}
+                  </a>
+                </td>
+                <td>{{ deal.listing.propertyType }} · {{ deal.listing.typology }}</td>
+                <td class="muted">{{ deal.listing.condition }}</td>
+                <td class="num">{{ deal.listing.areaM2 }} m²</td>
+                <td class="num">
+                  {{ deal.listing.listingSnapshot ? (deal.listing.listingSnapshot.price | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="num">
+                  {{ deal.listing.listingSnapshot ? (deal.listing.listingSnapshot.pricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
+                </td>
+                <td class="num">{{ deal.townMedianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+                <td class="num deal">-{{ deal.discountPercent }}%</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

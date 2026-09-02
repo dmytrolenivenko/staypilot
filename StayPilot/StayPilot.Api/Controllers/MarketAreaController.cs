@@ -89,7 +89,7 @@ namespace StayPilot.Api.Controllers
         /// Work the price numbers out again from every listing we hold, replacing the whole
         /// stats table. Run it after importing listings.
         /// </summary>
-        [Authorize(Roles = "Api.Write")]
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<RecalculateMarketAreaStatsResponse>> RecalculateMarketAreaStats()
         {

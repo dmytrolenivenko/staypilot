@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { PropertyListingResponse } from '../../core/models/property-listing';
 
 @Component({
   selector: 'app-listing-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './listing-detail.component.html',
   styleUrl: './listing-detail.component.css'
 })

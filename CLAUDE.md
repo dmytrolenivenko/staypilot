@@ -4,7 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-StayPilot Comps — a personal real-estate comparable-listings tool for the Algarve (Portugal).
+StayPilot Comps — a personal real-estate comparable-listings tool for Portugal. It began as an
+Algarve-only tool and the collection has since widened: as of 2026-08-24 the database holds 36,464
+listings across 18 districts, led by Lisboa, Faro and Setúbal but reaching down to Portalegre and
+Bragança with about a hundred each. That range is the main thing to hold in mind when changing
+anything in the valuation path — a rule calibrated on Algarve prices (an absolute EUR/m² floor,
+say) is wrong in both directions once Bragança is in the same table, which is why admission and
+confidence are both judged against a property's own município rather than against a constant.
 It stores scraped Idealista apartment listings with price history, and will eventually support
 market analysis and valuation of owned properties against comparables. This is an early-stage,
 single-developer project (see commit history) — a lot of the design is intentionally minimal
@@ -120,7 +126,8 @@ alongside its service.
 - **Authorization:** no controller has a class-level `[Authorize]`. Individual actions that write
   bulk data or trigger an expensive recalculation carry `[Authorize(Roles = "Api.Write")]`:
   `PropertyListingController.BulkAddPropertyListing`, `ListingSnapshotController.CreateListingSnapshotAsync`,
-  `MarketAreaController.RecalculateMarketAreaStats`, `PremiumFeatureController.ReCalculatePremiumFeaturesValue`.
+  `ListingSnapshotController.ReconcileActiveListingsAsync`, `MarketAreaController.RecalculateMarketAreaStats`,
+  `PremiumFeatureController.ReCalculatePremiumFeaturesValue`.
   Everything else — including all of `OwnedPropertyController` (My Properties CRUD) and every
   `GET` — is open. This is a deliberate current state for a personal, single-tenant deployment, not
   an oversight; tighten it before treating this as a multi-user product.
@@ -129,7 +136,7 @@ alongside its service.
   | Controller | Actions |
   |---|---|
   | `PropertyListingController` | `BulkAddPropertyListing` (POST, `Api.Write`), `GetById`, `FilterPropertyAsync` (POST — browse/filter/page) |
-  | `ListingSnapshotController` | `CreateListingSnapshotAsync` (POST, `Api.Write`), `GetListingSnapshotByPropertyIdAsync` |
+  | `ListingSnapshotController` | `CreateListingSnapshotAsync` (POST, `Api.Write`), `GetListingSnapshotByPropertyIdAsync`, `ReconcileActiveListingsAsync` (POST, `Api.Write` — marks listings missing from a caller's URL list as sold) |
   | `MarketAreaController` | `GetAll`, `GetOptions` (place picker), `GetLeaderboard`, `GetBudgetRanking`, `GetNeighbourGaps`, `RecalculateMarketAreaStats` (POST, `Api.Write`) |
   | `MarketOverviewController` | `GetMarketOverview` — live-computed slice by place + property type + typology, no recalculation step |
   | `OwnedPropertyController` | `GetOwnedPropertyAsync`, `GetAllOwnedPropertyAsync`, `AddOwnedPropertyAsync` (POST), `DeleteOwnedPropertyAsync`, `UpdateOwnedPropertyAsync`, `EstimateEvaluationsOwnedpropertyAsync` (single-property valuation), `ListValuationsOwnedpropertyAsync` (portfolio valuation — see below) |
@@ -148,7 +155,8 @@ alongside its service.
   T2...), which is what makes "what does €300k buy me here" answerable instead of one blended
   median across studios and villas.
 - `MarketArea` — a geographic zone (District/Municipality/Town/Zone). Seeded via EF migrations
-  from real-world Algarve data; matched by exact normalized-string lookup (`GetMarketId` in
+  from real-world Portuguese data (all districts, not only the Algarve); matched by exact
+  normalized-string lookup (`GetMarketId` in
   `PropertyListingService`), not by ID, when a scraped listing doesn't supply a `MarketAreaId`.
 - `PropertyListing` — one row per property, uniquely identified by `SourceUrl` (unique index;
   `AddPropertyListingAsync` is idempotent on `SourceUrl` — re-posting the same URL returns the
@@ -208,8 +216,10 @@ the work — don't "fix" this speculatively.
 ### Scraper (now a separate repo)
 
 The `AddProperty` scraper that feeds this API lives in its own repo now:
-https://github.com/dmytrolenivenko/AddProperty. It POSTs to this API's `PropertyListing`
-endpoints and keeps its **own copies** of `PropertyListingRequest`/`ListingSnapshotRequest` and
+https://github.com/dmytrolenivenko/AddProperty. It POSTs to this API's `PropertyListing` and
+`ListingSnapshot` endpoints — including `ReconcileActiveListingsAsync`, called once after
+`dotnet run upload` finishes with an empty `new\` folder, using the newest `checkdeleted-reports\`
+file's `SeenUrls` as `ActiveUrls` — and keeps its **own copies** of `PropertyListingRequest`/`ListingSnapshotRequest` and
 the enums (`PropertyType`, `Typology`, `PropertyCondition`, `ListingStatus`) — it does not
 reference `StayPilot.Application` or `StayPilot.Domain`. If you change a contract or enum values
 in this API, update the matching copy in that repo too, and double check enum **numeric values**

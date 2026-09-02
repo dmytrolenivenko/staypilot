@@ -13,6 +13,7 @@ namespace StayPilot.Application.Contracts.Response.Base
     ///   -300 to -399   listing snapshots
     ///   -400 to -499   owned properties
     ///   -500 to -599   valuation and premium features
+    ///   -600 to -699   investment analysis
     ///
     /// Two rules: add new codes at the end of their band, and never reuse a number.
     /// Callers key on the number, so reusing one silently changes what their code means.
@@ -92,6 +93,22 @@ namespace StayPilot.Application.Contracts.Response.Base
         [Display(Description = "The listing '{0}' could not be placed: no market area matches the address '{1}'.")]
         ListingMarketAreaNotFound = -203,
 
+        /// <summary>
+        /// Typology 0 is not a room count - it is the gap left when a caller sends nothing, or a
+        /// name we do not know. It reaches the front end as a bare number instead of a name and
+        /// breaks every screen that reads it as text, so it is refused at the door. {0} is the url.
+        /// </summary>
+        [Display(Description = "The listing '{0}' needs a typology (T0 to T10).")]
+        ListingTypologyRequired = -204,
+
+        /// <summary>
+        /// A search whose lowest bound sits above its highest one. It matches nothing, which the
+        /// screen used to report as a plain "No listings match" - indistinguishable from a search
+        /// that ran correctly and found nothing. {0} names which pair is inverted.
+        /// </summary>
+        [Display(Description = "The smallest {0} asked for is larger than the largest.")]
+        FilterRangeInverted = -205,
+
         // ---------- Listing snapshots ----------
 
         [NotFound]
@@ -101,6 +118,14 @@ namespace StayPilot.Application.Contracts.Response.Base
         [NotFound]
         [Display(Description = "Cannot add a price snapshot: the property with id '{0}' does not exist.")]
         SnapshotPropertyNotFound = -301,
+
+        /// <summary>
+        /// A reconciliation call sent an empty ActiveUrls list. Refused rather than honoured:
+        /// an empty list is indistinguishable from a caller bug, and honouring it would mark
+        /// every currently active listing sold in one call.
+        /// </summary>
+        [Display(Description = "ActiveUrls must not be empty — refusing to mark every active listing sold.")]
+        ReconcileActiveUrlsRequired = -302,
 
         // ---------- Owned properties ----------
 
@@ -113,6 +138,15 @@ namespace StayPilot.Application.Contracts.Response.Base
         /// <summary>{0} is how many usable listings we have, {1} the minimum the model needs.</summary>
         [Display(Description = "Not enough listings to calculate feature values: found {0}, need at least {1}.")]
         NotEnoughListingsToFitModel = -500,
+
+        // ---------- Investment analysis ----------
+
+        /// <summary>
+        /// The listing's town has no move-in-ready median to compare a resale value against.
+        /// {0} is the town name.
+        /// </summary>
+        [Display(Description = "Not enough move-in-ready listings in '{0}' to estimate a resale value.")]
+        InvestmentAnalysisNotEnoughData = -600,
     }
 
     /// <summary>

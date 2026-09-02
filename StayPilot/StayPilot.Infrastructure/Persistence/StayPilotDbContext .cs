@@ -23,6 +23,9 @@ namespace StayPilot.Infrastructure.Persistence
         /// <summary>The properties we own ourselves.</summary>
         public DbSet<OwnedProperty> OwnedProperties => Set<OwnedProperty>();
 
+        /// <summary>The last priced result for each owned property - a cache, overwritten on revalue.</summary>
+        public DbSet<OwnedPropertyValuation> OwnedPropertyValuations => Set<OwnedPropertyValuation>();
+
         /// <summary>The beaches table (used to find the nearest beach to a property).</summary>
         public DbSet<BeachMarker> BeachMarkers => Set<BeachMarker>();
 
@@ -37,6 +40,9 @@ namespace StayPilot.Infrastructure.Persistence
 
         /// <summary>The seeded per-district house price growth assumptions used by the forecast.</summary>
         public DbSet<HousePriceGrowth> HousePriceGrowth => Set<HousePriceGrowth>();
+
+        /// <summary>The Users table</summary>
+        public DbSet<User> Users => Set<User>();
 
         /// <summary>
         /// Builds the database shape: tables, keys, indexes, and number precision.
@@ -102,6 +108,7 @@ namespace StayPilot.Infrastructure.Persistence
             // nvarchar so existing rows stay valid (names match the enum members exactly), the
             // table stays human-readable, and reordering the enum can't silently repoint rows.
             modelBuilder.Entity<PremiumFeature>().Property(x => x.Feature).HasConversion<string>();
+
         }
     }
 }

@@ -7,12 +7,17 @@ using System.Text.RegularExpressions;
 namespace StayPilot.Application.Helpers.Calculators
 {
     /// <summary>
-    /// Everything one valuation produces: the price, the range around it, how much to trust it,
-    /// what the property has earned, and which of its features the money is sitting in.
+    /// Everything one valuation produces: the estimated ASKING price, the range around it, how much
+    /// to trust it, how far that ask has drifted from what was paid, and which of its features the
+    /// money is sitting in.
+    ///
+    /// "Price" here always means what the property would be ADVERTISED at, because adverts are the
+    /// only thing this database holds. It is not a sale price and has never been checked against
+    /// one - see <see cref="AskSpreadSummary"/>.
     /// </summary>
     public class PropertyEstimate
     {
-        /// <summary>The headline number.</summary>
+        /// <summary>The headline number: what this would be advertised at today.</summary>
         public decimal MidPrice { get; set; }
 
         /// <summary>Low and high ends of the estimate. Equal to <see cref="MidPrice"/> only on a degenerate fit.</summary>
@@ -24,8 +29,8 @@ namespace StayPilot.Application.Helpers.Calculators
         /// <summary>How much to trust it, judged on evidence near THIS property.</summary>
         public ValuationConfidence Confidence { get; set; }
 
-        /// <summary>What the property has made since purchase. All zeros without a purchase price.</summary>
-        public EquitySummary Equity { get; set; } = new();
+        /// <summary>How far the ask has drifted from the purchase price. All zeros without one.</summary>
+        public AskSpreadSummary AskSpread { get; set; } = new();
 
         /// <summary>One line per premium feature the property actually has.</summary>
         public List<ValuationAdjustment> Adjustments { get; set; } = new();
@@ -124,7 +129,10 @@ namespace StayPilot.Application.Helpers.Calculators
             var subject = ValuationSubject.FromOwnedProperty(property);
             var prediction = _model.PredictPricePerM2(subject);
 
-            var midPrice = prediction.PricePerM2 * property.AreaM2;
+            // Rounded once, here, so the range, the equity and the adjustments all derive from the
+            // same euro figure the screen prints. Unrounded it reaches the contract as
+            // 254866.2159918128 - a euro amount carrying ten decimal places nobody can act on.
+            var midPrice = Math.Round(prediction.PricePerM2 * property.AreaM2);
             var (minPrice, maxPrice) = PriceRange(midPrice, prediction.Spread);
 
             return new PropertyEstimate
@@ -133,7 +141,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 MinPrice = minPrice,
                 MaxPrice = maxPrice,
                 Confidence = DetermineConfidence(prediction),
-                Equity = BuildEquity(property.PurchasePrice, property.PurchaseDate, midPrice),
+                AskSpread = BuildAskSpread(property.PurchasePrice, property.PurchaseDate, midPrice),
                 Adjustments = BuildAdjustments(subject, midPrice, featureEffects),
                 LocatedMarketAreaId = prediction.LocatedMarketAreaId,
                 LocatedByCoordinates = prediction.LocatedByCoordinates,
@@ -170,11 +178,27 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// How much to trust the estimate - judged on evidence near THIS property, not on the
-        /// comp count. Listings only cover parts of the country, and a property outside them
-        /// must not come back looking confident.
+        /// How much to trust the estimate. Two questions, and the lower answer wins: is there
+        /// evidence NEAR this property, and does the model actually know its MARKET.
+        ///
+        /// Distance alone used to decide it, and on a national dataset that reads as confident
+        /// almost everywhere - 35,591 of 36,157 listings have a comp inside a kilometre, because
+        /// adverts cluster in towns whether or not the surrounding district has enough stock to
+        /// price. A flat in Portalegre, where the model holds a hundred listings for the whole
+        /// district, would earn High from ten neighbours on the same street. Capping by
+        /// <see cref="LocationPrecision"/> is what stops thin markets borrowing the confidence
+        /// of dense ones.
         /// </summary>
         private static ValuationConfidence DetermineConfidence(ValuationPrediction prediction)
+        {
+            var fromEvidence = ConfidenceFromNearbyEvidence(prediction);
+            var ceiling = CeilingFor(prediction.LocationPrecision);
+
+            return fromEvidence < ceiling ? fromEvidence : ceiling;
+        }
+
+        /// <summary>What the listings around this property alone would justify.</summary>
+        private static ValuationConfidence ConfidenceFromNearbyEvidence(ValuationPrediction prediction)
         {
             if (prediction.LocalComparablesUsed >= HighConfidenceComparables
                 && prediction.NearestComparableMeters <= HighConfidenceMeters)
@@ -188,17 +212,40 @@ namespace StayPilot.Application.Helpers.Calculators
         }
 
         /// <summary>
-        /// What the property has made since purchase. All zeros without a purchase price - a
-        /// gain measured against nothing still renders convincingly on screen.
+        /// The most any property priced at this level of precision may claim, however thick the
+        /// adverts around it happen to be.
+        ///
+        /// A zone or a município is a real market and can carry High. A district cannot - it is
+        /// one lump covering coast and interior, and pricing a property as "Faro" spans EUR 1,600
+        /// to EUR 12,000 per m2. Priced nationally, the model has no local knowledge at all, and
+        /// saying so is the whole point of the tier.
         /// </summary>
-        private static EquitySummary BuildEquity(
-            decimal? purchasePrice, DateTime? purchaseDate, decimal currentEstimate)
+        private static ValuationConfidence CeilingFor(LocationPrecision precision)
+        {
+            return precision switch
+            {
+                LocationPrecision.Area or LocationPrecision.Municipality => ValuationConfidence.High,
+                LocationPrecision.District => ValuationConfidence.Medium,
+                _ => ValuationConfidence.Low,
+            };
+        }
+
+        /// <summary>
+        /// How far the estimated ask has drifted from what was paid. All zeros without a purchase
+        /// price - a spread measured against nothing still renders convincingly on screen.
+        ///
+        /// Public so a cached valuation can rebuild this block from the live OwnedProperty row
+        /// instead of caching it: purchase price/date can change without a revaluation, and a
+        /// stale spread would silently lie about what changed.
+        /// </summary>
+        public static AskSpreadSummary BuildAskSpread(
+            decimal? purchasePrice, DateTime? purchaseDate, decimal estimatedAsk)
         {
             var paid = purchasePrice ?? 0;
-            var gainAmount = currentEstimate - paid;
-            var gainPercent = paid > 0 ? gainAmount / paid * 100 : 0;
+            var spreadAmount = estimatedAsk - paid;
+            var spreadPercent = paid > 0 ? spreadAmount / paid * 100 : 0;
 
-            // Fractional years (2.5, not 2) so the ROI maths is accurate.
+            // Fractional years (2.5, not 2) so the per-year maths is accurate.
             // A property saved without a purchase date carries the DateTime default, which reads as
             // two thousand years held. Anything before 1900 is an unset field, not a purchase.
             var yearsHeldExact = purchaseDate.HasValue && purchaseDate.Value.Year > 1900
@@ -207,22 +254,22 @@ namespace StayPilot.Application.Helpers.Calculators
 
             var monthsHeldExact = yearsHeldExact * 12;
 
-            return new EquitySummary
+            return new AskSpreadSummary
             {
                 PurchasePrice = paid,
-                CurrentEstimate = currentEstimate,
-                GainAmount = gainAmount,
-                GainPercent = Math.Round(gainPercent, 2),
+                EstimatedAskingPrice = estimatedAsk,
+                SpreadAmount = spreadAmount,
+                SpreadPercent = Math.Round(spreadPercent, 2),
                 YearsHeld = (int)yearsHeldExact,
-
-                // Under a year, annualising just magnifies noise -> stay at 0.
-                RoiPerYear = paid > 0 && yearsHeldExact >= 1
-                    ? Math.Round(gainPercent / yearsHeldExact, 2)
-                    : 0,
+                // Under a year, annualising magnifies noise - so say nothing rather than 0,
+                // which renders as "moved nothing" next to a spread that is really there.
+                SpreadPerYearPercent = paid > 0 && yearsHeldExact >= 1
+                    ? Math.Round(spreadPercent / yearsHeldExact, 2)
+                    : null,
 
                 // Per month divides sensibly at any age, so recent buys still show something.
-                RoiPerMonth = paid > 0 && monthsHeldExact > 0
-                    ? Math.Round(gainPercent / monthsHeldExact, 2)
+                SpreadPerMonthPercent = paid > 0 && monthsHeldExact > 0
+                    ? Math.Round(spreadPercent / monthsHeldExact, 2)
                     : 0,
             };
         }
@@ -271,7 +318,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 // A lift on the fourth floor and a sea view from the sand are worth measurably
                 // more than the market average of one, so those two are credited at their
                 // conditional figure rather than the headline.
-                Amount = AmountFor(estimatedPrice, meetsCondition ? effect.MaximumPercent!.Value : effect.Percent, units: 1),
+                Amount = AmountFor(estimatedPrice, meetsCondition ? effect.MaximumPercent!.Value : effect.Percent, units: 1, effect.IsMeasurable),
 
                 // A premium that changes sign depending on how the comparison is drawn is not a
                 // finding, however tight its confidence range looks - the breakdown greys it out
@@ -331,7 +378,7 @@ namespace StayPilot.Application.Helpers.Calculators
             return new ValuationAdjustment
             {
                 Label = FriendlyFeatureName(effect.Feature),
-                Amount = AmountFor(estimatedPrice, effect.Percent, unitsAboveTypical),
+                Amount = AmountFor(estimatedPrice, effect.Percent, unitsAboveTypical, effect.IsMeasurable),
                 IsMeasurable = effect.IsMeasurable,
                 Detail = counted.Detail,
             };
@@ -339,10 +386,21 @@ namespace StayPilot.Application.Helpers.Calculators
 
         /// <summary>
         /// The share of the price owed to a feature: what disappears when its multiplier is
-        /// divided back out. Floored at zero - a measured premium that came back negative means
-        /// the feature is worth nothing here, not that the owner should be billed for having it.
+        /// divided back out. Negative for a feature that costs a property money.
+        ///
+        /// This used to be floored at zero, on the reasoning that a premium measured negative
+        /// means the feature is worth nothing here rather than that the owner should be billed
+        /// for having it. That reasoning holds for a feature which OUGHT to be positive and came
+        /// back negative out of noise - a garage at -2% - and <paramref name="isMeasurable"/> is
+        /// what identifies those: an effect whose confidence range straddles zero is noise, and
+        /// is still floored.
+        ///
+        /// It does not hold for a feature that is negative by its nature. NeedsRenovation is one,
+        /// and flooring it valued a flat needing work exactly as though the work were free - in a
+        /// product whose headline analytic is renovation upside. A measurable negative is the
+        /// finding, not an error to hide.
         /// </summary>
-        private static decimal AmountFor(decimal estimatedPrice, decimal percent, decimal units)
+        private static decimal AmountFor(decimal estimatedPrice, decimal percent, decimal units, bool isMeasurable)
         {
             var multiplier = Math.Pow(1 + (double)percent / 100, (double)units);
 
@@ -350,7 +408,10 @@ namespace StayPilot.Application.Helpers.Calculators
             if (multiplier <= 0 || double.IsNaN(multiplier) || double.IsInfinity(multiplier))
                 return 0;
 
-            return Math.Max(0, Math.Round(estimatedPrice * (1 - 1 / (decimal)multiplier), 0));
+            var amount = Math.Round(estimatedPrice * (1 - 1 / (decimal)multiplier), 0);
+
+            // Noise that happened to land below zero: say nothing rather than invent a penalty.
+            return !isMeasurable && amount < 0 ? 0 : amount;
         }
 
         /// <summary>
@@ -487,6 +548,18 @@ namespace StayPilot.Application.Helpers.Calculators
 
         /// <summary>How many nearby listings fed the neighbourhood correction (0 = none).</summary>
         public int LocalComparablesUsed { get; set; }
+
+        /// <summary>
+        /// How specifically the model was able to place this property before pricing it - the
+        /// level <see cref="ValuationModel.EffectiveLocation"/> came to rest on.
+        ///
+        /// This is a different question from "is there a listing near it", and the two disagree
+        /// exactly where it matters. A flat in a thin district can have ten neighbours inside a
+        /// kilometre because they are all in the same small town, while the model still had to
+        /// price the whole district as one lump - or fall back to a national average. Distance
+        /// says High; this says the model barely knows this market.
+        /// </summary>
+        public LocationPrecision LocationPrecision { get; set; }
 
         /// <summary>
         /// How uncertain THIS estimate is, on the log scale - the model's typical error, widened
@@ -894,6 +967,7 @@ namespace StayPilot.Application.Helpers.Calculators
                 LocalComparablesUsed = neighbours.Count,
                 NearestComparableMeters = neighbours.Count == 0 ? double.MaxValue : neighbours.Min(x => x.Distance),
                 Spread = PredictionSpread * (1 + (ThinEvidenceWidening / (1 + evidence))),
+                LocationPrecision = PrecisionOf(subject, locatedMarketAreaId),
                 LocatedMarketAreaId = locatedMarketAreaId,
                 LocatedByCoordinates = locatedMarketAreaId != subject.MarketAreaId,
             };
@@ -1125,6 +1199,26 @@ namespace StayPilot.Application.Helpers.Calculators
             var district = DistrictOf(subject, marketAreaId);
 
             return _denseDistricts.Contains(district) ? $"D:{district}" : "national";
+        }
+
+        /// <summary>
+        /// The same fallback <see cref="EffectiveLocation"/> walks, reported as the level it came
+        /// to rest on. Kept beside it deliberately: if one gains a level the other must too, or
+        /// the confidence shown to a user stops describing the price they were given.
+        /// </summary>
+        internal LocationPrecision PrecisionOf(ValuationSubject subject, int? marketAreaId = null)
+        {
+            var area = marketAreaId ?? subject.MarketAreaId;
+
+            if (_denseAreas.Contains(area))
+                return LocationPrecision.Area;
+
+            if (_denseMunicipalities.Contains(MunicipalityKeyOf(subject, marketAreaId)))
+                return LocationPrecision.Municipality;
+
+            return _denseDistricts.Contains(DistrictOf(subject, marketAreaId))
+                ? LocationPrecision.District
+                : LocationPrecision.National;
         }
 
         /// <summary>

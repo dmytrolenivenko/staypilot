@@ -18,13 +18,17 @@ namespace StayPilot.UnitTests
         public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) =>
             Task.FromResult(_listings);
 
+        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
 
         public Task<PropertyListing?> GetPropertyListingByIdAsync(int id) => throw new NotImplementedException();
         public Task<List<PropertyListing>?> GetBulkPropertyListingByUrlAsync(List<string> urls) => throw new NotImplementedException();
         public Task<PropertyListing> AddPropertyListingAsync(PropertyListing propertyListing) => throw new NotImplementedException();
         public Task<(List<PropertyListing> Items, int TotalRecords)> FilterPropertyAsync(FilterPropertyListingRequest request) => throw new NotImplementedException();
         public Task SaveChangesAsync() => throw new NotImplementedException();
+        public void DiscardPendingChanges() => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync() => throw new NotImplementedException();
     }

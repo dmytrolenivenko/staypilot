@@ -7,7 +7,8 @@ import {
   AreaLevel,
   MarketAreaNeighbourGapResponse,
   NeighbourGapPlace,
-  NeighbourGapResponse
+  NeighbourGapResponse,
+  RELIABLE_LISTINGS
 } from '../../core/models/market-area-stats';
 import { TYPOLOGIES, Typology } from '../../core/models/enums';
 import { PageHeaderComponent } from '../../shared/page-header.component';
@@ -472,6 +473,13 @@ export class MarketAreaNeighboursComponent implements OnInit {
   // What you would save per m² by moving to the cheaper side.
   saving(gap: NeighbourGapResponse): number {
     return gap.expensive.medianPricePerM2 - gap.cheaper.medianPricePerM2;
+  }
+
+  // The same rule the leaderboard badges on. A -51% headline drawn from nine adverts is a lead,
+  // not a finding, and saying so here is the difference between the two screens agreeing about
+  // the same place and quietly contradicting each other.
+  isThin(place: NeighbourGapPlace): boolean {
+    return place.listingCount < RELIABLE_LISTINGS;
   }
 
   // Everything the pairs and the place list depend on. Deliberately not the anchor.

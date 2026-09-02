@@ -42,6 +42,29 @@
   white-space: nowrap;
 }
 
+/* Recalculates one row without disturbing the rest of the table - small and quiet
+   until hovered, since most visits never need it. */
+.icon-button {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.75em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: inherit;
+}
+
+.icon-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* The confidence chip rides next to the price, so it must not push the number
    onto a second line in a narrow column. */
 .badge-small {
@@ -253,6 +276,8 @@
 .panel-actions {
   margin: 0.4rem 0 0;
   font-size: 0.9em;
+  display: flex;
+  gap: var(--sp-4);
 }
 
 /* "Not measured" is a caveat, not an error — it gets a rule, not a red box. */

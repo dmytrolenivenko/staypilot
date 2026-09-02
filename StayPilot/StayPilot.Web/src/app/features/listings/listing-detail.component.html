@@ -1,9 +1,18 @@
 <div class="listing-detail">
   <header class="listing-head">
     <h2>Listing #{{ listing.id }}</h2>
-    <a class="link" [href]="listing.sourceUrl" target="_blank" rel="noopener">
-      {{ listing.sourceName || 'Source' }} ↗
-    </a>
+    <div class="listing-head-actions">
+      <a
+        class="link"
+        [routerLink]="['/listings/investment-analysis']"
+        [queryParams]="{ id: listing.id }"
+        title="Renovation cost, resale value and profit for this listing"
+        >Analyze →</a
+      >
+      <a class="link" [href]="listing.sourceUrl" target="_blank" rel="noopener">
+        {{ listing.sourceName || 'Source' }} ↗
+      </a>
+    </div>
   </header>
 
   <div class="fact-grid">

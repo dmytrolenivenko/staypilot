@@ -39,11 +39,18 @@ namespace StayPilot.Application.Interfaces.Repositories
         Task SaveChangesAsync();
 
         /// <summary>
-        /// Finds properties comparable to a given one: same property type, a room layout
-        /// within one step, and either in the same market area or within radiusMeters of
-        /// the given lat/lon. Only counts as fresh if its newest snapshot is not older
-        /// than the cutoff. Returns at most 100, same market area first, then nearest.
-        /// Falls back to the market area alone when the property has no coordinates.
+        /// Forget the rows that are queued to be inserted but have not been saved.
+        /// Call it after a failed save, or the same rows are sent again with the next one and
+        /// fail again.
+        /// </summary>
+        void DiscardPendingChanges();
+
+        /// <summary>
+        /// Finds properties comparable to a given one: same property type, a room layout within
+        /// one step, a floor area within a quarter either way, and within radiusMeters of the
+        /// given lat/lon. Only counts a listing if its newest snapshot is no older than the
+        /// cutoff. Every match is returned, not a top slice - ordered same market area first,
+        /// then nearest. Falls back to the market area alone when the property has no coordinates.
         /// </summary>
         Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months);
 
@@ -63,6 +70,23 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// empty string for any filter you do not want applied.
         /// </summary>
         Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology);
+
+        /// <summary>
+        /// Gets every active listing in one place, optionally narrowed to one condition, with its
+        /// newest snapshot and market area loaded. Not paged: ranking the best deals needs every
+        /// listing in the place at once, not one page of them. Pass null or an empty string for
+        /// any level you do not want applied.
+        /// </summary>
+        Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition);
+
+        /// <summary>
+        /// Gets every listing whose newest snapshot is Active, with just that snapshot loaded.
+        /// Used to work out which listings a fresh sweep no longer saw, so they can be marked
+        /// sold - see ReconcileActiveListingsAsync. Not paged and not by place: the sweep that
+        /// feeds it covers the whole site, so the comparison has to be against every active
+        /// listing in the database, not one page or one market area of them.
+        /// </summary>
+        Task<List<PropertyListing>> GetActiveListingsAsync();
 
         /// <summary>
         /// Gets every listing in one place with its WHOLE snapshot history loaded, newest first.
