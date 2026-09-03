@@ -15,7 +15,9 @@
 
       <span class="nav-group">Listings</span>
       <a class="nav-link" routerLink="/listing-browser" routerLinkActive="active">Browse</a>
+      <a class="nav-link" routerLink="/listings/top-deals" routerLinkActive="active">Top deals</a>
       <a class="nav-link" routerLink="/listings/lookup" routerLinkActive="active">Look up by id</a>
+      <a class="nav-link" routerLink="/listings/investment-analysis" routerLinkActive="active">Investment analysis</a>
 
       <span class="nav-group">Market areas</span>
       <a class="nav-link" routerLink="/market-overview" routerLinkActive="active">Market overview</a>
@@ -35,6 +37,22 @@
       <span class="nav-group">Planned</span>
       <a class="nav-link planned" routerLink="/beach-proximity" routerLinkActive="active">Beach proximity</a>
     </nav>
+
+    <div class="account-box">
+      @if (isSignedIn()) {
+        <span class="account-info">
+          @if (accountName()) {
+            <span class="account-name">{{ accountName() }}</span>
+          }
+          @if (accountEmail()) {
+            <span class="account-email">{{ accountEmail() }}</span>
+          }
+        </span>
+        <button type="button" class="account-action" (click)="logout()">Sign out</button>
+      } @else {
+        <button type="button" class="account-action" (click)="login()">Sign in</button>
+      }
+    </div>
 
     <button type="button" class="theme-toggle" (click)="toggleTheme()">
       {{ theme() === 'light' ? '◐ Dark' : '◑ Light' }}

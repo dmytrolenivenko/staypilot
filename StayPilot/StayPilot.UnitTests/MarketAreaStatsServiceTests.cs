@@ -45,11 +45,39 @@ namespace StayPilot.UnitTests
         public Task<PropertyListing> AddPropertyListingAsync(PropertyListing propertyListing) => throw new NotImplementedException();
         public Task<(List<PropertyListing> Items, int TotalRecords)> FilterPropertyAsync(FilterPropertyListingRequest request) => throw new NotImplementedException();
         public Task SaveChangesAsync() => throw new NotImplementedException();
+        public void DiscardPendingChanges() => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync() => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
 
+        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
+    }
+
+    // Same shape as UnusedListingRepo, but GetActiveListingsForTopDealsAsync actually answers -
+    // that is the one call GetTopDealsAsync makes.
+    file class FakeTopDealsListingRepo : IPropertyListingRepository
+    {
+        private readonly List<PropertyListing> _listings;
+
+        public FakeTopDealsListingRepo(List<PropertyListing> listings) => _listings = listings;
+
+        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) =>
+            Task.FromResult(_listings);
+
+        public Task<PropertyListing?> GetPropertyListingByIdAsync(int id) => throw new NotImplementedException();
+        public Task<List<PropertyListing>?> GetBulkPropertyListingByUrlAsync(List<string> urls) => throw new NotImplementedException();
+        public Task<PropertyListing> AddPropertyListingAsync(PropertyListing propertyListing) => throw new NotImplementedException();
+        public Task<(List<PropertyListing> Items, int TotalRecords)> FilterPropertyAsync(FilterPropertyListingRequest request) => throw new NotImplementedException();
+        public Task SaveChangesAsync() => throw new NotImplementedException();
+        public void DiscardPendingChanges() => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync() => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
     }
 
     /// <summary>
@@ -369,11 +397,85 @@ namespace StayPilot.UnitTests
             Assert.Equal(ValuationConfidence.Low, evidence.Confidence);
         }
 
+        // --- Top deals -------------------------------------------------------
+
+        [Fact]
+        public async Task GetTopDealsAsync_ProjectBucketBelowSampleFloor_DropsTheListingEvenThoughTheGapLooksHuge()
+        {
+            // Only 3 projects behind this town's ProjectMedianPricePerM2 - enough for the
+            // calculator to save the row, not enough to rank the whole country against it.
+            var stats = TownStats("Faro", "Albufeira", "Guia", projectCount: 3, projectMedian: 4_000m);
+            var listing = Listing("Faro", "Albufeira", "Guia", PropertyCondition.NeedsRenovation, pricePerM2: 800m);
+
+            var response = await Service(new List<MarketAreaStats> { stats }, new List<PropertyListing> { listing })
+                .GetTopDealsAsync(new TopDealsRequest());
+
+            Assert.Empty(response.Items);
+        }
+
+        [Fact]
+        public async Task GetTopDealsAsync_ProjectBucketAtSampleFloor_KeepsTheListingAndReportsTheGap()
+        {
+            // Same 4,000 median and same 800 asking price as above, but this time the median
+            // rests on 8 projects - the floor GetTopDealsAsync now requires before trusting it.
+            var stats = TownStats("Faro", "Albufeira", "Guia", projectCount: 8, projectMedian: 4_000m);
+            var listing = Listing("Faro", "Albufeira", "Guia", PropertyCondition.NeedsRenovation, pricePerM2: 800m);
+
+            var response = await Service(new List<MarketAreaStats> { stats }, new List<PropertyListing> { listing })
+                .GetTopDealsAsync(new TopDealsRequest());
+
+            var deal = Assert.Single(response.Items);
+            Assert.Equal(80m, deal.DiscountPercent);
+        }
+
         // --- Helpers ---------------------------------------------------------
 
         private static MarketAreaStatsService Service(List<MarketAreaStats> rows)
         {
             return new MarketAreaStatsService(new FakeStatsRepo(rows), new UnusedListingRepo());
+        }
+
+        private static MarketAreaStatsService Service(List<MarketAreaStats> statsRows, List<PropertyListing> listings)
+        {
+            return new MarketAreaStatsService(new FakeStatsRepo(statsRows), new FakeTopDealsListingRepo(listings));
+        }
+
+        /// <summary>
+        /// A town-level stats row with only its project bucket filled in - all the
+        /// GetTopDealsAsync project-listing tests need.
+        /// </summary>
+        private static MarketAreaStats TownStats(
+            string district, string municipality, string town, int projectCount, decimal projectMedian)
+        {
+            return new MarketAreaStats
+            {
+                Level = AreaLevel.Town,
+                District = district,
+                Municipality = municipality,
+                Town = town,
+                ListingCount = 50,
+                MedianPricePerM2 = projectMedian,
+                ProjectCount = projectCount,
+                ProjectMedianPricePerM2 = projectMedian
+            };
+        }
+
+        /// <summary>
+        /// One active listing with a single snapshot, priced per square meter directly (the area
+        /// and total price are irrelevant to GetTopDealsAsync, so they are left at their defaults).
+        /// </summary>
+        private static PropertyListing Listing(
+            string district, string municipality, string town, PropertyCondition condition, decimal pricePerM2)
+        {
+            return new PropertyListing
+            {
+                MarketArea = new MarketArea { District = district, Municipality = municipality, Town = town },
+                Condition = condition,
+                ListingSnapshots = new List<ListingSnapshot>
+                {
+                    new() { PricePerM2 = pricePerM2, Status = ListingStatus.Active, SnapshotDateUtc = DateTime.UtcNow }
+                }
+            };
         }
 
         /// <summary>

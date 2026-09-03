@@ -53430,6 +53430,9 @@ namespace StayPilot.Infrastructure.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("OwnerUserId")
+                        .HasColumnType("int");
+
                     b.Property<int>("PropertyType")
                         .HasColumnType("int");
 
@@ -53462,7 +53465,26 @@ namespace StayPilot.Infrastructure.Migrations
 
                     b.HasIndex("NearestBeachMarkerId");
 
+                    b.HasIndex("OwnerUserId");
+
                     b.ToTable("OwnedProperties");
+                });
+
+            modelBuilder.Entity("StayPilot.Domain.Entities.OwnedPropertyValuation", b =>
+                {
+                    b.Property<int>("OwnedPropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ResultJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ValuatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("OwnedPropertyId");
+
+                    b.ToTable("OwnedPropertyValuations");
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.PremiumFeature", b =>
@@ -53636,6 +53658,43 @@ namespace StayPilot.Infrastructure.Migrations
                     b.ToTable("PropertyListings");
                 });
 
+            modelBuilder.Entity("StayPilot.Domain.Entities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PreferredLocale")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("UserEmail")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("StayPilot.Domain.Entities.ListingSnapshot", b =>
                 {
                     b.HasOne("StayPilot.Domain.Entities.PropertyListing", "PropertyListing")
@@ -53670,9 +53729,28 @@ namespace StayPilot.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("NearestBeachMarkerId");
 
+                    b.HasOne("StayPilot.Domain.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("MarketArea");
 
                     b.Navigation("NearestBeachMarker");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("StayPilot.Domain.Entities.OwnedPropertyValuation", b =>
+                {
+                    b.HasOne("StayPilot.Domain.Entities.OwnedProperty", "OwnedProperty")
+                        .WithOne()
+                        .HasForeignKey("StayPilot.Domain.Entities.OwnedPropertyValuation", "OwnedPropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OwnedProperty");
                 });
 
             modelBuilder.Entity("StayPilot.Domain.Entities.PropertyListing", b =>

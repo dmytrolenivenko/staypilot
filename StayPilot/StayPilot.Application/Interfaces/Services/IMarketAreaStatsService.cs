@@ -35,5 +35,11 @@ namespace StayPilot.Application.Interfaces.Services
         /// kilometres changes what a square meter costs.
         /// </summary>
         Task<MarketAreaNeighbourGapResponse> GetNeighbourGapsAsync(MarketAreaNeighbourGapRequest request);
+
+        /// <summary>
+        /// The best-priced active listings in one place, ranked by how far below their own
+        /// town's median euro per square meter they ask.
+        /// </summary>
+        Task<TopDealsResponse> GetTopDealsAsync(TopDealsRequest request);
     }
 }

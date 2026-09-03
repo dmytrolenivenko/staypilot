@@ -21,16 +21,16 @@ namespace StayPilot.Infrastructure.Repositories
             return entry.Entity;
         }
 
-        public async Task<OwnedProperty?> GetOwnedPropertyAsync(int id)
+        public async Task<OwnedProperty?> GetOwnedPropertyAsync(int id, int ownerUserId)
         {
-            var entity = await _context.OwnedProperties.FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await _context.OwnedProperties.FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == ownerUserId);
 
             return entity;
         }
 
-        public async Task<string?> DeleteOwnedPropertyAsync(int id)
+        public async Task<string?> DeleteOwnedPropertyAsync(int id, int ownerUserId)
         {
-            var propertyToDelete = await _context.OwnedProperties.FindAsync(id);
+            var propertyToDelete = await _context.OwnedProperties.FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == ownerUserId);
 
             if (propertyToDelete is null) return null;
 
@@ -51,9 +51,30 @@ namespace StayPilot.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<OwnedProperty>> GetAllOwnedPropertyAsync()
+        public async Task<List<OwnedProperty>> GetAllOwnedPropertyAsync(int ownerUserId)
         {
-            return await _context.OwnedProperties.ToListAsync();
+            return await _context.OwnedProperties.Where(x => x.OwnerUserId == ownerUserId).ToListAsync();
+        }
+
+        public async Task<Dictionary<int, OwnedPropertyValuation>> GetAllValuationsAsync()
+        {
+            return await _context.OwnedPropertyValuations.ToDictionaryAsync(x => x.OwnedPropertyId);
+        }
+
+        public async Task UpsertValuationAsync(OwnedPropertyValuation valuation)
+        {
+            var existing = await _context.OwnedPropertyValuations
+                .FirstOrDefaultAsync(x => x.OwnedPropertyId == valuation.OwnedPropertyId);
+
+            if (existing is null)
+            {
+                await _context.OwnedPropertyValuations.AddAsync(valuation);
+
+                return;
+            }
+
+            existing.ResultJson = valuation.ResultJson;
+            existing.ValuatedAtUtc = valuation.ValuatedAtUtc;
         }
     }
 }

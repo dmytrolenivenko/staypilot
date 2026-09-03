@@ -13,6 +13,17 @@ namespace StayPilot.Application.Services
     /// <inheritdoc/>
     public class MarketAreaStatsService : IMarketAreaStatsService
     {
+        /// <summary>
+        /// How many listings a town's project or move-in bucket needs before its median is
+        /// trusted as a deal baseline. Higher than the calculator's own save-time floor of 3:
+        /// that floor only decides whether a bucket is worth storing at all, not whether it is
+        /// sturdy enough to rank the whole country's listings by how far below it they sit. A
+        /// discount measured against a 3-listing median is mostly luck, and ranking on "biggest
+        /// gap from a noisy number" puts the noisiest towns at the top of Top Deals, not the
+        /// best bargains.
+        /// </summary>
+        private const int MinimumConditionCountForDeal = 8;
+
         private readonly IMarketAreaStatsRepository _marketAreaStatsRepo;
         private readonly IPropertyListingRepository _propertyListingRepo;
 
@@ -182,6 +193,91 @@ namespace StayPilot.Application.Services
                 .ToList();
 
             return response;
+        }
+
+        /// <inheritdoc/>
+        public async Task<TopDealsResponse> GetTopDealsAsync(TopDealsRequest request)
+        {
+            // Same sample gate as the leaderboard - a median from a handful of listings is not
+            // a market to grade a deal against. With typology children, because a T5 house and a
+            // T1 apartment do not sell for the same €/m² even in the same town.
+            var townStats = await _marketAreaStatsRepo.GetWithTypologiesAsync(
+                AreaLevel.Town, minListings: 5, request.District, request.Municipality);
+
+            var statsByTown = townStats.ToDictionary(x => (x.District, x.Municipality, x.Town), x => x);
+
+            var listings = await _propertyListingRepo.GetActiveListingsForTopDealsAsync(
+                request.District, request.Municipality, request.Town, request.Zone, request.Condition);
+
+            var deals = new List<TopDealResponse>();
+
+            foreach (var listing in listings)
+            {
+                var snapshot = listing.ListingSnapshots.FirstOrDefault();
+
+                if (snapshot is null || snapshot.PricePerM2 <= 0)
+                {
+                    continue;
+                }
+
+                var key = (listing.MarketArea.District, listing.MarketArea.Municipality, listing.MarketArea.Town);
+
+                // No trustworthy stats for this listing's town -> nothing to grade it against.
+                if (!statsByTown.TryGetValue(key, out var stats))
+                {
+                    continue;
+                }
+
+                // A renovation project and move-in-ready stock are different markets: a project's
+                // low €/m² reflects the work it needs, not a bargain. Grading it against the
+                // blended median would call every fixer-upper a steal for needing work, so each
+                // listing is graded against its own bucket's median instead. Unclassified listings
+                // (neither, and thin buckets with too few listings) have no fair median and drop out.
+                var isProject = MarketAreaStatsCalculator.IsProject(listing.Condition, listing.EnergyCertificate);
+                var isMoveInReady = MarketAreaStatsCalculator.IsMoveInReady(listing.Condition, listing.EnergyCertificate);
+
+                // A median is only as trustworthy as the bucket it came from. The calculator will
+                // happily save one from as few as 3 listings - fine for a stats screen, not sturdy
+                // enough to be the yardstick every discount in the country gets ranked against.
+                var conditionCount = isProject ? stats.ProjectCount : isMoveInReady ? stats.MoveInCount : 0;
+
+                if (conditionCount < MinimumConditionCountForDeal)
+                {
+                    continue;
+                }
+
+                var medianPricePerM2 = isProject
+                    ? stats.ProjectMedianPricePerM2
+                    : isMoveInReady
+                        ? stats.MoveInMedianPricePerM2
+                        : null;
+
+                if (medianPricePerM2 is not > 0)
+                {
+                    continue;
+                }
+
+                var discountPercent = (medianPricePerM2.Value - snapshot.PricePerM2) / medianPricePerM2.Value * 100m;
+
+                // Asking at or above the median is not a deal.
+                if (discountPercent <= 0)
+                {
+                    continue;
+                }
+
+                deals.Add(new TopDealResponse
+                {
+                    Listing = Converter.MapToResponse(listing, snapshot),
+                    TownMedianPricePerM2 = medianPricePerM2.Value,
+                    DiscountPercent = decimal.Round(discountPercent, 1)
+                });
+            }
+
+            return new TopDealsResponse
+            {
+                Items = deals.OrderByDescending(x => x.DiscountPercent).Take(request.Count).ToList(),
+                CalculatedAtUtc = LastCalculatedAt(townStats)
+            };
         }
 
         /// <summary>

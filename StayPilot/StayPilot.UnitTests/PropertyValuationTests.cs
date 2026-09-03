@@ -278,16 +278,20 @@ namespace StayPilot.UnitTests
         public void Fit_AFewWildlyMispricedListings_DoNotDragTheEstimate()
         {
             // Sabotage check for the second pass. These rows survive ListingQuality - the area
-            // is plausible and the price is inside the market - they are simply wrong by a
-            // factor of five. On squared error one of them carries the weight of hundreds of
-            // ordinary rows, so without trimming they visibly move the answer.
+            // is plausible, the price is inside the market, and the row agrees with itself -
+            // they are simply wrong by a factor of five. On squared error one of them carries
+            // the weight of hundreds of ordinary rows, so without trimming they move the answer.
             var clean = FlatMarket(400, pricePerM2: 4_000);
 
             var polluted = FlatMarket(400, pricePerM2: 4_000);
 
             foreach (var listing in polluted.Take(8))
             {
+                // Price moves with the rate. Changing only the rate makes the row disagree with
+                // itself, and admission throws it out before the trimmer ever sees it - which
+                // would test the wrong pass and pass for the wrong reason.
                 listing.ListingSnapshots[0].PricePerM2 = 20_000;
+                listing.ListingSnapshots[0].Price = 20_000 * listing.AreaM2;
             }
 
             var fromClean = ValuationModel.Fit(clean).PredictPricePerM2(FlatMarketSubject());
@@ -300,6 +304,166 @@ namespace StayPilot.UnitTests
 
             Assert.True(drift < 0.02m,
                 $"eight bad rows in four hundred moved the estimate by {drift:P1}; it should barely notice");
+        }
+
+        // ---------- Admission: rows that cannot be describing a home ----------
+
+        [Fact]
+        public void IsUsable_RowWhosePricePerM2DisagreesWithPriceOverArea_IsRejected()
+        {
+            // Real shape, from the database: a Portimão advert asking EUR 123,123 over 91 m2 and
+            // carrying EUR 123/m2. Every field is plausible alone; only the three together are
+            // impossible, so every bound in isolation lets it through.
+            var broken = ListingWith(Typology.T4, areaM2: 91, pricePerM2: 1_353m);
+
+            // Deliberately inside the absolute price bounds, so the row can only be caught by
+            // the three fields disagreeing - not by a floor that would have stopped it anyway.
+            broken.ListingSnapshots[0].PricePerM2 = 5_000m;     // price and area left alone
+
+            Assert.InRange(broken.ListingSnapshots[0].PricePerM2, 400m, 25_000m);
+            Assert.False(ListingQuality.IsUsable(broken, broken.ListingSnapshots[0]));
+        }
+
+        [Fact]
+        public void IsUsable_GrossVersusNetAreaRounding_IsStillAccepted()
+        {
+            // Adverts are loose about gross against net floor area, so the check has to tolerate
+            // a few percent or it starts deleting sound rows.
+            var listing = ListingWith(Typology.T2, areaM2: 70, pricePerM2: 4_000m);
+
+            listing.ListingSnapshots[0].PricePerM2 = 4_120m;    // 3% out
+
+            Assert.True(ListingQuality.IsUsable(listing, listing.ListingSnapshots[0]));
+        }
+
+        [Fact]
+        public void UsableSubjects_ListingFarBelowItsOwnMunicipality_IsNotLearnedFrom()
+        {
+            // A 27 m2 studio asking EUR 13,500 where the município asks EUR 4,781/m2. Internally
+            // consistent, structurally plausible, and not a flat - a timeshare week or a garage.
+            // Only the local market can tell, which is why the absolute floor cannot catch it.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var notAHome = ListingWith(Typology.T0, areaM2: 27, pricePerM2: 500m);
+
+            notAHome.Id = 90_001;
+            notAHome.MarketAreaId = 1;
+            notAHome.MarketArea = listings[0].MarketArea;
+            notAHome.Latitude = listings[0].Latitude;
+            notAHome.Longitude = listings[0].Longitude;
+
+            listings.Add(notAHome);
+
+            Assert.Equal(200, ListingQuality.UsableSubjects(listings, out _).Count);
+        }
+
+        [Fact]
+        public void UsableSubjects_CheapButNotAbsurdListing_IsKept()
+        {
+            // Half the local rate is a bargain, which is the product's whole point. The floor
+            // sits at a fifth precisely so it never reaches the stock a user wants to find.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var bargain = ListingWith(Typology.T2, areaM2: 70, pricePerM2: 2_000m);
+
+            bargain.Id = 90_001;
+            bargain.MarketAreaId = 1;
+            bargain.MarketArea = listings[0].MarketArea;
+            bargain.Latitude = listings[0].Latitude;
+            bargain.Longitude = listings[0].Longitude;
+
+            listings.Add(bargain);
+
+            Assert.Equal(201, ListingQuality.UsableSubjects(listings, out _).Count);
+        }
+
+        [Fact]
+        public void UsableSubjects_ThinMunicipality_HasNoFloorAppliedToIt()
+        {
+            // Too few listings to know what a place charges. Applying a floor anyway would delete
+            // the thin markets first - the exact places least able to spare a row.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var thinPlace = Area(areaId: 2, district: "Bragança", municipality: "Vinhais",
+                count: 5, pricePerM2: 3_000m);
+
+            // One row at a seventh of its own handful of neighbours - under the fraction, but
+            // still above the absolute floor, so only the local rule could reject it. Kept,
+            // because five adverts cannot establish a median worth rejecting anything on.
+            thinPlace[0].ListingSnapshots[0].PricePerM2 = 450m;
+            thinPlace[0].ListingSnapshots[0].Price = 450m * thinPlace[0].AreaM2;
+
+            listings.AddRange(thinPlace);
+
+            Assert.Equal(205, ListingQuality.UsableSubjects(listings, out _).Count);
+        }
+
+        // ---------- Confidence reflects what the model knows, not just what is nearby ----------
+
+        [Fact]
+        public void Estimate_ThinDistrictWithCloseNeighbours_CannotClaimHighConfidence()
+        {
+            // The Portalegre case. Adverts cluster in towns, so ten comps inside a kilometre is
+            // easy even where the model holds almost nothing for the surrounding district - and
+            // distance alone read that as High.
+            var dense = FlatMarket(400, pricePerM2: 4_000);
+
+            // A second place, too small to earn a column of its own at any level, but with its
+            // listings packed into one street so every distance test passes comfortably.
+            // Twelve is under MinimumListingsPerArea, so it earns no column at area, município
+            // or district level. Priced near the dense market on purpose: a place far enough
+            // adrift gets trimmed as outliers and then has no neighbours to test with.
+            var thin = Area(areaId: 2, district: "Portalegre", municipality: "Marvao",
+                count: 12, pricePerM2: 3_200m);
+
+            foreach (var listing in thin)
+            {
+                listing.Latitude = 39.39m + (listing.Id % 12 * 0.0001m);
+                listing.Longitude = -7.37m + (listing.Id % 12 * 0.0001m);
+            }
+
+            var model = ValuationModel.Fit(dense.Concat(thin).ToList());
+
+            var subject = ValuationSubject.FromListing(thin[0]);
+            var prediction = model.PredictPricePerM2(subject);
+
+            // The evidence around it would have earned High on distance and count alone.
+            Assert.True(prediction.LocalComparablesUsed >= 10, "the thin place must have ten neighbours");
+            Assert.True(prediction.NearestComparableMeters <= 1_000, "and they must be within a kilometre");
+            Assert.Equal(LocationPrecision.National, prediction.LocationPrecision);
+
+            // What the user is actually shown must not say High anyway.
+            var owned = BuildOwned(floor: 1);
+
+            owned.MarketAreaId = 2;
+            owned.Latitude = thin[0].Latitude;
+            owned.Longitude = thin[0].Longitude;
+
+            var shown = PropertyValuation.Fit(dense.Concat(thin).ToList()).Estimate(owned, Array.Empty<FeatureEffect>());
+
+            Assert.NotEqual(ValuationConfidence.High, shown.Confidence);
+        }
+
+        [Fact]
+        public void Estimate_DensePlace_IsPricedAtItsOwnArea()
+        {
+            // The other side of the same rule: somewhere with real depth keeps its precision, so
+            // the cap never costs a confident answer that was earned.
+            var model = ValuationModel.Fit(FlatMarket(400, pricePerM2: 4_000));
+
+            var prediction = model.PredictPricePerM2(FlatMarketSubject());
+
+            Assert.Equal(LocationPrecision.Area, prediction.LocationPrecision);
+
+            // And the ceiling costs it nothing - a dense place still reports High.
+            var owned = BuildOwned(floor: 1);
+
+            owned.Latitude = 37.08m;
+            owned.Longitude = -8.10m;
+
+            var shown = PropertyValuation.Fit(FlatMarket(400, pricePerM2: 4_000)).Estimate(owned, Array.Empty<FeatureEffect>());
+
+            Assert.Equal(ValuationConfidence.High, shown.Confidence);
         }
 
         [Fact]
@@ -504,6 +668,57 @@ namespace StayPilot.UnitTests
 
             Assert.Contains("Terrace", labels);
             Assert.DoesNotContain("Balcony", labels);
+        }
+
+        // ---------- Features that cost a property money ----------
+
+        [Fact]
+        public void Estimate_MeasurableNeedsRenovation_ShowsWhatTheWorkCostsRatherThanZero()
+        {
+            // The clamp this replaces valued a flat needing work exactly as though the work were
+            // free - in a product whose headline analytic is renovation upside. A premium that is
+            // negative by nature, and measurable, is the finding.
+            var owned = BuildOwned(floor: 1);
+            owned.HasElevator = false;
+            owned.Condition = PropertyCondition.NeedsRenovation;
+
+            var estimate = Estimate(owned, new FeatureEffect
+            {
+                Feature = PremiumFeatures.NeedsRenovation,
+                Percent = -18m,
+                LowerPercent = -24m,        // range stays entirely below zero, so this is measurable
+                UpperPercent = -12m,
+            });
+
+            var renovation = Assert.Single(estimate.Adjustments, x => x.Label.Contains("enovation"));
+
+            Assert.True(renovation.IsMeasurable);
+            Assert.True(renovation.Amount < 0, $"expected a negative amount, got {renovation.Amount}");
+            AssertAmountIs(estimate.MidPrice, -18m, renovation.Amount);
+        }
+
+        [Fact]
+        public void Estimate_UnmeasurableNegativePremium_IsStillFlooredAtZero()
+        {
+            // A feature that ought to be positive and came back negative out of noise - a garage
+            // at -2% on a range straddling zero. Passing that through would bill the owner for
+            // having a garage, which is the reason the floor existed in the first place.
+            var owned = BuildOwned(floor: 1);
+            owned.HasElevator = false;
+            owned.HasGarage = true;
+
+            var estimate = Estimate(owned, new FeatureEffect
+            {
+                Feature = PremiumFeatures.HasGarage,
+                Percent = -2m,
+                LowerPercent = -9m,         // straddles zero, so the effect is not a finding
+                UpperPercent = 5m,
+            });
+
+            var garage = Assert.Single(estimate.Adjustments, x => x.Label.Contains("arage"));
+
+            Assert.False(garage.IsMeasurable);
+            Assert.Equal(0m, garage.Amount);
         }
 
         [Theory]
@@ -796,6 +1011,94 @@ namespace StayPilot.UnitTests
             listings.Add(secondUnit);
 
             Assert.Equal(202, ListingQuality.UsableSubjects(listings, out var collapsed).Count);
+            Assert.Equal(0, collapsed);
+        }
+
+        [Fact]
+        public void UsableSubjects_SameFlatRelistedAndRegeocoded_IsCountedOnce()
+        {
+            // The duplicate that actually occurs in this database. Both adverts carry the agency's
+            // own reference, but the re-listing was geocoded 300m away and re-priced, so the exact
+            // key sees two different flats. Measured on real data, this shape is 282 of the 293
+            // duplicate groups - the exact key alone caught 11.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var relisted = CopyOfTheSameFlat(listings[0], listingId: 90_001);
+
+            listings[0].Notes = "Ref: 26960236 | Area basis: bruta";
+            relisted.Notes = "Ref: 26960236 | Area basis: bruta | coords approximate";
+            relisted.Latitude = listings[0].Latitude + 0.0027m;          // ~300m north
+            relisted.ListingSnapshots.First().Price += 5_000m;           // re-listed slightly dearer
+
+            listings.Add(relisted);
+
+            Assert.Equal(200, ListingQuality.UsableSubjects(listings, out var collapsed).Count);
+            Assert.Equal(1, collapsed);
+        }
+
+        [Fact]
+        public void UsableSubjects_SameReferenceInTwoDifferentTowns_IsAReferenceCollisionAndBothAreKept()
+        {
+            // An agency reference is its own filing number, not a portal id, so short ones repeat
+            // across agencies: on this data 447 same-reference groups are a Faro flat and a
+            // Setúbal one. Distance is what tells a collision from a re-advertisement.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var elsewhere = CopyOfTheSameFlat(listings[0], listingId: 90_001);
+
+            listings[0].Notes = "Ref: 002 | Area basis: bruta";
+            elsewhere.Notes = "Ref: 002 | Area basis: bruta";
+            elsewhere.Latitude = listings[0].Latitude + 1.0m;            // a different district entirely
+
+            listings.Add(elsewhere);
+
+            Assert.Equal(201, ListingQuality.UsableSubjects(listings, out var collapsed).Count);
+            Assert.Equal(0, collapsed);
+        }
+
+        [Fact]
+        public void UsableSubjects_DevelopmentUnitsUnderTheirOwnReferences_AreAllKept()
+        {
+            // A reference identifies a unit, so a development's flats carry distinct ones even
+            // when they share an address, a size and a price. This is the case the second pass
+            // must not eat - the units are real separate flats and real market evidence.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var unitA = CopyOfTheSameFlat(listings[0], listingId: 90_001);
+            var unitB = CopyOfTheSameFlat(listings[0], listingId: 90_002);
+
+            listings[0].Notes = "Ref: 123891235-26 | Area basis: bruta";
+            unitA.Notes = "Ref: 123891235-27 | Area basis: bruta";
+            unitB.Notes = "Ref: 123891235-28 | Area basis: bruta";
+
+            // Same building, so the geocoder puts them within metres of each other.
+            unitA.Latitude = listings[0].Latitude + 0.00002m;
+            unitB.Latitude = listings[0].Latitude + 0.00004m;
+
+            listings.Add(unitA);
+            listings.Add(unitB);
+
+            Assert.Equal(202, ListingQuality.UsableSubjects(listings, out var collapsed).Count);
+            Assert.Equal(0, collapsed);
+        }
+
+        [Fact]
+        public void UsableSubjects_ListingsWithoutAReference_AreNeverMergedOnDistanceAlone()
+        {
+            // No reference is no evidence of identity. Two neighbouring flats of the same size
+            // must survive, or the second pass becomes a proximity filter that deletes a street.
+            var listings = FlatMarket(200, pricePerM2: 4_000);
+
+            var neighbour = CopyOfTheSameFlat(listings[0], listingId: 90_001);
+
+            listings[0].Notes = null;
+            neighbour.Notes = "Area basis: bruta";                       // notes, but no Ref: prefix
+            neighbour.Latitude = listings[0].Latitude + 0.0001m;
+            neighbour.ListingSnapshots.First().Price += 1_000m;
+
+            listings.Add(neighbour);
+
+            Assert.Equal(201, ListingQuality.UsableSubjects(listings, out var collapsed).Count);
             Assert.Equal(0, collapsed);
         }
 

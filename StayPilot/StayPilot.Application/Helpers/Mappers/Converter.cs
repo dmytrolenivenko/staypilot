@@ -1,4 +1,5 @@
-﻿using StayPilot.Application.Contracts.Request;
+﻿using System.Text.Json;
+using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Contracts.Response.SubResponse;
 using StayPilot.Application.Helpers.Calculators;
@@ -324,6 +325,18 @@ namespace StayPilot.Application.Helpers.Mappers
         /// </summary>
         public static MarketAreaStatsResponse MapToResponse(MarketAreaStats stats)
         {
+            // Rounded once, here, and the discount below derives from this rounded pair. Every
+            // screen prints these to the euro, so subtracting the unrounded originals is how
+            // "5,794 - 2,869" gets displayed as 2,926 - arithmetic a reader can check by eye
+            // and find wrong. Same rule the build-cost receipt already follows.
+            var moveInPerM2 = stats.MoveInMedianPricePerM2 is null
+                ? (decimal?)null
+                : Math.Round(stats.MoveInMedianPricePerM2.Value);
+
+            var projectPerM2 = stats.ProjectMedianPricePerM2 is null
+                ? (decimal?)null
+                : Math.Round(stats.ProjectMedianPricePerM2.Value);
+
             return new MarketAreaStatsResponse
             {
                 Level = stats.Level,
@@ -338,12 +351,12 @@ namespace StayPilot.Application.Helpers.Mappers
                 ProjectCount = stats.ProjectCount,
                 ProjectByConditionCount = stats.ProjectByConditionCount,
                 ProjectByEnergyCount = stats.ProjectByEnergyCount,
-                ProjectMedianPricePerM2 = stats.ProjectMedianPricePerM2,
+                ProjectMedianPricePerM2 = projectPerM2,
                 ProjectMedianAreaM2 = stats.ProjectMedianAreaM2,
                 ProjectP25PricePerM2 = stats.ProjectP25PricePerM2,
                 ProjectP75PricePerM2 = stats.ProjectP75PricePerM2,
                 MoveInCount = stats.MoveInCount,
-                MoveInMedianPricePerM2 = stats.MoveInMedianPricePerM2,
+                MoveInMedianPricePerM2 = moveInPerM2,
                 MoveInMedianAreaM2 = stats.MoveInMedianAreaM2,
                 MoveInP25PricePerM2 = stats.MoveInP25PricePerM2,
                 MoveInP75PricePerM2 = stats.MoveInP75PricePerM2,
@@ -351,9 +364,9 @@ namespace StayPilot.Application.Helpers.Mappers
 
                 // Only a discount when we measured both sides. One side alone tells you nothing
                 // about the gap, and a zero here would read as "no discount" instead of "unknown".
-                RenovationDiscountPerM2 = stats.MoveInMedianPricePerM2 is null || stats.ProjectMedianPricePerM2 is null
+                RenovationDiscountPerM2 = moveInPerM2 is null || projectPerM2 is null
                     ? null
-                    : stats.MoveInMedianPricePerM2 - stats.ProjectMedianPricePerM2,
+                    : moveInPerM2 - projectPerM2,
 
                 RenovationEvidence = BuildRenovationEvidence(stats),
 

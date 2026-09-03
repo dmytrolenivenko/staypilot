@@ -44,5 +44,20 @@ namespace StayPilot.Api.Controllers
 
             return this.ToActionResult(result);
         }
+
+        /// <summary>
+        /// Compares ActiveUrls against every listing this API holds as Active, and marks
+        /// anything missing from that list as sold (a new Sold snapshot, nothing is deleted).
+        /// Meant to run right after a scraper's full sweep of the source site, using the URLs
+        /// it actually saw still live.
+        /// </summary>
+        [Authorize(Roles = "Api.Write")]
+        [HttpPost]
+        public async Task<ActionResult<ReconcileActiveListingsResponse>> ReconcileActiveListingsAsync(ReconcileActiveListingsRequest request)
+        {
+            var result = await _service.ReconcileActiveListingsAsync(request);
+
+            return this.ToActionResult(result);
+        }
     }
 }

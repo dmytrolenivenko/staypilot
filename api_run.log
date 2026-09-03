@@ -1,0 +1,45 @@
+Using launch settings from C:\repos\staypilot\StayPilot\StayPilot.Api\Properties\launchSettings.json...
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5278
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\repos\staypilot\StayPilot\StayPilot.Api
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter[0]
+      Microsoft.IdentityModel Version: 8.22.0.0. Date 09/01/2026 14:55:37. PII logging is OFF. See https://aka.ms/IdentityModel/PII for details. 
+      IDX10242: Security token: '[PII of type 'Microsoft.IdentityModel.JsonWebTokens.JsonWebToken' is hidden. For more details, see https://aka.ms/IdentityModel/PII.]' has a valid signature.
+fail: Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter[0]
+      IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '17/08/2026 15:26:34', Current time (UTC): '01/09/2026 14:55:37'.
+info: Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter[0]
+      IDX10242: Security token: '[PII of type 'Microsoft.IdentityModel.JsonWebTokens.JsonWebToken' is hidden. For more details, see https://aka.ms/IdentityModel/PII.]' has a valid signature.
+info: Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter[0]
+      IDX10239: Lifetime of the token is valid.
+info: Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter[0]
+      IDX10234: Audience Validated.Audience: 'c447c11c-f8a9-4bf5-a9b1-6d176064370c'
+info: Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter[0]
+      IDX10245: Creating claims identity from the validated token: '[PII of type 'Microsoft.IdentityModel.JsonWebTokens.JsonWebToken' is hidden. For more details, see https://aka.ms/IdentityModel/PII.]'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (49ms) [Parameters=[@externalId='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[ExternalId], [u].[PreferredLocale], [u].[UserEmail], [u].[UserName]
+      FROM [Users] AS [u]
+      WHERE [u].[ExternalId] = @externalId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[@p0='?' (DbType = DateTime2), @p1='?' (Size = 450), @p2='?' (Size = 4000), @p3='?' (Size = 450), @p4='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      INSERT INTO [Users] ([CreatedAtUtc], [ExternalId], [PreferredLocale], [UserEmail], [UserName])
+      OUTPUT INSERTED.[Id]
+      VALUES (@p0, @p1, @p2, @p3, @p4);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@ownerUserId='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT [o].[Id], [o].[AreaM2], [o].[BalconyCount], [o].[Bathrooms], [o].[Condition], [o].[ConstructionYear], [o].[CreatedAtUtc], [o].[DistanceToBeachMeters], [o].[EnergyCertificate], [o].[Floor], [o].[HasAirConditioning], [o].[HasCityView], [o].[HasElevator], [o].[HasGarage], [o].[HasParking], [o].[HasSeaView], [o].[HasSwimmingPool], [o].[HasTerrace], [o].[IsFurnished], [o].[Latitude], [o].[Longitude], [o].[MarketAreaId], [o].[Name], [o].[NearestBeachMarkerId], [o].[NearestBeachName], [o].[Notes], [o].[OwnerUserId], [o].[PropertyType], [o].[PurchaseDate], [o].[PurchasePrice], [o].[RenovationInvestment], [o].[RenovationYear], [o].[TotalFloors], [o].[Typology], [o].[UpdatedAtUtc]
+      FROM [OwnedProperties] AS [o]
+      WHERE [o].[OwnerUserId] = @ownerUserId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [o].[OwnedPropertyId], [o].[ResultJson], [o].[ValuatedAtUtc]
+      FROM [OwnedPropertyValuations] AS [o]
