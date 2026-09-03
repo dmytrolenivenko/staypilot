@@ -16,9 +16,17 @@ import { ValuationComponent } from './features/valuation/valuation.component';
 import { BuildCostComponent } from './features/build-cost/build-cost.component';
 import { ComingSoonComponent } from './features/coming-soon/coming-soon.component';
 import { ComingSoonInfo } from './core/models/coming-soon-info';
+import { GroupHubComponent } from './features/group-hub/group-hub.component';
+import { NAV_GROUPS, NavGroup } from './core/models/nav-groups';
 
 function comingSoon(info: ComingSoonInfo) {
   return { info };
+}
+
+function groupHub(title: string) {
+  const group = NAV_GROUPS.find(g => g.title === title) as NavGroup;
+
+  return { group };
 }
 
 // Pathless parent wrapping every route so canActivateChild runs on every
@@ -32,6 +40,10 @@ export const routes: Routes = [
     canActivateChild: [MsalGuard],
     children: [
       { path: '', component: HomeComponent },
+      { path: 'listings', component: GroupHubComponent, data: groupHub('Listings') },
+      { path: 'market-areas', component: GroupHubComponent, data: groupHub('Market areas') },
+      { path: 'portfolio', component: GroupHubComponent, data: groupHub('Portfolio') },
+      { path: 'tools', component: GroupHubComponent, data: groupHub('Tools') },
       { path: 'market-overview', component: MarketOverviewComponent },
       { path: 'market-areas/leaderboard', component: MarketAreaLeaderboardComponent },
       { path: 'market-areas/budget', component: MarketAreaBudgetComponent },

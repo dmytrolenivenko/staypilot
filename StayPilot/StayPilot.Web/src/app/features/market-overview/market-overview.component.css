@@ -41,25 +41,25 @@
   font-size: var(--fs-sm);
 }
 
-/* The distribution: price range on the left, bar in the middle, count on the right. */
+/* The distribution: price range on the left, bar in the middle, count on the right.
+   The grid lives on the list itself, not on each <li> — a per-row grid sizes "max-content"
+   to that row's own label, so the widest label (e.g. a seven-figure whole-country range)
+   set its own track and every other bar started at a different x, unaligned. One grid
+   shared across all rows sizes each column to the widest cell in it, so every track lines
+   up regardless of how long that row's own label happens to be. */
 .distribution {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-}
-
-/* The label column sizes to its widest label instead of being pinned at 13rem. A whole-country
-   slice runs to seven-figure prices, and a nowrap label wider than its track used to spill
-   across the bar and swallow the row. The bar keeps whatever is left, down to a floor. */
-.distribution li {
   display: grid;
   grid-template-columns: max-content minmax(4rem, 1fr) 6rem;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-1) var(--sp-3);
   font-size: var(--fs-sm);
+}
+
+.distribution li {
+  display: contents;
 }
 
 .range {
@@ -90,9 +90,15 @@
 
 /* Narrow windows: let the bar rows stack their labels instead of squashing the bar. */
 @media (max-width: 720px) {
-  .distribution li {
+  .distribution {
     grid-template-columns: 1fr;
+  }
+
+  .distribution li {
+    display: flex;
+    flex-direction: column;
     gap: 0.15rem;
+    margin-bottom: var(--sp-1);
   }
 }
 
