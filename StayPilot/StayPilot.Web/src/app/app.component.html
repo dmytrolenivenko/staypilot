@@ -1,65 +1,128 @@
 <div class="shell">
-  <aside class="sidebar">
-    <a class="brand" routerLink="/">
-      <span class="brand-mark">SP</span>
-      <span class="brand-text">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" routerLink="/">
+        <span class="brand-mark">SP</span>
         <span class="brand-title">StayPilot</span>
-        <span class="brand-sub">Comps · Algarve</span>
-      </span>
-    </a>
-
-    <nav>
-      <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        Overview
       </a>
 
-      <span class="nav-group">Listings</span>
-      <a class="nav-link" routerLink="/listing-browser" routerLinkActive="active">Browse</a>
-      <a class="nav-link" routerLink="/listings/top-deals" routerLinkActive="active">Top deals</a>
-      <a class="nav-link" routerLink="/listings/lookup" routerLinkActive="active">Look up by id</a>
-      <a class="nav-link" routerLink="/listings/investment-analysis" routerLinkActive="active">Investment analysis</a>
+      <nav class="nav" (click)="closeGroup()">
+        <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          Overview
+        </a>
 
-      <span class="nav-group">Market areas</span>
-      <a class="nav-link" routerLink="/market-overview" routerLinkActive="active">Market overview</a>
-      <a class="nav-link" routerLink="/market-areas/leaderboard" routerLinkActive="active">Leaderboard</a>
-      <a class="nav-link" routerLink="/market-areas/budget" routerLinkActive="active">What money buys</a>
-      <a class="nav-link" routerLink="/market-areas/neighbours" routerLinkActive="active">Neighbour gaps</a>
-      <a class="nav-link" routerLink="/market-areas/renovation" routerLinkActive="active">Renovation upside</a>
+        @for (group of navGroups; track group.title) {
+          <div
+            class="nav-item"
+            routerLinkActive="active"
+            [class.open]="openGroup() === group.title"
+            (mouseenter)="onGroupHoverEnter(group.title)"
+            (mouseleave)="onGroupHoverLeave()"
+          >
+            <a
+              class="nav-trigger"
+              [routerLink]="group.hubPath"
+              [attr.aria-expanded]="openGroup() === group.title"
+            >
+              {{ group.title }}
+              <svg class="chevron" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </a>
 
-      <span class="nav-group">My portfolio</span>
-      <a class="nav-link" routerLink="/my-properties" routerLinkActive="active">My properties</a>
-      <a class="nav-link" routerLink="/valuation" routerLinkActive="active">Valuation</a>
+            <div class="nav-menu">
+              @for (link of group.links; track link.path) {
+                <a class="nav-menu-link" [routerLink]="link.path" routerLinkActive="active" [class.planned]="link.planned">
+                  <span class="nav-menu-row">
+                    <span class="nav-menu-title">{{ link.title }}</span>
+                    @if (link.planned) {
+                      <span class="badge badge-soon">Planned</span>
+                    }
+                  </span>
+                  <span class="nav-menu-desc">{{ link.desc }}</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+      </nav>
 
-      <span class="nav-group">Tools</span>
-      <a class="nav-link" routerLink="/feature-impact" routerLinkActive="active">Feature impact</a>
-      <a class="nav-link" routerLink="/build-cost" routerLinkActive="active">Build cost</a>
+      <div class="topbar-actions">
+        <label class="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input
+            type="text"
+            inputmode="numeric"
+            placeholder="Search listing id"
+            [(ngModel)]="searchId"
+            (keydown.enter)="runSearch()"
+          />
+        </label>
 
-      <span class="nav-group">Planned</span>
-      <a class="nav-link planned" routerLink="/beach-proximity" routerLinkActive="active">Beach proximity</a>
-    </nav>
+        <button type="button" class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="theme() === 'light' ? 'Switch to dark theme' : 'Switch to light theme'">
+          {{ theme() === 'light' ? '◐' : '◑' }}
+        </button>
 
-    <div class="account-box">
-      @if (isSignedIn()) {
-        <span class="account-info">
-          @if (accountName()) {
-            <span class="account-name">{{ accountName() }}</span>
+        <div class="account-box">
+          @if (isSignedIn()) {
+            <span class="account-info">
+              @if (accountName()) {
+                <span class="account-name">{{ accountName() }}</span>
+              }
+            </span>
+            <button type="button" class="account-action" (click)="logout()">Sign out</button>
+          } @else {
+            <button type="button" class="account-action account-action-primary" (click)="login()">Sign in</button>
           }
-          @if (accountEmail()) {
-            <span class="account-email">{{ accountEmail() }}</span>
-          }
-        </span>
-        <button type="button" class="account-action" (click)="logout()">Sign out</button>
-      } @else {
-        <button type="button" class="account-action" (click)="login()">Sign in</button>
-      }
+        </div>
+      </div>
     </div>
-
-    <button type="button" class="theme-toggle" (click)="toggleTheme()">
-      {{ theme() === 'light' ? '◐ Dark' : '◑ Light' }}
-    </button>
-  </aside>
+  </header>
 
   <main class="content">
     <router-outlet />
   </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-top">
+        <div class="site-footer-brand">
+          <a class="footer-brand" routerLink="/">
+            <span class="footer-brand-mark">SP</span>
+            <span class="footer-brand-title">StayPilot</span>
+          </a>
+          <p class="site-footer-tagline">
+            Every advert on the coast, read as one market — medians over averages, sample size always
+            shown, and rentals never dressed up as sale prices.
+          </p>
+        </div>
+
+        <nav class="site-footer-cols">
+          <div class="site-footer-col">
+            <h4>Overview</h4>
+            <a routerLink="/">Market snapshot</a>
+          </div>
+          @for (group of navGroups; track group.title) {
+            <div class="site-footer-col">
+              <h4>{{ group.title }}</h4>
+              @for (link of group.links; track link.path) {
+                <a [routerLink]="link.path">
+                  {{ link.title }}
+                  @if (link.planned) {
+                    <span class="footer-soon">Soon</span>
+                  }
+                </a>
+              }
+            </div>
+          }
+        </nav>
+      </div>
+
+      <div class="site-footer-bottom">
+        <p>© {{ currentYear }} StayPilot Comps.</p>
+        <p>
+          Figures are asking prices from public adverts, not confirmed sale prices — medians shown only
+          for places with {{ reliableListings }}+ listings behind them.
+        </p>
+      </div>
+    </div>
+  </footer>
 </div>

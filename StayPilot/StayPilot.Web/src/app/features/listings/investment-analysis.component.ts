@@ -82,7 +82,6 @@ export class InvestmentAnalysisComponent implements OnInit {
 
     this.loading.set(true);
     this.error.set(null);
-    this.result.set(null);
 
     const call = this.mode() === 'owned'
       ? this.service.analyzeOwnedProperty(targetId, renovationCostOverride)
@@ -114,14 +113,15 @@ export class InvestmentAnalysisComponent implements OnInit {
     this.analyze(targetId, value);
   }
 
-  /** Picks one of the fixed-price renovation scopes (Cosmetic / Full renovation / Full rebuild). */
+  /**
+   * Picks one of the fixed-price renovation scopes (Cosmetic / Full renovation / Full rebuild)
+   * into the input — the user still has to press Recalculate to re-run the analysis with it.
+   */
   selectRenovationOption(option: BuildCostOption): void {
-    const targetId = this.idInput();
-    if (!targetId || option.cost === undefined) {
+    if (option.cost === undefined) {
       return;
     }
     this.renovationCostInput.set(option.cost);
-    this.analyze(targetId, option.cost);
   }
 
   /** Drops the user's override and goes back to the calculated renovation cost. */

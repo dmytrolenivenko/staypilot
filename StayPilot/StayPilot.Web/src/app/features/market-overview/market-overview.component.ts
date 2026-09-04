@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketOverviewService } from '../../core/services/market-overview.service';
 import { MarketOverviewBreakdownItem, MarketOverviewResponse } from '../../core/models/market-overview';
-import { PROPERTY_TYPES, PropertyType, TYPOLOGIES, Typology } from '../../core/models/enums';
+import { PropertyType, TYPOLOGIES, Typology } from '../../core/models/enums';
 import { AreaLevel } from '../../core/models/market-area-stats';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
@@ -15,6 +15,11 @@ import { apiErrorMessage } from '../../core/api-error';
 
 // Bars offered for the distribution. Ten reads well on a normal window; the API caps at 20.
 const BUCKET_CHOICES = [6, 10, 14, 20];
+
+// Collection only covers apartments today, so offering Villa/House/Land here just invites a
+// slice that is guaranteed empty. Widen this list by hand as more types get collected — it is
+// not worth deriving from the data just to save editing one array later.
+const AVAILABLE_PROPERTY_TYPES: PropertyType[] = ['Apartment'];
 
 // Every column of the by-typology table is sortable.
 type TypologySort = 'typology' | 'listings' | 'price' | 'area' | 'pricePerM2';
@@ -92,7 +97,7 @@ function emptyForm(): OverviewForm {
   styleUrl: './market-overview.component.css'
 })
 export class MarketOverviewComponent implements OnInit {
-  readonly propertyTypes = PROPERTY_TYPES;
+  readonly propertyTypes = AVAILABLE_PROPERTY_TYPES;
   readonly typologies = TYPOLOGIES;
   readonly bucketChoices = BUCKET_CHOICES;
 
