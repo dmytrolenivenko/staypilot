@@ -18,26 +18,27 @@
     </div>
     <div class="hero-chart">
       @if (overview(); as ov) {
-        @if (typologyMix().length > 0) {
+        @if (topAreasByPopularity().length > 0) {
           <div class="chart-head">
-            <span class="chart-title">Listings by typology · coast-wide</span>
+            <span class="chart-title">Most popular areas · coast-wide</span>
             <span class="chart-ratio">{{ formatCount(ov.listingCount) }} adverts</span>
           </div>
-          <div class="chart-bars typology-bars">
-            @for (row of typologyMix(); track row.typology) {
+          <div class="chart-bars hero-bars">
+            @for (row of topAreasByPopularity(); track row.displayName) {
               <div class="chart-col">
                 <span class="chart-value">{{ formatCount(row.listingCount) }}</span>
                 <div
                   class="chart-bar single"
-                  [style.height.%]="barPct(row.listingCount, typologyMax())"
-                  [title]="row.typology + ' · ' + formatCount(row.listingCount) + ' listings · ' + euro(row.medianPricePerM2) + '/m²'"
+                  [style.height.%]="barPct(row.listingCount, topAreasMax())"
+                  [title]="row.displayName + ' · ' + formatCount(row.listingCount) + ' listings · ' + euro(row.medianPricePerM2) + '/m²'"
                 ></div>
-                <span class="chart-label">{{ row.typology }}</span>
+                <span class="chart-tag">{{ euro(row.medianPricePerM2) }}/m²</span>
+                <span class="chart-label">{{ row.displayName }}</span>
               </div>
             }
           </div>
         } @else {
-          <p class="hint">No typology data yet.</p>
+          <p class="hint">No area data yet.</p>
         }
       } @else if (marketLoading()) {
         <p class="hint">Loading…</p>
@@ -202,13 +203,23 @@
                 <div class="chart-bar a" [style.height.%]="barPctOfPair(gap.cheaper.medianPricePerM2, gap.cheaper.medianPricePerM2, gap.expensive.medianPricePerM2)"></div>
                 <span class="chart-tag">Pay less</span>
                 <span class="chart-label" [title]="gap.cheaper.displayName">{{ gap.cheaper.displayName }}</span>
+                <span class="chart-sub">{{ formatCount(gap.cheaper.listingCount) }} listings</span>
               </div>
               <div class="chart-col">
                 <span class="chart-value">{{ euro(gap.expensive.medianPricePerM2) }}<span class="chart-unit">/m²</span></span>
                 <div class="chart-bar b" [style.height.%]="barPctOfPair(gap.expensive.medianPricePerM2, gap.cheaper.medianPricePerM2, gap.expensive.medianPricePerM2)"></div>
                 <span class="chart-tag">Pay more</span>
                 <span class="chart-label" [title]="gap.expensive.displayName">{{ gap.expensive.displayName }}</span>
+                <span class="chart-sub">{{ formatCount(gap.expensive.listingCount) }} listings</span>
               </div>
+            </div>
+            <div class="reno-evidence">
+              <p class="reno-reason muted">
+                {{ euro(gap.expensive.medianPricePerM2 - gap.cheaper.medianPricePerM2) }}/m² apart, {{ formatKm(gap.distanceKm) }}
+                from each other — on a typical 90m² apartment that is roughly
+                {{ euro((gap.expensive.medianPricePerM2 - gap.cheaper.medianPricePerM2) * 90) }} in the asking price alone,
+                for what a map would call the same corner of the coast.
+              </p>
             </div>
           } @else if (gapLoading()) {
             <p class="hint">Loading…</p>
@@ -246,16 +257,22 @@
                 <span class="chart-value">{{ euro(area.projectMedianPricePerM2!) }}<span class="chart-unit">/m²</span></span>
                 <div class="chart-bar a" [style.height.%]="barPctOfPair(area.projectMedianPricePerM2!, area.projectMedianPricePerM2!, area.moveInMedianPricePerM2!)"></div>
                 <span class="chart-tag">As a project</span>
+                <span class="chart-sub">{{ formatCount(area.projectCount) }} listings</span>
               </div>
               <div class="chart-col">
                 <span class="chart-value">{{ euro(area.moveInMedianPricePerM2!) }}<span class="chart-unit">/m²</span></span>
                 <div class="chart-bar b" [style.height.%]="barPctOfPair(area.moveInMedianPricePerM2!, area.projectMedianPricePerM2!, area.moveInMedianPricePerM2!)"></div>
                 <span class="chart-tag">Move-in ready</span>
+                <span class="chart-sub">{{ formatCount(area.moveInCount) }} listings</span>
               </div>
             </div>
             @if (area.renovationEvidence; as evidence) {
               <div class="reno-evidence">
                 <span class="badge" [class]="trustClass(evidence)">{{ evidence.confidence }} confidence</span>
+                <p class="reno-reason muted">
+                  On a typical {{ sqm(area.projectMedianAreaM2!) }}m² project, that {{ euro(area.renovationDiscountPerM2!) }}/m²
+                  gap is worth roughly {{ euro(area.renovationDiscountPerM2! * area.projectMedianAreaM2!) }} once finished.
+                </p>
                 <p class="reno-reason muted">{{ evidence.reason }}</p>
               </div>
             }

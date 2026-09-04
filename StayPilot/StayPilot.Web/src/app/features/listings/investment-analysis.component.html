@@ -60,9 +60,12 @@
   </section>
 
   @if (result(); as result) {
-    <section class="card">
+    <section class="card" [class.is-refreshing]="loading()">
       <div class="card-head">
         <span class="card-title">{{ result.town }} · {{ result.municipality }}, {{ result.district }}</span>
+        @if (loading()) {
+          <span class="muted">Recalculating…</span>
+        }
         <span
           class="badge badge-small"
           [class.badge-high]="result.confidence === 'High'"

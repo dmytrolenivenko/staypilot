@@ -16,6 +16,10 @@ const PREVIEW_BUDGET = 320_000;
 // How many rows each narrative preview shows before it points the reader at the full screen.
 const PREVIEW_ROWS = 5;
 
+// How many areas the hero chart charts — wider than a narrative preview since the hero has
+// the full width of its half of the page to fill, not a card squeezed next to a paragraph.
+const HERO_TOP_AREAS = 8;
+
 // The neighbour-gap preview's scope. Not the strictest possible reading — the same starting
 // point market-area-neighbours.component.ts opens with (município grain, a modest listing
 // floor, a 25km radius, a 20% gap floor), so the "biggest gap" shown here is the same kind of
@@ -92,18 +96,12 @@ export class HomeComponent implements OnInit {
   marketError = signal<string | null>(null);
   private districtRows = signal<MarketAreaStatsResponse[]>([]);
   private townRows = signal<MarketAreaStatsResponse[]>([]);
+  private municipalityRows = signal<MarketAreaStatsResponse[]>([]);
   // Coast-wide asking-price read (median €, median €/m², typology mix) — the same unfiltered
   // GetMarketOverview call the Market overview screen makes when nothing is narrowed. Public:
   // the hero chart reads it directly for the typology mix and the total listing count.
   overview = signal<MarketOverviewResponse | null>(null);
 
-  // Every typology on sale, smallest first — the hero chart. Reuses data the overview call
-  // already carries, rather than a second endpoint: a coast-wide slice runs from T0 through
-  // T6+, which is enough bars to read as a real chart rather than two or three columns.
-  typologyMix = computed(() =>
-    [...(this.overview()?.typologies ?? [])].sort((a, b) => typologyRooms(a.typology) - typologyRooms(b.typology))
-  );
-  typologyMax = computed(() => Math.max(0, ...this.typologyMix().map(t => t.listingCount)));
   // When the server last recalculated these figures. Either leaderboard call carries it —
   // whichever comes back non-null wins. There is no per-listing upload timestamp exposed
   // anywhere in the API, so this is the honest stand-in for "how fresh is this".
@@ -112,6 +110,18 @@ export class HomeComponent implements OnInit {
   private reliableTownRows = computed(() =>
     this.townRows().filter(row => row.listingCount >= RELIABLE_LISTINGS)
   );
+  private reliableMunicipalityRows = computed(() =>
+    this.municipalityRows().filter(row => row.listingCount >= RELIABLE_LISTINGS)
+  );
+
+  // Hero chart: the coast's most popular municipalities by listing count, not by price —
+  // "popular" means where the stock actually is, the same read as heroStats().busiest but as
+  // a chart instead of a single tile. Municipality grain, not town — coarse enough that eight
+  // bars cover a meaningful share of the coast instead of eight adjacent parishes.
+  topAreasByPopularity = computed(() =>
+    [...this.reliableMunicipalityRows()].sort((a, b) => b.listingCount - a.listingCount).slice(0, HERO_TOP_AREAS)
+  );
+  topAreasMax = computed(() => Math.max(0, ...this.topAreasByPopularity().map(row => row.listingCount)));
 
   // --- "Renovation upside" preview ----------------------------------------------------
   // The single reliable town with the largest genuine, evidenced renovation discount.
@@ -260,13 +270,15 @@ export class HomeComponent implements OnInit {
       // returned row always has at least one listing behind it.
       districts: this.service.getLeaderboard({ level: 'District', minListings: 1 }),
       towns: this.service.getLeaderboard({ level: 'Town', minListings: 1 }),
+      municipalities: this.service.getLeaderboard({ level: 'Municipality', minListings: 1 }),
       // No filters = the whole coast, the same call the Market overview screen makes with
       // nothing narrowed — gives the hero a real median price/€/m² and typology mix.
       overview: this.overviewService.getMarketOverview({})
     }).subscribe({
-      next: ({ districts, towns, overview }) => {
+      next: ({ districts, towns, municipalities, overview }) => {
         this.districtRows.set(districts.items);
         this.townRows.set(towns.items);
+        this.municipalityRows.set(municipalities.items);
         this.overview.set(overview);
         this.calculatedAtUtc.set(districts.calculatedAtUtc ?? towns.calculatedAtUtc ?? null);
         this.marketLoading.set(false);
@@ -274,6 +286,7 @@ export class HomeComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.districtRows.set([]);
         this.townRows.set([]);
+        this.municipalityRows.set([]);
         this.overview.set(null);
         this.marketError.set(apiErrorMessage(err, 'Could not load the market stats.'));
         this.marketLoading.set(false);

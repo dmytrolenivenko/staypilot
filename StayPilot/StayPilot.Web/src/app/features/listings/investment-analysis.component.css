@@ -56,3 +56,9 @@
   padding-top: var(--sp-2);
   border-top: 1px dashed var(--border);
 }
+
+/* Recalculating: keep the previous result visible, just dimmed, instead of clearing it. */
+.is-refreshing {
+  opacity: 0.6;
+  pointer-events: none;
+}

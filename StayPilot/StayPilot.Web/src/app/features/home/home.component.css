@@ -88,8 +88,9 @@
 }
 
 /* --- Hero chart: the shape of the coast's stock, not a finding about one place -
-   Every typology on sale, T0 up. Plain, on the page, under a rule - not boxed in a
-   card - so it reads as part of the hero rather than a floating stat panel. */
+   The most popular areas by listing count, with each bar's €/m² alongside it. Plain,
+   on the page, under a rule - not boxed in a card - so it reads as part of the hero
+   rather than a floating stat panel. */
 
 .hero-chart {
   flex: 1;
@@ -99,14 +100,16 @@
   gap: var(--sp-4);
 }
 
-/* More columns than the other mini-charts on this page (a coast-wide slice runs
-   T0 through T6+) - a fixed 6rem basis per column would run wider than the hero's
-   own half of the page, so columns share whatever width is there instead. */
-.typology-bars {
+/* More columns than the other mini-charts on this page, and taller - the hero has the
+   full half of the page to fill, not a card squeezed next to a paragraph. A fixed 6rem
+   basis per column would run wider than the hero's own half of the page, so columns
+   share whatever width is there instead. */
+.hero-bars {
   gap: var(--sp-2);
+  height: 22rem;
 }
 
-.typology-bars .chart-col {
+.hero-bars .chart-col {
   flex: 1 1 0;
   min-width: 0;
 }
@@ -198,7 +201,7 @@
   align-items: flex-end;
   justify-content: center;
   gap: var(--sp-6);
-  height: 11rem;
+  height: 17rem;
 }
 
 .chart-col {
@@ -260,6 +263,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* A second, smaller number under the label - the sample size behind the bar, so a
+   two-bar comparison reads as backed by real listing counts, not just two prices. */
+.chart-sub {
+  width: 100%;
+  font-size: 0.6875rem;
+  color: var(--text-faint);
+  text-align: center;
 }
 
 /* --- Section shell --------------------------------------------------------- */
@@ -338,7 +350,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--sp-4);
 }
 
