@@ -211,6 +211,11 @@ namespace StayPilot.Infrastructure.Repositories
             }
 
             return await query
+                // Nothing here is ever written back, and tracking every active listing in the
+                // country costs more than the query itself: EF builds a change-tracking entry per
+                // listing, per market area and per snapshot, then holds the lot for a request that
+                // keeps ten rows. Unscoped, that is most of the wait on this screen.
+                .AsNoTracking()
                 .Include(x => x.MarketArea)
                 .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
                 .ToListAsync();

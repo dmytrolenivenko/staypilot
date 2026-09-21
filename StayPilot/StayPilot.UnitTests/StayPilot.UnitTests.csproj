@@ -15,6 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- CurrentUser reads ClaimsPrincipal off IHttpContextAccessor, so it lives in the Api layer
+         and can only be tested from here. -->
+    <ProjectReference Include="..\StayPilot.Api\StayPilot.Api.csproj" />
     <ProjectReference Include="..\StayPilot.Application\StayPilot.Application.csproj" />
     <ProjectReference Include="..\StayPilot.Domain\StayPilot.Domain.csproj" />
     <ProjectReference Include="..\StayPilot.Infrastructure\StayPilot.Infrastructure.csproj" />
