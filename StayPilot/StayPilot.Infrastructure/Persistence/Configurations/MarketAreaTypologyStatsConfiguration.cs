@@ -19,6 +19,8 @@ namespace StayPilot.Infrastructure.Persistence.Configurations
             builder.Property(x => x.MedianPrice).HasPrecision(18, 2);
             builder.Property(x => x.MedianPricePerM2).HasPrecision(18, 2);
             builder.Property(x => x.MedianAreaM2).HasPrecision(10, 2);
+            builder.Property(x => x.ProjectMedianPricePerM2).HasPrecision(18, 2);
+            builder.Property(x => x.MoveInMedianPricePerM2).HasPrecision(18, 2);
 
             // Store the typology as its name ("T2") and not its number, same reason the level and
             // the premium feature do: reordering the enum cannot then repoint saved rows.

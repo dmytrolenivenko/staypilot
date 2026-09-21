@@ -161,7 +161,15 @@ namespace StayPilot.Application.Helpers.Calculators
                     ListingCount = forTypology.Prices.Count,
                     MedianPrice = Median(forTypology.Prices),
                     MedianAreaM2 = Median(forTypology.Areas),
-                    MedianPricePerM2 = Median(forTypology.PricesPerM2)
+                    MedianPricePerM2 = Median(forTypology.PricesPerM2),
+
+                    // The same project/move-in split the parent row carries, kept inside this one
+                    // typology. Gated at the same count, so a typology never carries a median the
+                    // parent would have refused to save.
+                    ProjectCount = forTypology.ProjectPricesPerM2.Count,
+                    ProjectMedianPricePerM2 = MedianOrNull(forTypology.ProjectPricesPerM2),
+                    MoveInCount = forTypology.MoveInPricesPerM2.Count,
+                    MoveInMedianPricePerM2 = MedianOrNull(forTypology.MoveInPricesPerM2)
                 });
             }
 
@@ -419,7 +427,12 @@ namespace StayPilot.Application.Helpers.Calculators
                     BargainCount++;
                 }
 
-                if (IsProject(listing))
+                // Read once, then used for this place AND for its typology below. Asking twice is
+                // how the two would eventually answer differently.
+                var isProject = IsProject(listing);
+                var isMoveInReady = !isProject && IsMoveInReady(listing);
+
+                if (isProject)
                 {
                     ProjectPricesPerM2.Add(snapshot.PricePerM2);
                     ProjectAreas.Add(listing.AreaM2);
@@ -435,7 +448,7 @@ namespace StayPilot.Application.Helpers.Calculators
                         ProjectByEnergyCount++;
                     }
                 }
-                else if (IsMoveInReady(listing))
+                else if (isMoveInReady)
                 {
                     MoveInPricesPerM2.Add(snapshot.PricePerM2);
                     MoveInAreas.Add(listing.AreaM2);
@@ -462,6 +475,15 @@ namespace StayPilot.Application.Helpers.Calculators
                 forTypology.Prices.Add(snapshot.Price);
                 forTypology.PricesPerM2.Add(snapshot.PricePerM2);
                 forTypology.Areas.Add(listing.AreaM2);
+
+                if (isProject)
+                {
+                    forTypology.ProjectPricesPerM2.Add(snapshot.PricePerM2);
+                }
+                else if (isMoveInReady)
+                {
+                    forTypology.MoveInPricesPerM2.Add(snapshot.PricePerM2);
+                }
             }
 
             /// <summary>
@@ -489,6 +511,12 @@ namespace StayPilot.Application.Helpers.Calculators
             public List<decimal> PricesPerM2 { get; } = new();
 
             public List<decimal> Areas { get; } = new();
+
+            /// <summary>Price for each square meter of this typology's stock that needs work.</summary>
+            public List<decimal> ProjectPricesPerM2 { get; } = new();
+
+            /// <summary>And of the same typology's stock that does not.</summary>
+            public List<decimal> MoveInPricesPerM2 { get; } = new();
         }
     }
 }

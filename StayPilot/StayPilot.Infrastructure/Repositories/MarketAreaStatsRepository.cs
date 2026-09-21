@@ -53,7 +53,12 @@ namespace StayPilot.Infrastructure.Repositories
         private IQueryable<MarketAreaStats> Scoped(
             AreaLevel level, int minListings, string? district, string? municipality)
         {
+            // Read-only by contract: both callers map these rows straight into a response and
+            // never save them. RecalculateMarketAreaStatsAsync deletes through
+            // GetAllMarketAreaStatsAsync instead, which is still tracked - so nothing that writes
+            // comes through here.
             var query = _context.MarketAreaStats
+                .AsNoTracking()
                 .Where(x => x.Level == level && x.ListingCount >= minListings);
 
             if (!string.IsNullOrWhiteSpace(district))
