@@ -67,6 +67,9 @@
               @if (accountName()) {
                 <span class="account-name">{{ accountName() }}</span>
               }
+              @if (accountEmail()) {
+                <span class="account-email">{{ accountEmail() }}</span>
+              }
             </span>
             <button type="button" class="account-action" (click)="logout()">Sign out</button>
           } @else {

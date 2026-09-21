@@ -289,13 +289,28 @@
   gap: var(--sp-2);
 }
 
-.account-name {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
+.account-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.account-name,
+.account-email {
   white-space: nowrap;
   max-width: 12rem;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.account-name {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.account-email {
+  font-size: calc(var(--fs-xs) - 1px);
+  color: var(--text-faint);
 }
 
 .account-action {
