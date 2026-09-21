@@ -3,6 +3,12 @@
   width: 7rem;
 }
 
+/* The empty-portfolio state: the shared .empty block is built for a caption, and the button
+   that gets someone their first valuation deserves more than sitting inline in that sentence. */
+.empty .btn {
+  margin-top: var(--sp-3);
+}
+
 /* ---- The list ---------------------------------------------------------- */
 
 /* The whole row is the button, so it has to look like one. Deliberately not

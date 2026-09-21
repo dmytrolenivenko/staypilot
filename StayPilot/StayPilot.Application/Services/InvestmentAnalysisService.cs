@@ -83,16 +83,12 @@ namespace StayPilot.Application.Services
 
             // Same size effect as across typologies, just inside one: a "T5" here can be anything
             // from a modest house to a five-bed villa twice the size. Same +-25% band
-            // GetComparablePropertyListingAsync uses for a fair comp.
+            // GetComparablePropertyListingAsync uses for a fair comp. An atypical size doesn't
+            // mean there's no data to price against - it just means the median may not fit this
+            // particular unit as well, so it degrades confidence instead of blocking the analysis.
             const decimal areaBand = 0.25m;
             var isTypicalSizeForTypology = listing.AreaM2 >= typologyStats.MedianAreaM2 * (1 - areaBand)
                 && listing.AreaM2 <= typologyStats.MedianAreaM2 * (1 + areaBand);
-
-            if (!isTypicalSizeForTypology)
-            {
-                response.AddError(ErrorCode.InvestmentAnalysisNotEnoughData, listing.MarketArea.Town);
-                return response;
-            }
 
             var buildCostBasis = await _buildCostService.GetBuildCostBasisAsync(cancellationToken);
 
@@ -102,7 +98,9 @@ namespace StayPilot.Application.Services
             var totalInvestment = InvestmentAnalysisCalculator.EstimateTotalInvestment(snapshot.Price, renovationCost);
             var profit = InvestmentAnalysisCalculator.EstimateProfit(resaleValue, totalInvestment);
             var profitMarginPercent = InvestmentAnalysisCalculator.EstimateProfitMarginPercent(profit, totalInvestment);
-            var confidence = InvestmentAnalysisCalculator.DetermineConfidence(typologyStats.ListingCount);
+            var confidence = isTypicalSizeForTypology
+                ? InvestmentAnalysisCalculator.DetermineConfidence(typologyStats.ListingCount)
+                : ValuationConfidence.Low;
 
             response.PropertyListingId = listing.Id;
             response.AskPrice = snapshot.Price;
@@ -178,16 +176,12 @@ namespace StayPilot.Application.Services
 
             // Same size effect as across typologies, just inside one: a "T5" here can be anything
             // from a modest house to a five-bed villa twice the size. Same +-25% band
-            // GetComparablePropertyListingAsync uses for a fair comp.
+            // GetComparablePropertyListingAsync uses for a fair comp. An atypical size doesn't
+            // mean there's no data to price against - it just means the median may not fit this
+            // particular unit as well, so it degrades confidence instead of blocking the analysis.
             const decimal areaBand = 0.25m;
             var isTypicalSizeForTypology = property.AreaM2 >= typologyStats.MedianAreaM2 * (1 - areaBand)
                 && property.AreaM2 <= typologyStats.MedianAreaM2 * (1 + areaBand);
-
-            if (!isTypicalSizeForTypology)
-            {
-                response.AddError(ErrorCode.InvestmentAnalysisNotEnoughData, marketArea.Town);
-                return response;
-            }
 
             var buildCostBasis = await _buildCostService.GetBuildCostBasisAsync(cancellationToken);
 
@@ -197,7 +191,9 @@ namespace StayPilot.Application.Services
             var totalInvestment = InvestmentAnalysisCalculator.EstimateTotalInvestment(property.PurchasePrice, renovationCost);
             var profit = InvestmentAnalysisCalculator.EstimateProfit(resaleValue, totalInvestment);
             var profitMarginPercent = InvestmentAnalysisCalculator.EstimateProfitMarginPercent(profit, totalInvestment);
-            var confidence = InvestmentAnalysisCalculator.DetermineConfidence(typologyStats.ListingCount);
+            var confidence = isTypicalSizeForTypology
+                ? InvestmentAnalysisCalculator.DetermineConfidence(typologyStats.ListingCount)
+                : ValuationConfidence.Low;
 
             response.OwnedPropertyId = property.Id;
             response.AskPrice = property.PurchasePrice;
