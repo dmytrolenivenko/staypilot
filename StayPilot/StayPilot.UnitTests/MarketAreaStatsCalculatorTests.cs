@@ -241,6 +241,43 @@ namespace StayPilot.UnitTests
             Assert.Equal(280000m, typologies.Single(x => x.Typology == Typology.T3).MedianPrice);
         }
 
+        [Fact]
+        public void Calculate_TypologyCarriesItsOwnProjectAndMoveInMedians()
+        {
+            // Three cheap projects and three dear finished flats, all T2, all in one town. Top
+            // Deals grades a listing against whichever of these two matches its own condition,
+            // so the split has to survive down to the typology row and not only to its parent.
+            var listings = ThreeListings(2000m, areaM2: 90, typology: Typology.T2, condition: PropertyCondition.NeedsRenovation);
+            listings.AddRange(ThreeListings(5000m, areaM2: 90, typology: Typology.T2, condition: PropertyCondition.NewBuild));
+
+            var rows = MarketAreaStatsCalculator.Calculate(listings);
+            var typology = Assert.Single(Row(rows, AreaLevel.Town, "Faro", "Albufeira", "Guia").TypologyStats);
+
+            Assert.Equal(3, typology.ProjectCount);
+            Assert.Equal(2000m, typology.ProjectMedianPricePerM2);
+            Assert.Equal(3, typology.MoveInCount);
+            Assert.Equal(5000m, typology.MoveInMedianPricePerM2);
+
+            // And the blended median still sits between them, so nothing was moved rather than added.
+            Assert.Equal(3500m, typology.MedianPricePerM2);
+        }
+
+        [Fact]
+        public void Calculate_TypologyWithTooFewOfOneCondition_LeavesThatMedianNull()
+        {
+            // Three finished flats and a single project. Null is the honest answer for the
+            // project side: "we cannot say", which callers must read as skip, not as no discount.
+            var listings = ThreeListings(5000m, areaM2: 90, typology: Typology.T2, condition: PropertyCondition.NewBuild);
+            listings.Add(Listing("Faro", "Albufeira", "Guia", 2000m, areaM2: 90, condition: PropertyCondition.NeedsRenovation));
+
+            var rows = MarketAreaStatsCalculator.Calculate(listings);
+            var typology = Assert.Single(Row(rows, AreaLevel.Town, "Faro", "Albufeira", "Guia").TypologyStats);
+
+            Assert.Equal(1, typology.ProjectCount);
+            Assert.Null(typology.ProjectMedianPricePerM2);
+            Assert.Equal(5000m, typology.MoveInMedianPricePerM2);
+        }
+
         // --- Renovation split ---------------------------------------------------------
 
         [Fact]

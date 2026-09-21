@@ -142,9 +142,10 @@
     @if (loading()) {
       <p class="empty">Pricing every property against the marketâ¦</p>
     } @else if (items().length === 0) {
-      <p class="empty">
-        You have no properties yet. Add one under <a routerLink="/my-properties">My properties</a> first.
-      </p>
+      <div class="empty">
+        <p>Nothing to value yet — add a property and it shows up here.</p>
+        <a class="btn" routerLink="/my-properties">Create property →</a>
+      </div>
     } @else {
       <div class="table-wrap">
         <table class="data-table portfolio">

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Response;
@@ -46,6 +47,12 @@ namespace StayPilot.Api.Controllers
         /// Returns 404 if the property does not exist, 400 if its town has no move-in-ready
         /// median to resell against, or if <paramref name="renovationCostOverride"/> is negative.
         /// </summary>
+        // Reads someone's own property, so it needs a signed-in caller - same rule as every
+        // action on OwnedPropertyController. Action-level, not class-level: Analyze above reads
+        // a public listing and stays anonymous like the rest of the listing endpoints.
+        // Without this the service still asked ICurrentUser who was calling, and on an anonymous
+        // request that meant provisioning a User row with a null ExternalId.
+        [Authorize]
         [HttpGet("{ownedPropertyId}")]
         public async Task<ActionResult<InvestmentAnalysisResponse>> AnalyzeOwnedProperty(int ownedPropertyId, [FromQuery] decimal? renovationCostOverride, CancellationToken cancellationToken)
         {

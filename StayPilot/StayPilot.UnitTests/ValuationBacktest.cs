@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Domain.Entities;
@@ -183,7 +184,38 @@ namespace StayPilot.UnitTests
                 $"p90 {Percentile(errors, 0.90),6:F1}%");
         }
 
-        private static List<PropertyListing> LoadListings()
+        /// <summary>
+        /// How long a full market area recalculation takes on the real table. Not an accuracy
+        /// check - a feasibility one.
+        ///
+        /// The recalculation prices EVERY listing in order to count the underpriced ones, so its
+        /// cost is the per-property cost multiplied by the size of the table. A neighbour search
+        /// that scans every point is fast enough to price one flat and nobody notices; run 65,000
+        /// times it stops finishing, the endpoint times out, and every stats screen silently
+        /// serves whatever it last managed to compute rather than failing. That is exactly what
+        /// happened here, and nothing in the suite would have caught it.
+        /// </summary>
+        [Fact]
+        public void Recalculation_OnTheRealTable_StillFinishes()
+        {
+            if (!Enabled)
+                return;
+
+            var listings = LoadAllListings();
+
+            var clock = Stopwatch.StartNew();
+            var rows = MarketAreaStatsCalculator.Calculate(listings);
+            clock.Stop();
+
+            _output.WriteLine(
+                $"recalculated {listings.Count} listings into {rows.Count} rows " +
+                $"in {clock.Elapsed.TotalSeconds:F1}s");
+
+            Assert.NotEmpty(rows);
+        }
+
+        /// <summary>Every listing in the table, with what the calculators need loaded.</summary>
+        private static List<PropertyListing> LoadAllListings()
         {
             var options = new DbContextOptionsBuilder<StayPilotDbContext>()
                 .UseSqlServer(ConnectionString)
@@ -191,11 +223,16 @@ namespace StayPilot.UnitTests
 
             using var context = new StayPilotDbContext(options);
 
-            var listings = context.PropertyListings
+            return context.PropertyListings
                 .AsNoTracking()
                 .Include(x => x.MarketArea)          // the location fallback needs district/municipality
                 .Include(x => x.ListingSnapshots)
                 .ToList();
+        }
+
+        private static List<PropertyListing> LoadListings()
+        {
+            var listings = LoadAllListings();
 
             // The same admission rule the fit uses, so the holdout and the training set are drawn
             // from one population. Scoring against a row the model refuses to learn from would

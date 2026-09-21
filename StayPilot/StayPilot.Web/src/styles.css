@@ -8,7 +8,7 @@
 
 :root {
   /* surfaces */
-  --bg: #f5f6f8;
+  --bg: #ffffff;
   --surface: #ffffff;
   --surface-2: #f8f9fb;
   --surface-hover: #f1f3f5;
@@ -23,9 +23,12 @@
   --text-muted: #64707f;
   --text-faint: #98a2b0;
 
-  /* intent */
-  --accent: #2563eb;
-  --accent-soft: rgba(37, 99, 235, 0.1);
+  /* intent — a deep navy, not the flat #2563eb SaaS blue this used to be. The first attempt
+     (#17233d) was so dark it read as black, not blue — this one keeps enough lightness/
+     saturation that the hue is actually visible while still being clearly "deep", not bright. */
+  --accent: #1e3a72;
+  --accent-strong: #16294f;
+  --accent-soft: rgba(30, 58, 114, 0.1);
   --accent-contrast: #ffffff;
   --success: #12805c;
   --success-soft: rgba(18, 128, 92, 0.12);
@@ -33,6 +36,13 @@
   --warn-soft: rgba(165, 90, 0, 0.12);
   --error: #c02929;
   --error-soft: rgba(192, 41, 41, 0.1);
+
+  /* footer — deliberately a fixed dark neutral, not a colour, and not tied to the
+     light/dark toggle: it's the one part of the page that's darker than the page. */
+  --footer-bg: #14171c;
+  --footer-text: #f3f4f6;
+  --footer-text-muted: #9aa3af;
+  --footer-border: rgba(255, 255, 255, 0.1);
 
   /* spacing — 4px grid */
   --sp-1: 0.25rem;
@@ -43,12 +53,14 @@
   --sp-6: 1.5rem;
   --sp-8: 2rem;
 
-  /* radius */
-  --r-sm: 6px;
-  --r: 10px;
+  /* radius — kept small on purpose; this is a data app, not a marketing page */
+  --r-xs: 3px;
+  --r-sm: 4px;
+  --r: 4px;
   --r-pill: 999px;
 
   /* type */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --fs-xs: 0.75rem;
   --fs-sm: 0.8125rem;
   --fs-base: 0.9375rem;
@@ -76,15 +88,22 @@
   --text-muted: #97a1af;
   --text-faint: #6c7682;
 
-  --accent: #5b8cff;
-  --accent-soft: rgba(91, 140, 255, 0.14);
-  --accent-contrast: #0b0e12;
+  --accent: #7c98cc;
+  --accent-strong: #a3bce0;
+  --accent-soft: rgba(124, 152, 204, 0.16);
+  --accent-contrast: #0b1220;
   --success: #3ecf8e;
   --success-soft: rgba(62, 207, 142, 0.14);
   --warn: #e0a33c;
   --warn-soft: rgba(224, 163, 60, 0.14);
   --error: #f2726f;
   --error-soft: rgba(242, 114, 111, 0.14);
+
+  /* darker still than the already-dark page, so the footer keeps reading as its own band */
+  --footer-bg: #05070a;
+  --footer-text: #e7eaee;
+  --footer-text-muted: #838d99;
+  --footer-border: rgba(255, 255, 255, 0.08);
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 
@@ -106,7 +125,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--fs-base);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -191,8 +210,8 @@ a {
 /* --- Card --------------------------------------------------------------- */
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
   border-radius: var(--r);
   box-shadow: var(--shadow);
 }
@@ -263,6 +282,17 @@ button {
 button:hover:not(:disabled),
 .btn:hover {
   filter: brightness(1.06);
+}
+
+/* The primary fill is near-black in light mode, near-white in dark mode — brightness(1.06)
+   does nothing visible on either (black barely lightens, white just clips), so the solid
+   accent buttons get a dedicated opacity hover instead. Scoped to .btn (and the bare
+   <button> fallback) only - every other button variant (page-btn, theme-toggle, the header's
+   account actions, …) overrides the background away from --accent and keeps its own hover. */
+.btn:not(.btn-secondary):not(.btn-ghost):not(.btn-danger):hover:not(:disabled),
+button:not(.secondary):not(.danger):not(.sm):not(.page-btn):hover:not(:disabled) {
+  filter: none;
+  opacity: 0.85;
 }
 
 button:disabled,
@@ -458,7 +488,7 @@ input[type='checkbox'] {
   gap: var(--sp-2) var(--sp-5);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  background: var(--surface-2);
+  background: var(--surface);
   padding: var(--sp-3);
   margin: 0;
 }
@@ -478,9 +508,13 @@ input[type='checkbox'] {
 
 /* --- Tables ------------------------------------------------------------- */
 
-/* Wide tables scroll inside their card instead of stretching the page. */
+/* Wide tables scroll inside their card instead of stretching the page. Padded and given a floor
+   height so the card the table sits in reads as a proper panel rather than shrink-wrapping to
+   whatever few rows happen to be loaded. */
 .table-wrap {
   overflow-x: auto;
+  padding: var(--sp-4) 0;
+  min-height: 22rem;
 }
 
 .data-table {
@@ -489,28 +523,31 @@ input[type='checkbox'] {
   font-size: var(--fs-sm);
 }
 
+/* No rule between rows — a row is told apart from the next by air, not a line under it. One
+   rule total, over the header, is the only line this table draws. */
 .data-table th,
 .data-table td {
   text-align: left;
-  padding: 0.5rem var(--sp-4);
-  border-bottom: 1px solid var(--border);
+  padding: 1.4rem var(--sp-4);
   white-space: nowrap;
 }
 
+/* The one line the table draws, and it sits over the header, not boxed around it — the header
+   reads as sitting on the page rather than floating above it in its own strip, which is what
+   made a plain ranked list read as a dense data grid instead of a list of places. */
 .data-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--text-muted);
   font-size: var(--fs-xs);
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-.data-table tbody tr:last-child td {
-  border-bottom: none;
+  padding-top: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-top: 2px solid var(--text);
 }
 
 .data-table tbody tr:hover {
@@ -632,7 +669,7 @@ input[type='checkbox'] {
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  background: var(--surface-2);
+  background: var(--surface);
 }
 
 .stat-value {
@@ -690,7 +727,7 @@ input[type='checkbox'] {
 .badge {
   display: inline-block;
   padding: 0.1rem 0.5rem;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-xs);
   font-size: var(--fs-xs);
   font-weight: 600;
   white-space: nowrap;
@@ -837,6 +874,80 @@ input[type='checkbox'] {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+}
+
+/* --- Feature grid --------------------------------------------------------
+   A grid of link-cards: a group hub listing every screen inside it, the
+   home page's "under the hood" section. One primitive so both stay in sync. */
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0 var(--sp-6);
+}
+
+/* A hairline under each card reads as a list of options rather than a wall of
+   boxes — the border-per-tile look this replaced. The background only shows
+   up on hover, so the resting state is just type on the page. */
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  border-radius: var(--r-sm);
+  border-bottom: 1px solid var(--border);
+  padding: var(--sp-4);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.12s ease;
+}
+
+.feature-card:hover {
+  background: var(--surface-hover);
+}
+
+.feature-card-planned {
+  opacity: 0.7;
+}
+
+.feature-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.feature-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.feature-card-title {
+  font-weight: 650;
+  font-size: var(--fs-md);
+}
+
+.feature-card-desc {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Hidden until hover, so the resting card stays quiet and the affordance reads
+   as a response to intent rather than permanent chrome. */
+.feature-card-arrow {
+  flex: none;
+  color: var(--text-faint);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.feature-card:hover .feature-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--accent);
 }
 
 .row {

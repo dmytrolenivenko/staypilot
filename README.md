@@ -80,7 +80,10 @@ dotnet ef migrations add <Name> --project StayPilot.Infrastructure --startup-pro
 dotnet ef database update --project StayPilot.Infrastructure --startup-project StayPilot.Api
 ```
 
-There is no CI configured yet and no lint tooling beyond the C# compiler/analyzers.
+CI/CD lives in `.github/workflows/` — `ci.yml` gates every PR into `master`/`stable`/`release`
+(builds + tests the API, builds the Angular app), and `infra.yml` / `deploy-api.yml` /
+`deploy-web.yml` deploy each branch to its own Azure environment. There is no lint tooling
+beyond the C# compiler/analyzers, and the front-end tests are not run in CI.
 
 ## API surface
 
