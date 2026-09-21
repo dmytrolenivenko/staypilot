@@ -22,9 +22,17 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
                 }
             ]
             cors: {
-                allowedOrigins: [
-                    'https://${staticWebApp.properties.defaultHostname}'
-                ]
+                // prod is also served from the custom domain www.staypilot.vip, on top of
+                // the auto-generated Static Web App hostname - both need to be CORS-allowed
+                // for the browser to call this API from either origin.
+                allowedOrigins: env == 'prod'
+                    ? [
+                        'https://${staticWebApp.properties.defaultHostname}'
+                        'https://www.staypilot.vip'
+                      ]
+                    : [
+                        'https://${staticWebApp.properties.defaultHostname}'
+                      ]
             }
         }
     }
