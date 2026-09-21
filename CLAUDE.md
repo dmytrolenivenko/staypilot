@@ -24,12 +24,15 @@ This repo holds the Web API (`StayPilot/`, `StayPilot.slnx`) and, as of 2026-07-
 Angular front end at `StayPilot/StayPilot.Web/` — see its own `README.md` for how to run it. It's
 plain CSS/standalone-components, no UI framework, and only wires up screens the API actually
 supports. Most of the product pitch is now real (Market Overview, Leaderboard, What Money Buys,
-Neighbour Gaps, Renovation Upside, Listing Browser, Listing Lookup,
-My Properties, Valuation, Feature Impact, Build Cost); Beach Proximity is the last placeholder
-screen stating which backend endpoint it's waiting on — check `app.routes.ts` there before
-assuming a module is real. The plain Market Areas list screen was folded into Market Overview
-(the zone table is a filter, not something to read as a list), so `/market-areas` no longer
-routes anywhere. **Add Listing and Price Snapshots were removed from the front end** (2026-08-18):
+Neighbour Gaps, Renovation Upside, Listing Browser, Listing Lookup, Top Deals,
+Investment Analysis, My Properties, Valuation, Feature Impact, Build Cost); Beach Proximity is
+the last placeholder screen stating which backend endpoint it's waiting on — check
+`app.routes.ts` there before assuming a module is real. On top of those there is a Home
+dashboard and four `GroupHubComponent` landing pages (`/listings`, `/market-areas`,
+`/portfolio`, `/tools`) driven by `core/models/nav-groups.ts` — they are menus over the screens
+above, not screens of their own. The plain Market Areas *list* screen was folded into Market
+Overview (the zone table is a filter, not something to read as a list); `/market-areas` is now
+that group hub instead. **Add Listing and Price Snapshots were removed from the front end** (2026-08-18):
 they are data-entry screens for the scraper's job, not something a customer of this tool should
 see. The `ListingSnapshot` and `PropertyListing` write endpoints on the API are untouched — the
 scraper still uses them; only the UI for hand-entry is gone, so do not re-add those screens.
@@ -57,6 +60,10 @@ dotnet run --project StayPilot.Api           # Swagger UI at the launch URL (see
 # Tests (xUnit)
 dotnet test StayPilot.slnx
 dotnet test --filter "FullyQualifiedName~ClassName.MethodName"   # run a single test
+
+# Same, while the API is running under VS or `dotnet run` (otherwise the build fails on a
+# locked StayPilot.Api.dll - the test project references StayPilot.Api, so it has to build it):
+dotnet test StayPilot.slnx -p:BaseOutputPath=bin-diag/ -p:UseAppHost=false
 
 # EF Core migrations (run from StayPilot/ folder)
 dotnet ef migrations add <Name> --project StayPilot.Infrastructure --startup-project StayPilot.Api
@@ -97,8 +104,13 @@ StayPilot.Api             Controllers (thin — no business logic), Program.cs c
 StayPilot.Application     Request/Response DTOs (Contracts/) and service interfaces (Interfaces/) only — no implementations
 StayPilot.Domain          Entities and enums, plain C# classes, no NuGet deps
 StayPilot.Infrastructure  EF Core DbContext + migrations + entity configurations + repositories
-StayPilot.UnitTests       xUnit
+StayPilot.UnitTests       xUnit — references all four, Api included (CurrentUser lives there)
 ```
+
+Tests use **hand-written `file`-scoped fakes, not Moq** — there is no mocking library and adding
+one is not the answer to a fake being tedious. A fake that stands in for a repository should
+apply the same filter the real one applies (see `FakeStatsRepo`, `FakeOwnedPropertyRepo`);
+otherwise the test passes against a service that dropped the argument entirely.
 
 Service implementations (`PropertyListingService`, `MarketAreaService`, `MarketOverviewService`,
 etc.) live in `StayPilot.Application/Services/`, alongside the DTOs in `Contracts/` and the
@@ -158,13 +170,14 @@ alongside its service.
 
   | Controller | Actions |
   |---|---|
-  | `PropertyListingController` | `BulkAddPropertyListing` (POST, `Api.Write`), `GetById`, `FilterPropertyAsync` (POST — browse/filter/page) |
+  | `PropertyListingController` | `BulkAddPropertyListing` (POST, `Api.Write`), `GetById`, `FilterPropertyAsync` (POST — browse/filter/page), `GetTopDeals` (best-priced active listings in one place, ranked against their own town's median €/m² — reads `MarketAreaStats`, so it is only as fresh as the last recalculation) |
   | `ListingSnapshotController` | `CreateListingSnapshotAsync` (POST, `Api.Write`), `GetListingSnapshotByPropertyIdAsync`, `ReconcileActiveListingsAsync` (POST, `Api.Write` — marks listings missing from a caller's URL list as sold) |
   | `MarketAreaController` | `GetAll`, `GetOptions` (place picker), `GetLeaderboard`, `GetBudgetRanking`, `GetNeighbourGaps`, `RecalculateMarketAreaStats` (POST, `[Authorize]` — any signed-in user) |
   | `MarketOverviewController` | `GetMarketOverview` — live-computed slice by place + property type + typology, no recalculation step |
   | `OwnedPropertyController` | **class-level `[Authorize]`.** `GetOwnedPropertyAsync`, `GetAllOwnedPropertyAsync`, `AddOwnedPropertyAsync` (POST), `DeleteOwnedPropertyAsync`, `UpdateOwnedPropertyAsync`, `EstimateEvaluationsOwnedpropertyAsync` (single-property valuation), `ListValuationsOwnedpropertyAsync` (portfolio valuation), `RevalueOwnedPropertiesAsync`/`RevalueOwnedPropertyAsync` (POST, plain `[Authorize]` — recalculates only the caller's own rows, see below) |
   | `PremiumFeatureController` | `GetAllPremiumFeatures`, `ReCalculatePremiumFeaturesValue` (POST, `[Authorize]` — any signed-in user) |
   | `BuildCostController` | `GetBasis` — build-cost rates, see *Build cost* below |
+  | `InvestmentAnalysisController` | `Analyze` (one listing: renovation cost, resale value, profit — anonymous, like every other listing read), `AnalyzeOwnedProperty` (**action-level `[Authorize]`** — same math with the purchase price standing in for the ask; it resolves `ICurrentUser`, so it must never be anonymous, see *Per-user data isolation*). Both optionally return an AI-written thesis, see *AI narrative* below |
 
 ### Domain model
 
@@ -198,12 +211,28 @@ alongside its service.
   read/write in `OwnedPropertyService` resolves the caller's id via `ICurrentUser` and filters or
   stamps by it; see *Authentication & multi-tenancy* below. This is the IDOR fix: before it, id was
   a bare sequential int and any signed-in caller could read/edit/delete any other tenant's rows.
+- `OwnedPropertyValuation` — **a cache, not a history**: one row per `OwnedProperty` (its
+  `OwnedPropertyId` is also the primary key), holding the whole last valuation as a JSON blob in
+  `ResultJson` plus `ValuatedAtUtc`. Revaluing overwrites the row; a property with no row has
+  never been valued. It exists because pricing a portfolio fits the model over every listing and
+  then runs a comp search per property — fine once, far too slow on every visit to the Valuation
+  screen. So the read path (`GetCachedPortfolioAsync`, and the `ValuatedMidPrice`/`ValuatedAtUtc`
+  stamped onto `GetAllOwnedProperties`) reads this table, and only the explicit Re-price action
+  (`RevalueOwnedProperties`/`RevalueOwnedProperty`) recomputes and writes it. The blob is never
+  queried by its contents — every read wants all of it or none — which is why it is not a column
+  per field. Consequence to keep in mind: **adding a field to the valuation response does not
+  appear on cached rows until each property is re-priced.**
 - `User` — a person who has signed in at least once. Created **just-in-time** by `ICurrentUser`
   (`StayPilot.Api/Services/CurrentUser.cs`) on first authenticated request, keyed by the Entra `oid`
   claim (`ExternalId`, unique index) — there is no registration endpoint and no admin-created-user
   flow. `UserEmail` is also uniquely indexed; it's read off the token's `preferred_username` claim
   first, falling back to the `emails` claim array (Entra External ID's local email+password accounts
-  don't reliably populate `preferred_username` the way workforce accounts do).
+  don't reliably populate `preferred_username` the way workforce accounts do). **That fallback is
+  load-bearing, not defensive**: without it every CIAM local account stored an empty `UserEmail`,
+  so the first one signed up fine and the *second* collided on `IX_Users_UserEmail` and could
+  never get in at all. Covered by `CurrentUserTests`. Residual gap: a token carrying neither
+  claim still stores `""`, and two of those would still collide — the durable fix is a filtered
+  unique index (`WHERE [UserEmail] <> ''`), which needs a migration and has not been done.
 - `HousePriceGrowth` — **seeded reference data**, one row per Portuguese district plus a
   national fallback (`District = ""`). The percentages are *planning assumptions*, not a
   measured index: nobody scraped INE into this table, and every screen that quotes them also
@@ -239,6 +268,26 @@ alongside its service.
   empty `IndexPeriod` rather than a 500 — see `BuildCostService`'s class doc for the full rationale
   and the quotes it was cross-checked against. `IneRepository` exists purely because INE's site
   sends no CORS headers, so the browser cannot call it directly — this API is a proxy.
+
+### AI narrative (Investment Analysis)
+
+`InvestmentAnalysisService` optionally attaches a few-sentence written thesis to its numbers via
+`IInvestmentNarrativeClient` → `ClaudeInvestmentNarrativeClient`
+(`StayPilot.Infrastructure/Repositories/`, filed with the repositories because it is another
+outbound call, not because it touches the database — same as `IneRepository`). Points to hold:
+
+- It is **formatting, not analysis**: the model is handed numbers the service already computed
+  and asked to write them up. Nothing downstream reads the text back, and no decision depends on
+  it — so `claude-haiku-4-5` and a 400-token cap, not a reasoning model.
+- Failure is not an error. An `AnthropicException` is caught and the narrative comes back null;
+  the analysis response is returned in full without it. Never let this call fail the endpoint.
+- The key comes from `Anthropic:ApiKey` — **User Secrets locally, an `Anthropic__ApiKey` app
+  setting in Azure** — deliberately routed through `IConfiguration` rather than the SDK's own
+  `ANTHROPIC_API_KEY` environment variable, so it goes through the same config path as
+  everything else. The `AnthropicClient` is registered as a singleton in `Program.cs` with the
+  SDK's 10-minute default timeout cut to 20 seconds: this call blocks one HTTP response.
+- Unlike every other config value, this one is a real secret and is **not** in
+  `appsettings.json`. If the key is absent the client simply fails and the narrative is null.
 
 Known scaling caveats (documented, not yet fixed — see the vault's Session-08 log for full
 reasoning before touching these): `GetMarketId` and the nearest-beach lookup both do a full
@@ -328,6 +377,14 @@ edge case: two near-simultaneous first requests from the same brand-new user can
 lookup and both try to insert — the unique index on `ExternalId` makes the loser's
 `SaveChangesAsync` throw. Not worth solving speculatively; worth fixing if it's ever actually hit.
 
+**`CurrentUser` throws `UnauthorizedAccessException` when there is no `oid` on the request.**
+That is a guard against exactly one mistake: an action that resolves `ICurrentUser` but forgot
+its `[Authorize]`. It used to sail past and provision a `User` with a null `ExternalId` — a
+`NOT NULL`, uniquely indexed column, so the first anonymous caller poisoned the table for the
+next one. `InvestmentAnalysisController.AnalyzeOwnedProperty` was that action, and is now
+`[Authorize]`d. **If you see this exception, the fix is the missing attribute on the action, not
+a change to `CurrentUser`.** Covered by `CurrentUserTests`.
+
 `OwnedPropertyService` and `OwnedPropertyRepository` resolve `ICurrentUser.GetCurrentUserIdAsync()`
 on every call and filter (`GetOwnedPropertyAsync`, `GetAllOwnedPropertyAsync`, `DeleteOwnedPropertyAsync`)
 or stamp (`AddOwnedPropertyAsync`) by it — this, plus `OwnedPropertyController`'s class-level
@@ -362,6 +419,12 @@ when its call site broke against the changed repository signature — and got th
   gated by a plain `[Authorize]`. Silent renewal failure (an expired/dead session) falls back to no
   token rather than throwing — the API's resulting 401 is treated as the real signal that an
   interactive re-login is needed, not something to paper over client-side.
+- `core/api-error.ts` — turns a failed `HttpErrorResponse` into one readable line, handling both
+  shapes the API can produce: this codebase's `{ errors: [{ errorCode, errorMessage }] }`, and
+  ASP.NET's own `ValidationProblemDetails` (`{ errors: { Field: ["..."] } }`), which model
+  binding emits before a controller is ever reached. Only about a quarter of the components use
+  it — the rest still hand-roll the same two checks inline. **Use it in new screens** rather than
+  adding a third copy.
 - `app.component.ts`/`.html` — sidebar Sign in/Sign out control; shows both the account's display
   name and email once signed in. Email extraction has a fallback: tries `account.username` first,
   falls back to the ID token's `emails` claim array — CIAM's local email+password accounts don't
