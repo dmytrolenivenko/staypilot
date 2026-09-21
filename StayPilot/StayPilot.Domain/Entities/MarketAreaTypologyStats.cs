@@ -53,5 +53,26 @@ namespace StayPilot.Domain.Entities
         /// Middle price for each square meter for this typology here.
         /// </summary>
         public decimal MedianPricePerM2 { get; set; }
+
+        /// <summary>
+        /// The same four numbers the parent row carries for the stock that needs work and the
+        /// stock that does not, but kept inside one typology. Deals are graded against these:
+        /// the parent's figures blend a studio in with a five-bedroom house, and €/m² falls as
+        /// flats get bigger, so grading a large flat against them calls its size a bargain.
+        ///
+        /// Null when this typology has too few of that kind of listing here to take a median
+        /// from - the same floor the parent row uses. Null means "we cannot say", never "no
+        /// discount", so callers must skip the listing rather than grade it against zero.
+        /// </summary>
+        public int ProjectCount { get; set; }
+
+        /// <inheritdoc cref="ProjectCount"/>
+        public decimal? ProjectMedianPricePerM2 { get; set; }
+
+        /// <inheritdoc cref="ProjectCount"/>
+        public int MoveInCount { get; set; }
+
+        /// <inheritdoc cref="ProjectCount"/>
+        public decimal? MoveInMedianPricePerM2 { get; set; }
     }
 }

@@ -696,14 +696,14 @@ namespace StayPilot.Application.Helpers.Calculators
         private readonly double _medianFloor;
         private readonly double _medianBeachMeters;
         private readonly double[] _coefficients;
-        private readonly List<(double Latitude, double Longitude, double Residual)> _residuals;
+        private readonly PointGrid<double> _residuals;
 
         /// <summary>
         /// Where the listings the fit learned from are, and which market area each was filed
         /// under. Separate from <see cref="_residuals"/> because this answers a different
         /// question - not "how wrong is the regression here" but "which zone is here".
         /// </summary>
-        private readonly List<(double Latitude, double Longitude, int MarketAreaId)> _listingLocations;
+        private readonly PointGrid<int> _listingLocations;
 
         /// <summary>How many listings the fit learned from, after the outlier pass.</summary>
         public int TrainingListings { get; }
@@ -909,11 +909,11 @@ namespace StayPilot.Application.Helpers.Calculators
             _coefficients = fit.Coefficients;
 
             // The residual surface: where the regression is wrong, and where geographically.
-            _residuals = new List<(double, double, double)>();
+            _residuals = new PointGrid<double>();
 
             // The same points, carrying the zone each was filed under rather than its error -
             // this is what lets a property's coordinates decide which zone it is in.
-            _listingLocations = new List<(double, double, int)>();
+            _listingLocations = new PointGrid<int>();
 
             var averageTarget = targets.Average();
             var residualSumOfSquares = 0d;
@@ -930,10 +930,11 @@ namespace StayPilot.Application.Helpers.Calculators
 
                 if (subject.Latitude.HasValue && subject.Longitude.HasValue)
                 {
-                    _residuals.Add(((double)subject.Latitude.Value, (double)subject.Longitude.Value, residual));
+                    var latitude = (double)subject.Latitude.Value;
+                    var longitude = (double)subject.Longitude.Value;
 
-                    _listingLocations.Add((
-                        (double)subject.Latitude.Value, (double)subject.Longitude.Value, subject.MarketAreaId));
+                    _residuals.Add(latitude, longitude, residual);
+                    _listingLocations.Add(latitude, longitude, subject.MarketAreaId);
                 }
             }
 
@@ -996,17 +997,18 @@ namespace StayPilot.Application.Helpers.Calculators
             var longitudeDegrees = (double)longitude.Value;
 
             var winner = _listingLocations
-                .Select(x => (
-                    x.MarketAreaId,
-                    Distance: Calculator.CalculateDistanceMeters(
-                        latitudeDegrees, longitudeDegrees, x.Latitude, x.Longitude)))
-                // A catch-all area gets no vote. It usually holds more listings in a town centre
-                // than any real zone does, so left in it wins nearly every vote - which replaced
-                // one mis-picked zone with a worse one, and cost a Quarteira flat 30%.
-                .Where(x => x.Distance <= LocationVoteMeters && !_catchAllAreas.Contains(x.MarketAreaId))
-                .OrderBy(x => x.Distance)
-                .Take(LocationVoteCount)
-                .GroupBy(x => x.MarketAreaId)
+                .Nearest(
+                    latitudeDegrees,
+                    longitudeDegrees,
+                    LocationVoteCount,
+                    LocationVoteMeters,
+                    // A catch-all area gets no vote. It usually holds more listings in a town
+                    // centre than any real zone does, so left in it wins nearly every vote -
+                    // which replaced one mis-picked zone with a worse one, and cost a Quarteira
+                    // flat 30%. Filtered inside the search so a discarded vote does not use up
+                    // one of the twenty-five places.
+                    keep: marketAreaId => !_catchAllAreas.Contains(marketAreaId))
+                .GroupBy(x => x.Value)
                 .Select(x => (MarketAreaId: x.Key, Weight: x.Sum(vote => NeighbourWeight(vote.Distance))))
                 .OrderByDescending(x => x.Weight)
                 .ThenBy(x => x.MarketAreaId)
@@ -1100,14 +1102,7 @@ namespace StayPilot.Application.Helpers.Calculators
             var latitude = (double)subject.Latitude.Value;
             var longitude = (double)subject.Longitude.Value;
 
-            return _residuals
-                .Select(x => (
-                    Distance: Calculator.CalculateDistanceMeters(latitude, longitude, x.Latitude, x.Longitude),
-                    x.Residual))
-                .Where(x => x.Distance <= MaximumNeighbourMeters)
-                .OrderBy(x => x.Distance)
-                .Take(NeighbourCount)
-                .ToList();
+            return _residuals.Nearest(latitude, longitude, NeighbourCount, MaximumNeighbourMeters);
         }
 
         /// <summary>
@@ -1344,6 +1339,161 @@ namespace StayPilot.Application.Helpers.Calculators
             return sorted.Count % 2 != 0
                 ? sorted[sorted.Count / 2]
                 : (sorted[sorted.Count / 2] + sorted[(sorted.Count / 2) - 1]) / 2;
+        }
+
+        /// <summary>
+        /// The points the fit learned from, dropped into square cells on the map, so finding the
+        /// nearest few means opening the cells around a property instead of measuring the
+        /// distance to every listing in the country.
+        ///
+        /// Why it exists: pricing ONE property scanned every point twice, which nobody noticed
+        /// because it is fast enough once. Recalculating the market area stats prices EVERY
+        /// listing, so that scan ran 65,000 times over 65,000 points and the recalculation
+        /// stopped finishing at all.
+        ///
+        /// The answers are the same ones the scan gave, not an approximation. Cells are opened in
+        /// rings working outward, and the search only stops once the points already in hand are
+        /// nearer than the searched area is wide - so nothing closer can still be sitting in a
+        /// cell that was never opened.
+        /// </summary>
+        private sealed class PointGrid<T>
+        {
+            /// <summary>
+            /// How wide a cell is, in degrees - roughly 2km, about a town centre. Smaller cells
+            /// mean more of them to open; larger ones mean more points inside each.
+            /// </summary>
+            private const double CellDegrees = 0.02;
+
+            /// <summary>
+            /// The narrowest a cell can be, in metres. A degree of longitude shortens as you go
+            /// north - 0.02 degrees spans about 1,780m in the Algarve and 1,650m in Minho - and
+            /// the ring maths has to assume the narrow end or it would stop searching too early
+            /// and miss a nearer point.
+            /// </summary>
+            private const double CellNarrowestMeters = 1_600;
+
+            private readonly Dictionary<(int X, int Y), List<(double Latitude, double Longitude, T Value)>> _cells = new();
+
+            /// <summary>Files one point under the cell it falls in.</summary>
+            public void Add(double latitude, double longitude, T value)
+            {
+                var cell = CellFor(latitude, longitude);
+
+                if (!_cells.TryGetValue(cell, out var points))
+                {
+                    points = new List<(double, double, T)>();
+                    _cells[cell] = points;
+                }
+
+                points.Add((latitude, longitude, value));
+            }
+
+            /// <summary>
+            /// The <paramref name="wanted"/> nearest points to here, closest first, none further
+            /// away than <paramref name="maximumMeters"/>. Fewer than asked for - or none at all -
+            /// when that is all there is.
+            /// </summary>
+            /// <param name="keep">
+            /// Which points may be counted. Applied while searching rather than afterwards, so a
+            /// point that does not qualify never takes up one of the places.
+            /// </param>
+            public List<(double Distance, T Value)> Nearest(
+                double latitude, double longitude, int wanted, double maximumMeters, Func<T, bool>? keep = null)
+            {
+                var (centreX, centreY) = CellFor(latitude, longitude);
+                var found = new List<(double Distance, T Value)>();
+                var lastRing = (int)Math.Ceiling(maximumMeters / CellNarrowestMeters);
+
+                for (var ring = 0; ring <= lastRing; ring++)
+                {
+                    AddRing(centreX, centreY, ring, latitude, longitude, maximumMeters, keep, found);
+
+                    // Every cell within this ring has been opened, so everything closer than the
+                    // ring is wide has been seen. Once the furthest point we would keep is inside
+                    // that, no unopened cell can hold anything nearer, and widening the search
+                    // could only find points we would throw away.
+                    if (found.Count >= wanted && NthNearest(found, wanted) <= ring * CellNarrowestMeters)
+                        break;
+                }
+
+                return found
+                    .OrderBy(x => x.Distance)
+                    .Take(wanted)
+                    .ToList();
+            }
+
+            /// <summary>Opens every cell exactly <paramref name="ring"/> cells out, and no other.</summary>
+            private void AddRing(
+                int centreX,
+                int centreY,
+                int ring,
+                double latitude,
+                double longitude,
+                double maximumMeters,
+                Func<T, bool>? keep,
+                List<(double Distance, T Value)> found)
+            {
+                if (ring == 0)
+                {
+                    AddCell(centreX, centreY, latitude, longitude, maximumMeters, keep, found);
+
+                    return;
+                }
+
+                // The top and bottom edges, corners included.
+                for (var x = centreX - ring; x <= centreX + ring; x++)
+                {
+                    AddCell(x, centreY - ring, latitude, longitude, maximumMeters, keep, found);
+                    AddCell(x, centreY + ring, latitude, longitude, maximumMeters, keep, found);
+                }
+
+                // Then the two sides, minus the corners the edges above already covered.
+                for (var y = centreY - ring + 1; y <= centreY + ring - 1; y++)
+                {
+                    AddCell(centreX - ring, y, latitude, longitude, maximumMeters, keep, found);
+                    AddCell(centreX + ring, y, latitude, longitude, maximumMeters, keep, found);
+                }
+            }
+
+            /// <summary>Measures every point in one cell and keeps the ones that qualify.</summary>
+            private void AddCell(
+                int x,
+                int y,
+                double latitude,
+                double longitude,
+                double maximumMeters,
+                Func<T, bool>? keep,
+                List<(double Distance, T Value)> found)
+            {
+                if (!_cells.TryGetValue((x, y), out var points))
+                {
+                    return;
+                }
+
+                foreach (var point in points)
+                {
+                    if (keep is not null && !keep(point.Value))
+                        continue;
+
+                    var distance = Calculator.CalculateDistanceMeters(
+                        latitude, longitude, point.Latitude, point.Longitude);
+
+                    if (distance <= maximumMeters)
+                        found.Add((distance, point.Value));
+                }
+            }
+
+            /// <summary>How far away the <paramref name="nth"/> closest point found so far is.</summary>
+            private static double NthNearest(List<(double Distance, T Value)> found, int nth)
+            {
+                return found.OrderBy(x => x.Distance).ElementAt(nth - 1).Distance;
+            }
+
+            /// <summary>Which cell a point falls in. Floor, so negative coordinates still work.</summary>
+            private static (int X, int Y) CellFor(double latitude, double longitude)
+            {
+                return ((int)Math.Floor(latitude / CellDegrees), (int)Math.Floor(longitude / CellDegrees));
+            }
         }
     }
 }
