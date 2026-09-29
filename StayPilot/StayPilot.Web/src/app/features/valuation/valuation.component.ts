@@ -10,7 +10,6 @@ import {
   OwnedPropertyPortfolioItemResponse,
   OwnedPropertyPortfolioResponse
 } from '../../core/models/owned-property';
-import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 
 // Columns of the list. Sorted in the browser — a portfolio is a handful of rows.
@@ -51,7 +50,7 @@ function baseScenario(item: OwnedPropertyPortfolioItemResponse): GrowthScenarioR
 @Component({
   selector: 'app-valuation',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent, ExplainerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ExplainerComponent],
   templateUrl: './valuation.component.html',
   styleUrl: './valuation.component.css'
 })

@@ -1,13 +1,6 @@
+<!-- One half of the Tools screen; the title belongs to the shell above. Refresh and Recalculate
+     have moved down onto the table they rebuild. -->
 <div class="page">
-  <app-page-header
-    title="Feature impact"
-    sub="What each feature is worth as a price premium, holding size, rooms, condition, beach distance and location still."
-  >
-    <button actions type="button" class="secondary" (click)="reload()" [disabled]="loading()">Refresh</button>
-    <button actions type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
-      {{ recalculating() ? 'Recalculating…' : 'Recalculate' }}
-    </button>
-  </app-page-header>
 
   <app-explainer>
     <p>
@@ -37,7 +30,13 @@
   <section class="card">
     <div class="card-head">
       <span class="card-title">Premiums</span>
-      <span class="meta">{{ features().length }} features · click any column to sort</span>
+      <div class="card-actions">
+        <span class="meta">{{ features().length }} features · click any column to sort</span>
+        <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">Refresh</button>
+        <button type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
+          {{ recalculating() ? 'Recalculating…' : 'Recalculate' }}
+        </button>
+      </div>
     </div>
 
     @if (loading()) {

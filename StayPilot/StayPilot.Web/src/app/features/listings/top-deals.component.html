@@ -1,8 +1,6 @@
+<!-- One lens of the Listings screen; the title belongs to the shell above. Deals keep their own
+     scope controls: they scope a ranking, not a filter over the whole table like Browse. -->
 <div class="page">
-  <app-page-header
-    title="Top deals"
-    sub="Active listings asking the most below their own typology's median €/m² in the same town. Graded against comps of the same room count and a similar size, not the town's blended median — a large property's low €/m² reflects its size, not a bargain."
-  />
 
   <section class="card">
     <div class="card-head">
@@ -55,37 +53,39 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th class="rank">#</th>
-              <th>Location</th>
-              <th>Type</th>
-              <th>Condition</th>
-              <th class="num">Area</th>
-              <th class="num">Price</th>
-              <th class="num">€/m²</th>
-              <th class="num" title="Median for this listing's own typology and a similar size, in this town">Own median €/m²</th>
-              <th class="num">Discount</th>
+              <th class="rank sortable" (click)="toggleSort('rank')" title="The ranking by discount, as worked out on the server">#{{ arrow('rank') }}</th>
+              <th class="sortable" (click)="toggleSort('location')">Location{{ arrow('location') }}</th>
+              <th class="sortable" (click)="toggleSort('type')">Type{{ arrow('type') }}</th>
+              <th class="sortable" (click)="toggleSort('condition')">Condition{{ arrow('condition') }}</th>
+              <th class="num sortable" (click)="toggleSort('area')">Area{{ arrow('area') }}</th>
+              <th class="num sortable" (click)="toggleSort('price')">Price{{ arrow('price') }}</th>
+              <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
+              <th class="num sortable" (click)="toggleSort('median')" title="Median for this listing's own typology and a similar size, in this town">Own median €/m²{{ arrow('median') }}</th>
+              <th class="num sortable" (click)="toggleSort('discount')">Discount{{ arrow('discount') }}</th>
             </tr>
           </thead>
           <tbody>
-            @for (deal of deals(); track deal.listing.id; let i = $index) {
+            @for (row of sortedDeals(); track row.deal.listing.id) {
               <tr>
-                <td class="rank">{{ i + 1 }}</td>
+                <!-- The server's ranking, not the row number: sorting by price re-orders the
+                     table without pretending the fourth-biggest discount is now the first. -->
+                <td class="rank">{{ row.rank }}</td>
                 <td>
-                  <a [routerLink]="['/listings/lookup']" [queryParams]="{ id: deal.listing.id }">
-                    {{ deal.listing.marketAreaTown || deal.listing.marketAreaMunicipality }}
+                  <a [routerLink]="['/listings', row.deal.listing.id]">
+                    {{ row.deal.listing.marketAreaTown || row.deal.listing.marketAreaMunicipality }}
                   </a>
                 </td>
-                <td>{{ deal.listing.propertyType }} · {{ deal.listing.typology }}</td>
-                <td class="muted">{{ deal.listing.condition }}</td>
-                <td class="num">{{ deal.listing.areaM2 }} m²</td>
+                <td>{{ row.deal.listing.propertyType }} · {{ row.deal.listing.typology }}</td>
+                <td class="muted">{{ row.deal.listing.condition }}</td>
+                <td class="num">{{ row.deal.listing.areaM2 }} m²</td>
                 <td class="num">
-                  {{ deal.listing.listingSnapshot ? (deal.listing.listingSnapshot.price | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
+                  {{ row.deal.listing.listingSnapshot ? (row.deal.listing.listingSnapshot.price | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
                 </td>
                 <td class="num">
-                  {{ deal.listing.listingSnapshot ? (deal.listing.listingSnapshot.pricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
+                  {{ row.deal.listing.listingSnapshot ? (row.deal.listing.listingSnapshot.pricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
                 </td>
-                <td class="num">{{ deal.townMedianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
-                <td class="num deal">-{{ deal.discountPercent }}%</td>
+                <td class="num">{{ row.deal.townMedianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
+                <td class="num deal">-{{ row.deal.discountPercent }}%</td>
               </tr>
             }
           </tbody>

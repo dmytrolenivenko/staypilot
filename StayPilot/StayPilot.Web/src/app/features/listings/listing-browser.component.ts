@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ListingFilterService } from '../../core/services/listing-filter.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { ListingFilterService, PAGE_SIZE_CHOICES } from '../../core/services/listing-filter.service';
 import { MarketAreaService } from '../../core/services/market-area.service';
 import { FilterPropertyListingRequest } from '../../core/models/filter-property-listing';
 import { PropertyListingResponse } from '../../core/models/property-listing';
@@ -10,14 +12,29 @@ import {
   LISTING_STATUS_OPTIONS,
   PROPERTY_CONDITION_OPTIONS,
   PROPERTY_TYPES,
+  SortBy,
   TYPOLOGIES
 } from '../../core/models/enums';
-import { PageHeaderComponent } from '../../shared/page-header.component';
+import { apiErrorMessage } from '../../core/api-error';
 
-// The columns you can click to sort by.
+// The columns you can click to sort by, and the API field each one means. Every column here
+// maps to a real SortBy value, so a click reorders the whole matching set on the server — not
+// whatever slice of it the browser happens to be holding.
 type SortColumn =
   | 'id' | 'location' | 'type' | 'typology'
   | 'area' | 'price' | 'pricePerM2' | 'beach' | 'status';
+
+const SORT_FIELDS: Record<SortColumn, SortBy> = {
+  id: 'Id',
+  location: 'Location',
+  type: 'PropertyType',
+  typology: 'Typology',
+  area: 'AreaM2',
+  price: 'Price',
+  pricePerM2: 'PricePerM2',
+  beach: 'DistanceToBeachMeters',
+  status: 'ListingStatus'
+};
 
 // The on-screen filter form. '' = "Any" for dropdowns, null = empty for number boxes.
 // We strip those out before sending, so the API only filters on what you actually typed.
@@ -65,10 +82,17 @@ function emptyForm(): FilterForm {
   };
 }
 
+// Listing browser — filter, sort and page every listing the API holds.
+//
+// Sorting and paging are the server's job here. They used to be the browser's: a search pulled
+// every matching row (page 1, then pages 2..N in parallel) and sorted the pile locally. The API
+// would not serve more than 1,000 rows, so a search of a real distrito silently kept the first
+// 1,000 by Id and ranked only those — and the header called that number the total. Asking the
+// server for one page of an ordered set is both correct and one request instead of fifty.
 @Component({
   selector: 'app-listing-browser',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './listing-browser.component.html',
   styleUrl: './listing-browser.component.css'
 })
@@ -78,6 +102,7 @@ export class ListingBrowserComponent implements OnInit {
   readonly typologies = TYPOLOGIES;
   readonly conditions = PROPERTY_CONDITION_OPTIONS;
   readonly listingStatuses = LISTING_STATUS_OPTIONS;
+  readonly pageSizes = PAGE_SIZE_CHOICES;
 
   // The dropdown choices, each level loaded from the backend as you pick the one above.
   districtOptions = signal<string[]>([]);
@@ -88,47 +113,40 @@ export class ListingBrowserComponent implements OnInit {
   // The editable filter form.
   form: FilterForm = emptyForm();
 
-  // Everything the last Search downloaded (the full matching set).
-  private allRows = signal<PropertyListingResponse[]>([]);
+  // The current page of results, exactly as the server ordered it.
+  private rows = signal<PropertyListingResponse[]>([]);
 
   // Request state.
   loading = signal(false);
   error = signal<string | null>(null);
   hasSearched = signal(false);
-  capped = signal(false); // true when there were more than 1000 matches on the server
 
-  // What the SERVER says matched, which is not what we hold once the fetch hits its cap. Kept
-  // separate so the header can say "first 1,000 of 7,390" instead of calling the cap a total.
-  serverTotal = signal(0);
+  // How many listings match the filters, across every page. The server's own count, taken
+  // before paging — so it is the true total, never the size of what we are holding.
+  totalRecords = signal(0);
 
-  // Client-side sorting (set by clicking a column header).
-  sortColumn = signal<SortColumn | null>(null);
+  // Sorting and paging. Changing any of them asks the server again, because all three decide
+  // which rows come back rather than how the ones we have are arranged.
+  sortColumn = signal<SortColumn>('id');
   sortDir = signal<'asc' | 'desc'>('asc');
-
-  // Client-side paging.
   page = signal(1);
   pageSize = signal(20);
 
-  // Rows after sorting — recomputed instantly whenever the sort changes.
-  private sortedRows = computed(() => {
-    const rows = [...this.allRows()];
-    const col = this.sortColumn();
-    if (!col) {
-      return rows;
-    }
-    const dir = this.sortDir();
-    return rows.sort((a, b) => this.compare(a, b, col, dir));
-  });
+  // The filters the rows on screen were actually fetched with. Editing a box changes `form`
+  // but not this, so re-sorting or paging keeps answering the search you ran rather than
+  // quietly switching to a half-typed one.
+  private activeFilters: FilterPropertyListingRequest | null = null;
 
-  totalRecords = computed(() => this.sortedRows().length);
+  // Sorting and paging fire a request each, and clicking twice quickly leaves two open whose
+  // answers can land out of order — the older one last, showing the wrong page. Cancelling the
+  // open one means the newest request is always the one that renders.
+  private inFlight?: Subscription;
+
+  // The rows of the current page. Named as it was when paging was done here, so the template
+  // did not have to change with the mechanism behind it.
+  pagedRows = computed(() => this.rows());
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.totalRecords() / this.pageSize())));
-
-  // Just the slice of rows shown on the current page.
-  pagedRows = computed(() => {
-    const start = (this.page() - 1) * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
 
   // The numbered page buttons to show: a sliding window of up to 7 around the current page
   // (e.g. current 5 of 20 -> 2 3 4 5 6 7 8). First/Last buttons jump to the ends.
@@ -138,7 +156,7 @@ export class ListingBrowserComponent implements OnInit {
     const windowSize = 7;
 
     let start = Math.max(1, current - Math.floor(windowSize / 2));
-    let end = Math.min(total, start + windowSize - 1);
+    const end = Math.min(total, start + windowSize - 1);
     start = Math.max(1, end - windowSize + 1); // pull the window back if we hit the end
 
     const pages: number[] = [];
@@ -154,7 +172,7 @@ export class ListingBrowserComponent implements OnInit {
   ) {}
 
   // Load the area names once, when the page opens, for the location autocomplete.
-    ngOnInit(): void {
+  ngOnInit(): void {
     // Load the top dropdown (distritos). Nothing picked yet → backend returns districts.
     this.marketAreas.getOptions().subscribe({
       next: d => this.districtOptions.set(d),
@@ -162,7 +180,7 @@ export class ListingBrowserComponent implements OnInit {
     });
   }
 
-    // Distrito changed → wipe the child pickers and load this distrito's municípios.
+  // Distrito changed → wipe the child pickers and load this distrito's municípios.
   onDistrictChange(): void {
     this.form.municipality = '';
     this.form.town = '';
@@ -178,7 +196,7 @@ export class ListingBrowserComponent implements OnInit {
     }
   }
 
-    // Município changed → wipe the child pickers and load this município's freguesias.
+  // Município changed → wipe the child pickers and load this município's freguesias.
   onMunicipalityChange(): void {
     this.form.town = '';
     this.form.zone = '';
@@ -192,7 +210,7 @@ export class ListingBrowserComponent implements OnInit {
     }
   }
 
-    // Freguesia changed → wipe zona and load this freguesia's zonas.
+  // Freguesia changed → wipe zona and load this freguesia's zonas.
   onTownChange(): void {
     this.form.zone = '';
     this.zoneOptions.set([]);
@@ -206,48 +224,36 @@ export class ListingBrowserComponent implements OnInit {
 
   // --- Buttons -------------------------------------------------------------
 
-  // "Search" — the only thing that calls the API. Downloads the whole matching set
-  // (across as many pages of 20 as it takes), then we sort + page it in the browser.
+  // "Search" — reads the form, freezes it as the active filters, and asks for page 1.
   search(): void {
-    this.loading.set(true);
-    this.error.set(null);
+    this.activeFilters = this.buildFilters();
     this.hasSearched.set(true);
     this.page.set(1);
-
-    this.listingFilter.filterAll(this.buildRequest()).subscribe({
-      next: result => {
-        this.allRows.set(result.items);
-        this.capped.set(result.capped);
-        this.serverTotal.set(result.totalRecords);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Could not reach the API.');
-        this.allRows.set([]);
-        this.capped.set(false);
-        this.serverTotal.set(0);
-        this.loading.set(false);
-      }
-    });
+    this.fetch();
   }
 
   reset(): void {
+    this.inFlight?.unsubscribe();
     this.form = emptyForm();
     this.municipalityOptions.set([]);
     this.townOptions.set([]);
     this.zoneOptions.set([]);
-    this.allRows.set([]);
-    this.sortColumn.set(null);
+    this.rows.set([]);
+    this.activeFilters = null;
+    this.sortColumn.set('id');
+    this.sortDir.set('asc');
     this.page.set(1);
+    this.totalRecords.set(0);
     this.hasSearched.set(false);
     this.error.set(null);
-    this.capped.set(false);
-    this.serverTotal.set(0);
+    this.loading.set(false);
   }
 
-  // --- Client-side sorting (no API call) -----------------------------------
+  // --- Sorting -------------------------------------------------------------
 
-  // Click a header: first click sorts ascending, click the same one again to flip.
+  // Click a header: first click sorts ascending, click the same one again to flip. Either way
+  // it goes back to page 1 and asks the server, because the row that is now first may be on a
+  // page we are not holding.
   toggleSort(column: SortColumn): void {
     if (this.sortColumn() === column) {
       this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
@@ -256,6 +262,7 @@ export class ListingBrowserComponent implements OnInit {
       this.sortDir.set('asc');
     }
     this.page.set(1);
+    this.fetch();
   }
 
   // The little arrow shown next to the active column header.
@@ -266,65 +273,68 @@ export class ListingBrowserComponent implements OnInit {
     return this.sortDir() === 'asc' ? ' ▲' : ' ▼'; // ▲ / ▼
   }
 
-  // --- Client-side paging (no API call) ------------------------------------
+  // --- Paging --------------------------------------------------------------
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages()) {
+    if (page < 1 || page > this.totalPages() || page === this.page()) {
       return;
     }
     this.page.set(page);
+    this.fetch();
   }
 
   changePageSize(size: number): void {
-    this.pageSize.set(size);
+    this.pageSize.set(Number(size));
     this.page.set(1);
+    this.fetch();
   }
 
-  // --- Helpers -------------------------------------------------------------
+  // --- Fetching ------------------------------------------------------------
 
-  // The value a given column sorts on. Returns a number, a string, or null (missing).
-  private sortValue(item: PropertyListingResponse, column: SortColumn): number | string | null {
-    switch (column) {
-      case 'id': return item.id;
-      case 'location': return (item.marketAreaTown || item.marketAreaMunicipality || '').toLowerCase();
-      case 'type': return item.propertyType.toLowerCase();
-      case 'typology': return this.typologies.indexOf(item.typology); // keeps T2 before T10
-      case 'area': return item.areaM2;
-      case 'price': return item.listingSnapshot?.price ?? null;
-      case 'pricePerM2': return item.listingSnapshot?.pricePerM2 ?? null;
-      case 'beach': return item.distanceToBeachMeters ?? null;
-      case 'status': return (item.listingSnapshot?.status ?? '').toLowerCase();
+  // One page of the current search, ordered by the current column. Everything that changes
+  // what the server should return comes through here.
+  private fetch(): void {
+    if (!this.activeFilters) {
+      return;
     }
+
+    this.inFlight?.unsubscribe();
+    this.loading.set(true);
+    this.error.set(null);
+
+    const request: FilterPropertyListingRequest = {
+      ...this.activeFilters,
+      sortBy: SORT_FIELDS[this.sortColumn()],
+      sortDescending: this.sortDir() === 'desc',
+      pageNumber: this.page(),
+      pageSize: this.pageSize()
+    };
+
+    this.inFlight = this.listingFilter.filterPage(request).subscribe({
+      next: response => {
+        this.rows.set(response.items);
+        this.totalRecords.set(response.totalRecords);
+        this.loading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.rows.set([]);
+        this.totalRecords.set(0);
+        this.error.set(apiErrorMessage(err, 'Could not reach the API.'));
+        this.loading.set(false);
+      }
+    });
   }
 
-  private compare(
-    a: PropertyListingResponse,
-    b: PropertyListingResponse,
-    column: SortColumn,
-    dir: 'asc' | 'desc'
-  ): number {
-    const va = this.sortValue(a, column);
-    const vb = this.sortValue(b, column);
-
-    // Missing values always sink to the bottom, regardless of direction.
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-
-    const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-    return dir === 'asc' ? cmp : -cmp;
-  }
-
-  // Turns the on-screen form into the API request, dropping any blank field.
-  // pageNumber/pageSize here are placeholders — the service overrides them as it walks
-  // the pages of 20. Sorting is done in the browser, so sortBy is just a fixed default.
-  private buildRequest(): FilterPropertyListingRequest {
+  // Turns the on-screen form into the filter half of the API request, dropping any blank
+  // field. Sorting and paging are added per call in fetch(), because they change without the
+  // filters changing.
+  private buildFilters(): FilterPropertyListingRequest {
     const f = this.form;
     const request: FilterPropertyListingRequest = {
       sortBy: 'Id',
       sortDescending: false,
       pageNumber: 1,
-      pageSize: 20
+      pageSize: this.pageSize()
     };
 
     if (f.district) request.district = f.district;

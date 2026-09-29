@@ -1,10 +1,6 @@
+<!-- One half of the Portfolio screen; the title belongs to the shell above. "New property" has
+     moved down onto the table it adds a row to, where the count already is. -->
 <div class="page">
-  <app-page-header
-    title="My properties"
-    sub="The apartments you own — the base a valuation compares against market listings."
-  >
-    <button actions type="button" (click)="newProperty()">New property</button>
-  </app-page-header>
 
   @if (error()) {
     <p class="error" role="alert">{{ error() }}</p>
@@ -18,6 +14,7 @@
       <span class="card-title">All properties</span>
       <div class="card-actions">
         <span class="meta">{{ properties().length }} owned</span>
+        <button type="button" (click)="newProperty()">New property</button>
         @if (selectedIds().size > 0) {
           <button type="button" class="danger sm" (click)="deleteSelected()" [disabled]="loading()">
             Delete selected ({{ selectedIds().size }})

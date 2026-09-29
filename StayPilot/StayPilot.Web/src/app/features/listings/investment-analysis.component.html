@@ -1,9 +1,15 @@
 <div class="page">
-  <app-page-header
-    title="Investment analysis"
-    sub="Renovation cost, resale value and profit for one listing — plus an AI thesis grounded strictly in those numbers."
-  />
+  <!-- Standing on its own (My properties → analyse, or a direct link) it is a screen with its
+       own title and id box. Embedded in a listing page the id is already settled by the page
+       around it, so both disappear and what is left is the analysis itself. -->
+  @if (!embedded()) {
+    <app-page-header
+      title="Investment analysis"
+      sub="Renovation cost, resale value and profit for one listing — plus an AI thesis grounded strictly in those numbers."
+    />
+  }
 
+  @if (!embedded()) {
   <section class="card">
     <div class="card-head">
       <span class="card-title">Analyze</span>
@@ -58,6 +64,9 @@
       }
     </div>
   </section>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
 
   @if (result(); as result) {
     <section class="card" [class.is-refreshing]="loading()">

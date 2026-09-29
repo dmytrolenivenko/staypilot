@@ -3,6 +3,7 @@ using StayPilot.Application.Contracts.Response;
 using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
+using StayPilot.Application.ReadModels;
 using StayPilot.Domain.Enums;
 
 namespace StayPilot.Application.Services

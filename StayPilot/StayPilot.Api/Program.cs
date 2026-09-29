@@ -1,5 +1,6 @@
 using Anthropic;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Infrastructure.Persistence;
@@ -8,6 +9,7 @@ using StayPilot.Infrastructure.Repositories;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
 using Microsoft.Identity.Web;
+using StayPilot.Api;
 using StayPilot.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,6 +65,11 @@ builder.Services.AddScoped<IBuildCostService, BuildCostService>();
 builder.Services.AddScoped<IInvestmentAnalysisService, InvestmentAnalysisService>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
+// A singleton, unlike everything above it: it holds the one "is a recalculation going on right
+// now" flag that every request has to see, and the run it starts outlives the request that
+// asked for it.
+builder.Services.AddSingleton<IStatsRecalculationRunner, StatsRecalculationRunner>();
+
 // So CurrentUser can read the logged in user's claims off the current request.
 builder.Services.AddHttpContextAccessor();
 
@@ -103,6 +110,37 @@ builder.Services.AddHttpClient<IIneRepository, IneRepository>(client =>
 // Turn on ProblemDetails: send errors back in a standard shape.
 builder.Services.AddProblemDetails();
 
+// Compress what goes out. Everything this API sends is JSON, which is the most compressible
+// thing there is - a leaderboard of every town in the country is three quarters of a megabyte
+// raw and well under a tenth of that compressed. Nothing was compressing it before: the app
+// runs on Linux App Service with no IIS in front, so if Kestrel does not do it, nobody does.
+builder.Services.AddResponseCompression(options =>
+{
+    // Off by default over HTTPS, which here would mean off entirely. The risk this guards
+    // against (BREACH) is about secrets sitting in a compressed response next to attacker-
+    // controlled input - these responses carry public market numbers and no session cookie.
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+// Hold the public market answers for a few minutes.
+//
+// They only move when a scrape imports and RecalculateMarketAreaStats runs, so working the same
+// slice out twice in one minute is pure waste - and on the free App Service plan the CPU that
+// wastes is the scarcest thing the app has. Applied per action with [OutputCache], never
+// globally: OwnedProperty and the valuation screens are per-user and must never be shared.
+builder.Services.AddOutputCache(options =>
+{
+    // The default is 100MB, which is a lot to hand a free App Service instance with 1GB of RAM
+    // and a national listings table to read. Every slice of every place is its own cache entry,
+    // so this would fill given enough clicking; 32MB holds far more than a session's worth and
+    // evicts the least recently used rather than growing into the memory the queries need.
+    options.SizeLimit = 32 * 1024 * 1024;
+
+    options.AddPolicy(OutputCachePolicies.PublicMarketData, new PublicMarketDataCachePolicy());
+});
+
 var app = builder.Build();
 
 // The last resort. Everything a caller can actually do something about is already an error on
@@ -120,6 +158,11 @@ app.UseExceptionHandler(exceptionHandlerApp =>
     });
 });
 
+// Outermost of the two, so what the cache holds is one plain copy of the answer and each
+// reply is compressed for whoever asked. The other way round the cache would store whichever
+// encoding the first caller happened to accept, and hand it to the next one regardless.
+app.UseResponseCompression();
+
 // Swagger JSON and the test page in the browser.
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -132,6 +175,10 @@ app.UseAuthentication();
 
 // Check the user is allowed to call the endpoint.
 app.UseAuthorization();
+
+// Serve the held copy of a public market answer when there is one. After authorization, so a
+// request that is not allowed through never reaches the cache in either direction.
+app.UseOutputCache();
 
 // Send each request to the matching controller.
 app.MapControllers();

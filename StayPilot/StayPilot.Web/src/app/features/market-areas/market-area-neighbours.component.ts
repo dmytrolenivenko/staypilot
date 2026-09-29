@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
@@ -11,10 +11,9 @@ import {
   RELIABLE_LISTINGS
 } from '../../core/models/market-area-stats';
 import { TYPOLOGIES, Typology } from '../../core/models/enums';
-import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 import { PlaceNameComponent, placeLevelLabel, placeOwnName } from '../../shared/place-name.component';
-import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
+import { AreaScope, emptyScope } from '../../shared/area-scope-picker.component';
 
 // One neighbour, read from the anchor place's point of view. The API answers in pairs
 // ("dear place → cheaper place"), which is the right shape for a league table and the wrong
@@ -70,18 +69,6 @@ const NO_PAIRS_ASKED_FOR: MarketAreaNeighbourGapResponse = {
   calculatedAtUtc: null
 };
 
-// Which grains can be compared inside a given scope: the ones strictly finer than the scope
-// itself. "Municípios inside Loulé" is one place, Loulé, and one place makes no pairs — the table
-// came back empty and looked like missing data. Ordered coarsest first, so the head of the list is
-// the natural grain to fall back to when a scope makes the current one impossible.
-function levelsInside(scope: AreaScope): AreaLevel[] {
-  if (scope.municipality) {
-    return ['Town'];
-  }
-
-  return scope.district ? ['Municipality', 'Town'] : ['District', 'Municipality', 'Town'];
-}
-
 // Joins the two halves of a pair into one key. Any character neither place name can contain.
 const PAIR_KEY_SEPARATOR = ' → ';
 
@@ -98,19 +85,14 @@ const PAIR_KEY_SEPARATOR = ' → ';
   imports: [
     CommonModule,
     FormsModule,
-    PageHeaderComponent,
     ExplainerComponent,
-    PlaceNameComponent,
-    AreaScopePickerComponent
+    PlaceNameComponent
   ],
   templateUrl: './market-area-neighbours.component.html',
   styleUrl: './market-area-neighbours.component.css'
 })
-export class MarketAreaNeighboursComponent implements OnInit {
+export class MarketAreaNeighboursComponent implements OnInit, OnChanges {
   readonly typologies = TYPOLOGIES;
-
-  // Only the grains that can actually be paired inside the current scope.
-  levels = computed(() => levelsInside(this.scope()));
 
   // The dropdown reads in the same words the table does — "Town" on its own never said whether
   // it meant a freguesia or a município.
@@ -121,13 +103,29 @@ export class MarketAreaNeighboursComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  level = signal<AreaLevel>('Municipality');
-  minListings = signal(5);
   maxDistanceKm = signal(25);
   minGapPercent = signal(20);
 
+  // --- The shared filters, set by the Places shell ----------------------------------
+  // The shell also keeps the grain legal for the scope: "municípios inside Loulé" is one place
+  // and one place makes no pairs, which used to be this screen's own clamp.
+  level = signal<AreaLevel>('Municipality');
+  minListings = signal(5);
+
   // Narrowed to one distrito, and inside it one município. Empty = the whole country.
   scope = signal<AreaScope>(emptyScope());
+
+  @Input({ required: true, alias: 'level' }) set levelInput(value: AreaLevel) {
+    this.level.set(value);
+  }
+
+  @Input({ required: true, alias: 'minListings' }) set minListingsInput(value: number) {
+    this.minListings.set(Number(value));
+  }
+
+  @Input({ required: true, alias: 'scope' }) set scopeInput(value: AreaScope) {
+    this.scope.set(value);
+  }
 
   // Compare like with like. '' compares all stock at once, which is the default and the loosest
   // reading — two places can differ 30% on all stock purely because one sells villas.
@@ -330,22 +328,32 @@ export class MarketAreaNeighboursComponent implements OnInit {
 
   hiddenPairCount = computed(() => Math.max(0, this.sortedGaps().length - this.visiblePairs().length));
 
+  // False until the first load has been asked for. Angular sets inputs and runs ngOnChanges
+  // before ngOnInit, and a load fired from there would go out against half-set filters.
+  private started = false;
+
   constructor(private readonly service: MarketAreaStatsService) {}
 
   ngOnInit(): void {
+    this.started = true;
     this.load();
   }
 
-  changeLevel(level: AreaLevel): void {
-    this.level.set(level);
-    // Place names are level-specific — an anchor picked at Town level is not a Município.
-    this.anchor.set('');
-    this.load();
-  }
+  // A shared filter moved on the shell.
+  //
+  // The anchor is dropped whenever the place or the grain changes, because it is a place name
+  // at one grain inside one scope: an anchor picked at freguesia level is not a município, and
+  // one picked inside Faro may not exist inside Porto.
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!this.started) {
+      return;
+    }
 
-  changeMinListings(minListings: number): void {
-    this.minListings.set(Number(minListings));
-    this.loadWhenTypingStops();
+    if (changes['levelInput'] || changes['scopeInput']) {
+      this.anchor.set('');
+    }
+
+    this.load();
   }
 
   changeMaxDistance(maxDistanceKm: number): void {
@@ -356,22 +364,6 @@ export class MarketAreaNeighboursComponent implements OnInit {
   changeMinGap(minGapPercent: number): void {
     this.minGapPercent.set(Number(minGapPercent));
     this.loadWhenTypingStops();
-  }
-
-  changeScope(scope: AreaScope): void {
-    this.scope.set(scope);
-
-    // Narrowing to a município leaves no municípios to pair inside it, so the grain has to follow
-    // the scope down. Coarsest still possible, which is the smallest step from what was asked for.
-    const allowed = levelsInside(scope);
-
-    if (!allowed.includes(this.level())) {
-      this.level.set(allowed[0]);
-    }
-
-    // The anchor is a place inside the old scope, and may not exist inside the new one.
-    this.anchor.set('');
-    this.load();
   }
 
   changeTypology(typology: Typology | ''): void {

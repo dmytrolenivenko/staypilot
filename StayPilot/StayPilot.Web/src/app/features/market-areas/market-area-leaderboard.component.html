@@ -1,13 +1,7 @@
+<!-- One lens of the Places screen. The title, the place, the grain and the sample gate all
+     belong to the shell above; what is left here is the answer and the controls only this
+     question has. -->
 <div class="page">
-  <app-page-header
-    title="Leaderboard"
-    sub="Places ranked on the middle price per square metre — not the middle asking price, so a town full of small flats can't look cheap just for being small."
-  >
-    <button actions type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
-      {{ recalculating() ? 'Recalculating…' : 'Recalculate' }}
-    </button>
-  </app-page-header>
-
   <app-explainer>
     <p>
       Every place row names itself and then, underneath, the places it sits inside &mdash;
@@ -35,31 +29,23 @@
     </p>
   </app-explainer>
 
+  <!-- Rebuilding the numbers acts on the whole stats table, not on this lens - but it lives here
+       rather than on the shell because this is the lens that shows when they were last worked
+       out, and a button whose effect you cannot see is a button nobody trusts. -->
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Scope</span>
-      @if (calculatedAtUtc()) {
-        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
-      }
-    </div>
-    <div class="card-body">
-      <div class="toolbar">
-        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
-
-        <label class="control">
-          Level
-          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
-            @for (option of levels; track option) {
-              <option [ngValue]="option">{{ levelName(option) }}</option>
-            }
-          </select>
-        </label>
-
-        <label class="control">
-          Min listings
-          <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
-        </label>
-      </div>
+      <span class="card-title">Freshness</span>
+      <span class="card-actions">
+        @if (calculatedAtUtc()) {
+          <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+        }
+        @if (recalcNote(); as note) {
+          <span class="meta">{{ note }} · safe to leave this page</span>
+        }
+        <button type="button" class="btn-secondary" (click)="recalculate()" [disabled]="recalculating() || loading()">
+          {{ recalculating() ? 'Recalculating…' : 'Recalculate' }}
+        </button>
+      </span>
     </div>
   </section>
 

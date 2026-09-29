@@ -108,12 +108,23 @@ namespace StayPilot.Application.Contracts.Request
         /// <summary>Filter by listing state (for example active or sold).</summary>
         public ListingStatus? ListingStatus { get; set; }
 
-        /// <summary>Which page to return. Starts at 1. Allowed values: 1 to 50.</summary>
-        [Range(1, 50)]
+        /// <summary>
+        /// Which page to return. Starts at 1.
+        /// The old ceiling of 50 pages was a 1,000-row wall: a distrito like Faro holds over
+        /// 9,000 listings, and page 51 onwards answered 400, so most of them could not be
+        /// reached at all. Still bounded, because an unbounded page number is an invitation to
+        /// ask the database to skip ten million rows.
+        /// </summary>
+        [Range(1, 10000)]
         public int PageNumber { get; set; } = 1;
 
-        /// <summary>How many items per page. Allowed values: 1 to 20.</summary>
-        [Range(1,20)]
+        /// <summary>
+        /// How many items per page. Allowed values: 1 to 100.
+        /// Raised from 20 so a browser can show a page of 50 or 100 in one call instead of
+        /// stitching several together client-side. Widening a range never breaks a caller
+        /// already inside it, so the scraper is unaffected.
+        /// </summary>
+        [Range(1, 100)]
         public int PageSize { get; set; } = 20;
 
         /// <summary>Which field to sort by. Defaults to Id.</summary>

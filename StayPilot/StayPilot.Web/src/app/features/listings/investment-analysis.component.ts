@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, Input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { InvestmentAnalysisService } from '../../core/services/investment-analysis.service';
@@ -27,6 +27,26 @@ export type InvestmentAnalysisMode = 'listing' | 'owned';
 export class InvestmentAnalysisComponent implements OnInit {
   mode = signal<InvestmentAnalysisMode>('listing');
   idInput = signal<number | null>(null);
+
+  // True when a listing page is showing this below the listing's own facts. The page has already
+  // settled which listing this is, so the title and the id box would both be asking a question
+  // that is answered — and a second <h1> on the page at that.
+  embedded = signal(false);
+
+  /**
+   * Analyse this listing straight away, instead of waiting for an id to be typed or read off
+   * the query string. Setting it is what puts the component in its embedded form.
+   */
+  @Input() set listingId(value: number | null) {
+    if (!value || value <= 0) {
+      return;
+    }
+
+    this.embedded.set(true);
+    this.mode.set('listing');
+    this.analyze(value);
+  }
+
   result = signal<InvestmentAnalysisResponse | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
@@ -43,6 +63,12 @@ export class InvestmentAnalysisComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Embedded, the listing id came from the page around us and the analysis is already running.
+    // The query string belongs to that page, not to us, and reading it would start a second one.
+    if (this.embedded()) {
+      return;
+    }
+
     const ownedIdParam = this.route.snapshot.queryParamMap.get('ownedId');
     if (ownedIdParam) {
       const id = Number(ownedIdParam);
