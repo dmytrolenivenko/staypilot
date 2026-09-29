@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
@@ -30,6 +31,7 @@ namespace StayPilot.Api.Controllers
         /// listings answers 200 with a count of zero: an empty market is an answer, not an error.
         /// </summary>
         [HttpGet]
+        [OutputCache(PolicyName = OutputCachePolicies.PublicMarketData)]
         public async Task<ActionResult<MarketOverviewResponse>> GetMarketOverview([FromQuery] MarketOverviewRequest request)
         {
             var response = await _service.GetMarketOverviewAsync(request);

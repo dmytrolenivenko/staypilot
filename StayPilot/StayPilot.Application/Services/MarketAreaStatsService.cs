@@ -5,6 +5,7 @@ using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Interfaces.Services;
+using StayPilot.Application.ReadModels;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
@@ -206,21 +207,21 @@ namespace StayPilot.Application.Services
 
             var statsByTown = townStats.ToDictionary(x => (x.District, x.Municipality, x.Town), x => x);
 
-            var listings = await _propertyListingRepo.GetActiveListingsForTopDealsAsync(
+            var candidates = await _propertyListingRepo.GetActiveListingsForTopDealsAsync(
                 request.District, request.Municipality, request.Town, request.Zone, request.Condition);
 
-            var deals = new List<TopDealResponse>();
+            // Only the grade, not the listing: the whole country is graded here and ten of it is
+            // shown, so the listings themselves are read back once the ranking is known.
+            var graded = new List<GradedDeal>();
 
-            foreach (var listing in listings)
+            foreach (var listing in candidates)
             {
-                var snapshot = listing.ListingSnapshots.FirstOrDefault();
-
-                if (snapshot is null || snapshot.PricePerM2 <= 0)
+                if (listing.PricePerM2 <= 0)
                 {
                     continue;
                 }
 
-                var key = (listing.MarketArea.District, listing.MarketArea.Municipality, listing.MarketArea.Town);
+                var key = (listing.District, listing.Municipality, listing.Town);
 
                 // No trustworthy stats for this listing's town -> nothing to grade it against.
                 if (!statsByTown.TryGetValue(key, out var stats))
@@ -257,7 +258,7 @@ namespace StayPilot.Application.Services
                     continue;
                 }
 
-                var discountPercent = (medianPricePerM2.Value - snapshot.PricePerM2) / medianPricePerM2.Value * 100m;
+                var discountPercent = (medianPricePerM2.Value - listing.PricePerM2) / medianPricePerM2.Value * 100m;
 
                 // Asking at or above the median is not a deal.
                 if (discountPercent <= 0)
@@ -265,20 +266,45 @@ namespace StayPilot.Application.Services
                     continue;
                 }
 
-                deals.Add(new TopDealResponse
-                {
-                    Listing = Converter.MapToResponse(listing, snapshot),
-                    TownMedianPricePerM2 = medianPricePerM2.Value,
-                    DiscountPercent = decimal.Round(discountPercent, 1)
-                });
+                graded.Add(new GradedDeal(listing.ListingId, medianPricePerM2.Value, discountPercent));
             }
+
+            var winners = graded
+                .OrderByDescending(x => x.DiscountPercent)
+                .Take(request.Count)
+                .ToList();
+
+            var listingsById = (await _propertyListingRepo.GetPropertyListingsByIdsAsync(
+                    winners.Select(x => x.ListingId).ToList()))
+                .ToDictionary(x => x.Id);
 
             return new TopDealsResponse
             {
-                Items = deals.OrderByDescending(x => x.DiscountPercent).Take(request.Count).ToList(),
+                // Ordered by the ranking, not by whatever order the read came back in. A winner
+                // whose row has gone since it was graded is dropped rather than half-reported.
+                Items = winners
+                    .Where(x => listingsById.ContainsKey(x.ListingId))
+                    .Select(x => ToDeal(x, listingsById[x.ListingId]))
+                    .ToList(),
                 CalculatedAtUtc = LastCalculatedAt(townStats)
             };
         }
+
+        private static TopDealResponse ToDeal(GradedDeal deal, PropertyListing listing)
+        {
+            return new TopDealResponse
+            {
+                Listing = Converter.MapToResponse(listing, listing.ListingSnapshots.FirstOrDefault()),
+                TownMedianPricePerM2 = deal.TownMedianPricePerM2,
+                DiscountPercent = decimal.Round(deal.DiscountPercent, 1)
+            };
+        }
+
+        /// <summary>
+        /// One listing's grade, before the listing itself has been read. Just enough to rank on
+        /// and to fill the two numbers that sit beside the listing on screen.
+        /// </summary>
+        private readonly record struct GradedDeal(int ListingId, decimal TownMedianPricePerM2, decimal DiscountPercent);
 
         /// <summary>
         /// The most rooms this place usually sells for the budget, or null when nothing does.

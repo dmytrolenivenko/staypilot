@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { PremiumFeatureService } from '../../core/services/premium-feature.service';
 import { PremiumFeatureResponse } from '../../core/models/premium-feature';
-import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 
 // Every column in the table is sortable — one entry here per <th>.
@@ -21,7 +20,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-premium-features',
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, ExplainerComponent],
+  imports: [CommonModule, ExplainerComponent],
   templateUrl: './premium-features.component.html',
   styleUrl: './premium-features.component.css',
 })

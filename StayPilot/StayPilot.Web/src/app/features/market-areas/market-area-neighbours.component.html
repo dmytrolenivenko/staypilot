@@ -1,9 +1,6 @@
+<!-- One lens of the Places screen. The place and the grain come from the shell; the two
+     questions below (every pair, or one place against its neighbours) are this lens's own. -->
 <div class="page">
-  <app-page-header
-    title="Neighbour gaps"
-    sub="Two questions: where the biggest price borders at one grain are, or what one place looks like against everything near it. Pick which below."
-  />
-
   <app-explainer>
     <p>
       A gap is the difference in <strong>median €/m²</strong> between two places close enough to be
@@ -66,22 +63,6 @@
           Around one place
           <small>One place against everything near it</small>
         </button>
-      </div>
-
-      <!-- Then the places, as a sentence: what is being compared, and where. Two dropdowns can both
-           say &ldquo;Munic&iacute;pio&rdquo; and mean different things, and only their place in the
-           row says which. -->
-      <div class="picker-row">
-        <span class="picker-label">Compare</span>
-        <label class="control">
-          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
-            @for (option of levels(); track option) {
-              <option [ngValue]="option">{{ levelName(option) }} against {{ levelName(option).toLowerCase() }}</option>
-            }
-          </select>
-        </label>
-        <span class="picker-label">inside</span>
-        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
       </div>
 
       @if (mode() === 'around') {
@@ -149,10 +130,6 @@
             <input type="number" min="1" max="100" [ngModel]="minGapPercent()" (ngModelChange)="changeMinGap($event)" />
           </label>
 
-          <label class="control">
-            Min listings
-            <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
-          </label>
         </div>
       </details>
     </div>

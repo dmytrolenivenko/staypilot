@@ -1,0 +1,61 @@
+<div class="page">
+  <app-page-header
+    [title]="listing() ? '#' + listing()!.id + ' · ' + listing()!.marketAreaTown : 'Open a listing'"
+    [sub]="
+      listing()
+        ? 'Everything held about this listing, and what the numbers say about buying it.'
+        : 'Every listing has a page of its own. Browse to find one, or open it by id if you have one.'
+    "
+  />
+
+  <!-- The empty state IS the old lookup screen: no listing chosen yet, so the page asks which.
+       Once one is open this disappears - the id is settled, and the URL carries it. -->
+  @if (!listing()) {
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">Open by id</span>
+      </div>
+      <div class="card-body stack">
+        <form class="toolbar" (ngSubmit)="goToTyped()">
+          <label class="field">
+            <span>Listing id</span>
+            <input
+              class="id-input"
+              type="number"
+              min="1"
+              placeholder="e.g. 1042"
+              [ngModel]="idInput()"
+              (ngModelChange)="idInput.set($event)"
+              name="id"
+            />
+          </label>
+          <button type="submit" [disabled]="loading()">{{ loading() ? 'Opening…' : 'Open' }}</button>
+        </form>
+
+        @if (recentListings.ids().length > 0) {
+          <div class="row">
+            <span class="field-label">Recently viewed</span>
+            @for (id of recentListings.ids(); track id) {
+              <button class="link" type="button" (click)="open(id)">#{{ id }}</button>
+            }
+          </div>
+        }
+
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+      </div>
+    </section>
+  }
+
+  @if (listing(); as listing) {
+    <section class="card">
+      <div class="card-body">
+        <app-listing-detail [listing]="listing" />
+      </div>
+    </section>
+
+    <!-- Was a screen of its own, reached by typing this same id into a second box. -->
+    <app-investment-analysis [listingId]="analysisId()" />
+  }
+</div>

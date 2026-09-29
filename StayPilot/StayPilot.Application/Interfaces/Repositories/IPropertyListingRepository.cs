@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using StayPilot.Application.Contracts.Request;
+using StayPilot.Application.ReadModels;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
@@ -63,21 +64,42 @@ namespace StayPilot.Application.Interfaces.Repositories
 
         /// <summary>
         /// Gets every listing in one slice of the market - a place, optionally narrowed to one
-        /// property type and one room layout - with just its newest snapshot loaded.
+        /// property type and one room layout - cut down to the seven values the overview measures.
         ///
         /// Not paged: the market overview takes medians and a distribution over the whole slice,
         /// and a page of twenty would summarise the page rather than the market. Pass null or an
         /// empty string for any filter you do not want applied.
+        ///
+        /// <para>
+        /// Deliberately not entities. Unfiltered this is every listing in the country, and the
+        /// difference between seven columns and seven columns plus two joined rows of thirty is
+        /// the difference between a screen that answers and one that times out - see
+        /// <see cref="OverviewListing"/>.
+        /// </para>
         /// </summary>
-        Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology);
+        Task<List<OverviewListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology);
 
         /// <summary>
-        /// Gets every active listing in one place, optionally narrowed to one condition, with its
-        /// newest snapshot and market area loaded. Not paged: ranking the best deals needs every
-        /// listing in the place at once, not one page of them. Pass null or an empty string for
-        /// any level you do not want applied.
+        /// Gets every active listing in one place, optionally narrowed to one condition, cut down
+        /// to what grading a deal takes. Not paged: ranking the best deals needs every listing in
+        /// the place at once, not one page of them. Pass null or an empty string for any level
+        /// you do not want applied.
+        ///
+        /// <para>
+        /// Deliberately not entities - see <see cref="TopDealCandidate"/>. Read the handful that
+        /// win back in full with <see cref="GetPropertyListingsByIdsAsync"/>.
+        /// </para>
         /// </summary>
-        Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition);
+        Task<List<TopDealCandidate>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition);
+
+        /// <summary>
+        /// Gets these listings in full, with their market area and newest snapshot loaded, in no
+        /// particular order. Ids that match nothing are simply absent from the result.
+        ///
+        /// The second half of a grade-then-read pair: a screen that ranks the whole country and
+        /// shows ten of it grades on a projection and reads only the ten winners through here.
+        /// </summary>
+        Task<List<PropertyListing>> GetPropertyListingsByIdsAsync(IReadOnlyCollection<int> ids);
 
         /// <summary>
         /// Gets every listing whose newest snapshot is Active, with just that snapshot loaded.

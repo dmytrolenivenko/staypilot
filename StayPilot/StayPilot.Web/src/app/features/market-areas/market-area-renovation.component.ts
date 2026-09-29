@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
 import { AreaLevel, Confidence, MarketAreaStatsResponse } from '../../core/models/market-area-stats';
-import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 import { PlaceNameComponent, placeLevelLabel, placeOwnName } from '../../shared/place-name.component';
-import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
+import { AreaScope, emptyScope } from '../../shared/area-scope-picker.component';
 
 // Every column except Cost, which you type in and is therefore the same on every row.
 type SortColumn =
@@ -71,17 +70,13 @@ function confidenceRank(confidence: Confidence | undefined): number {
   imports: [
     CommonModule,
     FormsModule,
-    PageHeaderComponent,
     ExplainerComponent,
-    PlaceNameComponent,
-    AreaScopePickerComponent
+    PlaceNameComponent
   ],
   templateUrl: './market-area-renovation.component.html',
   styleUrl: './market-area-renovation.component.css'
 })
-export class MarketAreaRenovationComponent implements OnInit {
-  readonly levels: AreaLevel[] = ['District', 'Municipality', 'Town'];
-
+export class MarketAreaRenovationComponent implements OnInit, OnChanges {
   // The dropdown reads in the same words the table does — "Town" on its own never said whether
   // it meant a freguesia or a município.
   levelName = placeLevelLabel;
@@ -91,12 +86,26 @@ export class MarketAreaRenovationComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
+  renovationCostPerM2 = signal(DEFAULT_RENOVATION_COST_PER_M2);
+
+  // --- The shared filters, set by the Places shell ----------------------------------
   level = signal<AreaLevel>('Municipality');
   minListings = signal(5);
-  renovationCostPerM2 = signal(DEFAULT_RENOVATION_COST_PER_M2);
 
   // Narrowed to one distrito, and inside it one município. Empty = the whole country.
   scope = signal<AreaScope>(emptyScope());
+
+  @Input({ required: true, alias: 'level' }) set levelInput(value: AreaLevel) {
+    this.level.set(value);
+  }
+
+  @Input({ required: true, alias: 'minListings' }) set minListingsInput(value: number) {
+    this.minListings.set(Number(value));
+  }
+
+  @Input({ required: true, alias: 'scope' }) set scopeInput(value: AreaScope) {
+    this.scope.set(value);
+  }
 
   // Hide the rows whose discount the data cannot actually support. Off by default: a low-trust
   // row is still a lead, and hiding it silently is how a screen starts lying by omission.
@@ -194,25 +203,21 @@ export class MarketAreaRenovationComponent implements OnInit {
     return rows;
   });
 
+  // False until the first load has been asked for: Angular runs ngOnChanges before ngOnInit.
+  private started = false;
+
   constructor(private readonly service: MarketAreaStatsService) {}
 
   ngOnInit(): void {
+    this.started = true;
     this.load();
   }
 
-  changeLevel(level: AreaLevel): void {
-    this.level.set(level);
-    this.load();
-  }
-
-  changeMinListings(minListings: number): void {
-    this.minListings.set(Number(minListings));
-    this.load();
-  }
-
-  changeScope(scope: AreaScope): void {
-    this.scope.set(scope);
-    this.load();
+  // A shared filter moved on the shell. One load per change, however many moved together.
+  ngOnChanges(): void {
+    if (this.started) {
+      this.load();
+    }
   }
 
   // Costs are applied here, not on the server, so changing the rate is instant.

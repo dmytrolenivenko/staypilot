@@ -1,58 +1,80 @@
-// The header's nav groups: what drives both the hover dropdown (a fast single pick) and each
-// group's hub page (every option in that group, laid out as real page content). One list feeds
-// both, so a link added here shows up in both places without being kept in sync by hand.
+// The app's navigation, in one place.
+//
+// Four destinations plus Home: what used to be fourteen screens behind four hover menus is four
+// things the app is FOR, and the question you are asking within one of them rides along in ?ask=.
+//
+// The questions below are listed in the FOOTER only. The header deliberately stops at the four
+// destinations: every screen that answers several questions already carries a segmented control
+// for them under its own title, and a second copy in the header said the same thing twice with
+// two active states that could disagree.
+//
+// Each question's `title` must match the label its screen gives that choice — those segmented
+// options are the source of truth, and a footer that calls the same screen something else is the
+// app disagreeing with itself.
+//
+// The old paths all still resolve — see app.routes.ts.
+
+/** One of the questions a destination can answer, listed in the footer. */
+export interface NavQuestion {
+  /** The ?ask= value the screen reads. */
+  ask: string;
+  /** The label that screen's own segmented control gives this choice. */
+  title: string;
+}
 
 export interface NavLink {
   title: string;
   path: string;
   desc: string;
   planned?: boolean;
+
+  /** Which question to land on within a merged screen, e.g. { ask: 'deals' }. */
+  query?: Record<string, string>;
+
+  /** The questions this destination answers, listed under it in the footer. */
+  questions?: NavQuestion[];
 }
 
-export interface NavGroup {
-  title: string;
-  // Where clicking the trigger itself (not a link inside the dropdown) navigates to.
-  hubPath: string;
-  links: NavLink[];
-}
-
-export const NAV_GROUPS: NavGroup[] = [
+export const NAV_LINKS: NavLink[] = [
+  {
+    title: 'Places',
+    path: '/places',
+    desc: 'Compare towns and districts on what they actually ask per square metre.',
+    questions: [
+      { ask: 'value', title: 'Where value sits' },
+      { ask: 'budget', title: 'What money buys' },
+      { ask: 'neighbours', title: 'Neighbour gaps' },
+      { ask: 'renovation', title: 'Renovation upside' }
+    ]
+  },
   {
     title: 'Listings',
-    hubPath: '/listings',
-    links: [
-      { title: 'Browse', path: '/listing-browser', desc: 'Filter and sort every listing collected.' },
-      { title: 'Top deals', path: '/listings/top-deals', desc: 'Asking the most below their own median.' },
-      { title: 'Look up by id', path: '/listings/lookup', desc: 'One listing in full, with its latest snapshot.' },
-      { title: 'Investment analysis', path: '/listings/investment-analysis', desc: 'Renovation cost, resale value, profit.' }
+    path: '/listings',
+    desc: 'Every advert collected, and the ones asking furthest below their own local median.',
+    questions: [
+      { ask: 'browse', title: 'Browse' },
+      { ask: 'deals', title: 'Top deals' }
     ]
   },
   {
-    title: 'Market areas',
-    hubPath: '/market-areas',
-    links: [
-      { title: 'Market overview', path: '/market-overview', desc: 'One place, one typology, every price cut.' },
-      { title: 'Leaderboard', path: '/market-areas/leaderboard', desc: 'Places ranked on median €/m².' },
-      { title: 'What money buys', path: '/market-areas/budget', desc: 'The biggest typology a budget reaches.' },
-      { title: 'Neighbour gaps', path: '/market-areas/neighbours', desc: 'Nearby places priced far apart.' },
-      { title: 'Renovation upside', path: '/market-areas/renovation', desc: 'Where a fixer-upper is worth fixing.' },
-      { title: 'Beach proximity', path: '/beach-proximity', desc: 'Price premium by distance to beach.', planned: true }
+    // "Portfolio" is a finance word for "the flats you own". The screen is about your own
+    // properties, so it is now called that.
+    title: 'My properties',
+    path: '/portfolio',
+    desc: 'What you own, and what each would be advertised at today.',
+    questions: [
+      { ask: 'properties', title: 'My properties' },
+      { ask: 'valuation', title: 'Valuation' }
     ]
   },
   {
-    title: 'Portfolio',
-    hubPath: '/portfolio',
-    links: [
-      { title: 'My properties', path: '/my-properties', desc: 'Add, edit and delete what you own.' },
-      { title: 'Valuation', path: '/valuation', desc: 'What it would be advertised at today.' }
-    ]
-  },
-  {
-    title: 'Tools',
-    hubPath: '/tools',
-    links: [
-      { title: 'Feature impact', path: '/feature-impact', desc: 'What a garage, lift or sea view is worth.' },
-      { title: 'Build cost', path: '/build-cost', desc: 'Shell, pool, fees and VAT, projected.' }
+    // "Tools" said nothing about what was inside. These two both work a number out for you.
+    title: 'Calculators',
+    path: '/tools',
+    desc: 'What a feature adds to a price, and what building one would cost.',
+    questions: [
+      { ask: 'features', title: 'Feature impact' },
+      { ask: 'build', title: 'Build cost' }
     ]
   }
 ];

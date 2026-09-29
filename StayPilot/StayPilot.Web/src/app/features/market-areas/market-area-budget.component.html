@@ -1,9 +1,6 @@
+<!-- One lens of the Places screen: the title and the place/grain/sample controls are the
+     shell's, and what stays here is the budget itself and how far it may stretch. -->
 <div class="page">
-  <app-page-header
-    title="What money buys"
-    sub="The other way round from every property portal: put in what you have, and see what it actually gets you in each place."
-  />
-
   <app-explainer>
     <p>
       <strong>Best fit</strong> is the most rooms a place usually sells for your budget, judged on
@@ -34,7 +31,7 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Scope</span>
+      <span class="card-title">Your budget</span>
       @if (calculatedAtUtc()) {
         <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
       }
@@ -72,21 +69,6 @@
           </select>
         </label>
 
-        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
-
-        <label class="control">
-          Level
-          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
-            @for (option of levels; track option) {
-              <option [ngValue]="option">{{ levelName(option) }}</option>
-            }
-          </select>
-        </label>
-
-        <label class="control">
-          Min listings
-          <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
-        </label>
       </div>
     </div>
   </section>

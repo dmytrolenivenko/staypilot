@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using StayPilot.Api.Extensions;
 using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response;
@@ -70,6 +71,7 @@ namespace StayPilot.Api.Controllers
         /// call MarketArea/RecalculateMarketAreaStats after an import to refresh them.
         /// </summary>
         [HttpGet]
+        [OutputCache(PolicyName = OutputCachePolicies.PublicMarketData)]
         public async Task<ActionResult<TopDealsResponse>> GetTopDeals([FromQuery] TopDealsRequest request)
         {
             var result = await _statsService.GetTopDealsAsync(request);

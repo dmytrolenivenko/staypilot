@@ -1,116 +1,217 @@
 /* ==========================================================================
    StayPilot — design system
-   Tokens + the shared primitives every screen is built from. No UI framework.
-   Component CSS should only hold what is genuinely local to that screen.
+   Tokens first, then the primitives every screen is built from. No UI
+   framework, no dependencies: everything here is plain CSS a browser can read.
+
+   Rules for touching this file:
+     - A class lands here when a second screen needs it, not before.
+     - Component CSS holds only what is genuinely local to that screen.
+     - Every token has one job. A one-off value is local, not a new token.
    ========================================================================== */
 
-/* --- Tokens ------------------------------------------------------------- */
+/* --- Tokens --------------------------------------------------------------
+   A bright, instrument-like palette: white ground, cool grey bands, one teal
+   that does all the work. Teal appears as a FILL at full strength and as TEXT
+   only in its deep form — the bright teal on white is about 2.3:1, which is
+   fine behind a number and unreadable as a label. */
 
 :root {
-  /* surfaces */
+  /* surfaces — page, raised panel, band, inset/hover */
   --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f8f9fb;
-  --surface-hover: #f1f3f5;
+  --surface-2: #f4f7f9;
+  --surface-3: #f0f4f7;
+  --surface-hover: #eef3f6;
+  --header-bg: rgba(255, 255, 255, 0.85);
   --sidebar-bg: #ffffff;
 
   /* lines */
-  --border: #e4e7eb;
-  --border-strong: #d2d7de;
+  --border: #e8edf1;
+  --border-strong: #d4dce3;
 
   /* text */
-  --text: #14171c;
-  --text-muted: #64707f;
-  --text-faint: #98a2b0;
+  --text: #0c1a23;
+  --text-muted: #5a6b78;
+  --text-faint: #8a99a6;
 
-  /* intent — a deep navy, not the flat #2563eb SaaS blue this used to be. The first attempt
-     (#17233d) was so dark it read as black, not blue — this one keeps enough lightness/
-     saturation that the hue is actually visible while still being clearly "deep", not bright. */
-  --accent: #1e3a72;
-  --accent-strong: #16294f;
-  --accent-soft: rgba(30, 58, 114, 0.1);
-  --accent-contrast: #ffffff;
-  --success: #12805c;
-  --success-soft: rgba(18, 128, 92, 0.12);
-  --warn: #a55a00;
-  --warn-soft: rgba(165, 90, 0, 0.12);
-  --error: #c02929;
-  --error-soft: rgba(192, 41, 41, 0.1);
+  /* intent — teal. --accent fills, --accent-text writes. */
+  --accent: #0fb5a8;
+  --accent-strong: #0da096;
+  --accent-text: #046b63;
+  --accent-mid: #8ad9d3;
+  --accent-soft: #e6f7f5;
+  --accent-line: #b8e5e1;
+  /* What sits ON an --accent fill. Teal is a light colour: its readable
+     foreground is the ink, not white. */
+  --accent-contrast: #0c1a23;
 
-  /* footer — deliberately a fixed dark neutral, not a colour, and not tied to the
-     light/dark toggle: it's the one part of the page that's darker than the page. */
-  --footer-bg: #14171c;
-  --footer-text: #f3f4f6;
-  --footer-text-muted: #9aa3af;
-  --footer-border: rgba(255, 255, 255, 0.1);
+  /* A filled action that is not the teal one — sign in, the dark CTA band. */
+  --ink: #0c1a23;
+  --ink-contrast: #ffffff;
 
-  /* spacing — 4px grid */
+  --success: #0a7d55;
+  --success-soft: #e3f5ed;
+  --warn: #8a5300;
+  --warn-soft: #fbefdd;
+  --error: #b32626;
+  --error-soft: #fbe9e9;
+
+  /* charts — a teal ramp, darkest first. Series 1 is the accent, so a
+     single-series chart matches the rest of the page. */
+  --chart-1: #0fb5a8;
+  --chart-2: #8ad9d3;
+  --chart-3: #cde9e7;
+  --chart-track: #f0f4f7;
+  --chart-grid: #e8edf1;
+
+  /* Demand — a diverging scale, cold through hot. Its own ramp rather than the
+     brand teal, because it reads as a position on a scale and not as a
+     quantity of anything. Blue-to-amber-to-red rather than green-to-red, and
+     each step differs in lightness as well as hue, so the scale survives both
+     colour blindness and a greyscale print. */
+  --demand-cold: #24457c;
+  --demand-cold-soft: #e4ebf7;
+  --demand-cool: #2a6294;
+  --demand-cool-soft: #e6eff8;
+  --demand-balanced: #5a6b78;
+  --demand-balanced-soft: #eef1f4;
+  --demand-firm: #96590d;
+  --demand-firm-soft: #fbf0dd;
+  --demand-hot: #b3362b;
+  --demand-hot-soft: #fbe8e6;
+
+  /* footer */
+  --footer-bg: #f4f7f9;
+  --footer-text: #0c1a23;
+  --footer-text-muted: #5a6b78;
+  --footer-border: #e1e8ed;
+
+  /* spacing — 4px grid, named by step so the rhythm survives a redesign */
   --sp-1: 0.25rem;
   --sp-2: 0.5rem;
   --sp-3: 0.75rem;
   --sp-4: 1rem;
-  --sp-5: 1.25rem;
-  --sp-6: 1.5rem;
-  --sp-8: 2rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-8: 3rem;
+  --sp-10: 4rem;
+  --sp-12: 6.5rem;
 
-  /* radius — kept small on purpose; this is a data app, not a marketing page */
-  --r-xs: 3px;
-  --r-sm: 4px;
-  --r: 4px;
+  /* radius */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 16px;
   --r-pill: 999px;
 
   /* type */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --fs-xs: 0.75rem;
   --fs-sm: 0.8125rem;
   --fs-base: 0.9375rem;
-  --fs-md: 1rem;
-  --fs-lg: 1.125rem;
-  --fs-xl: 1.375rem;
-  --fs-display: 2rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5625rem;
+  --fs-2xl: 2.375rem;
+  --fs-3xl: 2.875rem;
+  --fs-display: 4.5rem;
 
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  /* elevation — soft and cool, matching the grey the page bands use */
+  --shadow-sm: 0 1px 2px rgba(12, 26, 35, 0.04), 0 1px 3px rgba(12, 26, 35, 0.04);
+  --shadow: 0 1px 2px rgba(12, 26, 35, 0.04), 0 6px 16px rgba(12, 26, 35, 0.06);
+  --shadow-lg: 0 2px 4px rgba(12, 26, 35, 0.04), 0 24px 64px rgba(12, 26, 35, 0.1);
+
+  /* motion — one duration and one easing, so nothing animates out of step */
+  --ease: cubic-bezier(0.2, 0, 0.13, 1);
+  --dur: 0.16s;
+
+  /* layout */
+  --page-max: 1280px;
 
   color-scheme: light;
 }
 
-:root[data-theme='dark'] {
-  --bg: #0e1013;
-  --surface: #16191e;
-  --surface-2: #1b1f25;
-  --surface-hover: #21262d;
-  --sidebar-bg: #121519;
+:root[data-theme="dark"] {
+  --bg: #0a1218;
+  --surface: #101a21;
+  --surface-2: #16222b;
+  --surface-3: #1d2b35;
+  --surface-hover: #1b2831;
+  --header-bg: rgba(16, 26, 33, 0.85);
+  --sidebar-bg: #101a21;
 
-  --border: #262c34;
-  --border-strong: #343b45;
+  --border: #223039;
+  --border-strong: #2e3f4a;
 
-  --text: #e7eaee;
-  --text-muted: #97a1af;
-  --text-faint: #6c7682;
+  --text: #e8eef2;
+  --text-muted: #93a5b1;
+  --text-faint: #6b7c88;
 
-  --accent: #7c98cc;
-  --accent-strong: #a3bce0;
-  --accent-soft: rgba(124, 152, 204, 0.16);
-  --accent-contrast: #0b1220;
-  --success: #3ecf8e;
-  --success-soft: rgba(62, 207, 142, 0.14);
-  --warn: #e0a33c;
-  --warn-soft: rgba(224, 163, 60, 0.14);
-  --error: #f2726f;
-  --error-soft: rgba(242, 114, 111, 0.14);
+  /* The fill brightens and the text form flips to the LIGHTER teal: on a dark
+     ground the deep teal that reads on white disappears. */
+  --accent: #2ed3c6;
+  --accent-strong: #4bdcd1;
+  --accent-text: #5fe0d5;
+  --accent-mid: #1c7a74;
+  --accent-soft: #0f2b2b;
+  --accent-line: #235a56;
+  --accent-contrast: #04171a;
 
-  /* darker still than the already-dark page, so the footer keeps reading as its own band */
-  --footer-bg: #05070a;
-  --footer-text: #e7eaee;
-  --footer-text-muted: #838d99;
-  --footer-border: rgba(255, 255, 255, 0.08);
+  --ink: #e8eef2;
+  --ink-contrast: #0a1218;
 
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --success: #3fcb94;
+  --success-soft: #0f2a20;
+  --warn: #e0a94f;
+  --warn-soft: #2b2113;
+  --error: #f2807d;
+  --error-soft: #2e1717;
+
+  --chart-1: #2ed3c6;
+  --chart-2: #1c7a74;
+  --chart-3: #164e4a;
+  --chart-track: #1d2b35;
+  --chart-grid: #223039;
+
+  /* The same scale, lifted: the light-mode values are dark inks meant for a
+     white ground and go invisible here. */
+  --demand-cold: #8fa8dd;
+  --demand-cold-soft: #161f30;
+  --demand-cool: #7fb3e0;
+  --demand-cool-soft: #14232f;
+  --demand-balanced: #93a5b1;
+  --demand-balanced-soft: #1d2b35;
+  --demand-firm: #e0a94f;
+  --demand-firm-soft: #2b2113;
+  --demand-hot: #f2807d;
+  --demand-hot-soft: #2e1717;
+
+  --footer-bg: #0d151b;
+  --footer-text: #e8eef2;
+  --footer-text-muted: #93a5b1;
+  --footer-border: #223039;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.4), 0 24px 64px rgba(0, 0, 0, 0.45);
 
   color-scheme: dark;
 }
 
-/* --- Base --------------------------------------------------------------- */
+/* Someone who has asked their OS to reduce motion gets none of it. Every
+   transition and animation in this file funnels through here. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Base ----------------------------------------------------------------- */
 
 * {
   box-sizing: border-box;
@@ -121,36 +222,51 @@ body {
   height: 100%;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: var(--fs-base);
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Display type is set tight and heavy; body type is not. The tracking is part
+   of the identity — without it the headings read as a default bold sans. */
 h1,
 h2,
-h3 {
+h3,
+h4 {
   margin: 0;
-  letter-spacing: -0.011em;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  font-weight: 800;
 }
 
 h1 {
-  font-size: var(--fs-xl);
-  font-weight: 650;
+  font-size: var(--fs-2xl);
 }
 
 h2 {
-  font-size: var(--fs-md);
-  font-weight: 620;
+  font-size: var(--fs-xl);
 }
 
 h3 {
-  font-size: var(--fs-sm);
-  font-weight: 650;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.028em;
+}
+
+h4 {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 p {
@@ -158,19 +274,59 @@ p {
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
-/* --- Page layout -------------------------------------------------------- */
+/* One focus ring for the whole app. Never removed, only moved. */
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
 
-/* Every screen is: one .page > one .page-head + N .card. */
+/* Tab past the header straight into the screen. Visible only when focused. */
+.skip-link {
+  position: absolute;
+  left: var(--sp-4);
+  top: var(--sp-4);
+  z-index: 100;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-250%);
+  transition: transform var(--dur) var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* Present for screen readers, absent on screen. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Page layout ----------------------------------------------------------
+   Every screen is one .page holding a .page-head and then its sections. */
+
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--sp-6);
 }
 
-/* The consistent top of every screen: title, one-line subtitle, actions. */
 .page-head {
   display: flex;
   align-items: flex-start;
@@ -182,14 +338,14 @@ a {
 .page-head-text {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: var(--sp-2);
   min-width: 0;
 }
 
 .page-sub {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
-  max-width: 76ch;
+  font-size: var(--fs-base);
+  max-width: 68ch;
 }
 
 .page-head-actions {
@@ -199,21 +355,77 @@ a {
   flex-wrap: wrap;
 }
 
-/* Small counts / timestamps that qualify a heading. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 64ch;
+}
+
+/* Small, heavily tracked, teal. Names the question a section answers. */
+.eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+/* A pill that states a live fact — "Updated daily · 18 districts". */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  flex: none;
+}
+
+/* Small counts and timestamps that qualify a heading. */
 .meta {
   color: var(--text-faint);
   font-size: var(--fs-xs);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* --- Card --------------------------------------------------------------- */
+/* --- Card ------------------------------------------------------------------ */
 
 .card {
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-interactive {
+  cursor: pointer;
+  transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.card-interactive:hover {
+  border-color: var(--border-strong);
   box-shadow: var(--shadow);
+  transform: translateY(-2px);
 }
 
 .card-head {
@@ -222,20 +434,18 @@ a {
   justify-content: space-between;
   gap: var(--sp-3);
   flex-wrap: wrap;
-  padding: var(--sp-3) var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--border);
 }
 
-/* Section label above a group of controls or a table. */
 .card-title {
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.015em;
 }
 
 .card-actions {
@@ -249,7 +459,25 @@ a {
   padding: var(--sp-5);
 }
 
-/* --- Buttons ------------------------------------------------------------ */
+/* A card that should recede: grouped background reading, not the answer. */
+.card-quiet {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+/* The rounded tile that carries a section's icon. */
+.icon-tile {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+/* --- Buttons --------------------------------------------------------------- */
 
 input,
 select,
@@ -269,72 +497,73 @@ button {
   color: var(--accent-contrast);
   border: 1px solid transparent;
   border-radius: var(--r-sm);
-  padding: 0.4rem 0.85rem;
+  padding: 0.6rem 1.1rem;
   font-size: var(--fs-sm);
-  font-weight: 550;
+  font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 
-button:hover:not(:disabled),
-.btn:hover {
-  filter: brightness(1.06);
+/* TRAP: the bare `button` here means every <button> in the app is a primary
+   action until something overrides it, and this selector is (0,2,1) — heavier
+   than a plain `.thing:hover`. Any button-shaped component (a segment, a pager
+   cell, an icon button, a text link) needs its hover written as
+   `.thing:hover:not(:disabled)` to outweigh it, or it will flash solid accent
+   on hover and swallow its own text. */
+.btn:hover:not(:disabled),
+button:hover:not(:disabled) {
+  background: var(--accent-strong);
 }
 
-/* The primary fill is near-black in light mode, near-white in dark mode — brightness(1.06)
-   does nothing visible on either (black barely lightens, white just clips), so the solid
-   accent buttons get a dedicated opacity hover instead. Scoped to .btn (and the bare
-   <button> fallback) only - every other button variant (page-btn, theme-toggle, the header's
-   account actions, …) overrides the background away from --accent and keeps its own hover. */
-.btn:not(.btn-secondary):not(.btn-ghost):not(.btn-danger):hover:not(:disabled),
-button:not(.secondary):not(.danger):not(.sm):not(.page-btn):hover:not(:disabled) {
-  filter: none;
-  opacity: 0.85;
+.btn:active:not(:disabled),
+button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 button:disabled,
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  filter: none;
+  transform: none;
 }
 
-button:focus-visible,
-.btn:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Neutral action — the default for anything that isn't the primary verb. */
+/* Neutral action — the default for anything that is not the primary verb. */
 .btn-secondary,
 button.secondary {
   background: var(--surface);
   color: var(--text);
   border-color: var(--border-strong);
-  filter: none;
 }
 
-.btn-secondary:hover,
+.btn-secondary:hover:not(:disabled),
 button.secondary:hover:not(:disabled) {
   background: var(--surface-hover);
-  filter: none;
+  border-color: var(--text-faint);
+}
+
+/* The dark filled action: sign in, and the CTA band's primary. */
+.btn-ink {
+  background: var(--ink);
+  color: var(--ink-contrast);
+}
+
+.btn-ink:hover:not(:disabled) {
+  background: var(--text-muted);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
   border-color: transparent;
-  filter: none;
 }
 
-.btn-ghost:hover {
+.btn-ghost:hover:not(:disabled) {
   background: var(--surface-hover);
   color: var(--text);
-  filter: none;
 }
 
 .btn-danger,
@@ -342,42 +571,64 @@ button.danger {
   background: transparent;
   color: var(--error);
   border-color: var(--error);
-  filter: none;
 }
 
-.btn-danger:hover,
+.btn-danger:hover:not(:disabled),
 button.danger:hover:not(:disabled) {
   background: var(--error-soft);
-  filter: none;
 }
 
 .btn-sm,
 button.sm {
-  padding: 0.2rem 0.55rem;
+  padding: 0.32rem 0.7rem;
   font-size: var(--fs-xs);
+  border-radius: var(--r-xs);
 }
 
-/* Text-weight action that sits inline next to buttons or inside a table row. */
+.btn-lg {
+  height: 52px;
+  padding: 0 1.75rem;
+  font-size: var(--fs-base);
+}
+
+/* Text-weight action, inline beside buttons or inside a table row. */
 .link,
 .btn-link {
-  color: var(--accent);
+  color: var(--accent-text);
   background: none;
   border: none;
   padding: 0;
   font-size: var(--fs-sm);
-  font-weight: 550;
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
 }
 
+/* `:not(:disabled)` is not a filter here, it is a specificity weight: without
+   it this rule is (0,2,0) and loses to the bare `button:hover:not(:disabled)`
+   above, which would paint a text-weight action with the solid accent fill. */
 .link:hover,
-.btn-link:hover {
+.btn-link:hover:not(:disabled) {
+  background: none;
   text-decoration: underline;
-  filter: none;
 }
 
-/* --- Form controls ------------------------------------------------------ */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.link-arrow svg {
+  transition: transform var(--dur) var(--ease);
+}
+
+.link-arrow:hover svg {
+  transform: translateX(3px);
+}
+
+/* --- Form controls --------------------------------------------------------- */
 
 input,
 select,
@@ -385,16 +636,15 @@ textarea {
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
-  padding: 0.4rem 0.55rem;
+  padding: 0.5rem 0.75rem;
   font-size: var(--fs-sm);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 
-input[type='number'] {
+input[type="number"] {
   font-variant-numeric: tabular-nums;
 }
 
-/* Explicit option colors stop the browser painting the dropdown popup with its
-   default light UA style for a frame before the dark theme catches up. */
 option {
   background: var(--surface);
   color: var(--text);
@@ -415,13 +665,12 @@ select:disabled {
   cursor: not-allowed;
 }
 
-input[type='checkbox'] {
+input[type="checkbox"] {
   width: auto;
   accent-color: var(--accent);
   cursor: pointer;
 }
 
-/* A labelled field: caption above the control. */
 .field {
   display: flex;
   flex-direction: column;
@@ -432,7 +681,7 @@ input[type='checkbox'] {
 .field > span,
 .field-label {
   font-size: var(--fs-xs);
-  font-weight: 550;
+  font-weight: 700;
   color: var(--text-muted);
 }
 
@@ -440,7 +689,6 @@ input[type='checkbox'] {
   grid-column: 1 / -1;
 }
 
-/* Many fields at once — the standard create/edit form body. */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -454,7 +702,82 @@ input[type='checkbox'] {
   flex-wrap: wrap;
 }
 
-/* A horizontal strip of controls above a table (filters, level pickers). */
+/* The strip that picks which question a merged screen is answering. */
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.segment {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 8rem;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Not chosen: hovering one fills it with the accent, so the choice you are
+   about to make is the loudest thing on the strip. This is the only state on
+   it you can act on, so it is the only one that gets the brand colour. */
+.segment:hover:not(.active) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.segment.active {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Already chosen: hovering it must promise nothing, so it barely moves.
+   Without this rule the bare `button:hover` above wins on specificity and
+   paints the chosen segment solid accent — which reads as the loudest thing
+   on the strip while its own hint text disappears into the fill behind it. */
+.segment.active:hover {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.segment-label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.segment-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.segment.active .segment-hint {
+  color: var(--text-muted);
+}
+
+/* The hint has to travel with the fill. Left on --text-faint it is a mid grey
+   sitting on saturated teal — unreadable, and the exact thing that made the
+   filled segment look broken. --accent-contrast is the ink chosen to read on
+   this fill; the hint just carries it a little lighter than the label. */
+.segment:hover:not(.active) .segment-hint {
+  color: var(--accent-contrast);
+  opacity: 0.78;
+}
+
 .toolbar {
   display: flex;
   align-items: flex-end;
@@ -467,7 +790,6 @@ input[type='checkbox'] {
   margin-left: auto;
 }
 
-/* Inline label + control, for compact toolbars. */
 .control {
   display: flex;
   align-items: center;
@@ -477,11 +799,10 @@ input[type='checkbox'] {
   white-space: nowrap;
 }
 
-.control input[type='number'] {
+.control input[type="number"] {
   width: 5.5rem;
 }
 
-/* Checkbox groups read as one field, laid out in a row. */
 .check-grid {
   display: flex;
   flex-wrap: wrap;
@@ -506,15 +827,10 @@ input[type='checkbox'] {
   cursor: pointer;
 }
 
-/* --- Tables ------------------------------------------------------------- */
+/* --- Tables ---------------------------------------------------------------- */
 
-/* Wide tables scroll inside their card instead of stretching the page. Padded and given a floor
-   height so the card the table sits in reads as a proper panel rather than shrink-wrapping to
-   whatever few rows happen to be loaded. */
 .table-wrap {
   overflow-x: auto;
-  padding: var(--sp-4) 0;
-  min-height: 22rem;
 }
 
 .data-table {
@@ -523,47 +839,49 @@ input[type='checkbox'] {
   font-size: var(--fs-sm);
 }
 
-/* No rule between rows — a row is told apart from the next by air, not a line under it. One
-   rule total, over the header, is the only line this table draws. */
 .data-table th,
 .data-table td {
   text-align: left;
-  padding: 1.4rem var(--sp-4);
+  padding: 0.85rem var(--sp-5);
   white-space: nowrap;
 }
 
-/* The one line the table draws, and it sits over the header, not boxed around it — the header
-   reads as sitting on the page rather than floating above it in its own strip, which is what
-   made a plain ranked list read as a dense data grid instead of a list of places. */
 .data-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
   background: var(--surface);
-  color: var(--text-muted);
+  color: var(--text-faint);
   font-size: var(--fs-xs);
-  font-weight: 650;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding-top: 1.1rem;
-  padding-bottom: 1.1rem;
-  border-top: 2px solid var(--text);
+  letter-spacing: 0.08em;
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.data-table tbody tr {
+  transition: background-color var(--dur) var(--ease);
 }
 
 .data-table tbody tr:hover {
   background: var(--surface-hover);
 }
 
+.data-table tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
 .data-table a {
   text-decoration: none;
-  font-weight: 550;
+  font-weight: 700;
 }
 
 .data-table a:hover {
   text-decoration: underline;
 }
 
-/* Clickable column header. The caret marks the active sort. */
 .data-table th.sortable {
   cursor: pointer;
   user-select: none;
@@ -579,6 +897,7 @@ input[type='checkbox'] {
 .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 
 .data-table .rank {
@@ -599,7 +918,6 @@ input[type='checkbox'] {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
-/* A vertical key/value table (single record detail). */
 .data-table.record th {
   position: static;
   width: 12rem;
@@ -607,8 +925,9 @@ input[type='checkbox'] {
   text-transform: none;
   letter-spacing: 0;
   font-size: var(--fs-sm);
-  font-weight: 550;
+  font-weight: 600;
   color: var(--text-muted);
+  border-bottom: none;
 }
 
 /* Rows the data cannot speak to: dimmed, never hidden — "we looked and found
@@ -616,10 +935,10 @@ input[type='checkbox'] {
 .data-table tr.dim,
 .data-table tr.unmeasured,
 .data-table tr.thin {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
-/* --- Pager -------------------------------------------------------------- */
+/* --- Pager ----------------------------------------------------------------- */
 
 .pager {
   display: flex;
@@ -634,31 +953,36 @@ input[type='checkbox'] {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  padding: 0.25rem 0.55rem;
-  min-width: 2.1rem;
+  border-radius: var(--r-xs);
+  padding: 0.3rem 0.6rem;
+  min-width: 2.2rem;
   font-size: var(--fs-xs);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  filter: none;
 }
 
 .page-btn:hover:not(:disabled) {
   background: var(--surface-hover);
-  filter: none;
 }
 
-.page-btn.active {
+/* The page you are already on. It does nothing when clicked, so it must not
+   light up when hovered either — the `:hover` here holds it still against the
+   bare `button:hover` rule, which would otherwise shift it a shade. */
+.page-btn.active,
+.page-btn.active:hover {
   background: var(--accent);
   color: var(--accent-contrast);
   border-color: var(--accent);
   cursor: default;
 }
 
-/* --- Stats & headline numbers ------------------------------------------- */
+/* --- Stats & headline numbers ----------------------------------------------
+   Figures are the product. They are set large, heavy and tight, with tabular
+   numerals so a column of them lines up. */
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: var(--sp-3);
 }
 
@@ -666,25 +990,31 @@ input[type='checkbox'] {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   background: var(--surface);
 }
 
-.stat-value {
-  font-size: var(--fs-md);
-  font-weight: 620;
-  font-variant-numeric: tabular-nums;
-}
-
 .stat-label {
   font-size: var(--fs-xs);
+  font-weight: 700;
   color: var(--text-muted);
   line-height: 1.35;
 }
 
-/* The one big number a screen exists to produce. */
+.stat-value {
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-note {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
 .headline {
   display: flex;
   align-items: flex-start;
@@ -702,17 +1032,17 @@ input[type='checkbox'] {
 
 .headline-label {
   font-size: var(--fs-xs);
-  font-weight: 650;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
 }
 
 .headline-price {
-  font-size: var(--fs-display);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -722,14 +1052,14 @@ input[type='checkbox'] {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Badges & tags ------------------------------------------------------ */
+/* --- Badges & tags ---------------------------------------------------------- */
 
 .badge {
   display: inline-block;
-  padding: 0.1rem 0.5rem;
+  padding: 0.18rem 0.6rem;
   border-radius: var(--r-xs);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -750,17 +1080,22 @@ input[type='checkbox'] {
 }
 
 .badge-soon {
-  background: var(--surface-hover);
+  background: var(--surface-3);
   color: var(--text-muted);
 }
 
-/* An inline qualifier on a value (typology, verdict, "thin"). */
+.badge-accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
 .tag {
   display: inline-block;
-  padding: 0.05rem 0.4rem;
+  padding: 0.05rem 0.45rem;
   border: 1px solid currentColor;
   border-radius: var(--r-pill);
   font-size: var(--fs-xs);
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -768,7 +1103,7 @@ input[type='checkbox'] {
   color: var(--text-faint);
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .tag-muted {
@@ -783,10 +1118,8 @@ input[type='checkbox'] {
   color: var(--error);
 }
 
-/* --- Messages ----------------------------------------------------------- */
+/* --- Messages --------------------------------------------------------------- */
 
-/* Background reading. Collapsed by default via <app-explainer>; this is the
-   open state, and the inline variant for a single caveat. */
 .note {
   display: flex;
   flex-direction: column;
@@ -804,6 +1137,9 @@ input[type='checkbox'] {
 }
 
 .error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
   background: var(--error-soft);
   border-radius: var(--r-sm);
   padding: var(--sp-3) var(--sp-4);
@@ -819,17 +1155,70 @@ input[type='checkbox'] {
   font-size: var(--fs-sm);
 }
 
-/* Nothing to show yet: says why, and what to do about it. */
 .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
   padding: var(--sp-8) var(--sp-5);
   text-align: center;
   color: var(--text-muted);
   font-size: var(--fs-sm);
-  max-width: 60ch;
+  max-width: 52ch;
   margin: 0 auto;
 }
 
-/* --- Key/value grid (record detail) ------------------------------------- */
+.empty-icon {
+  color: var(--text-faint);
+}
+
+.empty-title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* --- Loading -----------------------------------------------------------------
+   A grey block the shape of the thing that is coming, so the page does not
+   jump when it arrives. Always paired with an aria-busy region, never used as
+   the only signal that something is happening. */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-3);
+  border-radius: var(--r-xs);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: skeleton-sweep 1.4s infinite;
+}
+
+:root[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-text {
+  height: 0.7rem;
+  margin-bottom: var(--sp-2);
+}
+
+.skeleton-text:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Key/value grid ---------------------------------------------------------- */
 
 .kv {
   margin: 0;
@@ -846,10 +1235,10 @@ input[type='checkbox'] {
 
 .kv dd {
   margin: 0;
-  font-weight: 550;
+  font-weight: 700;
 }
 
-/* --- Utilities ---------------------------------------------------------- */
+/* --- Utilities ---------------------------------------------------------------- */
 
 .muted {
   color: var(--text-muted);
@@ -862,12 +1251,12 @@ input[type='checkbox'] {
 
 .pos {
   color: var(--success);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .neg {
   color: var(--error);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .stack {
@@ -876,37 +1265,47 @@ input[type='checkbox'] {
   gap: var(--sp-4);
 }
 
-/* --- Feature grid --------------------------------------------------------
-   A grid of link-cards: a group hub listing every screen inside it, the
-   home page's "under the hood" section. One primitive so both stay in sync. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Feature grid -------------------------------------------------------------- */
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0 var(--sp-6);
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--sp-4);
 }
 
-/* A hairline under each card reads as a list of options rather than a wall of
-   boxes — the border-per-tile look this replaced. The background only shows
-   up on hover, so the resting state is just type on the page. */
 .feature-card {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  border-radius: var(--r-sm);
-  border-bottom: 1px solid var(--border);
-  padding: var(--sp-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: var(--sp-5);
   text-decoration: none;
   color: inherit;
-  transition: background-color 0.12s ease;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 
 .feature-card:hover {
-  background: var(--surface-hover);
+  background: var(--surface);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
 }
 
 .feature-card-planned {
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
 .feature-card-head {
@@ -924,35 +1323,56 @@ input[type='checkbox'] {
 }
 
 .feature-card-title {
-  font-weight: 650;
+  font-weight: 700;
   font-size: var(--fs-md);
+  letter-spacing: -0.02em;
 }
 
 .feature-card-desc {
   font-size: var(--fs-sm);
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-/* Hidden until hover, so the resting card stays quiet and the affordance reads
-   as a response to intent rather than permanent chrome. */
 .feature-card-arrow {
   flex: none;
   color: var(--text-faint);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+  transition: transform var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .feature-card:hover .feature-card-arrow {
-  opacity: 1;
-  transform: translateX(0);
-  color: var(--accent);
+  transform: translateX(3px);
+  color: var(--accent-text);
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
+/* --- Responsive ----------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  :root {
+    --fs-display: 2.5rem;
+    --fs-3xl: 2rem;
+    --fs-2xl: 1.75rem;
+    --fs-xl: 1.375rem;
+  }
+
+  .card-body,
+  .card-head {
+    padding: var(--sp-4);
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.7rem var(--sp-4);
+  }
+}
+
+@media (max-width: 560px) {
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  }
+
+  .page-head-actions,
+  .card-actions {
+    width: 100%;
+  }
 }

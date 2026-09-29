@@ -1,70 +1,34 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import {
   FilterPropertyListingRequest,
   FilterPropertyListingResponse
 } from '../models/filter-property-listing';
-import { PropertyListingResponse } from '../models/property-listing';
 import { environment } from '../../../environments/environment';
 
-// The API returns at most 20 rows per call (its PageSize cap), so to sort + page in the
-// browser we first grab page 1, see how many matches there are, then pull the rest.
-const API_PAGE_SIZE = 20;
-
-// The API also caps PageNumber at 50, so we can fetch at most 50 * 20 = 1000 rows.
-const MAX_PAGES = 50;
+// Page sizes the browser offers. All inside the API's [Range(1, 100)] on PageSize.
+export const PAGE_SIZE_CHOICES = [20, 50, 100];
 
 // Talks to the sort/filter backend: POST /api/PropertyListing/FilterProperty.
+//
+// One call per page, sorted and paged by the server.
+//
+// It used to fetch every matching row instead — page 1, then pages 2..N in parallel — and sort
+// the pile in the browser. That was wrong twice over. The API caps a page at 100 rows and the
+// page number at 10,000, and it used to cap them at 20 and 50, so the fetch stopped dead at
+// 1,000 rows: a search of Faro (9,414 listings) quietly held the first 1,000 by Id and sorted
+// only those. "Most expensive in Faro" answered with the most expensive of an arbitrary eighth
+// of it, and nothing on screen said so. It also cost up to 50 requests per search.
 @Injectable({ providedIn: 'root' })
 export class ListingFilterService {
-  // Fix: this pointed at /api/ListPropertyListing, a controller that no longer
-  // exists (its one action moved into PropertyListingController). Every search
-  // would have 404'd.
   private readonly baseUrl = `${environment.apiBase}/api/PropertyListing/FilterProperty`;
 
   constructor(private readonly http: HttpClient) {}
 
-  // One page (used internally).
-  private page(
-    request: FilterPropertyListingRequest,
-    pageNumber: number
-  ): Observable<FilterPropertyListingResponse> {
-    const body: FilterPropertyListingRequest = { ...request, pageNumber, pageSize: API_PAGE_SIZE };
-    return this.http.post<FilterPropertyListingResponse>(this.baseUrl, body);
-  }
-
-  // All matching rows, gathered across however many pages of 20 it takes.
-  // Result carries both how many we actually hold and how many the server says match, because
-  // once the fetch is capped those are different numbers and the header must not print the cap
-  // as if it were the total.
-  filterAll(
-    request: FilterPropertyListingRequest
-  ): Observable<{ items: PropertyListingResponse[]; capped: boolean; totalRecords: number }> {
-    return this.page(request, 1).pipe(
-      switchMap(first => {
-        const neededPages = Math.ceil(first.totalRecords / API_PAGE_SIZE);
-        const pagesToFetch = Math.min(neededPages, MAX_PAGES);
-
-        // Everything fit on page 1 — nothing more to fetch.
-        if (pagesToFetch <= 1) {
-          return of({ items: first.items, capped: neededPages > MAX_PAGES, totalRecords: first.totalRecords });
-        }
-
-        // Fetch pages 2..N in parallel and stitch them onto page 1.
-        const rest: Observable<FilterPropertyListingResponse>[] = [];
-        for (let p = 2; p <= pagesToFetch; p++) {
-          rest.push(this.page(request, p));
-        }
-
-        return forkJoin(rest).pipe(
-          map(responses => {
-            const items = first.items.concat(...responses.map(r => r.items));
-            return { items, capped: neededPages > MAX_PAGES, totalRecords: first.totalRecords };
-          })
-        );
-      })
-    );
+  // One page, exactly as asked for. Sorting and paging both happen on the server, so what
+  // comes back is the real page N of the whole matching set, not of a truncated copy of it.
+  filterPage(request: FilterPropertyListingRequest): Observable<FilterPropertyListingResponse> {
+    return this.http.post<FilterPropertyListingResponse>(this.baseUrl, request);
   }
 }

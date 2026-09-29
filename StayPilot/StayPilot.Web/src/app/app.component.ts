@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit, effect, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { AccountInfo, InteractionStatus } from '@azure/msal-browser';
 import { Subject, filter, takeUntil } from 'rxjs';
-import { NAV_GROUPS } from './core/models/nav-groups';
+import { NAV_LINKS, NavLink } from './core/models/nav-groups';
+import { MarketAreaService } from './core/services/market-area.service';
 import { RELIABLE_LISTINGS } from './core/models/market-area-stats';
 
 type Theme = 'light' | 'dark';
@@ -32,9 +33,35 @@ export class AppComponent implements OnInit, OnDestroy {
   accountName = signal<string | null>(null);
   accountEmail = signal<string | null>(null);
 
-  navGroups = NAV_GROUPS;
-  openGroup = signal<string | null>(null);
-  searchId = '';
+  navLinks = NAV_LINKS;
+
+  // The nav collapses behind a button below 900px. Held here rather than in CSS
+  // because the same state closes it again on navigation and on Escape.
+  menuOpen = signal(false);
+
+  // Whether the account menu (name, email, sign out) is showing. On a phone
+  // there is no room to print an email address in the bar itself.
+  accountOpen = signal(false);
+
+  // The current URL, updated on every completed navigation. The sub-nav reads
+  // it to know which destination is active; routerLinkActive cannot help here
+  // because the strip has to exist before any of its own links are active.
+  // Seeded in the constructor, not here: a field initializer runs before the
+  // constructor's parameter properties are assigned, so `this.router` would
+  // still be undefined at this point.
+  private readonly url = signal('');
+
+  /**
+   * Home only. It is the one screen that draws its own full-bleed bands — a
+   * dark CTA, a grey trust strip — so the shell drops its content column and
+   * its padding and lets the screen run to the window's edges.
+   */
+  isHome = computed(() => this.url().split('?')[0] === '/');
+
+  // What was typed in the header box: a place name, or a listing id.
+  searchText = '';
+  searchError = signal<string | null>(null);
+  searching = signal(false);
 
   // Surfaced only for the footer's disclaimer line, so the "15+ listings" figure it states
   // can never drift from the actual reliability floor used across the market-area screens.
@@ -42,27 +69,27 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly currentYear = new Date().getFullYear();
 
   private readonly destroyed = new Subject<void>();
-  private readonly onDocumentClick = () => this.openGroup.set(null);
-  private readonly onDocumentKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      this.openGroup.set(null);
-    }
-  };
-
-  // Hover-intent for the dropdowns: opening on mouseenter is immediate (so adjacent
-  // triggers swap with no flicker), but closing on mouseleave waits a beat so crossing
-  // the visual gap between the trigger and the panel below it doesn't close the menu.
-  private hoverCloseTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly msal: MsalService,
     private readonly msalBroadcast: MsalBroadcastService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly marketAreas: MarketAreaService
   ) {
+    this.url.set(this.router.url);
+
     effect(() => {
       const theme = this.theme();
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem(THEME_STORAGE_KEY, theme);
+    });
+
+    // An open menu must not survive the navigation it triggered, or a phone
+    // lands on the new screen with the menu still covering it.
+    effect(() => {
+      this.url();
+      this.menuOpen.set(false);
+      this.accountOpen.set(false);
     });
   }
 
@@ -74,26 +101,37 @@ export class AppComponent implements OnInit, OnDestroy {
       )
       .subscribe(() => this.refreshAccount());
 
-    this.refreshAccount();
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntil(this.destroyed)
+      )
+      .subscribe(event => this.url.set(event.urlAfterRedirects));
 
-    document.addEventListener('click', this.onDocumentClick);
-    document.addEventListener('keydown', this.onDocumentKeydown);
+    this.refreshAccount();
   }
 
   ngOnDestroy(): void {
     this.destroyed.next();
     this.destroyed.complete();
-    document.removeEventListener('click', this.onDocumentClick);
-    document.removeEventListener('keydown', this.onDocumentKeydown);
-
-    if (this.hoverCloseTimer !== null) {
-      clearTimeout(this.hoverCloseTimer);
-      this.hoverCloseTimer = null;
-    }
   }
 
   toggleTheme(): void {
     this.theme.set(this.theme() === 'light' ? 'dark' : 'light');
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.set(!this.menuOpen());
+  }
+
+  toggleAccount(): void {
+    this.accountOpen.set(!this.accountOpen());
+  }
+
+  /** Escape closes whatever is open, from anywhere in the bar. */
+  closeOverlays(): void {
+    this.menuOpen.set(false);
+    this.accountOpen.set(false);
   }
 
   login(): void {
@@ -104,45 +142,73 @@ export class AppComponent implements OnInit, OnDestroy {
     this.msal.instance.logoutRedirect();
   }
 
-  closeGroup(): void {
-    this.openGroup.set(null);
-  }
+  /** The initials shown in the account button when there is no room for a name. */
+  accountInitials(): string {
+    const name = this.accountName() ?? this.accountEmail() ?? '';
+    const parts = name.split(/[\s@.]+/).filter(Boolean);
 
-  // Entering a trigger or its panel (both live inside the same .nav-item) opens that
-  // group right away and cancels any pending close from a group we just left - that's
-  // what makes moving straight from one open trigger to the next feel instant.
-  onGroupHoverEnter(title: string): void {
-    if (this.hoverCloseTimer !== null) {
-      clearTimeout(this.hoverCloseTimer);
-      this.hoverCloseTimer = null;
+    if (parts.length === 0) {
+      return '?';
     }
 
-    this.openGroup.set(title);
+    return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
   }
 
-  // Delayed close, not immediate - crossing the gap between the trigger and the panel
-  // below it fires a leave/enter pair, and closing immediately here would flicker.
-  onGroupHoverLeave(): void {
-    if (this.hoverCloseTimer !== null) {
-      clearTimeout(this.hoverCloseTimer);
-    }
-
-    this.hoverCloseTimer = setTimeout(() => {
-      this.openGroup.set(null);
-      this.hoverCloseTimer = null;
-    }, 150);
-  }
-
-  // The header search only understands a listing id for now - free-text place search would need
-  // matching against MarketArea names, which is a real feature, not a header afterthought.
+  /**
+   * The header search. A place name, or a listing id.
+   *
+   * It used to take a listing id and nothing else, which is a number nobody has for a listing
+   * they have not found yet — the one thing people type into a search box on a property site is
+   * where they are looking. A number is still understood, because the tables print ids and
+   * pasting one back in is the fastest way to reopen a listing.
+   */
   runSearch(): void {
-    const id = Number(this.searchId);
-    if (!this.searchId || !Number.isInteger(id) || id <= 0) {
+    const text = this.searchText.trim();
+
+    if (!text) {
       return;
     }
 
-    this.router.navigate(['/listings/lookup'], { queryParams: { id } });
-    this.searchId = '';
+    this.searchError.set(null);
+
+    // All digits: a listing id. Anything else is a place.
+    if (/^\d+$/.test(text)) {
+      this.router.navigate(['/listings', Number(text)]);
+      this.searchText = '';
+
+      return;
+    }
+
+    this.searching.set(true);
+
+    // One match is all a search box needs: it takes you somewhere, and every screen it lands on
+    // has its own place picker to move from there.
+    this.marketAreas.getPage({ search: text, pageNumber: 1, pageSize: 1 }).subscribe({
+      next: page => {
+        this.searching.set(false);
+
+        const match = page.items[0];
+
+        if (!match) {
+          this.searchError.set(`Nothing found for “${text}”.`);
+
+          return;
+        }
+
+        this.searchText = '';
+        this.router.navigate(['/places/overview'], {
+          queryParams: {
+            district: match.district,
+            municipality: match.municipality,
+            town: match.town
+          }
+        });
+      },
+      error: () => {
+        this.searching.set(false);
+        this.searchError.set('Could not search right now.');
+      }
+    });
   }
 
   // MSAL can hold several accounts (e.g. leftover from a previous tenant's

@@ -1,0 +1,19 @@
+<div class="page">
+  <app-page-header title="Calculators" [sub]="sub()" />
+
+  <app-segmented
+    label="Which tool"
+    [options]="lenses"
+    [value]="lens()"
+    (valueChange)="pickLens($event)"
+  />
+
+  @switch (lens()) {
+    @case ('features') {
+      <app-premium-features />
+    }
+    @case ('build') {
+      <app-build-cost />
+    }
+  }
+</div>

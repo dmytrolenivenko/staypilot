@@ -4,107 +4,116 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
 import { MarketOverviewService } from '../../core/services/market-overview.service';
-import { MarketAreaBudgetItemResponse, MarketAreaStatsResponse, NeighbourGapResponse, RELIABLE_LISTINGS } from '../../core/models/market-area-stats';
-import { MarketOverviewResponse, MarketOverviewTypology } from '../../core/models/market-overview';
+import {
+  MarketAreaBudgetItemResponse,
+  MarketAreaStatsResponse,
+  NeighbourGapResponse,
+  RELIABLE_LISTINGS
+} from '../../core/models/market-area-stats';
+import { MarketOverviewResponse } from '../../core/models/market-overview';
 import { NavLink } from '../../core/models/nav-groups';
 import { apiErrorMessage } from '../../core/api-error';
+import { BarChartComponent, BarChartItem } from '../../shared/bar-chart.component';
+import { CompareBarsComponent, CompareSide } from '../../shared/compare-bars.component';
 
 // One example budget for the "what your money reaches" preview. Not configurable here — the
-// real control lives on /market-areas/budget; this is a single real illustration of it.
+// real control lives on /places?ask=budget; this is a single real illustration of it.
 const PREVIEW_BUDGET = 320_000;
 
-// How many rows each narrative preview shows before it points the reader at the full screen.
+// How many rows each preview shows before it points the reader at the full screen.
 const PREVIEW_ROWS = 5;
 
-// How many areas the hero chart charts — wider than a narrative preview since the hero has
-// the full width of its half of the page to fill, not a card squeezed next to a paragraph.
-const HERO_TOP_AREAS = 8;
+// How many areas the hero panel charts. Five, not eight: the panel sits beside the headline now
+// rather than spanning the page, and a taller chart there pushes the buttons off the first screen.
+const HERO_TOP_AREAS = 5;
 
 // The neighbour-gap preview's scope. Not the strictest possible reading — the same starting
-// point market-area-neighbours.component.ts opens with (município grain, a modest listing
-// floor, a 25km radius, a 20% gap floor), so the "biggest gap" shown here is the same kind of
-// finding that screen leads with, not a cherry-picked extreme.
+// point the neighbours screen opens with (município grain, a modest listing floor, a 25km
+// radius, a 20% gap floor), so the "biggest gap" shown here is the same kind of finding that
+// screen leads with, not a cherry-picked extreme.
 const PREVIEW_GAP_LEVEL = 'Municipality' as const;
 const PREVIEW_GAP_MIN_LISTINGS = 5;
 const PREVIEW_GAP_MAX_DISTANCE_KM = 25;
 const PREVIEW_GAP_MIN_PERCENT = 20;
 
-// The four "under the hood" cards. A hand-picked cross-group subset (Listings + Tools), not a
-// full nav group, so it is its own small list rather than borrowed from one hub's links.
-const UNDER_THE_HOOD: NavLink[] = [
+// The area of a typical apartment, used only to restate a €/m² gap as a number in euros.
+// Stated in the copy wherever it is used, because it is an illustration, not a measurement.
+const TYPICAL_APARTMENT_M2 = 90;
+
+// The four "what else is in here" cards. A hand-picked cross-section, not a full nav group.
+const ELSEWHERE: NavLink[] = [
   {
-    title: 'Browse',
-    path: '/listing-browser',
-    desc: 'Filter and sort every listing by area, typology, price, size and beach distance.'
+    title: 'Browse every listing',
+    path: '/listings',
+    query: { ask: 'browse' },
+    desc: 'Filter and sort by area, typology, price, size and distance to the beach.'
   },
   {
-    title: 'Top deals',
-    path: '/listings/top-deals',
-    desc: "Active listings asking the most below their own typology's median in the same town."
+    title: 'Best deals',
+    path: '/listings',
+    query: { ask: 'deals' },
+    desc: "Listings asking the most below their own typology's median in the same town."
   },
   {
-    title: 'Feature impact',
-    path: '/feature-impact',
-    desc: 'What a garage, lift or sea view is worth as a premium, with confidence ranges.'
+    title: 'What a feature is worth',
+    path: '/tools',
+    query: { ask: 'features' },
+    desc: 'The premium on a garage, a lift or a sea view, with a confidence range.'
   },
   {
     title: 'Build cost',
-    path: '/build-cost',
-    desc: 'Shell, pool, garage, fees and VAT projected, held against local asking prices.'
+    path: '/tools',
+    query: { ask: 'build' },
+    desc: 'Shell, pool, garage, fees and VAT, held against local asking prices.'
   }
 ];
 
-interface HeroStats {
-  totalListings: number;
-  placesTracked: number;
-  districtsCovered: number;
-  // Coast-wide, unfiltered — the same read GetMarketOverview gives the Market overview
-  // screen when nothing is narrowed. Null only while that call itself is still loading.
-  medianPricePerM2: number | null;
-  busiestTypology: MarketOverviewTypology | null;
-  busiest: MarketAreaStatsResponse | null;
+/** One figure in the coverage band: how much there is to read, said plainly. */
+interface CoverageStat {
+  label: string;
+  value: string;
 }
+
 
 // T3 sorts above T2, T10 above T9 — the number after the T, not the string.
 function typologyRooms(typology: string): number {
   return Number(String(typology ?? '').replace(/^T/i, '')) || 0;
 }
 
-// StayPilot Comps landing page.
-//
-// Every number on it is real, read off the same MarketAreaStatsService the Leaderboard, Budget
-// and Neighbour-gaps screens already use — nothing here is hardcoded or invented. Where the data
-// cannot honestly answer a question (a blended market-wide median, a "last collection" figure,
-// anything resembling measured demand), the figure is left out rather than approximated.
+/**
+ * The landing page.
+ *
+ * Every number on it is real, read off the same services the Places and Listings screens use —
+ * nothing here is hardcoded or invented. Where the data cannot honestly answer a question (a
+ * blended market-wide median, a "last collection" figure, anything resembling measured demand),
+ * the figure is left out rather than approximated.
+ *
+ * The four previews are a grid rather than four alternating full-width bands. They are four
+ * answers of equal standing, and the alternating layout made the page three screens long while
+ * implying an order of importance that does not exist.
+ */
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, BarChartComponent, CompareBarsComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
 export class HomeComponent implements OnInit {
   readonly previewBudget = PREVIEW_BUDGET;
-  readonly underTheHood = UNDER_THE_HOOD;
+  readonly typicalApartmentM2 = TYPICAL_APARTMENT_M2;
+  readonly elsewhere = ELSEWHERE;
 
-  // --- Hero stat strip + "Where value sits" preview ---------------------------------
-  // Both read off the same two leaderboard calls: District rows (unfiltered, top grain, so
-  // summing listingCount across them cannot double-count) for the true total, Town rows
-  // (unfiltered, for the place count; thinned to RELIABLE_LISTINGS for the extremes and the
-  // preview table) for everything else.
+  // --- Market stats: the hero strip and three of the four previews -------------------
   marketLoading = signal(true);
   marketError = signal<string | null>(null);
   private districtRows = signal<MarketAreaStatsResponse[]>([]);
   private townRows = signal<MarketAreaStatsResponse[]>([]);
   private municipalityRows = signal<MarketAreaStatsResponse[]>([]);
-  // Coast-wide asking-price read (median €, median €/m², typology mix) — the same unfiltered
-  // GetMarketOverview call the Market overview screen makes when nothing is narrowed. Public:
-  // the hero chart reads it directly for the typology mix and the total listing count.
   overview = signal<MarketOverviewResponse | null>(null);
 
   // When the server last recalculated these figures. Either leaderboard call carries it —
-  // whichever comes back non-null wins. There is no per-listing upload timestamp exposed
-  // anywhere in the API, so this is the honest stand-in for "how fresh is this".
+  // whichever comes back non-null wins.
   calculatedAtUtc = signal<string | null>(null);
 
   private reliableTownRows = computed(() =>
@@ -114,85 +123,225 @@ export class HomeComponent implements OnInit {
     this.municipalityRows().filter(row => row.listingCount >= RELIABLE_LISTINGS)
   );
 
-  // Hero chart: the coast's most popular municipalities by listing count, not by price —
-  // "popular" means where the stock actually is, the same read as heroStats().busiest but as
-  // a chart instead of a single tile. Municipality grain, not town — coarse enough that eight
-  // bars cover a meaningful share of the coast instead of eight adjacent parishes.
-  topAreasByPopularity = computed(() =>
-    [...this.reliableMunicipalityRows()].sort((a, b) => b.listingCount - a.listingCount).slice(0, HERO_TOP_AREAS)
-  );
-  topAreasMax = computed(() => Math.max(0, ...this.topAreasByPopularity().map(row => row.listingCount)));
+  // --- Hero --------------------------------------------------------------------------
 
-  // --- "Renovation upside" preview ----------------------------------------------------
-  // The single reliable town with the largest genuine, evidenced renovation discount.
-  // Requires both a positive €/m² gap and server-provided evidence to back it — a discount
-  // with no evidence record is not a finding, just two medians that happen to differ.
+  /** One District-level row per district that has any data at all. */
+  districtCount = computed(() => this.districtRows().length);
+
+  /**
+   * The coverage band: four figures about the size of the collection, not about the market.
+   *
+   * Scale, not findings — the prices belong in the panel above, where the slice they describe
+   * is named. Null while the numbers are still coming, which is what draws the skeletons.
+   */
+  coverage = computed<CoverageStat[] | null>(() => {
+    if (this.marketLoading() || this.marketError()) {
+      return null;
+    }
+
+    // Every usable listing lands in exactly one district row, so summing them at the top
+    // grain is the true total and cannot double-count.
+    const totalListings = this.districtRows().reduce((sum, row) => sum + row.listingCount, 0);
+
+    return [
+      { label: 'Adverts tracked', value: this.formatCount(totalListings) },
+      // The raw Town-row count, not the reliable-only one: how many places have been measured
+      // at all, not how many are trustworthy enough to rank.
+      { label: 'Places measured', value: this.formatCount(this.townRows().length) },
+      { label: 'Districts, wall to wall', value: this.formatCount(this.districtCount()) },
+      { label: 'Collection & recalculation', value: 'Daily' }
+    ];
+  });
+
+  /**
+   * The panel's two headline figures, already formatted.
+   *
+   * Named reads rather than an `@if (overview(); as ov)` alias in the template: `as` is only
+   * allowed on a primary `@if`, and these sit in the `@else if` after the loading branch.
+   */
+  medianPrice = computed(() => {
+    const overview = this.overview();
+
+    return overview ? this.euro(overview.price.median) : '—';
+  });
+
+  medianPricePerM2 = computed(() => {
+    const overview = this.overview();
+
+    return overview ? this.euro(overview.pricePerM2.median) : '—';
+  });
+
+
+  /** The hero chart: where the stock actually is, by município. */
+  busiestAreas = computed<BarChartItem[]>(() =>
+    [...this.reliableMunicipalityRows()]
+      .sort((a, b) => b.listingCount - a.listingCount)
+      .slice(0, HERO_TOP_AREAS)
+      .map(row => ({
+        label: row.displayName,
+        value: row.listingCount,
+        valueText: this.formatCount(row.listingCount),
+        note: `${this.euro(row.medianPricePerM2)}/m²`
+      }))
+  );
+
+  // --- Preview 1: where value sits -----------------------------------------------------
+
+  priciestPlaces = computed<BarChartItem[]>(() =>
+    [...this.reliableTownRows()]
+      .sort((a, b) => b.medianPricePerM2 - a.medianPricePerM2)
+      .slice(0, PREVIEW_ROWS)
+      .map(row => ({
+        label: row.displayName,
+        value: row.medianPricePerM2,
+        valueText: `${this.euro(row.medianPricePerM2)}`,
+        note: `${this.formatCount(row.listingCount)} listings`
+      }))
+  );
+
+  // --- Preview 2: what your money reaches ----------------------------------------------
+
+  budgetLoading = signal(true);
+  budgetError = signal<string | null>(null);
+  private budgetRows = signal<MarketAreaBudgetItemResponse[]>([]);
+
+  /**
+   * Charted on floor space, not price: every place here is already priced at (or just under)
+   * the same fixed budget by construction, so a price chart reads as flat. Floor space is what
+   * actually varies, and is the whole point — the same money buying more or less room.
+   */
+  budgetPlaces = computed<BarChartItem[]>(() =>
+    this.budgetRows().map(item => ({
+      label: item.displayName,
+      value: item.medianAreaM2,
+      valueText: `${this.sqm(item.medianAreaM2)} m²`,
+      note: `${item.bestTypology} · ${this.euro(item.medianPrice)}`
+    }))
+  );
+
+  // --- Preview 3: neighbour gaps --------------------------------------------------------
+
+  gapLoading = signal(true);
+  gapError = signal<string | null>(null);
+  topGap = signal<NeighbourGapResponse | null>(null);
+
+  gapCheaper = computed<CompareSide | null>(() => {
+    const gap = this.topGap();
+
+    return gap
+      ? {
+          label: gap.cheaper.displayName,
+          value: gap.cheaper.medianPricePerM2,
+          valueText: `${this.euro(gap.cheaper.medianPricePerM2)}/m²`,
+          note: `${this.formatCount(gap.cheaper.listingCount)} listings`
+        }
+      : null;
+  });
+
+  gapDearer = computed<CompareSide | null>(() => {
+    const gap = this.topGap();
+
+    return gap
+      ? {
+          label: gap.expensive.displayName,
+          value: gap.expensive.medianPricePerM2,
+          valueText: `${this.euro(gap.expensive.medianPricePerM2)}/m²`,
+          note: `${this.formatCount(gap.expensive.listingCount)} listings`
+        }
+      : null;
+  });
+
+  /** The gap itself, worded for the chart's delta line. */
+  gapDelta = computed<string>(() => {
+    const gap = this.topGap();
+
+    return gap ? `${this.roundPercent(gap.gapPercent)}% apart · ${this.formatKm(gap.distanceKm)}` : '';
+  });
+
+  /** The same gap restated as money on a typical apartment, which is how people hold it. */
+  gapOnTypicalFlat = computed<string | null>(() => {
+    const gap = this.topGap();
+
+    if (!gap) {
+      return null;
+    }
+
+    const perM2 = gap.expensive.medianPricePerM2 - gap.cheaper.medianPricePerM2;
+
+    return this.euro(perM2 * TYPICAL_APARTMENT_M2);
+  });
+
+  // --- Preview 4: renovation upside ------------------------------------------------------
+
+  /**
+   * The single reliable town with the largest genuine, evidenced renovation discount. Requires
+   * both a positive €/m² gap and server-provided evidence to back it — a discount with no
+   * evidence record is not a finding, just two medians that happen to differ.
+   */
   renovationHighlight = computed<MarketAreaStatsResponse | null>(() =>
     this.reliableTownRows().reduce<MarketAreaStatsResponse | null>((best, row) => {
       if (row.renovationDiscountPerM2 == null || row.renovationDiscountPerM2 <= 0 || !row.renovationEvidence) {
         return best;
       }
+
       return !best || row.renovationDiscountPerM2 > (best.renovationDiscountPerM2 ?? -Infinity) ? row : best;
     }, null)
   );
 
-  // The hero used to lead with a price comparison, but that's a finding, not a credibility
-  // signal — it belongs down in "Borders you cannot see" (which already covers the same
-  // ground with real neighbour-gap data). A flat coast-wide figure is different: it is not a
-  // comparison between places, just one more measure of scale alongside listings/places/
-  // districts, so the median price and typology mix now sit up here too.
-  heroStats = computed<HeroStats | null>(() => {
-    if (this.marketLoading() || this.marketError()) {
+  renovationProject = computed<CompareSide | null>(() => {
+    const area = this.renovationHighlight();
+
+    return area?.projectMedianPricePerM2
+      ? {
+          label: 'Needs work',
+          value: area.projectMedianPricePerM2,
+          valueText: `${this.euro(area.projectMedianPricePerM2)}/m²`,
+          note: `${this.formatCount(area.projectCount)} listings`
+        }
+      : null;
+  });
+
+  renovationFinished = computed<CompareSide | null>(() => {
+    const area = this.renovationHighlight();
+
+    return area?.moveInMedianPricePerM2
+      ? {
+          label: 'Move-in ready',
+          value: area.moveInMedianPricePerM2,
+          valueText: `${this.euro(area.moveInMedianPricePerM2)}/m²`,
+          note: `${this.formatCount(area.moveInCount)} listings`
+        }
+      : null;
+  });
+
+  /**
+   * The rest of the renovation card, pulled out as its own reads.
+   *
+   * The template used to reach these off the `@if (…; as area)` alias, which does not survive
+   * two levels of nesting inside the block that declares it. Naming them here is clearer than
+   * flattening the template around a scoping rule.
+   */
+  renovationPlace = computed(() => this.renovationHighlight()?.displayName ?? '');
+  renovationEvidence = computed(() => this.renovationHighlight()?.renovationEvidence ?? null);
+  renovationProjectAreaM2 = computed(() => this.renovationHighlight()?.projectMedianAreaM2 ?? null);
+
+  /** The gap itself, worded for the chart's delta line. */
+  renovationDelta = computed<string>(() => {
+    const perM2 = this.renovationHighlight()?.renovationDiscountPerM2;
+
+    return perM2 ? `+${this.euro(perM2)}/m² finished` : '';
+  });
+
+  /** What the renovation gap is worth in money on that town's own typical project. */
+  renovationUpside = computed<string | null>(() => {
+    const area = this.renovationHighlight();
+
+    if (!area?.renovationDiscountPerM2 || !area.projectMedianAreaM2) {
       return null;
     }
 
-    const reliable = this.reliableTownRows();
-    const overview = this.overview();
-
-    return {
-      totalListings: this.districtRows().reduce((sum, row) => sum + row.listingCount, 0),
-      // The raw Town-row count, not the reliable-only one — this states how many places have
-      // been measured at all, not how many are trustworthy.
-      placesTracked: this.townRows().length,
-      // One District-level row per district that has any data at all.
-      districtsCovered: this.districtRows().length,
-      medianPricePerM2: overview?.pricePerM2.median ?? null,
-      // Most-listed typology across the whole coast, not the priciest or the cheapest — this
-      // tile answers "what does this coast mostly sell", the same way "busiest" answers
-      // "where" rather than "what's most in demand".
-      busiestTypology:
-        overview && overview.typologies.length > 0
-          ? [...overview.typologies].sort((a, b) => b.listingCount - a.listingCount)[0]
-          : null,
-      // "Busiest" = most listings. There is no market-wide demand ranking anywhere in this
-      // system — DemandLevel is wired into per-property valuation, not a place-level figure —
-      // so this is deliberately not called "most in demand".
-      busiest: reliable.reduce<MarketAreaStatsResponse | null>(
-        (best, row) => (!best || row.listingCount > best.listingCount ? row : best),
-        null
-      )
-    };
+    return this.euro(area.renovationDiscountPerM2 * area.projectMedianAreaM2);
   });
-
-  leaderboardPreview = computed(() =>
-    [...this.reliableTownRows()].sort((a, b) => b.medianPricePerM2 - a.medianPricePerM2).slice(0, PREVIEW_ROWS)
-  );
-
-  // --- "What your money reaches" preview ---------------------------------------------
-  budgetLoading = signal(true);
-  budgetError = signal<string | null>(null);
-  budgetPreview = signal<MarketAreaBudgetItemResponse[]>([]);
-  // Charted on medianAreaM2, not medianPrice - every item here is already priced at (or just
-  // under) the same fixed budget by construction, so the prices barely differ and a price bar
-  // chart reads as flat/broken. Floor space is the number that actually varies place to place,
-  // and it's the whole point of "what your money reaches" - the same budget buying more or
-  // less room.
-  budgetMax = computed(() => Math.max(0, ...this.budgetPreview().map(item => item.medianAreaM2)));
-
-  // --- "Borders you cannot see" preview ------------------------------------------------
-  gapLoading = signal(true);
-  gapError = signal<string | null>(null);
-  topGap = signal<NeighbourGapResponse | null>(null);
 
   constructor(
     private readonly service: MarketAreaStatsService,
@@ -204,6 +353,10 @@ export class HomeComponent implements OnInit {
     this.loadBudgetPreview();
     this.loadGapPreview();
   }
+
+  // --- Formatting ---------------------------------------------------------------------
+  // Public because the template reads them, and shared with the computeds above so a number
+  // is written the same way wherever it appears.
 
   euro(value: number): string {
     return Number.isFinite(value) ? `€${Math.round(value).toLocaleString('en-GB')}` : '—';
@@ -227,26 +380,13 @@ export class HomeComponent implements OnInit {
 
   formatDate(iso: string): string {
     const date = new Date(iso);
+
     return Number.isNaN(date.getTime())
       ? '—'
       : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  // Shared by every mini bar-chart on this page: height as a percentage of a scale's max,
-  // floored at 8% so a bar never disappears next to a much larger one (a 5-10x spread between
-  // cheapest and priciest, or project and move-in-ready, is common on this coast).
-  barPct(value: number, max: number): number {
-    return max > 0 ? Math.max(8, Math.round((value / max) * 100)) : 0;
-  }
-
-  // Two-bar comparisons (cheapest vs most expensive, pay-more vs pay-less, project vs
-  // move-in ready): height relative to the larger of the pair, so the smaller bar shows its
-  // real proportion instead of being independently normalised - the whole point of the chart.
-  barPctOfPair(value: number, a: number, b: number): number {
-    return this.barPct(value, Math.max(a, b));
-  }
-
-  // Mirrors market-area-renovation.component.ts's trustClass — same confidence, same badge.
+  /** Mirrors the renovation screen's trustClass — same confidence, same badge. */
   trustClass(evidence: { confidence: string } | null): string {
     switch (evidence?.confidence) {
       case 'High':
@@ -271,7 +411,7 @@ export class HomeComponent implements OnInit {
       districts: this.service.getLeaderboard({ level: 'District', minListings: 1 }),
       towns: this.service.getLeaderboard({ level: 'Town', minListings: 1 }),
       municipalities: this.service.getLeaderboard({ level: 'Municipality', minListings: 1 }),
-      // No filters = the whole coast, the same call the Market overview screen makes with
+      // No filters = the whole country, the same call the Market overview screen makes with
       // nothing narrowed — gives the hero a real median price/€/m² and typology mix.
       overview: this.overviewService.getMarketOverview({})
     }).subscribe({
@@ -306,11 +446,11 @@ export class HomeComponent implements OnInit {
             .sort((a, b) => typologyRooms(b.bestTypology) - typologyRooms(a.bestTypology))
             .slice(0, PREVIEW_ROWS);
 
-          this.budgetPreview.set(rows);
+          this.budgetRows.set(rows);
           this.budgetLoading.set(false);
         },
         error: (err: HttpErrorResponse) => {
-          this.budgetPreview.set([]);
+          this.budgetRows.set([]);
           this.budgetError.set(apiErrorMessage(err, 'Could not load a budget example.'));
           this.budgetLoading.set(false);
         }

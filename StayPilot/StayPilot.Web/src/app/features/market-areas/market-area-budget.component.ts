@@ -1,14 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, switchMap } from 'rxjs';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
 import { AreaLevel, MarketAreaBudgetItemResponse } from '../../core/models/market-area-stats';
 import { TYPOLOGIES, Typology } from '../../core/models/enums';
-import { PageHeaderComponent } from '../../shared/page-header.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
 import { PlaceNameComponent, placeLevelLabel, placeOwnName } from '../../shared/place-name.component';
-import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
+import { AreaScope, emptyScope } from '../../shared/area-scope-picker.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { apiErrorMessage } from '../../core/api-error';
 
@@ -31,16 +30,13 @@ const STRETCH_CHOICES = [0, 5, 10, 20];
   imports: [
     CommonModule,
     FormsModule,
-    PageHeaderComponent,
     ExplainerComponent,
-    PlaceNameComponent,
-    AreaScopePickerComponent
+    PlaceNameComponent
   ],
   templateUrl: './market-area-budget.component.html',
   styleUrl: './market-area-budget.component.css'
 })
-export class MarketAreaBudgetComponent implements OnInit {
-  readonly levels: AreaLevel[] = ['District', 'Municipality', 'Town'];
+export class MarketAreaBudgetComponent implements OnInit, OnChanges {
   readonly typologies = TYPOLOGIES;
   readonly stretchChoices = STRETCH_CHOICES;
 
@@ -55,11 +51,27 @@ export class MarketAreaBudgetComponent implements OnInit {
   error = signal<string | null>(null);
 
   budget = signal(300000);
+
+  // --- The shared filters, set by the Places shell ----------------------------------
+  // Place, grain and sample gate are one set of controls above the question switcher now, so
+  // moving from "what money buys here" to "what is cheapest here" keeps the here.
   level = signal<AreaLevel>('Municipality');
   minListings = signal(5);
 
   // Narrowed to one distrito, and inside it one município. Empty = the whole country.
   scope = signal<AreaScope>(emptyScope());
+
+  @Input({ required: true, alias: 'level' }) set levelInput(value: AreaLevel) {
+    this.level.set(value);
+  }
+
+  @Input({ required: true, alias: 'minListings' }) set minListingsInput(value: number) {
+    this.minListings.set(Number(value));
+  }
+
+  @Input({ required: true, alias: 'scope' }) set scopeInput(value: AreaScope) {
+    this.scope.set(value);
+  }
 
   // "Where does my money buy at least a T3" rather than "where does it buy something".
   // Empty string means no floor, which is what the API treats as no filter.
@@ -127,9 +139,15 @@ export class MarketAreaBudgetComponent implements OnInit {
   // Every load goes through here, so a slow answer for an old budget cannot overwrite a newer one.
   private readonly loads = new Subject<void>();
 
+  // False until the load pipeline exists, so the shell setting its inputs on the first
+  // change-detection pass cannot push a load into a Subject nothing is subscribed to yet.
+  private started = false;
+
   constructor(private readonly service: MarketAreaStatsService) {}
 
   ngOnInit(): void {
+    this.started = true;
+
     this.budgetChanges.pipe(debounceTime(400)).subscribe(() => this.loads.next());
 
     this.loads
@@ -175,19 +193,12 @@ export class MarketAreaBudgetComponent implements OnInit {
     this.budgetChanges.next();
   }
 
-  changeLevel(level: AreaLevel): void {
-    this.level.set(level);
-    this.reload();
-  }
-
-  changeMinListings(minListings: number): void {
-    this.minListings.set(Number(minListings));
-    this.reload();
-  }
-
-  changeScope(scope: AreaScope): void {
-    this.scope.set(scope);
-    this.reload();
+  // A shared filter moved on the shell. Once per change, however many moved together, and never
+  // before ngOnInit has wired the load pipeline up - Angular runs ngOnChanges first.
+  ngOnChanges(): void {
+    if (this.started) {
+      this.reload();
+    }
   }
 
   changeMinTypology(minTypology: Typology | ''): void {
