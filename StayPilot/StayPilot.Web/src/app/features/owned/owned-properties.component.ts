@@ -8,6 +8,7 @@ import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketArea } from '../../core/models/market-area';
 import { OwnedPropertyRequest, OwnedPropertyResponse } from '../../core/models/owned-property';
 import { clickedRowControl } from '../../shared/row-click';
+import { LocationPickerComponent } from '../../shared/location-picker.component';
 import {
   PROPERTY_CONDITION_OPTIONS,
   PROPERTY_TYPES,
@@ -24,7 +25,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-owned-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LocationPickerComponent],
   templateUrl: './owned-properties.component.html',
   styleUrl: './owned-properties.component.css'
 })
@@ -104,6 +105,9 @@ export class OwnedPropertiesComponent implements OnInit {
   editingId = signal<number | null>(null);
 
   form: OwnedPropertyRequest = this.emptyForm();
+
+  // Whether the "Choose on map" picker is open under the coordinate inputs.
+  showMap = signal(false);
 
   constructor(
     private readonly service: OwnedPropertyService,

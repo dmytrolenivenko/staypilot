@@ -209,6 +209,22 @@
           <input type="number" step="any" [(ngModel)]="form.longitude" name="longitude" />
         </label>
 
+        <!-- Pick the coordinates on a map instead of pasting them in. Typed values move the pin. -->
+        <div class="field map-toggle">
+          <button type="button" class="btn" (click)="showMap.set(!showMap())">
+            {{ showMap() ? 'Hide map' : 'Choose on map' }}
+          </button>
+        </div>
+        @if (showMap()) {
+          <div class="field wide">
+            <app-location-picker
+              [lat]="form.latitude"
+              [lng]="form.longitude"
+              (picked)="form.latitude = $event.lat; form.longitude = $event.lng" />
+            <span class="hint">Click the map or drag the pin to set the coordinates.</span>
+          </div>
+        }
+
         <label class="field">
           <span>Purchase price (€)</span>
           <input type="number" min="0" [(ngModel)]="form.purchasePrice" name="purchasePrice" />
