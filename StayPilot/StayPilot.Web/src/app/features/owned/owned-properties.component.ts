@@ -160,6 +160,25 @@ export class OwnedPropertiesComponent implements OnInit {
     });
   }
 
+  // A click anywhere on a row does what its Evaluate button does. Clicks on the row's own
+  // controls (checkbox, Edit, AI analysis) are theirs, not the row's.
+  openValuation(p: OwnedPropertyResponse, event: MouseEvent): void {
+    if ((event.target as HTMLElement).closest('input, button, a')) {
+      return;
+    }
+
+    if (!p.valuatedAtUtc) {
+      // Never priced: there is nothing to open yet, so price it first, same as the button.
+      if (this.analysingId() === null) {
+        this.analyse(p);
+      }
+
+      return;
+    }
+
+    this.router.navigate(['/portfolio'], { queryParams: { ask: 'valuation', propertyId: p.id } });
+  }
+
   // Load (or reload) the full list of owned properties for the top table.
   loadAll(): void {
     this.listLoading.set(true);

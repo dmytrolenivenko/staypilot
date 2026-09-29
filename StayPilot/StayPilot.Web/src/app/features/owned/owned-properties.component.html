@@ -47,7 +47,13 @@
           </thead>
           <tbody>
             @for (p of sortedProperties(); track p.id) {
-              <tr [class.row-selected]="isSelected(p.id)" [class.row-editing]="editingId() === p.id">
+              <tr
+                class="row-link"
+                [class.row-selected]="isSelected(p.id)"
+                [class.row-editing]="editingId() === p.id"
+                (click)="openValuation(p, $event)"
+                title="Open this property's valuation"
+              >
                 <td class="pick">
                   <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" [attr.aria-label]="'Select ' + p.name" />
                 </td>

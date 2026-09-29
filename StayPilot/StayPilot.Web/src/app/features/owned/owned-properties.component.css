@@ -5,3 +5,8 @@
   align-items: center;
   white-space: nowrap;
 }
+
+/* The whole row opens the valuation, so it should look clickable. */
+.row-link {
+  cursor: pointer;
+}
