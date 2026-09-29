@@ -57,6 +57,23 @@ namespace StayPilot.Api.Controllers
         }
 
         /// <summary>
+        /// Return every place we hold as one tree: district, municipality, town, zones.
+        /// The front end loads this once and fills every dropdown of the place picker itself,
+        /// instead of one GetOptions call per level.
+        /// </summary>
+        [HttpGet]
+        [OutputCache(PolicyName = OutputCachePolicies.PublicMarketData)]
+        // Seed data that only changes with a migration, so the browser may keep it for half a
+        // day. Private: the request carries a token, and shared caches must not store those.
+        [ResponseCache(Duration = 12 * 60 * 60, Location = ResponseCacheLocation.Client)]
+        public async Task<ActionResult<MarketAreaTreeResponse>> GetTree()
+        {
+            var response = await _service.GetMarketAreaTreeAsync();
+
+            return this.ToActionResult(response);
+        }
+
+        /// <summary>
         /// Return the places ranked by price for each square meter, priciest first by default.
         /// Reads numbers worked out earlier, so it is a plain table read - call
         /// RecalculateMarketAreaStats after an import to refresh them.

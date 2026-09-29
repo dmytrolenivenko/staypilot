@@ -68,6 +68,7 @@ namespace StayPilot.UnitTests
         public Task<List<MarketArea>> GetAllMarketAreasAsync() => Task.FromResult(_areas);
         public Task<(List<MarketArea> Items, int TotalRecords)> GetMarketAreasPageAsync(MarketAreaRequest request) => throw new NotImplementedException();
         public Task<List<string>> GetMarketAreaOptionsAsync(string? distrinct, string? municipality, string? town) => throw new NotImplementedException();
+        public Task<List<MarketArea>> GetMarketAreaNamesAsync() => throw new NotImplementedException();
     }
 
     file class FakeBeachMarkerRepo : IBeachMarkerRepository

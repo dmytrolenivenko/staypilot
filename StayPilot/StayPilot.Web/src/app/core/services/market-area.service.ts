@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams} from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { MarketArea, MarketAreaPage, MarketAreaQuery } from '../models/market-area';
+import { map, shareReplay, switchMap } from 'rxjs/operators';
+import { MarketArea, MarketAreaPage, MarketAreaQuery, MarketAreaTreeDistrict } from '../models/market-area';
 import { environment } from '../../../environments/environment';
 
 // GetAll is paged on the server now. This is the biggest page it accepts,
@@ -13,7 +13,19 @@ const MAX_PAGE_SIZE = 200;
 export class MarketAreaService {
   private readonly baseUrl = `${environment.apiBase}/api/MarketArea`;
 
-  constructor(private readonly http: HttpClient) {}
+  // The whole place tree, fetched once per session and shared by every picker on every screen.
+  // shareReplay resets on error, so a failed load is retried by the next dropdown, not cached.
+  private readonly tree$: Observable<MarketAreaTreeDistrict[]>;
+
+  constructor(private readonly http: HttpClient) {
+    // Built here, not as a field initializer: those run before `http` is assigned.
+    this.tree$ = this.http
+      .get<{ districts: MarketAreaTreeDistrict[] }>(`${this.baseUrl}/GetTree`)
+      .pipe(
+        map(response => response.districts),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+  }
 
   // One page. Optional search text matches district, municipality, town or zone.
   getPage(query: MarketAreaQuery): Observable<MarketAreaPage> {
@@ -51,17 +63,39 @@ export class MarketAreaService {
     );
   }
 
-  // Calls GET /api/MarketArea/GetOptions/options — returns the dropdown choices for the next level.
-  // Pass what's already picked; the backend returns the level below it.
-  getOptions(district?: string, municipality?: string, town?: string): Observable<string[]> {
-    let params = new HttpParams();
-    if (district) params = params.set('district', district);
-    if (municipality) params = params.set('municipality', municipality);
-    if (town) params = params.set('town', town);
-
-    // The API wraps the list in a response object so it can carry errors; unwrap "items" here.
-    return this.http
-      .get<{ items: string[] }>(`${this.baseUrl}/GetOptions/options`, { params })
-      .pipe(map(response => response.items));
+  // Starts the tree download early (the app shell calls this), so the first dropdown a
+  // screen opens is already filled rather than waiting on the API.
+  preloadTree(): void {
+    this.tree$.subscribe({ error: () => {} });
   }
+
+  // The dropdown choices for the next level. Pass what's already picked; you get the level
+  // below it. Answered from the tree in the browser - it used to be one API call per level,
+  // seconds each, just to open the next dropdown.
+  getOptions(district?: string, municipality?: string, town?: string): Observable<string[]> {
+    return this.tree$.pipe(map(tree => optionsFrom(tree, district, municipality, town)));
+  }
+}
+
+// Case-insensitive, the way the API matched them before this moved into the browser.
+function sameName(a: string, b: string): boolean {
+  return a.localeCompare(b, 'pt', { sensitivity: 'accent' }) === 0;
+}
+
+function optionsFrom(tree: MarketAreaTreeDistrict[], district?: string, municipality?: string, town?: string): string[] {
+  if (!district) {
+    return tree.map(x => x.name);
+  }
+
+  const d = tree.find(x => sameName(x.name, district));
+  if (!municipality) {
+    return d?.municipalities.map(x => x.name) ?? [];
+  }
+
+  const m = d?.municipalities.find(x => sameName(x.name, municipality));
+  if (!town) {
+    return m?.towns.map(x => x.name) ?? [];
+  }
+
+  return m?.towns.find(x => sameName(x.name, town))?.zones ?? [];
 }

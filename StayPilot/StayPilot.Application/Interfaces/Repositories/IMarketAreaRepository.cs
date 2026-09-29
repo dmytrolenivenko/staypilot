@@ -27,5 +27,11 @@ namespace StayPilot.Application.Interfaces.Repositories
         /// towns, give district + municipality to get its zones, and so on.
         /// </summary>
         Task<List<string>> GetMarketAreaOptionsAsync(string? distrinct, string? municipality, string? town);
+
+        /// <summary>
+        /// Get every market area with only its place names filled in (district, municipality,
+        /// town, zone), read-only. For building the place picker's tree, which needs nothing else.
+        /// </summary>
+        Task<List<MarketArea>> GetMarketAreaNamesAsync();
     }
 }
