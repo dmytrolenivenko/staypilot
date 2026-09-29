@@ -869,6 +869,11 @@ input[type="checkbox"] {
   background: var(--surface-hover);
 }
 
+/* A row that opens something when clicked anywhere (see shared/row-click.ts). */
+.data-table tbody tr.row-link {
+  cursor: pointer;
+}
+
 .data-table tbody tr + tr td {
   border-top: 1px solid var(--border);
 }
