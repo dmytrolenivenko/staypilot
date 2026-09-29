@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { SegmentedComponent, SegmentedOption } from '../../shared/segmented.component';
@@ -41,15 +42,20 @@ export class PortfolioComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
-    const asked = this.route.snapshot.queryParamMap.get('ask') as PortfolioLens | null;
+    // Watched, not read once: Evaluate on a My properties row links to ?ask=valuation on this
+    // same page, and Angular reuses the component rather than building a new one.
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const asked = params.get('ask') as PortfolioLens | null;
 
-    if (asked && LENSES.some(lens => lens.value === asked)) {
-      this.lens.set(asked);
-    }
+      if (asked && LENSES.some(lens => lens.value === asked)) {
+        this.lens.set(asked);
+      }
+    });
   }
 
   pickLens(lens: PortfolioLens): void {

@@ -6,6 +6,7 @@ import { PlacesComponent } from './features/places/places.component';
 import { MarketOverviewComponent } from './features/market-overview/market-overview.component';
 import { ListingsComponent } from './features/listings/listings.component';
 import { ListingPageComponent } from './features/listings/listing-page.component';
+import { InvestmentAnalysisComponent } from './features/listings/investment-analysis.component';
 import { PortfolioComponent } from './features/portfolio/portfolio.component';
 import { ToolsComponent } from './features/tools/tools.component';
 import { ComingSoonComponent } from './features/coming-soon/coming-soon.component';
@@ -23,7 +24,29 @@ function comingSoon(info: ComingSoonInfo) {
  * the route table rather than making each merged screen read a second source of truth.
  */
 function toQuestion(path: string, ask: string): RedirectFunction {
-  return () => inject(Router).createUrlTree([path], { queryParams: { ask } });
+  // Keeps whatever else the old link carried (?propertyId=, ?edit=) - dropping it opened the
+  // right screen on the wrong property.
+  return ({ queryParams }) => inject(Router).createUrlTree([path], { queryParams: { ...queryParams, ask } });
+}
+
+/**
+ * The old analysis path. An owned property goes to the analysis screen, a listing to its own
+ * page (which runs the same analysis embedded), anything else to Listings.
+ */
+function toAnalysis(): RedirectFunction {
+  return ({ queryParams }) => {
+    const router = inject(Router);
+
+    if (queryParams['ownedId']) {
+      return router.createUrlTree(['/portfolio/analysis'], { queryParams: { ownedId: queryParams['ownedId'] } });
+    }
+
+    if (queryParams['id']) {
+      return router.createUrlTree(['/listings', queryParams['id']]);
+    }
+
+    return router.createUrlTree(['/listings']);
+  };
 }
 
 // Pathless parent wrapping every route so canActivateChild runs on every
@@ -51,6 +74,10 @@ export const routes: Routes = [
       { path: 'places/overview', component: MarketOverviewComponent },
       { path: 'listings', component: ListingsComponent },
       { path: 'portfolio', component: PortfolioComponent },
+      // The investment analysis (numbers + AI thesis) for one owned property, ?ownedId=<id>.
+      // Its own screen: a listing gets it embedded on /listings/:id, an owned property has no
+      // page of its own to embed it in.
+      { path: 'portfolio/analysis', component: InvestmentAnalysisComponent },
       { path: 'tools', component: ToolsComponent },
 
       // --- Where the old menu items went -----------------------------------------
@@ -61,7 +88,7 @@ export const routes: Routes = [
       // URL. Sent to Listings rather than to an id-less listing page, because "which listing"
       // is a question Browse answers and an empty id box does not.
       { path: 'listings/lookup', redirectTo: '/listings', pathMatch: 'full' },
-      { path: 'listings/investment-analysis', redirectTo: '/listings', pathMatch: 'full' },
+      { path: 'listings/investment-analysis', redirectTo: toAnalysis(), pathMatch: 'full' },
 
       // One listing in full — the page Browse and Top deals now link their rows to.
       { path: 'listings/:id', component: ListingPageComponent },

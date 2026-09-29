@@ -620,11 +620,11 @@
                             Edit {{ item.name }} →
                           </a>
                           <a
-                            [routerLink]="['/listings/investment-analysis']"
+                            [routerLink]="['/portfolio/analysis']"
                             [queryParams]="{ ownedId: item.id }"
-                            title="Renovation cost, resale value and profit for this property"
+                            title="Renovation cost, resale value, profit and an AI-written thesis for this property"
                           >
-                            Analyze {{ item.name }} →
+                            AI analysis of {{ item.name }} →
                           </a>
                         </p>
                       </div>

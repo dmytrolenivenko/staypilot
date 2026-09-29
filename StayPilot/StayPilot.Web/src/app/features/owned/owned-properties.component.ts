@@ -151,7 +151,7 @@ export class OwnedPropertiesComponent implements OnInit {
     this.service.recalculateAll(12, 2000, 10).subscribe({
       next: () => {
         this.analysingId.set(null);
-        this.router.navigate(['/valuation'], { queryParams: { propertyId: p.id } });
+        this.router.navigate(['/portfolio'], { queryParams: { ask: 'valuation', propertyId: p.id } });
       },
       error: () => {
         this.error.set('Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.');

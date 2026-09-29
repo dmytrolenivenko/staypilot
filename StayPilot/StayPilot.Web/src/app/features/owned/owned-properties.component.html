@@ -68,31 +68,32 @@
                 </td>
                 <td class="row-actions">
                   <button type="button" class="secondary sm" (click)="select(p)">Edit</button>
+                  <!-- Evaluate is the core action of this table, so it is the one filled button. -->
                   @if (p.valuatedAtUtc) {
                     <a
-                      class="link"
-                      [routerLink]="['/valuation']"
-                      [queryParams]="{ propertyId: p.id }"
+                      class="btn btn-sm"
+                      [routerLink]="['/portfolio']"
+                      [queryParams]="{ ask: 'valuation', propertyId: p.id }"
                       title="See this property's valuation, comps and forecast"
                       >Evaluate →</a
                     >
                   } @else {
                     <button
                       type="button"
-                      class="secondary sm"
+                      class="sm"
                       (click)="analyse(p)"
                       [disabled]="analysingId() === p.id"
                       title="Price every owned property and open this one's valuation"
                     >
-                      {{ analysingId() === p.id ? 'Analysing…' : 'Analyse' }}
+                      {{ analysingId() === p.id ? 'Pricing…' : 'Evaluate →' }}
                     </button>
                   }
                   <a
-                    class="link"
-                    [routerLink]="['/listings/investment-analysis']"
+                    class="btn btn-secondary btn-sm"
+                    [routerLink]="['/portfolio/analysis']"
                     [queryParams]="{ ownedId: p.id }"
-                    title="Renovation cost, resale value and profit for this property"
-                    >Analyze →</a
+                    title="Renovation cost, resale value, profit and an AI-written thesis for this property"
+                    >AI analysis →</a
                   >
                 </td>
               </tr>
@@ -262,13 +263,13 @@
       <div class="card-head">
         <span class="card-title">Resolved by the server</span>
         <div class="card-actions">
-          <a class="btn" [routerLink]="['/valuation']" [queryParams]="{ propertyId: p.id }">Estimate value →</a>
+          <a class="btn" [routerLink]="['/portfolio']" [queryParams]="{ ask: 'valuation', propertyId: p.id }">Evaluate →</a>
           <a
-            class="btn"
-            [routerLink]="['/listings/investment-analysis']"
+            class="btn btn-secondary"
+            [routerLink]="['/portfolio/analysis']"
             [queryParams]="{ ownedId: p.id }"
-            title="Renovation cost, resale value and profit for this property"
-            >Analyze →</a
+            title="Renovation cost, resale value, profit and an AI-written thesis for this property"
+            >AI analysis →</a
           >
         </div>
       </div>
