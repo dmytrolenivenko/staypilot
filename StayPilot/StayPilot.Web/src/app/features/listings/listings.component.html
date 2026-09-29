@@ -1,0 +1,19 @@
+<div class="page">
+  <app-page-header title="Listings" [sub]="sub()" />
+
+  <app-segmented
+    label="What to ask about the listings"
+    [options]="lenses"
+    [value]="lens()"
+    (valueChange)="pickLens($event)"
+  />
+
+  @switch (lens()) {
+    @case ('browse') {
+      <app-listing-browser />
+    }
+    @case ('deals') {
+      <app-top-deals />
+    }
+  }
+</div>

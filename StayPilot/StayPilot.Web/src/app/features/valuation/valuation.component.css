@@ -93,29 +93,32 @@
   white-space: nowrap;
 }
 
+/* The demand scale's colours are tokens, not literals: the values these used
+   to carry were dark inks over a translucent fill, which is readable on white
+   and invisible once the dark theme puts the same ink on a dark ground. */
 .demand-hot {
-  background: rgba(220, 68, 55, 0.15);
-  color: #b3362b;
+  background: var(--demand-hot-soft);
+  color: var(--demand-hot);
 }
 
 .demand-firm {
-  background: rgba(233, 145, 45, 0.16);
-  color: #a2610f;
+  background: var(--demand-firm-soft);
+  color: var(--demand-firm);
 }
 
 .demand-balanced {
-  background: rgba(120, 120, 120, 0.16);
-  color: var(--text-muted);
+  background: var(--demand-balanced-soft);
+  color: var(--demand-balanced);
 }
 
 .demand-soft {
-  background: rgba(60, 130, 200, 0.15);
-  color: #2a6294;
+  background: var(--demand-cool-soft);
+  color: var(--demand-cool);
 }
 
 .demand-cold {
-  background: rgba(60, 100, 180, 0.18);
-  color: #24457c;
+  background: var(--demand-cold-soft);
+  color: var(--demand-cold);
 }
 
 /* Not measured must not look like a band. No fill, dashed outline, muted text. */
@@ -142,7 +145,14 @@
   position: relative;
   height: 0.5rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, #24457c 0%, #2a6294 25%, #999 50%, #a2610f 75%, #b3362b 100%);
+  background: linear-gradient(
+    90deg,
+    var(--demand-cold) 0%,
+    var(--demand-cool) 25%,
+    var(--demand-balanced) 50%,
+    var(--demand-firm) 75%,
+    var(--demand-hot) 100%
+  );
 }
 
 .meter-needle {

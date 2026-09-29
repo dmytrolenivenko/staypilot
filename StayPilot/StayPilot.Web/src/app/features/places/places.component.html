@@ -1,0 +1,55 @@
+<div class="page">
+  <app-page-header title="Places" [sub]="sub()" />
+
+  <!-- The question first, then the filters it is asked with. In that order because the filters
+       do not change when the question does, and the strip is what used to be four menu items. -->
+  <app-segmented
+    label="What to ask about these places"
+    [options]="lenses"
+    [value]="lens()"
+    (valueChange)="pickLens($event)"
+  />
+
+  <section class="card">
+    <div class="card-head">
+      <span class="card-title">Where to look</span>
+      <span class="meta">These three stay put when you change the question above</span>
+    </div>
+    <div class="card-body">
+      <div class="toolbar">
+        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
+
+        <label class="control">
+          Level
+          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
+            @for (option of levels(); track option) {
+              <option [ngValue]="option">{{ levelName(option) }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="control">
+          Min listings
+          <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- One lens at a time. @switch rather than hidden blocks, so the three that are not on screen
+       are not mounted at all and cannot hold a national table in memory or fire a request. -->
+  @switch (lens()) {
+    @case ('value') {
+      <app-market-area-leaderboard [scope]="scope()" [level]="level()" [minListings]="minListings()" />
+    }
+    @case ('budget') {
+      <app-market-area-budget [scope]="scope()" [level]="level()" [minListings]="minListings()" />
+    }
+    @case ('neighbours') {
+      <app-market-area-neighbours [scope]="scope()" [level]="level()" [minListings]="minListings()" />
+    }
+    @case ('renovation') {
+      <app-market-area-renovation [scope]="scope()" [level]="level()" [minListings]="minListings()" />
+    }
+  }
+</div>

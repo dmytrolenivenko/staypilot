@@ -137,5 +137,21 @@ namespace StayPilot.Infrastructure.Repositories
             // Nothing picked yet -> the top level: the districts.
             return await query.Select(x => x.District).Distinct().OrderBy(x => x).ToListAsync();
         }
+
+        /// <inheritdoc/>
+        public async Task<List<MarketArea>> GetMarketAreaNamesAsync()
+        {
+            // Just the four name columns - Notes and the rest are never shown in a picker.
+            return await _context.MarketAreas
+                .AsNoTracking()
+                .Select(x => new MarketArea
+                {
+                    District = x.District,
+                    Municipality = x.Municipality,
+                    Town = x.Town,
+                    Zone = x.Zone
+                })
+                .ToListAsync();
+        }
     }
 }

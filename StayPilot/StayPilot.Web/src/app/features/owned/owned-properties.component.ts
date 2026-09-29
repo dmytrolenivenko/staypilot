@@ -7,12 +7,12 @@ import { OwnedPropertyService } from '../../core/services/owned-property.service
 import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketArea } from '../../core/models/market-area';
 import { OwnedPropertyRequest, OwnedPropertyResponse } from '../../core/models/owned-property';
+import { clickedRowControl } from '../../shared/row-click';
 import {
   PROPERTY_CONDITION_OPTIONS,
   PROPERTY_TYPES,
   TYPOLOGIES
 } from '../../core/models/enums';
-import { PageHeaderComponent } from '../../shared/page-header.component';
 
 // Columns the property list can be sorted by.
 type SortField = 'id' | 'name' | 'propertyType' | 'typology' | 'areaM2' | 'purchasePrice';
@@ -24,7 +24,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-owned-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './owned-properties.component.html',
   styleUrl: './owned-properties.component.css'
 })
@@ -152,13 +152,32 @@ export class OwnedPropertiesComponent implements OnInit {
     this.service.recalculateAll(12, 2000, 10).subscribe({
       next: () => {
         this.analysingId.set(null);
-        this.router.navigate(['/valuation'], { queryParams: { propertyId: p.id } });
+        this.router.navigate(['/portfolio'], { queryParams: { ask: 'valuation', propertyId: p.id } });
       },
       error: () => {
         this.error.set('Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.');
         this.analysingId.set(null);
       }
     });
+  }
+
+  // A click anywhere on a row does what its Evaluate button does. Clicks on the row's own
+  // controls (checkbox, Edit, AI analysis) are theirs, not the row's.
+  openValuation(p: OwnedPropertyResponse, event: MouseEvent): void {
+    if (clickedRowControl(event)) {
+      return;
+    }
+
+    if (!p.valuatedAtUtc) {
+      // Never priced: there is nothing to open yet, so price it first, same as the button.
+      if (this.analysingId() === null) {
+        this.analyse(p);
+      }
+
+      return;
+    }
+
+    this.router.navigate(['/portfolio'], { queryParams: { ask: 'valuation', propertyId: p.id } });
   }
 
   // Load (or reload) the full list of owned properties for the top table.

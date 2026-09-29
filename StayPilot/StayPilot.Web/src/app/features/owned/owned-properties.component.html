@@ -1,10 +1,6 @@
+<!-- One half of the Portfolio screen; the title belongs to the shell above. "New property" has
+     moved down onto the table it adds a row to, where the count already is. -->
 <div class="page">
-  <app-page-header
-    title="My properties"
-    sub="The apartments you own — the base a valuation compares against market listings."
-  >
-    <button actions type="button" (click)="newProperty()">New property</button>
-  </app-page-header>
 
   @if (error()) {
     <p class="error" role="alert">{{ error() }}</p>
@@ -18,6 +14,7 @@
       <span class="card-title">All properties</span>
       <div class="card-actions">
         <span class="meta">{{ properties().length }} owned</span>
+        <button type="button" (click)="newProperty()">New property</button>
         @if (selectedIds().size > 0) {
           <button type="button" class="danger sm" (click)="deleteSelected()" [disabled]="loading()">
             Delete selected ({{ selectedIds().size }})
@@ -50,7 +47,13 @@
           </thead>
           <tbody>
             @for (p of sortedProperties(); track p.id) {
-              <tr [class.row-selected]="isSelected(p.id)" [class.row-editing]="editingId() === p.id">
+              <tr
+                class="row-link"
+                [class.row-selected]="isSelected(p.id)"
+                [class.row-editing]="editingId() === p.id"
+                (click)="openValuation(p, $event)"
+                title="Open this property's valuation"
+              >
                 <td class="pick">
                   <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" [attr.aria-label]="'Select ' + p.name" />
                 </td>
@@ -71,31 +74,32 @@
                 </td>
                 <td class="row-actions">
                   <button type="button" class="secondary sm" (click)="select(p)">Edit</button>
+                  <!-- Evaluate is the core action of this table, so it is the one filled button. -->
                   @if (p.valuatedAtUtc) {
                     <a
-                      class="link"
-                      [routerLink]="['/valuation']"
-                      [queryParams]="{ propertyId: p.id }"
+                      class="btn btn-sm"
+                      [routerLink]="['/portfolio']"
+                      [queryParams]="{ ask: 'valuation', propertyId: p.id }"
                       title="See this property's valuation, comps and forecast"
                       >Evaluate →</a
                     >
                   } @else {
                     <button
                       type="button"
-                      class="secondary sm"
+                      class="sm"
                       (click)="analyse(p)"
                       [disabled]="analysingId() === p.id"
                       title="Price every owned property and open this one's valuation"
                     >
-                      {{ analysingId() === p.id ? 'Analysing…' : 'Analyse' }}
+                      {{ analysingId() === p.id ? 'Pricing…' : 'Evaluate →' }}
                     </button>
                   }
                   <a
-                    class="link"
-                    [routerLink]="['/listings/investment-analysis']"
+                    class="btn btn-secondary btn-sm"
+                    [routerLink]="['/portfolio/analysis']"
                     [queryParams]="{ ownedId: p.id }"
-                    title="Renovation cost, resale value and profit for this property"
-                    >Analyze →</a
+                    title="Renovation cost, resale value, profit and an AI-written thesis for this property"
+                    >AI analysis →</a
                   >
                 </td>
               </tr>
@@ -265,13 +269,13 @@
       <div class="card-head">
         <span class="card-title">Resolved by the server</span>
         <div class="card-actions">
-          <a class="btn" [routerLink]="['/valuation']" [queryParams]="{ propertyId: p.id }">Estimate value →</a>
+          <a class="btn" [routerLink]="['/portfolio']" [queryParams]="{ ask: 'valuation', propertyId: p.id }">Evaluate →</a>
           <a
-            class="btn"
-            [routerLink]="['/listings/investment-analysis']"
+            class="btn btn-secondary"
+            [routerLink]="['/portfolio/analysis']"
             [queryParams]="{ ownedId: p.id }"
-            title="Renovation cost, resale value and profit for this property"
-            >Analyze →</a
+            title="Renovation cost, resale value, profit and an AI-written thesis for this property"
+            >AI analysis →</a
           >
         </div>
       </div>

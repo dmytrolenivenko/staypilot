@@ -7,7 +7,8 @@ import {
   MarketAreaLeaderboardQuery,
   MarketAreaLeaderboardResponse,
   MarketAreaNeighbourGapQuery,
-  MarketAreaNeighbourGapResponse
+  MarketAreaNeighbourGapResponse,
+  RecalculateMarketAreaStatsResponse
 } from '../models/market-area-stats';
 import { environment } from '../../../environments/environment';
 
@@ -92,7 +93,16 @@ export class MarketAreaStatsService {
 
   // POST /api/MarketArea/RecalculateMarketAreaStats
   // Rebuilds the whole stats table from current listings. Run it after an import.
-  recalculate(): Observable<unknown> {
-    return this.http.post<unknown>(`${this.baseUrl}/RecalculateMarketAreaStats`, {});
+  //
+  // Comes back as soon as the run has STARTED, not when it has finished — the run takes minutes
+  // and Azure kills the request long before then. Poll getRecalculationStatus to see it through.
+  recalculate(): Observable<RecalculateMarketAreaStatsResponse> {
+    return this.http.post<RecalculateMarketAreaStatsResponse>(`${this.baseUrl}/RecalculateMarketAreaStats`, {});
+  }
+
+  // GET /api/MarketArea/GetRecalculationStatus
+  // Whether a run is still going, and how the last one ended.
+  getRecalculationStatus(): Observable<RecalculateMarketAreaStatsResponse> {
+    return this.http.get<RecalculateMarketAreaStatsResponse>(`${this.baseUrl}/GetRecalculationStatus`);
   }
 }

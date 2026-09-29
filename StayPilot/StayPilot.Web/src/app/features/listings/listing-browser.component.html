@@ -1,8 +1,5 @@
+<!-- One lens of the Listings screen; the title belongs to the shell above. -->
 <div class="page">
-  <app-page-header
-    title="Browse listings"
-    sub="Set the filters, then Search. Sorting and paging happen instantly in the browser — leave a box empty to ignore that filter."
-  />
 
   <!-- FILTERS (the only thing that calls the database — on Search) -->
   <section class="card">
@@ -138,11 +135,7 @@
       @if (hasSearched() && totalRecords() > 0) {
         <div class="card-actions">
           <span class="meta">
-            @if (capped()) {
-              first {{ totalRecords() | number }} of {{ serverTotal() | number }} matches · page {{ page() }} of {{ totalPages() }}
-            } @else {
-              {{ totalRecords() }} match{{ totalRecords() === 1 ? '' : 'es' }} · page {{ page() }} of {{ totalPages() }}
-            }
+            {{ totalRecords() | number }} match{{ totalRecords() === 1 ? '' : 'es' }} · page {{ page() }} of {{ totalPages() | number }}
           </span>
           <label class="control">
             Per page
@@ -183,8 +176,8 @@
           </thead>
           <tbody>
             @for (item of pagedRows(); track item.id) {
-              <tr>
-                <td><a [routerLink]="['/listings/lookup']" [queryParams]="{ id: item.id }">#{{ item.id }}</a></td>
+              <tr class="row-link" (click)="openListing(item.id, $event)" title="Open this listing's details">
+                <td><a [routerLink]="['/listings', item.id]">#{{ item.id }}</a></td>
                 <td>{{ item.marketAreaTown || item.marketAreaMunicipality }}</td>
                 <td>{{ item.propertyType }}</td>
                 <td>{{ item.typology }}</td>
@@ -222,11 +215,6 @@
         </div>
       }
 
-      @if (capped()) {
-        <div class="card-body">
-          <p class="hint">Showing the first {{ totalRecords() | number }} of {{ serverTotal() | number }} matches. Narrow your filters to see the rest.</p>
-        </div>
-      }
     }
   </section>
 </div>

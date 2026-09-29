@@ -1,47 +1,37 @@
+/* The landing page.
+   It is the one screen that runs full-bleed — the shell drops its content
+   column for it (.content-flush) and each band here sets its own gutter.
+   Tokens, cards, buttons, the feature grid and the charts come from
+   styles.css; only what is genuinely local to this page lives below. */
+
 .home {
   display: flex;
   flex-direction: column;
-  gap: 3.5rem;
-  padding-bottom: var(--sp-8);
 }
 
-/* Chart colour slots, shared by the hero chart and every preview panel below it - a
-   diverging blue/red pair for a genuine two-sided comparison (cheap vs pricey, project vs
-   move-in ready), plus a single accent for a nominal ranking (the budget preview's five
-   places, where colouring by rank would just be re-encoding the bar height as hue). */
-.home {
-  --chart-a: #2a78d6;
-  --chart-b: #e34948;
+/* The shared gutter. Every band is full-width; its contents are not. */
+.hero,
+.trust-grid,
+.trust-kicker,
+.questions-section,
+.elsewhere-section,
+.cta {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
 }
 
-:root[data-theme='dark'] .home {
-  --chart-a: #3987e5;
-  --chart-b: #e66767;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .home {
-    --chart-a: #3987e5;
-    --chart-b: #e66767;
-  }
-}
-
-/* --- Hero --------------------------------------------------------------- */
-
-/* Hero + stat-stripe as one visual block - .home's normal 3.5rem inter-section gap
-   is right for the *next* section, but would read as two unrelated rules stacked
-   on top of each other if it also fell between the hero and the strip under it. */
-.hero-block {
-  display: flex;
-  flex-direction: column;
-}
+/* --- Hero -----------------------------------------------------------------
+   The pitch and a live read of the market, side by side. Centred copy with the
+   data underneath pushed everything below the fold and left the panel reading
+   as a separate section rather than as the evidence for the sentence above it. */
 
 .hero {
+  padding: var(--sp-10) var(--sp-6) var(--sp-8);
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: var(--sp-8);
-  align-items: stretch;
-  padding: var(--sp-8) 0 var(--sp-6);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+  align-items: center;
+  gap: var(--sp-10);
 }
 
 .hero-copy {
@@ -51,415 +41,399 @@
   gap: var(--sp-5);
 }
 
-.eyebrow {
-  font-size: var(--fs-xs);
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+.hero-title {
+  font-size: var(--fs-display);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.045em;
+  max-width: 13ch;
 }
 
-.hero-copy h1 {
-  margin: 0;
-  max-width: 15ch;
-  font-size: 3.5rem;
-  line-height: 1.03;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+/* The deep teal, not the fill teal: this is text. */
+.hero-accent {
+  color: var(--accent-text);
 }
 
 .hero-sub {
-  max-width: 56ch;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   line-height: 1.6;
   color: var(--text-muted);
+  max-width: 48ch;
 }
 
 .hero-actions {
   display: flex;
-  align-items: center;
   gap: var(--sp-3);
   flex-wrap: wrap;
-}
-
-.hero-actions .btn {
-  padding: 0.65rem 1.25rem;
-  font-size: var(--fs-md);
-}
-
-/* --- Hero chart: the shape of the coast's stock, not a finding about one place -
-   The most popular areas by listing count, with each bar's €/m² alongside it. Plain,
-   on the page, under a rule - not boxed in a card - so it reads as part of the hero
-   rather than a floating stat panel. */
-
-.hero-chart {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--sp-4);
-}
-
-/* More columns than the other mini-charts on this page, and taller - the hero has the
-   full half of the page to fill, not a card squeezed next to a paragraph. A fixed 6rem
-   basis per column would run wider than the hero's own half of the page, so columns
-   share whatever width is there instead. */
-.hero-bars {
-  gap: var(--sp-2);
-  height: 22rem;
-}
-
-.hero-bars .chart-col {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-/* --- Stat stripe: a plain white band under the hero, not a card inside it ------
-   The hero's job upstairs is the pitch; this line underneath is the credibility -
-   proving there's real coverage and a real price behind it. A price comparison
-   between places is a finding, not a credibility signal, and stays out of both -
-   it already lives in "Borders you cannot see" below with real neighbour-gap data. */
-
-.stat-stripe {
-  display: flex;
-  flex-wrap: wrap;
-  border-top: 2px solid var(--text);
-  border-bottom: 1px solid var(--border);
-}
-
-.stripe-tile {
-  flex: 1 1 10rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  padding: var(--sp-5) var(--sp-5) var(--sp-5) 0;
-}
-
-/* Vertical rule between tiles, not around each one - a stripe reads as one strip cut
-   into columns, not as a row of separate boxes. */
-.stripe-tile + .stripe-tile {
-  padding-left: var(--sp-5);
-  border-left: 1px solid var(--border);
-}
-
-.stripe-label {
-  font-size: var(--fs-xs);
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-}
-
-.stripe-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-
-.stripe-value-sm {
-  font-size: 1.125rem;
-}
-
-.stripe-note {
-  font-size: var(--fs-sm);
-  color: var(--text-faint);
-}
-
-/* --- Shared mini bar-chart primitives -----------------------------------------
-   Used by the hero chart and every "narrative preview" panel below it (budget,
-   neighbour gap, renovation) so a comparison always renders as bars, not a few
-   lines of text floating in an otherwise-empty card. */
-
-/* The same rule a .data-table draws over its header — every chart on this page starts with
-   one, same as every table does, so a graph is never just floating text with no marked start. */
-.chart-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  padding-top: var(--sp-3);
-  border-top: 2px solid var(--text);
-}
-
-.chart-title {
-  font-size: var(--fs-xs);
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-}
-
-.chart-ratio {
-  font-size: var(--fs-sm);
-  font-weight: 650;
-  color: var(--text);
-}
-
-.chart-bars {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: var(--sp-6);
-  height: 17rem;
-}
-
-.chart-col {
-  flex: 0 1 6rem;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--sp-1);
-}
-
-.chart-value {
-  font-size: var(--fs-lg);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.chart-unit {
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--text-faint);
-}
-
-/* <=24px thick per the mark spec - a chart reads as data because of the air around a
-   thin bar, not because the bar itself is wide. */
-.chart-bar {
-  width: 100%;
-  max-width: 1.5rem;
-  border-radius: 3px 3px 0 0;
-  transition: height 0.25s ease;
-}
-
-.chart-bar.a {
-  background: var(--chart-a);
-}
-
-.chart-bar.b {
-  background: var(--chart-b);
-}
-
-.chart-bar.single {
-  background: var(--accent);
-}
-
-.chart-tag {
-  font-size: var(--fs-xs);
-  font-weight: 650;
-  color: var(--text);
   padding-top: var(--sp-2);
 }
 
-.chart-label {
-  width: 100%;
+/* --- The hero panel --------------------------------------------------------
+   A real read of the data, sized to sit beside the copy rather than to
+   impersonate a whole application window. It carries no tab strip: those tabs
+   looked like navigation and did nothing, and the panel is not a screenshot of
+   somewhere else — it is this page showing its own numbers. */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.panel-title {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.panel-scope {
   font-size: var(--fs-xs);
-  color: var(--text-muted);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* A second, smaller number under the label - the sample size behind the bar, so a
-   two-bar comparison reads as backed by real listing counts, not just two prices. */
-.chart-sub {
-  width: 100%;
-  font-size: 0.6875rem;
+  font-weight: 600;
   color: var(--text-faint);
-  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-/* --- Section shell --------------------------------------------------------- */
+/* The two medians, sharing the row under the chart. */
+.panel-foot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
 
-.section {
+.readout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.readout-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+/* The headline figures. Heavy, tight, tabular — sized to the panel's column
+   rather than to the page, so they read as a readout and not as a second
+   headline competing with the one beside them. */
+.readout-value {
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Coverage band ----------------------------------------------------------
+   A grey band, full width, so it reads as a foundation the rest of the page
+   stands on rather than as another row of cards. */
+
+.trust {
+  margin-top: var(--sp-12);
+  padding: var(--sp-8) var(--sp-6);
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
 }
 
-.section-head {
+.trust-kicker {
+  text-align: center;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+
+.trust-cell {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  max-width: 62ch;
-}
-
-.section-head h2 {
-  font-size: 2rem;
-  letter-spacing: -0.02em;
-}
-
-/* --- Narrative blocks: text on one side, a live preview on the other -------- */
-
-.narrative {
-  display: flex;
-  align-items: stretch;
-  gap: var(--sp-8);
-}
-
-.narrative > * {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-/* Visual order only — the text stays first in the DOM in every block, reversed or not, so
-   reading order (and screen-reader order) never depends on which side the preview lands on. */
-.narrative-reverse {
-  flex-direction: row-reverse;
-}
-
-.narrative-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-}
-
-.narrative-text h3 {
-  font-size: 1.5rem;
-}
-
-.narrative-text p {
-  color: var(--text-muted);
-  font-size: var(--fs-md);
-  line-height: 1.6;
-  max-width: 50ch;
-}
-
-/* Overrides the global .card chrome (background, border, shadow, radius) — these previews sit
-   on the page like the rest of the home screen's editorial content, not boxed off from it. */
-.narrative-preview.card {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-.narrative-preview {
-  display: flex;
-  flex-direction: column;
-  min-height: 18rem;
-}
-
-.narrative-preview .card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: var(--sp-4);
-}
-
-/* --- Portfolio: the app's own feature, given a full-width showcase rather than
-   squeezed into the narrative's 50/50 split every other section uses. --------- */
-
-.portfolio-banner {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--sp-8);
-  padding: var(--sp-8);
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r);
-}
-
-.portfolio-banner-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  max-width: 46ch;
-  flex: 1 1 24rem;
-}
-
-.portfolio-banner-text h2 {
-  font-size: 2.25rem;
-  letter-spacing: -0.02em;
-}
-
-.portfolio-banner-text p {
-  color: var(--text-muted);
-  font-size: var(--fs-md);
-  line-height: 1.6;
-}
-
-.portfolio-banner-preview {
-  flex: 1 1 22rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 12rem;
-  padding: var(--sp-6);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
+  gap: var(--sp-1);
   text-align: center;
 }
 
-/* --- Renovation preview: evidence line under its two bars ---------------------- */
-
-.reno-evidence {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--border);
+.trust-value {
+  font-size: var(--fs-3xl);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
 }
 
-.reno-reason {
+.trust-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.trust-error {
+  grid-column: 1 / -1;
+}
+
+/* --- The four questions ------------------------------------------------------- */
+
+.questions-section {
+  padding: var(--sp-12) var(--sp-6) 0;
+  gap: var(--sp-8);
+}
+
+.questions-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-3);
+}
+
+.questions-head h2 {
+  font-size: var(--fs-3xl);
+  max-width: 20ch;
+}
+
+.questions-sub {
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 58ch;
+}
+
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+/* Head, chart, then the link pinned to the bottom so all four line up however
+   tall their charts turn out to be. */
+.question .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  height: 100%;
+  padding: var(--sp-6);
+}
+
+.question {
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.question:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+.question-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.question-sub {
+  color: var(--text-muted);
   font-size: var(--fs-sm);
   line-height: 1.6;
 }
 
-/* --- Responsive ---------------------------------------------------------------- */
+/* The sentence that restates a chart's finding in money. */
+.question-note {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
 
-@media (max-width: 860px) {
+.question-note .badge {
+  margin-right: var(--sp-2);
+}
+
+.question .link-arrow {
+  margin-top: auto;
+}
+
+/* --- Loading ------------------------------------------------------------------- */
+
+.skeleton-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.skeleton-row {
+  height: 1.5rem;
+}
+
+.skeleton-row.tall {
+  height: 2.6rem;
+}
+
+/* --- Also in here ---------------------------------------------------------------- */
+
+.elsewhere-section {
+  padding: var(--sp-12) var(--sp-6) 0;
+  gap: var(--sp-5);
+}
+
+.elsewhere-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  flex-wrap: wrap;
+}
+
+.elsewhere-head h2 {
+  font-size: var(--fs-xl);
+  max-width: 20ch;
+}
+
+/* --- The dark call to action ------------------------------------------------------ */
+
+.cta-wrap {
+  padding: var(--sp-12) var(--sp-6) var(--sp-12);
+}
+
+/* Fixed ink, not var(--ink): this band is dark in both themes on purpose —
+   in dark mode --ink flips to near-white and the band would invert with it. */
+.cta {
+  background: #0c1a23;
+  border-radius: var(--r-lg);
+  padding: var(--sp-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8);
+}
+
+.cta-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 44ch;
+}
+
+.cta-text h2 {
+  font-size: var(--fs-2xl);
+  color: #ffffff;
+}
+
+.cta-text p {
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: #a8b6c0;
+}
+
+.cta-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.cta-ghost {
+  background: transparent;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.cta-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* --- Responsive --------------------------------------------------------------------- */
+
+@media (max-width: 960px) {
+  /* The panel drops under the copy rather than squeezing into a column too
+     narrow for a place name and a bar to share a line. */
   .hero {
+    grid-template-columns: 1fr;
+    gap: var(--sp-6);
+    padding-top: var(--sp-8);
+  }
+
+  .hero-title,
+  .hero-sub {
+    max-width: none;
+  }
+
+  .trust-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-6) var(--sp-5);
+  }
+
+  .question-grid {
     grid-template-columns: 1fr;
   }
 
-  .narrative,
-  .narrative-reverse {
+  .cta {
     flex-direction: column;
+    align-items: flex-start;
+    padding: var(--sp-6);
   }
 
-  .hero {
-    align-items: initial;
+  .cta-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero,
+  .trust,
+  .questions-section,
+  .elsewhere-section,
+  .cta-wrap {
+    padding-inline: var(--sp-4);
   }
 
-  .hero-foundation {
-    flex: initial;
+  .trust {
+    padding-block: var(--sp-6);
   }
 
-  .foundation-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .questions-section,
+  .elsewhere-section,
+  .cta-wrap {
+    padding-top: var(--sp-8);
   }
 
-  .foundation-value {
-    font-size: 2rem;
+  .trust {
+    margin-top: var(--sp-8);
   }
 
-  .foundation-unit {
-    font-size: 1rem;
+  .cta-wrap {
+    padding-bottom: var(--sp-8);
   }
 
-  .chart-bars {
-    height: 8rem;
-    gap: var(--sp-3);
+  .question .card-body {
+    padding: var(--sp-5);
   }
 
-  .chart-value {
-    font-size: var(--fs-sm);
-  }
-
-  .narrative-preview {
-    min-height: 0;
+  .hero-actions .btn,
+  .cta-actions .btn {
+    flex: 1 1 auto;
   }
 }

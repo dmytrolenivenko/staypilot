@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketOverviewService } from '../../core/services/market-overview.service';
 import { MarketOverviewBreakdownItem, MarketOverviewResponse } from '../../core/models/market-overview';
@@ -169,7 +170,8 @@ export class MarketOverviewComponent implements OnInit {
 
   constructor(
     private readonly marketAreas: MarketAreaService,
-    private readonly service: MarketOverviewService
+    private readonly service: MarketOverviewService,
+    private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -181,6 +183,40 @@ export class MarketOverviewComponent implements OnInit {
         this.error.set('Could not load the list of places. Check the API is running.');
       }
     });
+
+    this.openPlaceFromUrl();
+  }
+
+  /**
+   * Arrive at one place already chosen, from the header search or a link.
+   *
+   * The dropdowns below still have to be filled in for the place that was asked for, or the
+   * screen shows Albufeira's numbers above a picker that says "All of Portugal".
+   */
+  private openPlaceFromUrl(): void {
+    const params = this.route.snapshot.queryParamMap;
+
+    this.form.district = params.get('district') ?? '';
+    this.form.municipality = params.get('municipality') ?? '';
+    this.form.town = params.get('town') ?? '';
+
+    if (!this.form.district) {
+      return;
+    }
+
+    this.marketAreas.getOptions(this.form.district).subscribe({
+      next: municipalities => this.municipalityOptions.set(municipalities),
+      error: () => this.municipalityOptions.set([])
+    });
+
+    if (this.form.municipality) {
+      this.marketAreas.getOptions(this.form.district, this.form.municipality).subscribe({
+        next: towns => this.townOptions.set(towns),
+        error: () => this.townOptions.set([])
+      });
+    }
+
+    this.load();
   }
 
   onDistrictChange(): void {

@@ -1,9 +1,6 @@
+<!-- One lens of the Places screen: the other three find value, this one says where to create
+     it. Place, grain and sample gate are the shell's; the renovation rate is this lens's own. -->
 <div class="page">
-  <app-page-header
-    title="Renovation upside"
-    sub="Where the market pays you enough for taking the work on. The other screens find value; this one says where to create it."
-  />
-
   <app-explainer>
     <p>
       <strong>How the discount is worked out.</strong> Every listing in a place is sorted into one
@@ -46,17 +43,6 @@
     </div>
     <div class="card-body">
       <div class="toolbar">
-        <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
-
-        <label class="control">
-          Level
-          <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
-            @for (option of levels; track option) {
-              <option [ngValue]="option">{{ levelName(option) }}</option>
-            }
-          </select>
-        </label>
-
         <label class="control">
           Renovation €/m²
           <input
@@ -67,11 +53,6 @@
             [ngModel]="renovationCostPerM2()"
             (ngModelChange)="changeRenovationCost($event)"
           />
-        </label>
-
-        <label class="control">
-          Min listings
-          <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
         </label>
 
         <label class="control checkbox">
