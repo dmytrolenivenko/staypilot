@@ -2,6 +2,7 @@ using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Helpers.Calculators;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Services;
+using StayPilot.Application.ReadModels;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
@@ -11,14 +12,15 @@ namespace StayPilot.UnitTests
     // Only the one method the overview reads is implemented; the rest is not this test's business.
     file class FakeOverviewListingRepo : IPropertyListingRepository
     {
-        private readonly List<PropertyListing> _listings;
+        private readonly List<OverviewListing> _listings;
 
-        public FakeOverviewListingRepo(List<PropertyListing> listings) => _listings = listings;
+        public FakeOverviewListingRepo(List<OverviewListing> listings) => _listings = listings;
 
-        public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) =>
+        public Task<List<OverviewListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) =>
             Task.FromResult(_listings);
 
-        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+        public Task<List<TopDealCandidate>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetPropertyListingsByIdsAsync(IReadOnlyCollection<int> ids) => throw new NotImplementedException();
 
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
@@ -43,7 +45,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_OneVeryExpensiveVilla_MovesTheAverageButNotTheMedian()
         {
-            var listings = new List<PropertyListing>
+            var listings = new List<OverviewListing>
             {
                 Listing(200_000m, 100),
                 Listing(220_000m, 100),
@@ -64,27 +66,23 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_ListingsItCannotMeasure_AreLeftOutOfTheCount()
         {
-            var noSnapshot = Listing(200_000m, 100);
-            noSnapshot.ListingSnapshots.Clear();
-
-            var listings = new List<PropertyListing>
+            var listings = new List<OverviewListing>
             {
                 Listing(200_000m, 100),
-                noSnapshot,
-                Listing(0m, 100),   // no price
+                Listing(0m, 100),    // no newest snapshot, which reaches us as no price
                 Listing(200_000m, 0) // no area, so no price per m2 either
             };
 
             var overview = MarketOverviewCalculator.Calculate(listings, 10);
 
-            // One measurable listing out of four. The count must not promise the other three.
+            // One measurable listing out of three. The count must not promise the other two.
             Assert.Equal(1, overview.ListingCount);
         }
 
         [Fact]
         public void Calculate_NothingMatched_IsAnEmptyAnswerAndNotAnError()
         {
-            var overview = MarketOverviewCalculator.Calculate(new List<PropertyListing>(), 10);
+            var overview = MarketOverviewCalculator.Calculate(new List<OverviewListing>(), 10);
 
             Assert.True(overview.Succeeded);
             Assert.Equal(0, overview.ListingCount);
@@ -96,7 +94,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_Distribution_CountsEveryListingAndSharesAddUpToAHundred()
         {
-            var listings = new List<PropertyListing>();
+            var listings = new List<OverviewListing>();
 
             for (var price = 100_000m; price <= 1_000_000m; price += 100_000m)
             {
@@ -120,7 +118,7 @@ namespace StayPilot.UnitTests
         {
             // Forty flats between 200k and 278k, plus one five-million villa. Bars drawn from the
             // raw min and max would put the forty in the first bar and leave eight of ten empty.
-            var listings = new List<PropertyListing>();
+            var listings = new List<OverviewListing>();
 
             for (var price = 200_000m; price < 280_000m; price += 2_000m)
             {
@@ -142,7 +140,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_EveryListingAsksTheSame_DrawsOneBar()
         {
-            var listings = new List<PropertyListing>
+            var listings = new List<OverviewListing>
             {
                 Listing(250_000m, 100),
                 Listing(250_000m, 100),
@@ -159,7 +157,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_BucketCountBelowTheMinimum_IsClampedInsteadOfDividingByZero()
         {
-            var listings = new List<PropertyListing>
+            var listings = new List<OverviewListing>
             {
                 Listing(100_000m, 100),
                 Listing(200_000m, 100),
@@ -174,7 +172,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_TypologyRows_OneRowPerLayoutFewestRoomsFirst()
         {
-            var listings = new List<PropertyListing>
+            var listings = new List<OverviewListing>
             {
                 Listing(300_000m, 100, Typology.T3),
                 Listing(200_000m, 80, Typology.T2),
@@ -200,7 +198,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public async Task GetMarketOverviewAsync_NamesTheSliceByItsNarrowestPart()
         {
-            var service = new MarketOverviewService(new FakeOverviewListingRepo(new List<PropertyListing> { Listing(200_000m, 100) }));
+            var service = new MarketOverviewService(new FakeOverviewListingRepo(new List<OverviewListing> { Listing(200_000m, 100) }));
 
             var town = await service.GetMarketOverviewAsync(new MarketOverviewRequest
             {
@@ -225,7 +223,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_BrokenDownByDistrict_RanksThePlacesAndComparesEachToTheSlice()
         {
-            var listings = new List<PropertyListing>
+            var listings = new List<OverviewListing>
             {
                 Placed(400_000m, 100, "Faro", "Albufeira", "Guia"),
                 Placed(400_000m, 100, "Faro", "Albufeira", "Guia"),
@@ -255,7 +253,7 @@ namespace StayPilot.UnitTests
         [Fact]
         public void Calculate_ListingsWithNoArea_AreLeftOutOfTheBreakdownEntirely()
         {
-            var listings = new List<PropertyListing>
+            var listings = new List<OverviewListing>
             {
                 Placed(400_000m, 100, "Faro", "Albufeira", "Guia"),
                 Listing(200_000m, 100)
@@ -274,7 +272,7 @@ namespace StayPilot.UnitTests
         public void Calculate_WithNoBreakdownLevel_ReturnsNoBreakdown()
         {
             var overview = MarketOverviewCalculator.Calculate(
-                new List<PropertyListing> { Placed(400_000m, 100, "Faro", "Albufeira", "Guia") }, 10);
+                new List<OverviewListing> { Placed(400_000m, 100, "Faro", "Albufeira", "Guia") }, 10);
 
             Assert.Null(overview.Breakdown);
         }
@@ -283,7 +281,7 @@ namespace StayPilot.UnitTests
         public async Task GetMarketOverviewAsync_BreaksTheSliceIntoTheGrainBelowIt()
         {
             var service = new MarketOverviewService(new FakeOverviewListingRepo(
-                new List<PropertyListing> { Placed(400_000m, 100, "Faro", "Albufeira", "Guia") }));
+                new List<OverviewListing> { Placed(400_000m, 100, "Faro", "Albufeira", "Guia") }));
 
             var everywhere = await service.GetMarketOverviewAsync(new MarketOverviewRequest());
             var district = await service.GetMarketOverviewAsync(new MarketOverviewRequest { District = "Faro" });
@@ -304,44 +302,37 @@ namespace StayPilot.UnitTests
         /// A listing that also knows where it is, for the breakdown. Same shape as
         /// <see cref="Listing"/> otherwise.
         /// </summary>
-        private static PropertyListing Placed(
+        private static OverviewListing Placed(
             decimal price, int areaM2, string district, string municipality, string town)
         {
-            var listing = Listing(price, areaM2);
-
-            listing.MarketArea = new MarketArea
+            return Listing(price, areaM2) with
             {
                 District = district,
                 Municipality = municipality,
                 Town = town
             };
-
-            return listing;
         }
 
         /// <summary>
-        /// One listing with one snapshot at the given price. The price for each square meter is
-        /// worked out here the same way the importer does it, so the maths under test is the only
-        /// thing the assertions can be measuring.
+        /// One listing as the repository hands it over: priced at its newest snapshot, with no
+        /// place on it. The price for each square meter is worked out here the same way the
+        /// importer does it, so the maths under test is the only thing the assertions can be
+        /// measuring.
+        ///
+        /// A price of zero is how a listing with no snapshot at all arrives - the query projects
+        /// the missing snapshot's price to zero rather than dropping the row, so that is what a
+        /// test of "listings we cannot measure" has to pass in.
         /// </summary>
-        private static PropertyListing Listing(decimal price, int areaM2, Typology typology = Typology.T2)
+        private static OverviewListing Listing(decimal price, int areaM2, Typology typology = Typology.T2)
         {
-            return new PropertyListing
-            {
-                AreaM2 = areaM2,
-                Typology = typology,
-                PropertyType = PropertyType.Apartment,
-                ListingSnapshots = new List<ListingSnapshot>
-                {
-                    new()
-                    {
-                        Price = price,
-                        PricePerM2 = areaM2 == 0 ? 0m : price / areaM2,
-                        SnapshotDateUtc = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc),
-                        Status = ListingStatus.Active
-                    }
-                }
-            };
+            return new OverviewListing(
+                price,
+                areaM2 == 0 ? 0m : price / areaM2,
+                areaM2,
+                typology,
+                string.Empty,
+                string.Empty,
+                string.Empty);
         }
     }
 }

@@ -1,32 +1,52 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { RedirectFunction, Router, Routes } from '@angular/router';
 import { MsalGuard } from '@azure/msal-angular';
 import { HomeComponent } from './features/home/home.component';
+import { PlacesComponent } from './features/places/places.component';
 import { MarketOverviewComponent } from './features/market-overview/market-overview.component';
-import { MarketAreaLeaderboardComponent } from './features/market-areas/market-area-leaderboard.component';
-import { MarketAreaBudgetComponent } from './features/market-areas/market-area-budget.component';
-import { MarketAreaNeighboursComponent } from './features/market-areas/market-area-neighbours.component';
-import { MarketAreaRenovationComponent } from './features/market-areas/market-area-renovation.component';
-import { ListingLookupComponent } from './features/listings/listing-lookup.component';
-import { ListingBrowserComponent } from './features/listings/listing-browser.component';
-import { TopDealsComponent } from './features/listings/top-deals.component';
+import { ListingsComponent } from './features/listings/listings.component';
+import { ListingPageComponent } from './features/listings/listing-page.component';
 import { InvestmentAnalysisComponent } from './features/listings/investment-analysis.component';
-import { PremiumFeaturesComponent } from './features/premium-features/premium-features.component';
-import { OwnedPropertiesComponent } from './features/owned/owned-properties.component';
-import { ValuationComponent } from './features/valuation/valuation.component';
-import { BuildCostComponent } from './features/build-cost/build-cost.component';
+import { PortfolioComponent } from './features/portfolio/portfolio.component';
+import { ToolsComponent } from './features/tools/tools.component';
 import { ComingSoonComponent } from './features/coming-soon/coming-soon.component';
 import { ComingSoonInfo } from './core/models/coming-soon-info';
-import { GroupHubComponent } from './features/group-hub/group-hub.component';
-import { NAV_GROUPS, NavGroup } from './core/models/nav-groups';
 
 function comingSoon(info: ComingSoonInfo) {
   return { info };
 }
 
-function groupHub(title: string) {
-  const group = NAV_GROUPS.find(g => g.title === title) as NavGroup;
+/**
+ * An old screen's path, landing on the question that screen used to be.
+ *
+ * A plain string redirectTo cannot carry a query string, and the question is a query parameter
+ * now — so these are built as UrlTrees instead. Returning one keeps the whole redirect inside
+ * the route table rather than making each merged screen read a second source of truth.
+ */
+function toQuestion(path: string, ask: string): RedirectFunction {
+  // Keeps whatever else the old link carried (?propertyId=, ?edit=) - dropping it opened the
+  // right screen on the wrong property.
+  return ({ queryParams }) => inject(Router).createUrlTree([path], { queryParams: { ...queryParams, ask } });
+}
 
-  return { group };
+/**
+ * The old analysis path. An owned property goes to the analysis screen, a listing to its own
+ * page (which runs the same analysis embedded), anything else to Listings.
+ */
+function toAnalysis(): RedirectFunction {
+  return ({ queryParams }) => {
+    const router = inject(Router);
+
+    if (queryParams['ownedId']) {
+      return router.createUrlTree(['/portfolio/analysis'], { queryParams: { ownedId: queryParams['ownedId'] } });
+    }
+
+    if (queryParams['id']) {
+      return router.createUrlTree(['/listings', queryParams['id']]);
+    }
+
+    return router.createUrlTree(['/listings']);
+  };
 }
 
 // Pathless parent wrapping every route so canActivateChild runs on every
@@ -34,29 +54,61 @@ function groupHub(title: string) {
 // login page (per MSAL_GUARD_CONFIG's InteractionType.Redirect) whenever
 // nobody is signed in yet. The whole app is behind sign-in now, not just
 // My Properties.
+//
+// Six destinations, where there used to be fourteen screens behind four hub pages. What was a
+// navigation choice ("Leaderboard" or "What money buys") is now a control on the one screen
+// that answers both, so the routes below are the six things this app is FOR, and the question
+// being asked within one of them rides along in ?ask=.
+//
+// Every old path still resolves. They were in the menu for months and are in bookmarks and
+// notes; a redirect costs a line and a 404 costs a user.
 export const routes: Routes = [
   {
     path: '',
     canActivateChild: [MsalGuard],
     children: [
       { path: '', component: HomeComponent },
-      { path: 'listings', component: GroupHubComponent, data: groupHub('Listings') },
-      { path: 'market-areas', component: GroupHubComponent, data: groupHub('Market areas') },
-      { path: 'portfolio', component: GroupHubComponent, data: groupHub('Portfolio') },
-      { path: 'tools', component: GroupHubComponent, data: groupHub('Tools') },
-      { path: 'market-overview', component: MarketOverviewComponent },
-      { path: 'market-areas/leaderboard', component: MarketAreaLeaderboardComponent },
-      { path: 'market-areas/budget', component: MarketAreaBudgetComponent },
-      { path: 'market-areas/neighbours', component: MarketAreaNeighboursComponent },
-      { path: 'market-areas/renovation', component: MarketAreaRenovationComponent },
-      { path: 'listings/lookup', component: ListingLookupComponent },
-      { path: 'listings/investment-analysis', component: InvestmentAnalysisComponent },
-      { path: 'listings/top-deals', component: TopDealsComponent },
-      { path: 'listing-browser', component: ListingBrowserComponent },
-      { path: 'feature-impact', component: PremiumFeaturesComponent },
-      { path: 'my-properties', component: OwnedPropertiesComponent },
-      { path: 'valuation', component: ValuationComponent },
-      { path: 'build-cost', component: BuildCostComponent },
+
+      // --- The six ---------------------------------------------------------------
+      { path: 'places', component: PlacesComponent },
+      { path: 'places/overview', component: MarketOverviewComponent },
+      { path: 'listings', component: ListingsComponent },
+      { path: 'portfolio', component: PortfolioComponent },
+      // The investment analysis (numbers + AI thesis) for one owned property, ?ownedId=<id>.
+      // Its own screen: a listing gets it embedded on /listings/:id, an owned property has no
+      // page of its own to embed it in.
+      { path: 'portfolio/analysis', component: InvestmentAnalysisComponent },
+      { path: 'tools', component: ToolsComponent },
+
+      // --- Where the old menu items went -----------------------------------------
+      // These sit above 'listings/:id' on purpose: below it, "lookup" would be read as an id.
+      { path: 'listings/top-deals', redirectTo: toQuestion('/listings', 'deals'), pathMatch: 'full' },
+
+      // Both of these opened by asking for a listing id, which /listings/:id now carries in the
+      // URL. Sent to Listings rather than to an id-less listing page, because "which listing"
+      // is a question Browse answers and an empty id box does not.
+      { path: 'listings/lookup', redirectTo: '/listings', pathMatch: 'full' },
+      { path: 'listings/investment-analysis', redirectTo: toAnalysis(), pathMatch: 'full' },
+
+      // One listing in full — the page Browse and Top deals now link their rows to.
+      { path: 'listings/:id', component: ListingPageComponent },
+
+      // The four Places lenses.
+      { path: 'market-areas', redirectTo: '/places', pathMatch: 'full' },
+      { path: 'market-areas/leaderboard', redirectTo: toQuestion('/places', 'value'), pathMatch: 'full' },
+      { path: 'market-areas/budget', redirectTo: toQuestion('/places', 'budget'), pathMatch: 'full' },
+      { path: 'market-areas/neighbours', redirectTo: toQuestion('/places', 'neighbours'), pathMatch: 'full' },
+      { path: 'market-areas/renovation', redirectTo: toQuestion('/places', 'renovation'), pathMatch: 'full' },
+      { path: 'market-overview', redirectTo: '/places/overview', pathMatch: 'full' },
+
+      { path: 'listing-browser', redirectTo: toQuestion('/listings', 'browse'), pathMatch: 'full' },
+
+      // Portfolio and tools.
+      { path: 'my-properties', redirectTo: toQuestion('/portfolio', 'properties'), pathMatch: 'full' },
+      { path: 'valuation', redirectTo: toQuestion('/portfolio', 'valuation'), pathMatch: 'full' },
+      { path: 'feature-impact', redirectTo: toQuestion('/tools', 'features'), pathMatch: 'full' },
+      { path: 'build-cost', redirectTo: toQuestion('/tools', 'build'), pathMatch: 'full' },
+
       {
         path: 'beach-proximity',
         component: ComingSoonComponent,

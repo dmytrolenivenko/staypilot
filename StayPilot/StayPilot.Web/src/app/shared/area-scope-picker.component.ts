@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MarketAreaService } from '../core/services/market-area.service';
+import { AreaLevel } from '../core/models/market-area-stats';
 
 /** Where a screen has been narrowed to. Empty strings mean "not narrowed". */
 export interface AreaScope {
@@ -11,6 +12,24 @@ export interface AreaScope {
 
 export function emptyScope(): AreaScope {
   return { district: '', municipality: '' };
+}
+
+/**
+ * Which grains can be ranked against each other inside a given scope: the ones strictly finer
+ * than the scope itself. "Municípios inside Loulé" is one place, Loulé, and one place ranks
+ * against nothing — the table came back empty and looked like missing data.
+ *
+ * Ordered coarsest first, so the head of the list is the natural grain to fall back to when a
+ * scope makes the current one impossible. Lived on the neighbour-gaps screen until the place,
+ * the grain and the sample gate moved up to the Places shell, which now applies it for all
+ * four lenses rather than one of them.
+ */
+export function levelsInside(scope: AreaScope): AreaLevel[] {
+  if (scope.municipality) {
+    return ['Town'];
+  }
+
+  return scope.district ? ['Municipality', 'Town'] : ['District', 'Municipality', 'Town'];
 }
 
 /**

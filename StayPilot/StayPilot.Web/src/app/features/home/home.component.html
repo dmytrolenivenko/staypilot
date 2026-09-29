@@ -1,326 +1,301 @@
 <div class="home">
-
-  <!-- Hero + the credibility strip under it — grouped so they sit close together, with the
-       normal section gap resuming after the strip, not before it. -->
-  <div class="hero-block">
+  <!-- ===== Hero: the pitch on one side, a real read of the market on the other ===== -->
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow">Algarve · Comparables</span>
-      <h1>Know what the Algarve is really asking.</h1>
+      @if (calculatedAtUtc(); as refreshedAt) {
+        <span class="chip">
+          <span class="chip-dot" aria-hidden="true"></span>
+          Updated {{ formatDate(refreshedAt) }} · {{ districtCount() }} districts
+        </span>
+      } @else {
+        <span class="chip">
+          <span class="chip-dot" aria-hidden="true"></span>
+          Collected daily across mainland Portugal
+        </span>
+      }
+
+      <h1 class="hero-title">Know what Portugal is <span class="hero-accent">really</span> asking</h1>
+
       <p class="hero-sub">
-        Every advert on the coast, collected daily and read as one market. Median over average, sample
-        size always shown, asking prices never dressed up as sale prices.
+        Every property advert in the country, collected daily and read as one market. Medians rather
+        than averages, sample size always shown, and asking prices never dressed up as sale prices.
       </p>
+
       <div class="hero-actions">
-        <a class="btn" routerLink="/market-overview">Explore the market</a>
-        <a class="btn btn-secondary" routerLink="/valuation">Value my property</a>
+        <a class="btn btn-lg" routerLink="/places" [queryParams]="{ ask: 'value' }">Explore the market</a>
+        <a class="btn btn-secondary btn-lg" routerLink="/portfolio" [queryParams]="{ ask: 'valuation' }">
+          Value my property
+        </a>
       </div>
     </div>
-    <div class="hero-chart">
-      @if (overview(); as ov) {
-        @if (topAreasByPopularity().length > 0) {
-          <div class="chart-head">
-            <span class="chart-title">Most popular areas · coast-wide</span>
-            <span class="chart-ratio">{{ formatCount(ov.listingCount) }} adverts</span>
-          </div>
-          <div class="chart-bars hero-bars">
-            @for (row of topAreasByPopularity(); track row.displayName) {
-              <div class="chart-col">
-                <span class="chart-value">{{ formatCount(row.listingCount) }}</span>
-                <div
-                  class="chart-bar single"
-                  [style.height.%]="barPct(row.listingCount, topAreasMax())"
-                  [title]="row.displayName + ' · ' + formatCount(row.listingCount) + ' listings · ' + euro(row.medianPricePerM2) + '/m²'"
-                ></div>
-                <span class="chart-tag">{{ euro(row.medianPricePerM2) }}/m²</span>
-                <span class="chart-label">{{ row.displayName }}</span>
-              </div>
-            }
-          </div>
-        } @else {
-          <p class="hint">No area data yet.</p>
+
+    <!-- A real read, not a screenshot of one. No window chrome and no tab strip: those
+         promised navigation that did nothing, and the panel is not pretending to be a
+         separate application — it is this page showing its own data. -->
+    <aside class="panel" aria-label="Where the stock is">
+      <div class="panel-head">
+        <span class="panel-title">Where the stock is</span>
+        @if (overview(); as ov) {
+          <span class="panel-scope">{{ formatCount(ov.listingCount) }} adverts</span>
         }
-      } @else if (marketLoading()) {
-        <p class="hint">Loading…</p>
+      </div>
+
+      @if (marketLoading()) {
+        <div class="skeleton-chart" aria-busy="true" aria-label="Loading area data">
+          @for (row of [1, 2, 3, 4, 5]; track row) {
+            <div class="skeleton skeleton-row"></div>
+          }
+        </div>
       } @else if (marketError()) {
         <p class="error">{{ marketError() }}</p>
+      } @else if (busiestAreas().length) {
+        <app-bar-chart [items]="busiestAreas()" [showAxis]="false" />
+      } @else {
+        <p class="hint">No area data yet.</p>
+      }
+
+      @if (!marketLoading() && !marketError()) {
+        <div class="panel-foot">
+          <div class="readout">
+            <span class="readout-label">Median asking price</span>
+            <span class="readout-value">{{ medianPrice() }}</span>
+          </div>
+          <div class="readout">
+            <span class="readout-label">Median €/m²</span>
+            <span class="readout-value">{{ medianPricePerM2() }}</span>
+          </div>
+        </div>
+      }
+    </aside>
+  </section>
+
+  <!-- ===== Coverage: how much there is to read, before any finding ===== -->
+  <section class="trust" aria-label="Coverage">
+    <p class="trust-kicker">Built on every public advert in mainland Portugal</p>
+
+    <div class="trust-grid">
+      @if (coverage(); as stats) {
+        @for (stat of stats; track stat.label) {
+          <div class="trust-cell">
+            <span class="trust-value">{{ stat.value }}</span>
+            <span class="trust-label">{{ stat.label }}</span>
+          </div>
+        }
+      } @else if (marketError()) {
+        <p class="error trust-error">{{ marketError() }}</p>
+      } @else {
+        @for (tile of [1, 2, 3, 4]; track tile) {
+          <div class="trust-cell" aria-busy="true">
+            <div class="skeleton skeleton-text" style="width: 7rem; height: 2.4rem"></div>
+            <div class="skeleton skeleton-text" style="width: 5.5rem"></div>
+          </div>
+        }
       }
     </div>
   </section>
 
-  <!-- The credibility strip: a plain white band under the hero, not a card floating inside it —
-       the same numbers as before, now read as a line under the pitch rather than a box beside it. -->
-  <section class="stat-stripe">
-    @if (heroStats(); as stats) {
-      <div class="stripe-tile">
-        <span class="stripe-label">Adverts tracked</span>
-        <span class="stripe-value">{{ formatCount(stats.totalListings) }}</span>
-        <span class="stripe-note">Across {{ formatCount(stats.placesTracked) }} places</span>
-      </div>
-      <div class="stripe-tile">
-        <span class="stripe-label">Median €/m²</span>
-        <span class="stripe-value">
-          @if (stats.medianPricePerM2 !== null) { {{ euro(stats.medianPricePerM2) }} } @else { — }
-        </span>
-        <span class="stripe-note">Coast-wide</span>
-      </div>
-      <div class="stripe-tile">
-        <span class="stripe-label">Most listed</span>
-        <span class="stripe-value">{{ stats.busiestTypology?.typology ?? '—' }}</span>
-        <span class="stripe-note">
-          @if (stats.busiestTypology; as t) { {{ formatCount(t.listingCount) }} adverts } @else { Typology }
-        </span>
-      </div>
-      <div class="stripe-tile">
-        <span class="stripe-label">Coverage</span>
-        <span class="stripe-value">{{ formatCount(stats.districtsCovered) }}</span>
-        <span class="stripe-note">Districts, wall to wall</span>
-      </div>
-      <div class="stripe-tile">
-        <span class="stripe-label">Updated</span>
-        @if (calculatedAtUtc(); as refreshedAt) {
-          <span class="stripe-value stripe-value-sm">{{ formatDate(refreshedAt) }}</span>
-        } @else {
-          <span class="stripe-value stripe-value-sm">—</span>
-        }
-        <span class="stripe-note">Last refreshed</span>
-      </div>
-    } @else if (marketLoading()) {
-      <p class="hint">Loading market stats…</p>
-    } @else if (marketError()) {
-      <p class="error">{{ marketError() }}</p>
-    }
-  </section>
-  </div>
+  <!-- ===== The four questions ===== -->
+  <section class="section questions-section">
+    <div class="questions-head">
+      <span class="eyebrow">What you can find here</span>
+      <h2>Four questions, answered from the adverts themselves</h2>
+      <p class="questions-sub">
+        Each one is a live example, worked out from every listing collected. Open any of them to set
+        your own place, budget and thresholds.
+      </p>
+    </div>
 
-  <!-- Narrative: Where value sits -->
-  <section class="section">
-    <div class="narrative">
-      <div class="narrative-text">
-        <h3>Where value sits</h3>
-        <p>
-          Every place ranked on the middle price per square metre, so a town full of small flats cannot
-          look cheap just for being small. Places resting on too few adverts are left out of this
-          preview rather than shown as if they were solid.
-        </p>
-        <a class="btn" routerLink="/market-areas/leaderboard">See the leaderboard</a>
-      </div>
-      <div class="narrative-preview card">
+    <div class="question-grid">
+      <!-- 1 -->
+      <article class="card question">
         <div class="card-body">
+          <span class="icon-tile" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 20V10" /><path d="M10 20V4" /><path d="M16 20v-7" /><path d="M22 20H2" />
+            </svg>
+          </span>
+
+          <div class="question-head">
+            <h3>Where value sits</h3>
+            <p class="question-sub">
+              Every place ranked on its middle price per square metre, so a town full of small flats
+              cannot look cheap just for being small.
+            </p>
+          </div>
+
           @if (marketLoading()) {
-            <p class="hint">Loading…</p>
+            <div class="skeleton-chart" aria-busy="true">
+              @for (row of [1, 2, 3, 4]; track row) {
+                <div class="skeleton skeleton-row"></div>
+              }
+            </div>
           } @else if (marketError()) {
             <p class="error">{{ marketError() }}</p>
-          } @else if (leaderboardPreview().length) {
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Place</th>
-                  <th class="num">Listings</th>
-                  <th class="num">€/m²</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of leaderboardPreview(); track row.displayName) {
-                  <tr>
-                    <td>{{ row.displayName }}</td>
-                    <td class="num">{{ formatCount(row.listingCount) }}</td>
-                    <td class="num">{{ euro(row.medianPricePerM2) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+          } @else if (priciestPlaces().length) {
+            <app-bar-chart [items]="priciestPlaces()" [showAxis]="false" />
           } @else {
             <p class="hint">Not enough reliably-sized places yet.</p>
           }
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- Narrative: What your money reaches -->
-  <section class="section">
-    <div class="narrative narrative-reverse">
-      <div class="narrative-text">
-        <h3>What your money reaches</h3>
-        <p>
-          The other way round from a property portal: put in what you have, and see the biggest layout
-          each place usually sells for it — judged on what that typology typically costs there, not the
-          cheapest advert in it.
-        </p>
-        <a class="btn" routerLink="/market-areas/budget">Try a budget</a>
-      </div>
-      <div class="narrative-preview card">
+          <a class="link link-arrow" routerLink="/places" [queryParams]="{ ask: 'value' }">
+            See the full ranking
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- 2 -->
+      <article class="card question">
         <div class="card-body">
+          <span class="icon-tile" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="6" width="20" height="13" rx="2" /><circle cx="12" cy="12.5" r="2.6" />
+            </svg>
+          </span>
+
+          <div class="question-head">
+            <h3>What your money buys</h3>
+            <p class="question-sub">
+              The other way round from a property portal: put in what you have, and see the biggest
+              home each place usually sells for it.
+            </p>
+          </div>
+
           @if (budgetLoading()) {
-            <p class="hint">Loading…</p>
-          } @else if (budgetError()) {
-            <p class="error">{{ budgetError() }}</p>
-          } @else if (budgetPreview().length) {
-            <div class="chart-head">
-              <span class="chart-title">Floor space this budget reaches</span>
-              <span class="chart-ratio">Budget {{ euro(previewBudget) }}</span>
-            </div>
-            <div class="chart-bars">
-              @for (item of budgetPreview(); track item.displayName) {
-                <div class="chart-col">
-                  <span class="chart-value">{{ sqm(item.medianAreaM2) }}<span class="chart-unit">m²</span></span>
-                  <div class="chart-bar single" [style.height.%]="barPct(item.medianAreaM2, budgetMax())"></div>
-                  <span class="chart-tag">{{ item.bestTypology }}</span>
-                  <span class="chart-label" [title]="item.displayName">{{ item.displayName }}</span>
-                </div>
+            <div class="skeleton-chart" aria-busy="true">
+              @for (row of [1, 2, 3, 4]; track row) {
+                <div class="skeleton skeleton-row"></div>
               }
             </div>
+          } @else if (budgetError()) {
+            <p class="error">{{ budgetError() }}</p>
+          } @else if (budgetPlaces().length) {
+            <app-bar-chart
+              [items]="budgetPlaces()"
+              [showAxis]="false"
+              [subCaption]="'Budget ' + euro(previewBudget)"
+            />
           } @else {
             <p class="hint">No place reaches this budget among reliably-sized places.</p>
           }
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- Narrative: Borders you cannot see -->
-  <section class="section">
-    <div class="narrative">
-      <div class="narrative-text">
-        <h3>Borders you cannot see on a price list</h3>
-        <p>
-          Two places close enough to be a real choice, priced far apart. The gap is shown per square
-          metre and by how far apart the two places sit — a border a price list alone would not show.
-        </p>
-        <a class="btn" routerLink="/market-areas/neighbours">Open neighbour gaps</a>
-      </div>
-      <div class="narrative-preview card">
+          <a class="link link-arrow" routerLink="/places" [queryParams]="{ ask: 'budget' }">
+            Try your own budget
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- 3 -->
+      <article class="card question">
         <div class="card-body">
-          @if (topGap(); as gap) {
-            <div class="chart-head">
-              <span class="chart-title">Pay more here vs pay less nearby</span>
-              <span class="chart-ratio">−{{ roundPercent(gap.gapPercent) }}% · {{ formatKm(gap.distanceKm) }} apart</span>
+          <span class="icon-tile" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z" /><circle cx="12" cy="10" r="2.5" />
+            </svg>
+          </span>
+
+          <div class="question-head">
+            <h3>Borders you cannot see</h3>
+            <p class="question-sub">
+              Two places close enough to be a real choice, priced far apart — a border a price list
+              alone would never show you.
+            </p>
+          </div>
+
+          @if (gapLoading()) {
+            <div class="skeleton-chart" aria-busy="true">
+              @for (row of [1, 2]; track row) {
+                <div class="skeleton skeleton-row tall"></div>
+              }
             </div>
-            <div class="chart-bars">
-              <div class="chart-col">
-                <span class="chart-value">{{ euro(gap.cheaper.medianPricePerM2) }}<span class="chart-unit">/m²</span></span>
-                <div class="chart-bar a" [style.height.%]="barPctOfPair(gap.cheaper.medianPricePerM2, gap.cheaper.medianPricePerM2, gap.expensive.medianPricePerM2)"></div>
-                <span class="chart-tag">Pay less</span>
-                <span class="chart-label" [title]="gap.cheaper.displayName">{{ gap.cheaper.displayName }}</span>
-                <span class="chart-sub">{{ formatCount(gap.cheaper.listingCount) }} listings</span>
-              </div>
-              <div class="chart-col">
-                <span class="chart-value">{{ euro(gap.expensive.medianPricePerM2) }}<span class="chart-unit">/m²</span></span>
-                <div class="chart-bar b" [style.height.%]="barPctOfPair(gap.expensive.medianPricePerM2, gap.cheaper.medianPricePerM2, gap.expensive.medianPricePerM2)"></div>
-                <span class="chart-tag">Pay more</span>
-                <span class="chart-label" [title]="gap.expensive.displayName">{{ gap.expensive.displayName }}</span>
-                <span class="chart-sub">{{ formatCount(gap.expensive.listingCount) }} listings</span>
-              </div>
-            </div>
-            <div class="reno-evidence">
-              <p class="reno-reason muted">
-                {{ euro(gap.expensive.medianPricePerM2 - gap.cheaper.medianPricePerM2) }}/m² apart, {{ formatKm(gap.distanceKm) }}
-                from each other — on a typical 90m² apartment that is roughly
-                {{ euro((gap.expensive.medianPricePerM2 - gap.cheaper.medianPricePerM2) * 90) }} in the asking price alone,
-                for what a map would call the same corner of the coast.
-              </p>
-            </div>
-          } @else if (gapLoading()) {
-            <p class="hint">Loading…</p>
           } @else if (gapError()) {
             <p class="error">{{ gapError() }}</p>
+          } @else if (topGap()) {
+            <app-compare-bars [low]="gapCheaper()!" [high]="gapDearer()!" [deltaText]="gapDelta()" />
+            <p class="question-note">
+              About {{ gapOnTypicalFlat() }} on a typical {{ typicalApartmentM2 }}m² apartment, for what
+              a map would call the same corner of the country.
+            </p>
           } @else {
             <p class="hint">No qualifying neighbour pair at the default thresholds.</p>
           }
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- Narrative: Renovation upside -->
-  <section class="section">
-    <div class="narrative narrative-reverse">
-      <div class="narrative-text">
-        <h3>Renovation upside</h3>
-        <p>
-          Some places show a real gap between what a project sells for and what the same flat fetches
-          finished. Only shown where the evidence backs it — a spread with no evidence behind it is two
-          medians that happen to differ, not a renovation worth doing.
-        </p>
-        <a class="btn" routerLink="/market-areas/renovation">Open renovation upside</a>
-      </div>
-      <div class="narrative-preview card">
+          <a class="link link-arrow" routerLink="/places" [queryParams]="{ ask: 'neighbours' }">
+            Find gaps near you
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- 4 -->
+      <article class="card question">
         <div class="card-body">
-          @if (renovationHighlight(); as area) {
-            <div class="chart-head">
-              <span class="chart-title">{{ area.displayName }}</span>
-              <span class="chart-ratio">+{{ euro(area.renovationDiscountPerM2!) }}/m² finished</span>
+          <span class="icon-tile" aria-hidden="true">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3l7 7-4 4-7-7 4-4Z" /><path d="M10 7l-7 7v7h7l7-7" />
+            </svg>
+          </span>
+
+          <div class="question-head">
+            <h3>Renovation upside</h3>
+            <p class="question-sub">
+              What a place asks for a flat that needs work, against what the same flat fetches
+              finished. Shown only where the evidence backs it.
+            </p>
+          </div>
+
+          @if (marketLoading()) {
+            <div class="skeleton-chart" aria-busy="true">
+              @for (row of [1, 2]; track row) {
+                <div class="skeleton skeleton-row tall"></div>
+              }
             </div>
-            <div class="chart-bars">
-              <div class="chart-col">
-                <span class="chart-value">{{ euro(area.projectMedianPricePerM2!) }}<span class="chart-unit">/m²</span></span>
-                <div class="chart-bar a" [style.height.%]="barPctOfPair(area.projectMedianPricePerM2!, area.projectMedianPricePerM2!, area.moveInMedianPricePerM2!)"></div>
-                <span class="chart-tag">As a project</span>
-                <span class="chart-sub">{{ formatCount(area.projectCount) }} listings</span>
-              </div>
-              <div class="chart-col">
-                <span class="chart-value">{{ euro(area.moveInMedianPricePerM2!) }}<span class="chart-unit">/m²</span></span>
-                <div class="chart-bar b" [style.height.%]="barPctOfPair(area.moveInMedianPricePerM2!, area.projectMedianPricePerM2!, area.moveInMedianPricePerM2!)"></div>
-                <span class="chart-tag">Move-in ready</span>
-                <span class="chart-sub">{{ formatCount(area.moveInCount) }} listings</span>
-              </div>
-            </div>
-            @if (area.renovationEvidence; as evidence) {
-              <div class="reno-evidence">
-                <span class="badge" [class]="trustClass(evidence)">{{ evidence.confidence }} confidence</span>
-                <p class="reno-reason muted">
-                  On a typical {{ sqm(area.projectMedianAreaM2!) }}m² project, that {{ euro(area.renovationDiscountPerM2!) }}/m²
-                  gap is worth roughly {{ euro(area.renovationDiscountPerM2! * area.projectMedianAreaM2!) }} once finished.
-                </p>
-                <p class="reno-reason muted">{{ evidence.reason }}</p>
-              </div>
-            }
-          } @else if (marketLoading()) {
-            <p class="hint">Loading…</p>
           } @else if (marketError()) {
             <p class="error">{{ marketError() }}</p>
+          } @else if (renovationHighlight()) {
+            @if (renovationProject() && renovationFinished()) {
+              <app-compare-bars
+                [low]="renovationProject()!"
+                [high]="renovationFinished()!"
+                [deltaText]="renovationDelta()"
+              />
+              @if (renovationEvidence(); as evidence) {
+                <p class="question-note">
+                  <span class="badge" [class]="trustClass(evidence)">{{ evidence.confidence }} confidence</span>
+                  {{ renovationPlace() }} — that gap is worth roughly {{ renovationUpside() }} on a
+                  typical {{ sqm(renovationProjectAreaM2()!) }}m² project there.
+                </p>
+              }
+            } @else {
+              <p class="hint">No place currently has both sides of the comparison measured.</p>
+            }
           } @else {
             <p class="hint">No reliably-sized place currently has strong renovation evidence.</p>
           }
+
+          <a class="link link-arrow" routerLink="/places" [queryParams]="{ ask: 'renovation' }">
+            Compare project prices
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
         </div>
-      </div>
+      </article>
     </div>
   </section>
 
-  <!-- Portfolio: a full-width banner, not the narrative 50/50 split every other
-       section uses — this is the app's own feature, not a preview of the market. -->
-  <section class="section">
-    <div class="portfolio-banner">
-      <div class="portfolio-banner-text">
-        <span class="eyebrow">Portfolio</span>
-        <h2>Your own apartments, priced against the coast</h2>
-        <p>
-          Add what you own once. Every recalculation prices it against the adverts around it and shows
-          the comps it leaned on and what each feature contributed.
-        </p>
-        <div class="hero-actions">
-          <a class="btn" routerLink="/my-properties">Add a property</a>
-          <a class="btn btn-secondary" routerLink="/valuation">See a valuation</a>
-        </div>
-      </div>
-      <div class="portfolio-banner-preview">
-        <p class="hint">
-          Owned-property numbers are personal to your account — add a property to see it priced here.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Under the hood -->
-  <section class="section">
-    <div class="section-head">
-      <span class="eyebrow">Under the hood</span>
+  <!-- ===== Everything not already on this page ===== -->
+  <section class="section elsewhere-section">
+    <div class="elsewhere-head">
       <h2>The adverts, and the figures behind them</h2>
+      <a class="link link-arrow" routerLink="/listings" [queryParams]="{ ask: 'browse' }">
+        Browse everything
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </a>
     </div>
+
     <div class="feature-grid">
-      @for (item of underTheHood; track item.path) {
-        <a class="feature-card" [routerLink]="item.path">
+      @for (item of elsewhere; track item.title) {
+        <a class="feature-card" [routerLink]="item.path" [queryParams]="item.query ?? null">
           <span class="feature-card-head">
             <span class="feature-card-title">{{ item.title }}</span>
             <svg class="feature-card-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -333,4 +308,22 @@
     </div>
   </section>
 
+  <!-- ===== The app's own feature ===== -->
+  <section class="cta-wrap">
+    <div class="cta">
+      <div class="cta-text">
+        <h2>What you own, priced against the market around it</h2>
+        <p>
+          Add a property once. Every recalculation prices it against the adverts nearby and shows the
+          comparables it leaned on, and what each feature contributed to the figure.
+        </p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn-lg" routerLink="/portfolio" [queryParams]="{ ask: 'properties' }">Add a property</a>
+        <a class="btn btn-lg cta-ghost" routerLink="/portfolio" [queryParams]="{ ask: 'valuation' }">
+          See a valuation
+        </a>
+      </div>
+    </div>
+  </section>
 </div>

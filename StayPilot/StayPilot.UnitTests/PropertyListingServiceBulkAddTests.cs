@@ -2,6 +2,7 @@ using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Contracts.Response.Base;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Services;
+using StayPilot.Application.ReadModels;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
@@ -51,9 +52,10 @@ namespace StayPilot.UnitTests
 
         public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync() => throw new NotImplementedException();
-        public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
+        public Task<List<OverviewListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
 
-        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+        public Task<List<TopDealCandidate>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetPropertyListingsByIdsAsync(IReadOnlyCollection<int> ids) => throw new NotImplementedException();
 
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
@@ -66,6 +68,7 @@ namespace StayPilot.UnitTests
         public Task<List<MarketArea>> GetAllMarketAreasAsync() => Task.FromResult(_areas);
         public Task<(List<MarketArea> Items, int TotalRecords)> GetMarketAreasPageAsync(MarketAreaRequest request) => throw new NotImplementedException();
         public Task<List<string>> GetMarketAreaOptionsAsync(string? distrinct, string? municipality, string? town) => throw new NotImplementedException();
+        public Task<List<MarketArea>> GetMarketAreaNamesAsync() => throw new NotImplementedException();
     }
 
     file class FakeBeachMarkerRepo : IBeachMarkerRepository

@@ -19,5 +19,11 @@ namespace StayPilot.Application.Interfaces.Services
         /// Each filter you pass narrows the result (district, then municipality, then town).
         /// </summary>
         Task<MarketAreaOptionsResponse> GetMarketAreaOptionsAsync(string? district, string? municipality, string? town);
+
+        /// <summary>
+        /// Get every place we hold as one tree (district > municipality > town > zones), so the
+        /// region picker can be filled in the browser without a call per dropdown.
+        /// </summary>
+        Task<MarketAreaTreeResponse> GetMarketAreaTreeAsync();
     }
 }

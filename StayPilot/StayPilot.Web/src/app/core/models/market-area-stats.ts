@@ -177,3 +177,20 @@ export interface MarketAreaNeighbourGapQuery {
   // The fewest listings of that typology a place needs to be half of a pair.
   minTypologyListings?: number;
 }
+
+// Mirrors RecalculateMarketAreaStatsResponse on the API.
+//
+// The recalculation runs past the request that starts it — it takes minutes and Azure closes the
+// connection at ~230s — so the POST returns immediately and this is how the screen follows it.
+// Held in the API's memory, so a restart forgets it: the durable "are the numbers fresh" answer
+// is calculatedAtUtc on the leaderboard, which is why the screen compares that too.
+export interface RecalculateMarketAreaStatsResponse {
+  isRunning: boolean;
+  startedAtUtc: string | null;
+  finishedAtUtc: string | null;
+  listingsUsed: number;
+  rowsWritten: number;
+  calculatedAtUtc: string | null;
+  // Why the last run did not work, or null when it did.
+  failureReason: string | null;
+}

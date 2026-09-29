@@ -18,7 +18,6 @@ import { BuildCostService } from '../../core/services/build-cost.service';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
 import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
-import { PageHeaderComponent } from '../../shared/page-header.component';
 
 // What a line of the receipt is made of. Every group produces these, so the table, the
 // composition bar and the totals all read from one list instead of each doing the sums again.
@@ -85,7 +84,7 @@ function sentenceCase(label: string): string {
 @Component({
   selector: 'app-build-cost',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageHeaderComponent, ExplainerComponent, AreaScopePickerComponent],
+  imports: [CommonModule, FormsModule, ExplainerComponent, AreaScopePickerComponent],
   templateUrl: './build-cost.component.html',
   styleUrl: './build-cost.component.css'
 })

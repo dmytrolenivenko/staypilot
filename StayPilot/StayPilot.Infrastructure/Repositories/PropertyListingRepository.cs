@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StayPilot.Application.Contracts.Request;
+using StayPilot.Application.ReadModels;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
@@ -174,7 +175,23 @@ namespace StayPilot.Infrastructure.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition)
+        public async Task<List<PropertyListing>> GetPropertyListingsByIdsAsync(IReadOnlyCollection<int> ids)
+        {
+            if (ids.Count == 0)
+            {
+                return new List<PropertyListing>();
+            }
+
+            return await _context.PropertyListings
+                .AsNoTracking()
+                .Where(x => ids.Contains(x.Id))
+                .Include(x => x.MarketArea)
+                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<TopDealCandidate>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition)
         {
             var query = _context.PropertyListings.AsQueryable();
 
@@ -210,15 +227,41 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.Condition == condition);
             }
 
-            return await query
-                // Nothing here is ever written back, and tracking every active listing in the
-                // country costs more than the query itself: EF builds a change-tracking entry per
-                // listing, per market area and per snapshot, then holds the lot for a request that
-                // keeps ten rows. Unscoped, that is most of the wait on this screen.
+            // Seven values per listing, not the listing.
+            //
+            // This used to read whole entities with their market area and newest snapshot
+            // Included. Unscoped that is every active listing in the country - EF built an
+            // object graph per listing, per market area and per snapshot, for a request that
+            // keeps ten rows. The grading only ever looked at a place, a condition, an energy
+            // certificate and a price per square meter, so that is all that crosses the wire
+            // now; GetPropertyListingsByIdsAsync reads the ten winners back in full.
+            var rows = await query
                 .AsNoTracking()
-                .Include(x => x.MarketArea)
-                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Condition,
+                    x.EnergyCertificate,
+                    x.MarketArea.District,
+                    x.MarketArea.Municipality,
+                    x.MarketArea.Town,
+                    PricePerM2 = x.ListingSnapshots
+                        .OrderByDescending(s => s.SnapshotDateUtc)
+                        .Select(s => s.PricePerM2)
+                        .FirstOrDefault()
+                })
                 .ToListAsync();
+
+            return rows
+                .Select(x => new TopDealCandidate(
+                    x.Id,
+                    x.Condition,
+                    x.EnergyCertificate,
+                    x.District,
+                    x.Municipality,
+                    x.Town,
+                    x.PricePerM2))
+                .ToList();
         }
 
         /// <summary>
@@ -460,6 +503,22 @@ namespace StayPilot.Infrastructure.Repositories
                 ? query.OrderByDescending(x => x.DistanceToBeachMeters)
                 : query.OrderBy(x => x.DistanceToBeachMeters),
 
+                SortBy.Location => request.SortDescending
+                ? query.OrderByDescending(x => x.MarketArea.District).ThenByDescending(x => x.MarketArea.Municipality).ThenByDescending(x => x.MarketArea.Town)
+                : query.OrderBy(x => x.MarketArea.District).ThenBy(x => x.MarketArea.Municipality).ThenBy(x => x.MarketArea.Town),
+
+                SortBy.PropertyType => request.SortDescending
+                ? query.OrderByDescending(x => x.PropertyType)
+                : query.OrderBy(x => x.PropertyType),
+
+                SortBy.Typology => request.SortDescending
+                ? query.OrderByDescending(x => x.Typology)
+                : query.OrderBy(x => x.Typology),
+
+                SortBy.ListingStatus => request.SortDescending
+                ? query.OrderByDescending(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status)
+                : query.OrderBy(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).FirstOrDefault()!.Status),
+
                 SortBy.Id => request.SortDescending
                 ? query.OrderByDescending(x => x.Id)
                 : query.OrderBy(x => x.Id),
@@ -467,6 +526,12 @@ namespace StayPilot.Infrastructure.Repositories
                 // No sort asked (or unknown) -> sort by Id.
                 _ => query.OrderBy(x => x.Id)
             };
+
+            // Id last, always, as the tie-break. Every sort above can tie - hundreds of flats
+            // share a price or an area - and SQL Server is free to order ties differently on
+            // each call, so without one a row can come back on two pages of the same search
+            // and another on none. Paging is only stable if the ordering is total.
+            query = ((IOrderedQueryable<PropertyListing>)query).ThenBy(x => x.Id);
 
             var items = await query
                 .Include(x => x.MarketArea) // also load the market area
@@ -612,7 +677,7 @@ namespace StayPilot.Infrastructure.Repositories
         /// The market area is filtered on but not loaded: the overview counts and prices listings,
         /// it never prints their address, so pulling the area rows would be paid for nothing.
         /// </summary>
-        public async Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology)
+        public async Task<List<OverviewListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology)
         {
             var query = _context.PropertyListings.AsQueryable();
 
@@ -641,15 +706,46 @@ namespace StayPilot.Infrastructure.Repositories
                 query = query.Where(x => x.Typology == typology);
             }
 
-            return await query
-                // Nothing here is written back, and a broad slice is tens of thousands of listings
-                // with an area and a snapshot each. Tracking that graph costs more than reading it.
+            // Seven columns per listing, not seven tables' worth.
+            //
+            // This used to Include the market area and the newest snapshot and hand back whole
+            // entities, which meant ~34 listing columns (Notes and SourceUrl among them), a full
+            // market area row and a full snapshot row crossing the wire per listing - for a
+            // calculator that reads a price, a price per m2, an area, a typology and three place
+            // names. Unfiltered that is every listing in the country on every call, and it was
+            // most of the ten-plus seconds the screen took.
+            //
+            // The newest snapshot is reached once, as a two-column subquery, rather than once per
+            // value: two separate FirstOrDefault()s read the same way but make SQL Server apply
+            // the same ordered subquery twice.
+            var rows = await query
                 .AsNoTracking()
-                // The area comes along because the overview now also breaks the slice into the
-                // places inside it, and that needs a district/município/freguesia per listing.
-                .Include(x => x.MarketArea)
-                .Include(x => x.ListingSnapshots.OrderByDescending(s => s.SnapshotDateUtc).Take(1))
+                .Select(x => new
+                {
+                    x.AreaM2,
+                    x.Typology,
+                    x.MarketArea.District,
+                    x.MarketArea.Municipality,
+                    x.MarketArea.Town,
+                    Newest = x.ListingSnapshots
+                        .OrderByDescending(s => s.SnapshotDateUtc)
+                        .Select(s => new { s.Price, s.PricePerM2 })
+                        .FirstOrDefault()
+                })
                 .ToListAsync();
+
+            // A listing with no snapshot at all keeps its place here, priced at zero - what counts
+            // as measurable is the calculator's rule, and it stays in the calculator.
+            return rows
+                .Select(x => new OverviewListing(
+                    x.Newest?.Price ?? 0m,
+                    x.Newest?.PricePerM2 ?? 0m,
+                    x.AreaM2,
+                    x.Typology,
+                    x.District,
+                    x.Municipality,
+                    x.Town))
+                .ToList();
         }
 
         /// <inheritdoc cref="IPropertyListingRepository.GetActiveListingsAsync"/>

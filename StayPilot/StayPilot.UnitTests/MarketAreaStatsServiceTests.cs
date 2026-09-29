@@ -2,6 +2,7 @@ using StayPilot.Application.Contracts.Request;
 using StayPilot.Application.Helpers.Mappers;
 using StayPilot.Application.Interfaces.Repositories;
 using StayPilot.Application.Services;
+using StayPilot.Application.ReadModels;
 using StayPilot.Domain.Entities;
 using StayPilot.Domain.Enums;
 
@@ -48,24 +49,45 @@ namespace StayPilot.UnitTests
         public void DiscardPendingChanges() => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync() => throw new NotImplementedException();
-        public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
+        public Task<List<OverviewListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
 
-        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+        public Task<List<TopDealCandidate>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) => throw new NotImplementedException();
+        public Task<List<PropertyListing>> GetPropertyListingsByIdsAsync(IReadOnlyCollection<int> ids) => throw new NotImplementedException();
 
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
     }
 
-    // Same shape as UnusedListingRepo, but GetActiveListingsForTopDealsAsync actually answers -
-    // that is the one call GetTopDealsAsync makes.
+    // Same shape as UnusedListingRepo, but the two calls GetTopDealsAsync makes actually answer:
+    // it grades on candidates, then reads the winners back in full.
+    //
+    // Both are served off the same listings, projected the way the real repository projects them,
+    // so a test cannot pass against a service that grades on something the database never sends.
     file class FakeTopDealsListingRepo : IPropertyListingRepository
     {
         private readonly List<PropertyListing> _listings;
 
         public FakeTopDealsListingRepo(List<PropertyListing> listings) => _listings = listings;
 
-        public Task<List<PropertyListing>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) =>
-            Task.FromResult(_listings);
+        public Task<List<TopDealCandidate>> GetActiveListingsForTopDealsAsync(string? district, string? municipality, string? town, string? zone, PropertyCondition? condition) =>
+            Task.FromResult(_listings
+                // The real query keeps only listings whose newest snapshot is Active.
+                .Where(x => Newest(x)?.Status == ListingStatus.Active)
+                .Select(x => new TopDealCandidate(
+                    x.Id,
+                    x.Condition,
+                    x.EnergyCertificate,
+                    x.MarketArea.District,
+                    x.MarketArea.Municipality,
+                    x.MarketArea.Town,
+                    Newest(x)?.PricePerM2 ?? 0m))
+                .ToList());
+
+        public Task<List<PropertyListing>> GetPropertyListingsByIdsAsync(IReadOnlyCollection<int> ids) =>
+            Task.FromResult(_listings.Where(x => ids.Contains(x.Id)).ToList());
+
+        private static ListingSnapshot? Newest(PropertyListing listing) =>
+            listing.ListingSnapshots.OrderByDescending(x => x.SnapshotDateUtc).FirstOrDefault();
 
         public Task<PropertyListing?> GetPropertyListingByIdAsync(int id) => throw new NotImplementedException();
         public Task<List<PropertyListing>?> GetBulkPropertyListingByUrlAsync(List<string> urls) => throw new NotImplementedException();
@@ -75,7 +97,7 @@ namespace StayPilot.UnitTests
         public void DiscardPendingChanges() => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetComparablePropertyListingAsync(int marketId, PropertyType propertyType, Typology typology, int areaM2, int? distanceToBeachMeters, decimal? latitude, decimal? longitude, int radiusMeters, int months) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetAllListingsForFeaturePremiumCalculationAsync() => throw new NotImplementedException();
-        public Task<List<PropertyListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
+        public Task<List<OverviewListing>> GetListingsForMarketOverviewAsync(string? district, string? municipality, string? town, PropertyType? propertyType, Typology? typology) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetListingsWithHistoryAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
         public Task<List<PropertyListing>> GetActiveListingsAsync() => throw new NotImplementedException();
     }
@@ -463,12 +485,16 @@ namespace StayPilot.UnitTests
         /// <summary>
         /// One active listing with a single snapshot, priced per square meter directly (the area
         /// and total price are irrelevant to GetTopDealsAsync, so they are left at their defaults).
+        ///
+        /// The Id matters even in a one-listing test: the service grades on a projection and then
+        /// reads the winners back by Id, so a listing with no Id cannot be read back.
         /// </summary>
         private static PropertyListing Listing(
-            string district, string municipality, string town, PropertyCondition condition, decimal pricePerM2)
+            string district, string municipality, string town, PropertyCondition condition, decimal pricePerM2, int id = 1)
         {
             return new PropertyListing
             {
+                Id = id,
                 MarketArea = new MarketArea { District = district, Municipality = municipality, Town = town },
                 Condition = condition,
                 ListingSnapshots = new List<ListingSnapshot>
