@@ -7,6 +7,7 @@ import { OwnedPropertyService } from '../../core/services/owned-property.service
 import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketArea } from '../../core/models/market-area';
 import { OwnedPropertyRequest, OwnedPropertyResponse } from '../../core/models/owned-property';
+import { clickedRowControl } from '../../shared/row-click';
 import {
   PROPERTY_CONDITION_OPTIONS,
   PROPERTY_TYPES,
@@ -163,7 +164,7 @@ export class OwnedPropertiesComponent implements OnInit {
   // A click anywhere on a row does what its Evaluate button does. Clicks on the row's own
   // controls (checkbox, Edit, AI analysis) are theirs, not the row's.
   openValuation(p: OwnedPropertyResponse, event: MouseEvent): void {
-    if ((event.target as HTMLElement).closest('input, button, a')) {
+    if (clickedRowControl(event)) {
       return;
     }
 

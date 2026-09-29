@@ -66,7 +66,7 @@
           </thead>
           <tbody>
             @for (row of sortedDeals(); track row.deal.listing.id) {
-              <tr>
+              <tr class="row-link" (click)="openListing(row.deal.listing.id, $event)" title="Open this listing's details">
                 <!-- The server's ranking, not the row number: sorting by price re-orders the
                      table without pretending the fourth-biggest discount is now the first. -->
                 <td class="rank">{{ row.rank }}</td>

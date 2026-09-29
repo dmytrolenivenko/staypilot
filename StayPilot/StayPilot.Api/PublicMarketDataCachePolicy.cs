@@ -48,6 +48,24 @@ namespace StayPilot.Api
             // would be served Porto's numbers.
             context.CacheVaryByRules.QueryKeys = "*";
 
+            // Let the browser keep it too, so going back to a screen skips the round trip. Same
+            // window as the server copy, and a cached reply carries Age, so it never adds up past it.
+            // OnStarting, not ServeResponseAsync: that one runs after the body went out.
+            if (cacheable)
+            {
+                var response = context.HttpContext.Response;
+
+                response.OnStarting(() =>
+                {
+                    if (response.StatusCode == StatusCodes.Status200OK)
+                    {
+                        response.Headers.CacheControl = $"public, max-age={OutputCachePolicies.CacheMinutes * 60}";
+                    }
+
+                    return Task.CompletedTask;
+                });
+            }
+
             return ValueTask.CompletedTask;
         }
 

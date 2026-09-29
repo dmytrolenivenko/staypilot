@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { TopDealsService } from '../../core/services/top-deals.service';
@@ -9,6 +9,7 @@ import { TopDealResponse } from '../../core/models/top-deals';
 import { PROPERTY_CONDITION_OPTIONS } from '../../core/models/enums';
 import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
 import { apiErrorMessage } from '../../core/api-error';
+import { clickedRowControl } from '../../shared/row-click';
 
 // A deal with the rank the server gave it. Held separately from the row order so re-sorting the
 // table cannot renumber the ranking - #1 is the biggest discount whichever column you click.
@@ -74,7 +75,19 @@ export class TopDealsComponent implements OnInit {
   // already narrowed away. Cancelling the open one keeps exactly one in flight.
   private inFlight?: Subscription;
 
-  constructor(private readonly service: TopDealsService) {}
+  constructor(
+    private readonly service: TopDealsService,
+    private readonly router: Router
+  ) {}
+
+  // A click anywhere on a deal row opens that listing, not only its location link.
+  openListing(id: number, event: MouseEvent): void {
+    if (clickedRowControl(event)) {
+      return;
+    }
+
+    this.router.navigate(['/listings', id]);
+  }
 
   ngOnInit(): void {
     this.load();

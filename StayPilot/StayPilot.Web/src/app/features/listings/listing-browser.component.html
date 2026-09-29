@@ -176,7 +176,7 @@
           </thead>
           <tbody>
             @for (item of pagedRows(); track item.id) {
-              <tr>
+              <tr class="row-link" (click)="openListing(item.id, $event)" title="Open this listing's details">
                 <td><a [routerLink]="['/listings', item.id]">#{{ item.id }}</a></td>
                 <td>{{ item.marketAreaTown || item.marketAreaMunicipality }}</td>
                 <td>{{ item.propertyType }}</td>

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ListingFilterService, PAGE_SIZE_CHOICES } from '../../core/services/listing-filter.service';
@@ -16,6 +16,7 @@ import {
   TYPOLOGIES
 } from '../../core/models/enums';
 import { apiErrorMessage } from '../../core/api-error';
+import { clickedRowControl } from '../../shared/row-click';
 
 // The columns you can click to sort by, and the API field each one means. Every column here
 // maps to a real SortBy value, so a click reorders the whole matching set on the server — not
@@ -168,8 +169,18 @@ export class ListingBrowserComponent implements OnInit {
 
   constructor(
     private readonly listingFilter: ListingFilterService,
-    private readonly marketAreas: MarketAreaService
+    private readonly marketAreas: MarketAreaService,
+    private readonly router: Router
   ) {}
+
+  // A click anywhere on a result row opens that listing, not only its #id link.
+  openListing(id: number, event: MouseEvent): void {
+    if (clickedRowControl(event)) {
+      return;
+    }
+
+    this.router.navigate(['/listings', id]);
+  }
 
   // Load the area names once, when the page opens, for the location autocomplete.
   ngOnInit(): void {
