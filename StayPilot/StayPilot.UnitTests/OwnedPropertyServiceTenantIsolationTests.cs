@@ -92,6 +92,7 @@ namespace StayPilot.UnitTests
 
         public Task<(List<MarketArea> Items, int TotalRecords)> GetMarketAreasPageAsync(MarketAreaRequest request) => throw new NotImplementedException();
         public Task<List<string>> GetMarketAreaOptionsAsync(string? district, string? municipality, string? town) => throw new NotImplementedException();
+        public Task<List<MarketArea>> GetMarketAreaNamesAsync() => throw new NotImplementedException();
     }
 
     // No beaches: the property then just gets null beach fields, which is a normal case.

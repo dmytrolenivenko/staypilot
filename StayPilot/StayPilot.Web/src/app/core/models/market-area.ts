@@ -22,3 +22,19 @@ export interface MarketAreaPage {
   pageSize: number;
   totalRecords: number;
 }
+
+// Every place we hold, as GET /api/MarketArea/GetTree returns it. Each level is sorted.
+export interface MarketAreaTreeDistrict {
+  name: string;
+  municipalities: MarketAreaTreeMunicipality[];
+}
+
+export interface MarketAreaTreeMunicipality {
+  name: string;
+  towns: MarketAreaTreeTown[];
+}
+
+export interface MarketAreaTreeTown {
+  name: string;
+  zones: string[];
+}

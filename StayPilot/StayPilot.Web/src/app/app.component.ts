@@ -109,6 +109,9 @@ export class AppComponent implements OnInit, OnDestroy {
       .subscribe(event => this.url.set(event.urlAfterRedirects));
 
     this.refreshAccount();
+
+    // Fetch the place tree while the first screen renders, so its dropdowns open filled.
+    this.marketAreas.preloadTree();
   }
 
   ngOnDestroy(): void {
