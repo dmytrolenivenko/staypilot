@@ -2,7 +2,7 @@
      it. Place, grain and sample gate are the shell's; the renovation rate is this lens's own. -->
 <div class="page">
   <app-explainer>
-    <p>
+    <p i18n="@@areas.renovation.explainer.discount">
       <strong>How the discount is worked out.</strong> Every listing in a place is sorted into one
       of three piles. A <em>project</em> is one whose advert says it needs work, <em>or</em> whose
       energy certificate is D or worse. <em>Finished</em> means the advert calls it good,
@@ -11,7 +11,7 @@
       &euro;/m² of the finished pile minus the middle &euro;/m² of the project pile. That
       is the whole calculation: one subtraction between two medians, from real adverts.
     </p>
-    <p>
+    <p i18n="@@areas.renovation.explainer.certificate">
       <strong>Why the certificate does most of the work.</strong> &ldquo;Needs renovation&rdquo; is
       set on barely 1% of listings &mdash; too few for most places to have any project stock at
       all. A poor energy grade covers roughly ten times as many and is measured rather than typed
@@ -19,7 +19,7 @@
       overlaps with needing work without being identical to it. Open any row to see which of the
       two signals its projects came from.
     </p>
-    <p>
+    <p i18n="@@areas.renovation.explainer.trust">
       <strong>Trust</strong> is why this screen is worth believing at all. Two medians always
       differ by something. Whether that something is a finding depends on how many adverts each
       side rests on, how far the two price spreads sit apart, and how much of the place's stock got
@@ -27,7 +27,7 @@
       gap between their middles is noise wearing a decimal point &mdash; and the row says so,
       with the reason.
     </p>
-    <p>
+    <p i18n="@@areas.renovation.explainer.cost">
       <strong>Cost</strong> is an estimate, and yours to set. It is kept in its own column and
       never merged into the measured discount, because one is read off the market and the other is
       a guess &mdash; when the guess is wrong you need to be able to see it.
@@ -36,15 +36,15 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Scope</span>
+      <span class="card-title" i18n="@@areas.renovation.scope">Scope</span>
       @if (calculatedAtUtc()) {
-        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+        <span class="meta" i18n="@@areas.renovation.workedOut">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
       }
     </div>
     <div class="card-body">
       <div class="toolbar">
         <label class="control">
-          Renovation €/m²
+          <ng-container i18n="@@areas.renovation.costLabel">Renovation €/m²</ng-container>
           <input
             class="cost-input"
             type="number"
@@ -57,7 +57,7 @@
 
         <label class="control checkbox">
           <input type="checkbox" [ngModel]="trustedOnly()" (ngModelChange)="trustedOnly.set($event)" />
-          Hide low trust
+          <ng-container i18n="@@areas.renovation.hideLowTrust">Hide low trust</ng-container>
           @if (lowTrustCount() > 0) {
             <span class="faint">({{ lowTrustCount() }})</span>
           }
@@ -68,22 +68,23 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Places measured</span>
+      <span class="card-title" i18n="@@areas.renovation.placesMeasured">Places measured</span>
       <span class="meta">
-        {{ sortedAreas().length }} places · {{ levelName(level()) }}
+        <ng-container i18n="@@areas.renovation.placeCount">{sortedAreas().length, plural, =1 {1 place} other {{{ sortedAreas().length }} places}}</ng-container> · {{ levelName(level()) }}
         @if (trustedOnly() && lowTrustCount() > 0) {
-          · {{ lowTrustCount() }} low-trust hidden
+          <ng-container i18n="@@areas.renovation.lowTrustHidden">· {{ lowTrustCount() }} low-trust hidden</ng-container>
         }
       </span>
     </div>
 
     @if (loading()) {
-      <p class="empty">Loading…</p>
+      <p class="empty" i18n="@@areas.renovation.loading">Loading…</p>
     } @else if (error()) {
       <div class="card-body"><p class="error">{{ error() }}</p></div>
     } @else if (sortedAreas().length === 0) {
-      <p class="empty">
-        No place at {{ levelName(level()).toLowerCase() }} level has both enough project stock and
+      <!-- level() is the API value; the select turns it into copy. -->
+      <p class="empty" i18n="@@areas.renovation.empty">
+        No place at {level(), select, District {distrito} Municipality {município} other {freguesia}} level has both enough project stock and
         enough finished stock to compare. Lower Min listings, widen the area, or try a wider level
         &mdash; renovation stock is thin everywhere, which is exactly why the energy certificate is
         used to find it.
@@ -94,28 +95,30 @@
           <thead>
             <tr>
               <th class="rank">#</th>
-              <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
+              <th class="sortable" (click)="toggleSort('place')"><ng-container i18n="@@areas.renovation.col.place">Place</ng-container>{{ arrow('place') }}</th>
               <th
                 class="sortable"
                 (click)="toggleSort('trust')"
                 title="How far the discount deserves to be believed — open a row for the reason"
+                i18n-title="@@areas.renovation.col.trustTitle"
               >
-                Trust{{ arrow('trust') }}
+                <ng-container i18n="@@areas.renovation.col.trust">Trust</ng-container>{{ arrow('trust') }}
               </th>
-              <th class="num sortable" (click)="toggleSort('projects')">Projects{{ arrow('projects') }}</th>
-              <th class="num sortable" (click)="toggleSort('needsWork')">Needs work €/m²{{ arrow('needsWork') }}</th>
-              <th class="num sortable" (click)="toggleSort('finished')">Finished €/m²{{ arrow('finished') }}</th>
-              <th class="num sortable" (click)="toggleSort('discount')">Discount{{ arrow('discount') }}</th>
-              <th class="num" title="You type this in — the same on every row, so there is nothing to sort">Cost</th>
-              <th class="num sortable" (click)="toggleSort('margin')">Margin{{ arrow('margin') }}</th>
+              <th class="num sortable" (click)="toggleSort('projects')"><ng-container i18n="@@areas.renovation.col.projects">Projects</ng-container>{{ arrow('projects') }}</th>
+              <th class="num sortable" (click)="toggleSort('needsWork')"><ng-container i18n="@@areas.renovation.col.needsWork">Needs work €/m²</ng-container>{{ arrow('needsWork') }}</th>
+              <th class="num sortable" (click)="toggleSort('finished')"><ng-container i18n="@@areas.renovation.col.finished">Finished €/m²</ng-container>{{ arrow('finished') }}</th>
+              <th class="num sortable" (click)="toggleSort('discount')"><ng-container i18n="@@areas.renovation.col.discount">Discount</ng-container>{{ arrow('discount') }}</th>
+              <th class="num" title="You type this in — the same on every row, so there is nothing to sort" i18n-title="@@areas.renovation.col.costTitle" i18n="@@areas.renovation.col.cost">Cost</th>
+              <th class="num sortable" (click)="toggleSort('margin')"><ng-container i18n="@@areas.renovation.col.margin">Margin</ng-container>{{ arrow('margin') }}</th>
               <th
                 class="num sortable"
                 (click)="toggleSort('onAFlat')"
                 title="The margin as money, on a project of the size this place actually sells"
+                i18n-title="@@areas.renovation.col.onAFlatTitle"
               >
-                On a typical flat{{ arrow('onAFlat') }}
+                <ng-container i18n="@@areas.renovation.col.onAFlat">On a typical flat</ng-container>{{ arrow('onAFlat') }}
               </th>
-              <th class="sortable" (click)="toggleSort('verdict')">Verdict{{ arrow('verdict') }}</th>
+              <th class="sortable" (click)="toggleSort('verdict')"><ng-container i18n="@@areas.renovation.col.verdict">Verdict</ng-container>{{ arrow('verdict') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -130,20 +133,19 @@
                     [town]="area.town"
                   >
                     @if (isThin(area)) {
-                      <span class="tag tag-quiet" title="Fewer than 10 project listings — read with suspicion">thin</span>
+                      <span class="tag tag-quiet" title="Fewer than 10 project listings — read with suspicion" i18n-title="@@areas.renovation.thinTitle" i18n="@@areas.renovation.thin">thin</span>
                     }
                   </app-place-name>
                 </td>
                 <td>
                   @if (area.renovationEvidence; as evidence) {
-                    <span class="badge" [class]="trustClass(area)" [title]="evidence.reason">
-                      {{ evidence.confidence }}
-                    </span>
+                    <!-- The API sends the confidence as an English word; the select turns it into copy. -->
+                    <span class="badge" [class]="trustClass(area)" [title]="evidence.reason" i18n="@@areas.renovation.confidence">{evidence.confidence, select, High {High} Medium {Medium} other {Low}}</span>
                   }
                 </td>
                 <td class="num">
                   {{ area.projectCount }}
-                  <span class="faint">of {{ area.listingCount }}</span>
+                  <span class="faint" i18n="@@areas.renovation.ofListings">of {{ area.listingCount }}</span>
                 </td>
                 <td class="num">{{ area.projectMedianPricePerM2 | number: '1.0-0' }}</td>
                 <td class="num">{{ area.moveInMedianPricePerM2 | number: '1.0-0' }}</td>
@@ -164,21 +166,21 @@
                       <!-- 1. Why this row should or should not be believed. -->
                       @if (area.renovationEvidence; as evidence) {
                         <div class="working-block">
-                          <h4>How much to trust this</h4>
+                          <h4 i18n="@@areas.renovation.howMuchTrust">How much to trust this</h4>
                           <p class="verdict-line">
-                            <span class="badge" [class]="trustClass(area)">{{ evidence.confidence }}</span>
+                            <span class="badge" [class]="trustClass(area)" i18n="@@areas.renovation.confidence">{evidence.confidence, select, High {High} Medium {Medium} other {Low}}</span>
                             {{ evidence.reason }}
                           </p>
                           <dl class="kv">
-                            <dt>Spreads overlap</dt>
+                            <dt i18n="@@areas.renovation.spreadsOverlap">Spreads overlap</dt>
                             <dd>
                               {{ evidence.spreadOverlapPercent | number: '1.0-0' }}%
-                              <span class="faint">0% = the two piles are cleanly apart</span>
+                              <span class="faint" i18n="@@areas.renovation.spreadsOverlapHint">0% = the two piles are cleanly apart</span>
                             </dd>
-                            <dt>Stock with a verdict</dt>
+                            <dt i18n="@@areas.renovation.stockWithVerdict">Stock with a verdict</dt>
                             <dd>
                               {{ evidence.classifiedSharePercent | number: '1.0-0' }}%
-                              <span class="faint">
+                              <span class="faint" i18n="@@areas.renovation.classifiedOfListings">
                                 {{ classifiedCount(area) | number }} of {{ area.listingCount | number }} listings
                               </span>
                             </dd>
@@ -188,18 +190,18 @@
 
                       <!-- 2. Where the project pile came from. -->
                       <div class="working-block">
-                        <h4>How the {{ area.projectCount }} projects were found</h4>
+                        <h4 i18n="@@areas.renovation.howFound">{area.projectCount, plural, =1 {How the 1 project was found} other {How the {{ area.projectCount }} projects were found}}</h4>
                         <dl class="kv">
-                          <dt>Advert says needs work</dt>
+                          <dt i18n="@@areas.renovation.byCondition">Advert says needs work</dt>
                           <dd>{{ area.projectByConditionCount | number }}</dd>
-                          <dt>Energy grade D or worse</dt>
+                          <dt i18n="@@areas.renovation.byEnergy">Energy grade D or worse</dt>
                           <dd>{{ area.projectByEnergyCount | number }}</dd>
-                          <dt>Finished stock, to compare against</dt>
+                          <dt i18n="@@areas.renovation.finishedToCompare">Finished stock, to compare against</dt>
                           <dd>{{ area.moveInCount | number }}</dd>
-                          <dt>Neither, so left out</dt>
+                          <dt i18n="@@areas.renovation.neither">Neither, so left out</dt>
                           <dd>
                             {{ area.unclassifiedCount | number }}
-                            <span class="faint">no condition and no certificate</span>
+                            <span class="faint" i18n="@@areas.renovation.neitherHint">no condition and no certificate</span>
                           </dd>
                         </dl>
                       </div>
@@ -207,15 +209,15 @@
                       <!-- 3. The two spreads, on one scale. -->
                       @if (hasSpread(area)) {
                         <div class="working-block wide">
-                          <h4>Where the two piles actually sit</h4>
-                          <p class="note-inline">
+                          <h4 i18n="@@areas.renovation.whereSpreads">Where the two piles actually sit</h4>
+                          <p class="note-inline" i18n="@@areas.renovation.spreadsNote">
                             The middle half of each pile &mdash; a quarter of the listings ask less
                             than the left edge, a quarter more than the right. Bars that sit on top
                             of each other mean the discount between their middles is not a finding.
                           </p>
 
                           <div class="spread-row">
-                            <span class="spread-label">Needs work</span>
+                            <span class="spread-label" i18n="@@areas.renovation.spreadNeedsWork">Needs work</span>
                             <span class="spread-track">
                               <span
                                 class="spread-bar project"
@@ -230,7 +232,7 @@
                           </div>
 
                           <div class="spread-row">
-                            <span class="spread-label">Finished</span>
+                            <span class="spread-label" i18n="@@areas.renovation.spreadFinished">Finished</span>
                             <span class="spread-track">
                               <span
                                 class="spread-bar movein"
@@ -248,22 +250,22 @@
 
                       <!-- 4. The whole thing as money, on one flat. -->
                       <div class="working-block wide">
-                        <h4>On a typical {{ typicalFlatM2(area) | number: '1.0-0' }} m² project here</h4>
+                        <h4 i18n="@@areas.renovation.typicalProject">On a typical {{ typicalFlatM2(area) | number: '1.0-0' }} m² project here</h4>
                         <dl class="kv figures">
-                          <dt>Buy at the project rate</dt>
-                          <dd>€{{ buyPrice(area) | number: '1.0-0' }}</dd>
-                          <dt>Spend on the work <span class="faint">your estimate</span></dt>
-                          <dd class="estimated">€{{ workCost(area) | number: '1.0-0' }}</dd>
-                          <dt>Total in</dt>
-                          <dd>€{{ buyPrice(area) + workCost(area) | number: '1.0-0' }}</dd>
-                          <dt>Finished stock here sells for</dt>
-                          <dd>€{{ finishedValue(area) | number: '1.0-0' }}</dd>
-                          <dt>Margin</dt>
+                          <dt i18n="@@areas.renovation.buyAt">Buy at the project rate</dt>
+                          <dd>{{ buyPrice(area) | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+                          <dt i18n="@@areas.renovation.spendOnWork">Spend on the work <span class="faint">your estimate</span></dt>
+                          <dd class="estimated">{{ workCost(area) | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+                          <dt i18n="@@areas.renovation.totalIn">Total in</dt>
+                          <dd>{{ buyPrice(area) + workCost(area) | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+                          <dt i18n="@@areas.renovation.finishedSellsFor">Finished stock here sells for</dt>
+                          <dd>{{ finishedValue(area) | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+                          <dt i18n="@@areas.renovation.marginLabel">Margin</dt>
                           <dd class="lead" [class.pos]="margin(area) > 0" [class.neg]="margin(area) < 0">
-                            €{{ marginOnATypicalFlat(area) | number: '1.0-0' }}
+                            {{ marginOnATypicalFlat(area) | currency: 'EUR' : 'symbol' : '1.0-0' }}
                           </dd>
                         </dl>
-                        <p class="note-inline">
+                        <p class="note-inline" i18n="@@areas.renovation.marginNote">
                           Before buying and selling costs, tax, and the months it takes &mdash; none
                           of which this screen knows about. Read the margin as the room there is to
                           work in, not as profit.

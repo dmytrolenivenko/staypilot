@@ -37,44 +37,45 @@ export interface NavLink {
 
 export const NAV_LINKS: NavLink[] = [
   {
-    title: 'Places',
-    path: '/places',
-    desc: 'Compare towns and districts on what they actually ask per square metre.',
-    questions: [
-      { ask: 'value', title: 'Where value sits' },
-      { ask: 'budget', title: 'What money buys' },
-      { ask: 'neighbours', title: 'Neighbour gaps' },
-      { ask: 'renovation', title: 'Renovation upside' }
-    ]
-  },
-  {
-    title: 'Listings',
-    path: '/listings',
-    desc: 'Every advert collected, and the ones asking furthest below their own local median.',
-    questions: [
-      { ask: 'browse', title: 'Browse' },
-      { ask: 'deals', title: 'Top deals' }
-    ]
-  },
-  {
+    // First: valuing what you own is the core of the app; the rest is the evidence behind it.
     // "Portfolio" is a finance word for "the flats you own". The screen is about your own
     // properties, so it is now called that.
-    title: 'My properties',
+    title: $localize`:@@core.nav.portfolio.title:My properties`,
     path: '/portfolio',
-    desc: 'What you own, and what each would be advertised at today.',
+    desc: $localize`:@@core.nav.portfolio.desc:What you own, and what each would be advertised at today.`,
     questions: [
-      { ask: 'properties', title: 'My properties' },
-      { ask: 'valuation', title: 'Valuation' }
+      { ask: 'properties', title: $localize`:@@core.nav.portfolio.title:My properties` },
+      { ask: 'valuation', title: $localize`:@@core.nav.ask.valuation:Valuation` }
+    ]
+  },
+  {
+    title: $localize`:@@core.nav.places.title:Places`,
+    path: '/places',
+    desc: $localize`:@@core.nav.places.desc:Compare towns and districts on what they actually ask per square metre.`,
+    questions: [
+      { ask: 'value', title: $localize`:@@core.nav.ask.value:Where value sits` },
+      { ask: 'budget', title: $localize`:@@core.nav.ask.budget:What money buys` },
+      { ask: 'neighbours', title: $localize`:@@core.nav.ask.neighbours:Neighbour gaps` },
+      { ask: 'renovation', title: $localize`:@@core.nav.ask.renovation:Renovation upside` }
+    ]
+  },
+  {
+    title: $localize`:@@core.nav.listings.title:Listings`,
+    path: '/listings',
+    desc: $localize`:@@core.nav.listings.desc:Every advert collected, and the ones asking furthest below their own local median.`,
+    questions: [
+      { ask: 'browse', title: $localize`:@@core.nav.ask.browse:Browse` },
+      { ask: 'deals', title: $localize`:@@core.nav.ask.deals:Top deals` }
     ]
   },
   {
     // "Tools" said nothing about what was inside. These two both work a number out for you.
-    title: 'Calculators',
+    title: $localize`:@@core.nav.tools.title:Calculators`,
     path: '/tools',
-    desc: 'What a feature adds to a price, and what building one would cost.',
+    desc: $localize`:@@core.nav.tools.desc:What a feature adds to a price, and what building one would cost.`,
     questions: [
-      { ask: 'features', title: 'Feature impact' },
-      { ask: 'build', title: 'Build cost' }
+      { ask: 'features', title: $localize`:@@core.nav.ask.features:Feature impact` },
+      { ask: 'build', title: $localize`:@@core.nav.ask.build:Build cost` }
     ]
   }
 ];

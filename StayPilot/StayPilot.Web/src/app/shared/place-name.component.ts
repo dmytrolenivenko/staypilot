@@ -13,26 +13,26 @@ export interface PlaceParts {
 export function placeLevelLabel(level: AreaLevel): string {
   switch (level) {
     case 'District':
-      return 'Distrito';
+      return $localize`:@@shared.placeName.level.district:Distrito`;
 
     case 'Municipality':
-      return 'Município';
+      return $localize`:@@shared.placeName.level.municipality:Município`;
 
     default:
-      return 'Freguesia';
+      return $localize`:@@shared.placeName.level.town:Freguesia`;
   }
 }
 
 export function placeLevelHint(level: AreaLevel): string {
   switch (level) {
     case 'District':
-      return 'Distrito — the broadest grain, e.g. Faro';
+      return $localize`:@@shared.placeName.hint.district:Distrito — the broadest grain, e.g. Faro`;
 
     case 'Municipality':
-      return 'Município — a council inside a distrito, e.g. Albufeira';
+      return $localize`:@@shared.placeName.hint.municipality:Município — a council inside a distrito, e.g. Albufeira`;
 
     default:
-      return 'Freguesia — a parish/town inside a município, e.g. Guia';
+      return $localize`:@@shared.placeName.hint.town:Freguesia — a parish/town inside a município, e.g. Guia`;
   }
 }
 

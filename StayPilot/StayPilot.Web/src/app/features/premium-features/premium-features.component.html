@@ -3,17 +3,17 @@
 <div class="page">
 
   <app-explainer>
-    <p>
+    <p i18n="@@features.explainer.correlation">
       This is correlation across current asking prices, not causation. Recalculate to refresh from
       the latest data.
     </p>
-    <p>
+    <p i18n="@@features.explainer.upTo">
       Where a feature is worth wildly different amounts depending on the property &mdash; a sea view
       on the beachfront against one that means a sliver on the horizon &mdash; the row also shows
       what it reaches, and the conditions that figure holds under. Same model, different question:
       the headline stays the market-wide average.
     </p>
-    <p>
+    <p i18n="@@features.explainer.range">
       Every number has a confidence range. Where that range crosses zero the data cannot tell whether
       the feature affects price at all &mdash; those rows say <em>no measurable effect</em> rather than
       showing a percentage, and sort to the bottom whichever column you sort on. Features whose ranges
@@ -29,20 +29,20 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Premiums</span>
+      <span class="card-title" i18n="@@features.title">Premiums</span>
       <div class="card-actions">
-        <span class="meta">{{ features().length }} features · click any column to sort</span>
-        <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">Refresh</button>
+        <span class="meta" i18n="@@features.count">{features().length, plural, =1 {1 feature} other {{{ features().length }} features}} · click any column to sort</span>
+        <button type="button" class="secondary" (click)="reload()" [disabled]="loading()" i18n="@@features.refresh">Refresh</button>
         <button type="button" (click)="recalculate()" [disabled]="recalculating() || loading()">
-          {{ recalculating() ? 'Recalculating…' : 'Recalculate' }}
+          {{ recalculating() ? recalculatingLabel : recalculateLabel }}
         </button>
       </div>
     </div>
 
     @if (loading()) {
-      <p class="empty">Loading…</p>
+      <p class="empty" i18n="@@features.loading">Loading…</p>
     } @else if (features().length === 0) {
-      <p class="empty">
+      <p class="empty" i18n="@@features.empty">
         No feature premiums yet. Hit <strong>Recalculate</strong> to compute them from current listings.
       </p>
     } @else {
@@ -50,14 +50,14 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th class="sortable" (click)="sortBy('featureName')">Feature{{ arrow('featureName') }}</th>
-              <th class="sortable" (click)="sortBy('premiumPercentage')">Impact{{ arrow('premiumPercentage') }}</th>
-              <th class="sortable" (click)="sortBy('confidenceRange')" title="Sorted on how wide the range is">
-                Confidence range{{ arrow('confidenceRange') }}
+              <th class="sortable" (click)="sortBy('featureName')"><ng-container i18n="@@features.col.feature">Feature</ng-container>{{ arrow('featureName') }}</th>
+              <th class="sortable" (click)="sortBy('premiumPercentage')"><ng-container i18n="@@features.col.impact">Impact</ng-container>{{ arrow('premiumPercentage') }}</th>
+              <th class="sortable" (click)="sortBy('confidenceRange')" title="Sorted on how wide the range is" i18n-title="@@features.col.rangeTitle">
+                <ng-container i18n="@@features.col.range">Confidence range</ng-container>{{ arrow('confidenceRange') }}
               </th>
-              <th class="sortable" (click)="sortBy('basis')">Basis{{ arrow('basis') }}</th>
-              <th class="num sortable" (click)="sortBy('listings')">Listings with it{{ arrow('listings') }}</th>
-              <th class="sortable" (click)="sortBy('calculatedAt')">Last calculated{{ arrow('calculatedAt') }}</th>
+              <th class="sortable" (click)="sortBy('basis')"><ng-container i18n="@@features.col.basis">Basis</ng-container>{{ arrow('basis') }}</th>
+              <th class="num sortable" (click)="sortBy('listings')"><ng-container i18n="@@features.col.listings">Listings with it</ng-container>{{ arrow('listings') }}</th>
+              <th class="sortable" (click)="sortBy('calculatedAt')"><ng-container i18n="@@features.col.calculated">Last calculated</ng-container>{{ arrow('calculatedAt') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -71,19 +71,19 @@
                     <!-- The "up to" only ever appears with the conditions it holds under. Both
                          numbers come from the same fit; they answer different questions. -->
                     @if (f.maximumPercent !== null) {
-                      <span class="peak">
+                      <span class="peak" i18n="@@features.upTo">
                         up to +{{ f.maximumPercent | number: '1.0-1' }}%
                         <span class="faint">{{ f.maximumBasis }}</span>
                       </span>
                     }
                   </td>
-                  <td class="range">
+                  <td class="range" i18n="@@features.range">
                     {{ f.lowerBoundPercent > 0 ? '+' : '' }}{{ f.lowerBoundPercent | number: '1.0-1' }}% to
                     {{ f.upperBoundPercent > 0 ? '+' : '' }}{{ f.upperBoundPercent | number: '1.0-1' }}%
                   </td>
                 } @else {
-                  <td class="muted">no measurable effect</td>
-                  <td class="range muted">
+                  <td class="muted" i18n="@@features.noEffect">no measurable effect</td>
+                  <td class="range muted" i18n="@@features.rangeIncludesZero">
                     {{ f.lowerBoundPercent | number: '1.0-1' }}% to
                     {{ f.upperBoundPercent > 0 ? '+' : '' }}{{ f.upperBoundPercent | number: '1.0-1' }}%
                     &mdash; includes zero
@@ -93,7 +93,7 @@
                 <td class="muted basis">{{ basis(f) }}</td>
                 <td class="num" [title]="evidenceHint(f)">
                   {{ f.listingsWithFeature | number }}
-                  <span class="faint">of {{ f.sampleSize | number }}</span>
+                  <span class="faint" i18n="@@features.ofSample">of {{ f.sampleSize | number }}</span>
                 </td>
                 <td class="muted">{{ f.calculatedAtUtc | date: 'medium' }}</td>
               </tr>

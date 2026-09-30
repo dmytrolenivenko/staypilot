@@ -59,8 +59,9 @@ export const REGIONS: Region[] = [
   { key: 'lisboa', label: 'Lisboa', multiplier: 1.2 },
   { key: 'algarve', label: 'Algarve', multiplier: 1.15 },
   { key: 'porto', label: 'Porto', multiplier: 1.1 },
-  { key: 'coastal', label: 'Other coastal', multiplier: 1.05 },
-  { key: 'interior', label: 'Interior / rural', multiplier: 1.0 }
+  // Lisboa, Algarve and Porto are place names and stay as they are.
+  { key: 'coastal', label: $localize`:@@core.region.coastal:Other coastal`, multiplier: 1.05 },
+  { key: 'interior', label: $localize`:@@core.region.interior:Interior / rural`, multiplier: 1.0 }
 ];
 
 // Soft costs, as percentages of the works. Architecture and engineering run 3–6% of the contract

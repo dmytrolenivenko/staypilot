@@ -49,11 +49,11 @@ function toAnalysis(): RedirectFunction {
   };
 }
 
-// Pathless parent wrapping every route so canActivateChild runs on every
-// navigation, not just the first one - MsalGuard redirects to the hosted
-// login page (per MSAL_GUARD_CONFIG's InteractionType.Redirect) whenever
-// nobody is signed in yet. The whole app is behind sign-in now, not just
-// My Properties.
+// Browsing is open to everyone. Only Portfolio (your own properties and their valuation) needs
+// sign-in: MsalGuard sits on those routes and redirects to the hosted login page (per
+// MSAL_GUARD_CONFIG's InteractionType.Redirect). The old /my-properties and /valuation links
+// redirect into /portfolio, so the guard covers them too. The AI narrative on a listing is gated
+// on the API instead - anonymous visitors get the numbers and a sign-in prompt.
 //
 // Six destinations, where there used to be fourteen screens behind four hub pages. What was a
 // navigation choice ("Leaderboard" or "What money buys") is now a control on the one screen
@@ -65,7 +65,6 @@ function toAnalysis(): RedirectFunction {
 export const routes: Routes = [
   {
     path: '',
-    canActivateChild: [MsalGuard],
     children: [
       { path: '', component: HomeComponent },
 
@@ -73,11 +72,11 @@ export const routes: Routes = [
       { path: 'places', component: PlacesComponent },
       { path: 'places/overview', component: MarketOverviewComponent },
       { path: 'listings', component: ListingsComponent },
-      { path: 'portfolio', component: PortfolioComponent },
+      { path: 'portfolio', component: PortfolioComponent, canActivate: [MsalGuard] },
       // The investment analysis (numbers + AI thesis) for one owned property, ?ownedId=<id>.
       // Its own screen: a listing gets it embedded on /listings/:id, an owned property has no
       // page of its own to embed it in.
-      { path: 'portfolio/analysis', component: InvestmentAnalysisComponent },
+      { path: 'portfolio/analysis', component: InvestmentAnalysisComponent, canActivate: [MsalGuard] },
       { path: 'tools', component: ToolsComponent },
 
       // --- Where the old menu items went -----------------------------------------
@@ -113,9 +112,9 @@ export const routes: Routes = [
         path: 'beach-proximity',
         component: ComingSoonComponent,
         data: comingSoon({
-          title: 'Beach Proximity View',
-          description: 'Price premium by distance-to-beach band, possibly on a simple map.',
-          needs: 'A listing list/filter + stats endpoint grouped by beach-distance band on the API.'
+          title: $localize`:@@shell.comingSoon.beach.title:Beach Proximity View`,
+          description: $localize`:@@shell.comingSoon.beach.description:Price premium by distance-to-beach band, possibly on a simple map.`,
+          needs: $localize`:@@shell.comingSoon.beach.needs:A listing list/filter + stats endpoint grouped by beach-distance band on the API.`
         })
       },
       { path: '**', redirectTo: '' }

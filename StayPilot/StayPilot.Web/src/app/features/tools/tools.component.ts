@@ -9,14 +9,15 @@ import { BuildCostComponent } from '../build-cost/build-cost.component';
 export type ToolsLens = 'features' | 'build';
 
 const LENSES: SegmentedOption<ToolsLens>[] = [
-  { value: 'features', label: 'Feature impact', hint: 'What a garage, lift or sea view is worth' },
-  { value: 'build', label: 'Build cost', hint: 'Shell, pool, fees and VAT, projected' }
+  // Labels share the footer's ids (nav-groups.ts) so the two can never disagree.
+  { value: 'features', label: $localize`:@@core.nav.ask.features:Feature impact`, hint: $localize`:@@hub.tools.features.hint:What a garage, lift or sea view is worth` },
+  { value: 'build', label: $localize`:@@core.nav.ask.build:Build cost`, hint: $localize`:@@hub.tools.build.hint:Shell, pool, fees and VAT, projected` }
 ];
 
 const LENS_SUBS: Record<ToolsLens, string> = {
   features:
-    'What each feature is worth as a price premium, holding size, rooms, condition, beach distance and location still.',
-  build: 'What it would cost to build this house from scratch, and whether that beats buying one.'
+    $localize`:@@hub.tools.features.sub:What each feature is worth as a price premium, holding size, rooms, condition, beach distance and location still.`,
+  build: $localize`:@@hub.tools.build.sub:What it would cost to build this house from scratch, and whether that beats buying one.`
 };
 
 /**

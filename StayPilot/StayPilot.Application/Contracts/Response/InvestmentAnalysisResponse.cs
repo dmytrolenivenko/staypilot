@@ -70,5 +70,11 @@ namespace StayPilot.Application.Contracts.Response
         /// whenever that call fails — the numbers above are always returned regardless.
         /// </summary>
         public string? Narrative { get; set; }
+
+        /// <summary>
+        /// True when the narrative was skipped because nobody is signed in. The AI call costs
+        /// money per request, so anonymous visitors get the numbers only.
+        /// </summary>
+        public bool NarrativeRequiresSignIn { get; set; }
     }
 }

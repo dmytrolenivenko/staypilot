@@ -1,8 +1,9 @@
 <div class="page">
-  <app-page-header title="Listings" [sub]="sub()" />
+  <app-page-header title="Listings" i18n-title="@@core.nav.listings.title" [sub]="sub()" />
 
   <app-segmented
     label="What to ask about the listings"
+    i18n-label="@@hub.listings.segmented.aria"
     [options]="lenses"
     [value]="lens()"
     (valueChange)="pickLens($event)"

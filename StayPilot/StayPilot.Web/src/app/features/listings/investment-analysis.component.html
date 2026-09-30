@@ -5,22 +5,25 @@
   @if (!embedded()) {
     <app-page-header
       title="Investment analysis"
+      i18n-title="@@listings.analysis.title"
       sub="Renovation cost, resale value and profit for one listing — plus an AI thesis grounded strictly in those numbers."
+      i18n-sub="@@listings.analysis.sub"
     />
   }
 
   @if (!embedded()) {
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Analyze</span>
+      <span class="card-title" i18n="@@listings.analysis.analyzeCard">Analyze</span>
     </div>
     <div class="card-body stack">
-      <div class="row mode-toggle" role="group" aria-label="What to analyze">
+      <div class="row mode-toggle" role="group" aria-label="What to analyze" i18n-aria-label="@@listings.analysis.modeAria">
         <button
           type="button"
           class="secondary sm"
           [class.active]="mode() === 'listing'"
           (click)="setMode('listing')"
+          i18n="@@listings.analysis.modeListing"
         >
           Listing
         </button>
@@ -29,6 +32,7 @@
           class="secondary sm"
           [class.active]="mode() === 'owned'"
           (click)="setMode('owned')"
+          i18n="@@listings.analysis.modeOwned"
         >
           My property
         </button>
@@ -36,23 +40,23 @@
 
       <form class="toolbar" (ngSubmit)="analyze()">
         <label class="field">
-          <span>{{ mode() === 'owned' ? 'Property id' : 'Listing id' }}</span>
+          <span>{{ mode() === 'owned' ? propertyIdLabel : listingIdLabel }}</span>
           <input
             class="id-input"
             type="number"
             min="1"
-            [placeholder]="mode() === 'owned' ? 'e.g. 12' : 'e.g. 1042'"
+            [placeholder]="mode() === 'owned' ? propertyIdPlaceholder : listingIdPlaceholder"
             [ngModel]="idInput()"
             (ngModelChange)="idInput.set($event)"
             name="id"
           />
         </label>
-        <button type="submit" [disabled]="loading()">{{ loading() ? 'Analyzing…' : 'Analyze' }}</button>
+        <button type="submit" [disabled]="loading()">{{ loading() ? analyzingLabel : analyzeLabel }}</button>
       </form>
 
       @if (mode() === 'listing' && recentListings.ids().length > 0) {
         <div class="row">
-          <span class="field-label">Recently viewed</span>
+          <span class="field-label" i18n="@@listings.analysis.recent">Recently viewed</span>
           @for (id of recentListings.ids(); track id) {
             <button class="link" type="button" (click)="analyze(id)">#{{ id }}</button>
           }
@@ -73,7 +77,7 @@
       <div class="card-head">
         <span class="card-title">{{ result.town }} · {{ result.municipality }}, {{ result.district }}</span>
         @if (loading()) {
-          <span class="muted">Recalculating…</span>
+          <span class="muted" i18n="@@listings.analysis.recalculating">Recalculating…</span>
         }
         <span
           class="badge badge-small"
@@ -81,46 +85,49 @@
           [class.badge-medium]="result.confidence === 'Medium'"
           [class.badge-low]="result.confidence === 'Low'"
           title="How many move-in-ready comps the town median rests on"
-        >
-          {{ result.confidence }} confidence
-        </span>
+          i18n-title="@@listings.analysis.confidenceTitle"
+          i18n="@@listings.analysis.confidence"
+        >{result.confidence, select, High {High confidence} Medium {Medium confidence} other {Low confidence}}</span>
       </div>
 
       <div class="card-body stack">
         <table class="data-table figures">
           <tbody>
             <tr>
-              <td>{{ result.ownedPropertyId ? 'Purchase price' : 'Ask price' }}</td>
-              <td class="num">€{{ result.askPrice | number: '1.0-0' }}</td>
+              <td>{{ result.ownedPropertyId ? purchasePriceLabel : askPriceLabel }}</td>
+              <td class="num">{{ result.askPrice | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
             </tr>
             <tr>
-              <td>Area</td>
+              <td i18n="@@listings.analysis.area">Area</td>
               <td class="num">{{ result.areaM2 }} m²</td>
             </tr>
             <tr>
-              <td>Condition</td>
-              <td class="num">{{ result.condition }}</td>
+              <td i18n="@@listings.analysis.condition">Condition</td>
+              <td class="num">{{ conditionLabel(result.condition) }}</td>
             </tr>
             <tr>
               <td>
-                Town move-in median
-                <span class="muted">({{ result.townMoveInListingCount }} comps)</span>
+                <ng-container i18n="@@listings.analysis.townMedian">Town move-in median</ng-container>
+                <span class="muted" i18n="@@listings.analysis.comps">({result.townMoveInListingCount, plural, =1 {1 comp} other {{{ result.townMoveInListingCount }} comps}})</span>
               </td>
-              <td class="num">€{{ result.townMoveInMedianPricePerM2 | number: '1.0-0' }}/m²</td>
+              <td class="num">{{ result.townMoveInMedianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</td>
             </tr>
             <tr>
               <td>
-                {{ result.renovationCostIsOverride ? 'Your renovation estimate' : 'Estimated renovation cost' }}
-                <span class="muted" title="What today's build rates say a renovation like this would cost">
-                  ({{ result.condition }} condition)
-                </span>
+                {{ result.renovationCostIsOverride ? ownEstimateLabel : estimatedCostLabel }}
+                <span
+                  class="muted"
+                  title="What today's build rates say a renovation like this would cost"
+                  i18n-title="@@listings.analysis.buildRatesTitle"
+                  i18n="@@listings.analysis.conditionNote"
+                >({{ conditionLabel(result.condition) }} condition)</span>
               </td>
-              <td class="num">€{{ result.estimatedRenovationCost | number: '1.0-0' }}</td>
+              <td class="num">{{ result.estimatedRenovationCost | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
             </tr>
             <tr>
               <td colspan="2">
                 <div class="renovation-scopes">
-                  <span class="field-label">Or pick a scope, priced for {{ result.areaM2 }} m²</span>
+                  <span class="field-label" i18n="@@listings.analysis.pickScope">Or pick a scope, priced for {{ result.areaM2 }} m²</span>
                   <div class="row">
                     @for (option of result.renovationOptions; track option.key) {
                       <button
@@ -130,7 +137,7 @@
                         (click)="selectRenovationOption(option)"
                       >
                         {{ option.label }}<br />
-                        <span class="muted">€{{ option.ratePerM2 | number: '1.0-0' }}/m² · €{{ option.cost | number: '1.0-0' }}</span>
+                        <span class="muted">{{ option.ratePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m² · {{ option.cost | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
                       </button>
                     }
                   </div>
@@ -138,43 +145,44 @@
 
                 <form class="row renovation-override" (ngSubmit)="applyRenovationCost()">
                   <label class="field">
-                    <span>Your own renovation cost (€)</span>
+                    <span i18n="@@listings.analysis.ownCost">Your own renovation cost (€)</span>
                     <input
                       type="number"
                       min="0"
                       step="500"
                       placeholder="e.g. 15000"
+                      i18n-placeholder="@@listings.analysis.ownCostPlaceholder"
                       [ngModel]="renovationCostInput()"
                       (ngModelChange)="renovationCostInput.set($event)"
                       name="renovationCostOverride"
                     />
                   </label>
-                  <button type="submit" class="secondary sm" [disabled]="loading()">Recalculate</button>
+                  <button type="submit" class="secondary sm" [disabled]="loading()" i18n="@@listings.analysis.recalculate">Recalculate</button>
                   @if (result.renovationCostIsOverride) {
-                    <button type="button" class="link" (click)="resetRenovationCost()">Reset to estimate</button>
+                    <button type="button" class="link" (click)="resetRenovationCost()" i18n="@@listings.analysis.resetEstimate">Reset to estimate</button>
                   }
                 </form>
               </td>
             </tr>
             <tr>
-              <td>Estimated resale value</td>
-              <td class="num">€{{ result.estimatedResaleValue | number: '1.0-0' }}</td>
+              <td i18n="@@listings.analysis.resale">Estimated resale value</td>
+              <td class="num">{{ result.estimatedResaleValue | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
             </tr>
             <tr class="total-row">
               <td>
-                Total investment
-                <span class="muted">({{ result.ownedPropertyId ? 'purchase' : 'ask' }} + renovation)</span>
+                <ng-container i18n="@@listings.analysis.totalInvestment">Total investment</ng-container>
+                <span class="muted">{{ result.ownedPropertyId ? purchasePlusRenovation : askPlusRenovation }}</span>
               </td>
-              <td class="num">€{{ result.totalInvestment | number: '1.0-0' }}</td>
+              <td class="num">{{ result.totalInvestment | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
             </tr>
             <tr class="total-row">
-              <td>Estimated profit</td>
+              <td i18n="@@listings.analysis.profit">Estimated profit</td>
               <td class="num" [class.pos]="result.estimatedProfit > 0" [class.neg]="result.estimatedProfit < 0">
-                {{ result.estimatedProfit > 0 ? '+' : '' }}€{{ result.estimatedProfit | number: '1.0-0' }}
+                {{ result.estimatedProfit > 0 ? '+' : '' }}{{ result.estimatedProfit | currency: 'EUR' : 'symbol' : '1.0-0' }}
               </td>
             </tr>
             <tr class="total-row">
-              <td>Profit margin</td>
+              <td i18n="@@listings.analysis.margin">Profit margin</td>
               <td class="num" [class.pos]="result.profitMarginPercent > 0" [class.neg]="result.profitMarginPercent < 0">
                 {{ result.profitMarginPercent > 0 ? '+' : '' }}{{ result.profitMarginPercent | number: '1.0-1' }}%
               </td>
@@ -183,15 +191,20 @@
         </table>
 
         <div class="narrative">
-          <span class="field-label">AI investment thesis</span>
+          <span class="field-label" i18n="@@listings.analysis.thesis">AI investment thesis</span>
           @if (result.narrative) {
             <p class="narrative-text">{{ result.narrative }}</p>
+          } @else if (result.narrativeRequiresSignIn) {
+            <p class="muted">
+              <ng-container i18n="@@listings.analysis.signInPrompt">Sign in to get the AI investment thesis for this listing.</ng-container>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="signIn()" i18n="@@listings.analysis.signIn">Sign in</button>
+            </p>
           } @else {
-            <p class="muted">No narrative available for this analysis — the numbers above are unaffected.</p>
+            <p class="muted" i18n="@@listings.analysis.noNarrative">No narrative available for this analysis — the numbers above are unaffected.</p>
           }
         </div>
 
-        <p class="muted timestamp">Calculated {{ result.calculatedAtUtc | date: 'medium' }}</p>
+        <p class="muted timestamp" i18n="@@listings.analysis.calculated">Calculated {{ result.calculatedAtUtc | date: 'medium' }}</p>
       </div>
     </section>
   }

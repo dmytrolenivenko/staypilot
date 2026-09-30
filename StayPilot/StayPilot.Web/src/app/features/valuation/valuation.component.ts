@@ -11,6 +11,7 @@ import {
   OwnedPropertyPortfolioResponse
 } from '../../core/models/owned-property';
 import { ExplainerComponent } from '../../shared/explainer.component';
+import { APP_LOCALE } from '../../core/locale';
 
 // Columns of the list. Sorted in the browser — a portfolio is a handful of rows.
 type PortfolioSort = 'name' | 'place' | 'value' | 'pricePerM2' | 'spread' | 'demand' | 'projected';
@@ -55,6 +56,10 @@ function baseScenario(item: OwnedPropertyPortfolioItemResponse): GrowthScenarioR
   styleUrl: './valuation.component.css'
 })
 export class ValuationComponent implements OnInit {
+  // Fallbacks the template shows when the API sends nothing.
+  readonly fullConfidenceNote = $localize`:@@valuation.row.confidenceFull:The estimate had everything it wanted`;
+  readonly thisPlace = $localize`:@@valuation.demand.thisPlace:this place`;
+
   portfolio = signal<OwnedPropertyPortfolioResponse | null>(null);
 
   loading = signal(true);
@@ -257,7 +262,7 @@ export class ValuationComponent implements OnInit {
         }
       },
       error: () => {
-        this.error.set('Could not load your cached valuations. Check the API is running.');
+        this.error.set($localize`:@@valuation.error.load:Could not load your cached valuations. Check the API is running.`);
         this.loading.set(false);
       }
     });
@@ -280,7 +285,7 @@ export class ValuationComponent implements OnInit {
       },
       error: () => {
         this.recalculateError.set(
-          'Could not recalculate. Check the API is running, and that there are enough listings collected to fit the model.'
+          $localize`:@@valuation.error.recalculate:Could not recalculate. Check the API is running, and that there are enough listings collected to fit the model.`
         );
         this.recalculating.set(false);
       }
@@ -300,7 +305,7 @@ export class ValuationComponent implements OnInit {
         this.recalculatingId.set(null);
 
         if (!response.item) {
-          this.recalculateOneError.set('Not enough listings collected to price this property yet.');
+          this.recalculateOneError.set($localize`:@@valuation.error.notEnoughListings:Not enough listings collected to price this property yet.`);
 
           return;
         }
@@ -328,7 +333,7 @@ export class ValuationComponent implements OnInit {
       },
       error: () => {
         this.recalculatingId.set(null);
-        this.recalculateOneError.set('Could not recalculate this property.');
+        this.recalculateOneError.set($localize`:@@valuation.error.recalculateOne:Could not recalculate this property.`);
       }
     });
   }
@@ -380,7 +385,7 @@ export class ValuationComponent implements OnInit {
         this.detailLoadingId.set(null);
       },
       error: () => {
-        this.detailError.set('Could not load the comparables for this property.');
+        this.detailError.set($localize`:@@valuation.error.comps:Could not load the comparables for this property.`);
         this.detailLoadingId.set(null);
       }
     });
@@ -404,7 +409,10 @@ export class ValuationComponent implements OnInit {
   // "Quarteira · Loulé, Faro" — narrowest first, then what it sits inside, same order the
   // market screens use so a place reads the same wherever it appears.
   placeLabel(item: OwnedPropertyPortfolioItemResponse): string {
-    return [item.town, item.municipality, item.district].filter(part => part).join(' · ');
+    // A town named after its município (Vila Real de Santo António) would print twice.
+    const parts = [item.town, item.municipality, item.district].filter(part => part);
+
+    return parts.filter((part, i) => parts.indexOf(part) === i).join(' · ');
   }
 
   // False for a property added since the last Recalculate - it has no price yet, not a €0 one.
@@ -423,18 +431,43 @@ export class ValuationComponent implements OnInit {
 
   // Compact euros for the table cells: €1.2M rather than €1,234,567, which is what pushed the
   // Market Overview bars off their own rows. The exact figure stays in the title attribute.
+  // Compact notation writes the suffix per locale: en-GB €1.2M / €235K, pt-PT 1,2 M € / 235 mil €.
   money(value: number): string {
     const absolute = Math.abs(value);
 
     if (absolute >= 1_000_000) {
-      return `€${(value / 1_000_000).toFixed(1)}M`;
+      return value.toLocaleString(APP_LOCALE, {
+        style: 'currency',
+        currency: 'EUR',
+        notation: 'compact',
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+      });
     }
 
     if (absolute >= 10_000) {
-      return `€${Math.round(value / 1000)}k`;
+      return value.toLocaleString(APP_LOCALE, {
+        style: 'currency',
+        currency: 'EUR',
+        notation: 'compact',
+        maximumFractionDigits: 0
+      });
     }
 
-    return `€${Math.round(value).toLocaleString('pt-PT')}`;
+    return this.euro(value);
+  }
+
+  // The exact figure, for title attributes and tooltips built in code.
+  euro(value: number): string {
+    return Math.round(value).toLocaleString(APP_LOCALE, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  }
+
+  // Tooltip on the projected column: the exact figure and the rate behind it.
+  baseTitle(scenario: GrowthScenarioResponse): string {
+    const amount = this.euro(scenario.finalYearValue);
+    const percent = scenario.annualPercent.toLocaleString(APP_LOCALE, { maximumFractionDigits: 1 });
+
+    return $localize`:@@valuation.row.baseTitle:${amount}:amount: at ${percent}:percent:% a year`;
   }
 
   scenario(item: OwnedPropertyPortfolioItemResponse, name: string): GrowthScenarioResponse | null {

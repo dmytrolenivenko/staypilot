@@ -38,7 +38,7 @@ namespace StayPilot.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<InvestmentAnalysisResponse> AnalyzeAsync(int propertyListingId, decimal? renovationCostOverride = null, CancellationToken cancellationToken = default)
+        public async Task<InvestmentAnalysisResponse> AnalyzeAsync(int propertyListingId, decimal? renovationCostOverride = null, bool includeNarrative = true, CancellationToken cancellationToken = default)
         {
             var response = new InvestmentAnalysisResponse();
 
@@ -120,6 +120,13 @@ namespace StayPilot.Application.Services
             response.ProfitMarginPercent = profitMarginPercent;
             response.Confidence = confidence;
             response.CalculatedAtUtc = DateTime.UtcNow;
+
+            // Anonymous visitors get the numbers only - the AI call is paid per request.
+            if (!includeNarrative)
+            {
+                response.NarrativeRequiresSignIn = true;
+                return response;
+            }
 
             // Narrated last, from the numbers above and nothing else. Null on any failure — the
             // numbers themselves are the response; the narrative is a bonus on top of them.

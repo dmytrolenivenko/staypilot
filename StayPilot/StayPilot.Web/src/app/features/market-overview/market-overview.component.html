@@ -1,21 +1,23 @@
 <div class="page">
   <app-page-header
     title="Market overview"
+    i18n-title="@@overview.title"
     sub="Pick a place, narrow it to one kind of property if you want. Every number is worked out from the listings at the moment you ask — no recalculation step to run first."
+    i18n-sub="@@overview.sub"
   />
 
   <app-explainer>
-    <p>
+    <p i18n="@@overview.explainer.medianAverage">
       <strong>Median</strong> and <strong>average</strong> are both shown on purpose: the gap between
       them is the reading. They agree on an even market, and the average runs away from the median
       exactly where a few expensive listings are pulling it.
     </p>
-    <p>
+    <p i18n="@@overview.explainer.distribution">
       The distribution bars are as wide as the price range they cover, drawn between the 5th and the
       95th percentile so one very expensive listing cannot stretch them until every other bar is
       empty &mdash; that listing is still counted, in the last bar.
     </p>
-    <p>
+    <p i18n="@@overview.explainer.inside">
       <strong>Inside &hellip;</strong> is the section to read on a broad slice. A single median
       taken across every distrito describes no market you can buy in; the same listings split by
       place do. The split is always one grain finer than what you picked &mdash; distritos when
@@ -27,80 +29,81 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Slice</span>
+      <span class="card-title" i18n="@@overview.slice.title">Slice</span>
       @if (overview()) {
-        <span class="meta">{{ overview()!.placeName }} · {{ overview()!.listingCount | number }} listings</span>
+        <span class="meta">{{ overview()!.placeName }} · <ng-container i18n="@@overview.slice.listings">{overview()!.listingCount, plural, =1 {1 listing} other {{{ overview()!.listingCount | number }} listings}}</ng-container></span>
       }
     </div>
     <div class="card-body">
       <form class="form-grid" (ngSubmit)="load()">
         <label class="field">
-          <span>Distrito</span>
+          <span i18n="@@overview.form.district">Distrito</span>
           <select name="district" [(ngModel)]="form.district" (ngModelChange)="onDistrictChange()">
-            <option value="">All areas</option>
+            <option value="" i18n="@@overview.form.allAreas">All areas</option>
             @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Município</span>
+          <span i18n="@@overview.form.municipality">Município</span>
           <select
             name="municipality"
             [(ngModel)]="form.municipality"
             (ngModelChange)="onMunicipalityChange()"
             [disabled]="!form.district"
           >
-            <option value="">All</option>
+            <option value="" i18n="@@overview.form.all">All</option>
             @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Freguesia</span>
+          <span i18n="@@overview.form.town">Freguesia</span>
           <select name="town" [(ngModel)]="form.town" (ngModelChange)="load()" [disabled]="!form.municipality">
-            <option value="">All</option>
+            <option value="" i18n="@@overview.form.allTowns">All</option>
             @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Property type</span>
+          <span i18n="@@overview.form.propertyType">Property type</span>
           <select name="propertyType" [(ngModel)]="form.propertyType" (ngModelChange)="load()">
-            <option value="">Any</option>
-            @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
+            <option value="" i18n="@@overview.form.any">Any</option>
+            <!-- The value stays the API enum; only the label is translated. -->
+            @for (t of propertyTypes; track t) { <option [value]="t" i18n="@@overview.form.propertyTypeOption">{t, select, Apartment {Apartment} Villa {Villa} House {House} Land {Land} other {{{ t }}}}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Typology</span>
+          <span i18n="@@overview.form.typology">Typology</span>
           <select name="typology" [(ngModel)]="form.typology" (ngModelChange)="load()">
-            <option value="">Any</option>
+            <option value="" i18n="@@overview.form.any">Any</option>
             @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Distribution bars</span>
+          <span i18n="@@overview.form.buckets">Distribution bars</span>
           <select name="buckets" [(ngModel)]="form.buckets" (ngModelChange)="load()">
             @for (b of bucketChoices; track b) { <option [ngValue]="b">{{ b }}</option> }
           </select>
         </label>
 
         <div class="actions">
-          <button type="submit">Show</button>
-          <button type="button" class="secondary" (click)="reset()">Reset</button>
+          <button type="submit" i18n="@@overview.form.show">Show</button>
+          <button type="button" class="secondary" (click)="reset()" i18n="@@overview.form.reset">Reset</button>
         </div>
       </form>
     </div>
   </section>
 
   @if (loading()) {
-    <section class="card"><p class="empty">Loading…</p></section>
+    <section class="card"><p class="empty" i18n="@@overview.loading">Loading…</p></section>
   } @else if (error()) {
     <section class="card"><div class="card-body"><p class="error">{{ error() }}</p></div></section>
   } @else if (!overview()) {
     <section class="card">
-      <p class="empty">
+      <p class="empty" i18n="@@overview.prompt">
         Press <strong>Show</strong> to measure every area at once, or pick a distrito to start
         narrower. Either way the summary is followed by the places inside it broken out one by
         one &mdash; the whole country in a single median describes no market you can buy in, so
@@ -111,12 +114,12 @@
     <section class="card">
       <p class="empty">
         @if (nothingNarrowedBelowDistrict()) {
-          No listings have been collected in {{ form.district }} yet. Collection so far covers the
+          <ng-container i18n="@@overview.empty.notCollected">No listings have been collected in {{ form.district }} yet. Collection so far covers the
           Algarve and Lisboa &mdash; widening the slice will not help here, because there is
-          nothing underneath it to widen into.
+          nothing underneath it to widen into.</ng-container>
         } @else {
-          No listings match this slice. Widen it &mdash; drop the typology, or step back up to the
-          município. An empty market is an answer too.
+          <ng-container i18n="@@overview.empty.noMatch">No listings match this slice. Widen it &mdash; drop the typology, or step back up to the
+          município. An empty market is an answer too.</ng-container>
         }
       </p>
     </section>
@@ -124,62 +127,62 @@
     <section class="card">
       <div class="card-head">
         <span class="card-title">{{ overview()!.placeName }}</span>
-        <span class="meta">Read {{ overview()!.generatedAtUtc | date: 'medium' }}</span>
+        <span class="meta" i18n="@@overview.readAt">Read {{ overview()!.generatedAtUtc | date: 'medium' }}</span>
       </div>
       <div class="card-body stack">
         @if (isThin()) {
-          <p class="warning">
-            Only {{ overview()!.listingCount }} listings in this slice. Read every number below as
+          <p class="warning" i18n="@@overview.thinWarning">
+            Only {overview()!.listingCount, plural, =1 {1 listing} other {{{ overview()!.listingCount }} listings}} in this slice. Read every number below as
             &ldquo;these few adverts&rdquo;, not as the market.
           </p>
         }
 
         <div class="summary-grid">
           <div class="summary">
-            <h3>Asking price</h3>
+            <h3 i18n="@@overview.summary.askingPrice">Asking price</h3>
             <dl class="kv figures">
-              <dt>Median</dt>
-              <dd class="lead">&euro;{{ overview()!.price.median | number: '1.0-0' }}</dd>
-              <dt>Average</dt>
-              <dd>&euro;{{ overview()!.price.average | number: '1.0-0' }}</dd>
-              <dt>Lowest</dt>
-              <dd>&euro;{{ overview()!.price.min | number: '1.0-0' }}</dd>
-              <dt>Highest</dt>
-              <dd>&euro;{{ overview()!.price.max | number: '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.median">Median</dt>
+              <dd class="lead">{{ overview()!.price.median | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.average">Average</dt>
+              <dd>{{ overview()!.price.average | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.lowest">Lowest</dt>
+              <dd>{{ overview()!.price.min | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.highest">Highest</dt>
+              <dd>{{ overview()!.price.max | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
             </dl>
           </div>
 
           <div class="summary">
-            <h3>Price per m²</h3>
+            <h3 i18n="@@overview.summary.pricePerM2">Price per m²</h3>
             <dl class="kv figures">
-              <dt>Median</dt>
-              <dd class="lead">&euro;{{ overview()!.pricePerM2.median | number: '1.0-0' }}</dd>
-              <dt>Average</dt>
-              <dd>&euro;{{ overview()!.pricePerM2.average | number: '1.0-0' }}</dd>
-              <dt>Lowest</dt>
-              <dd>&euro;{{ overview()!.pricePerM2.min | number: '1.0-0' }}</dd>
-              <dt>Highest</dt>
-              <dd>&euro;{{ overview()!.pricePerM2.max | number: '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.median">Median</dt>
+              <dd class="lead">{{ overview()!.pricePerM2.median | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.average">Average</dt>
+              <dd>{{ overview()!.pricePerM2.average | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.lowest">Lowest</dt>
+              <dd>{{ overview()!.pricePerM2.min | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+              <dt i18n="@@overview.summary.highest">Highest</dt>
+              <dd>{{ overview()!.pricePerM2.max | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
             </dl>
           </div>
 
           <div class="summary">
-            <h3>Floor area</h3>
+            <h3 i18n="@@overview.summary.floorArea">Floor area</h3>
             <dl class="kv figures">
-              <dt>Median</dt>
+              <dt i18n="@@overview.summary.median">Median</dt>
               <dd class="lead">{{ overview()!.areaM2.median | number: '1.0-0' }} m²</dd>
-              <dt>Average</dt>
+              <dt i18n="@@overview.summary.average">Average</dt>
               <dd>{{ overview()!.areaM2.average | number: '1.0-0' }} m²</dd>
-              <dt>Smallest</dt>
+              <dt i18n="@@overview.summary.smallest">Smallest</dt>
               <dd>{{ overview()!.areaM2.min | number: '1.0-0' }} m²</dd>
-              <dt>Largest</dt>
+              <dt i18n="@@overview.summary.largest">Largest</dt>
               <dd>{{ overview()!.areaM2.max | number: '1.0-0' }} m²</dd>
             </dl>
           </div>
         </div>
 
         @if (isSkewed()) {
-          <p class="hint">
+          <p class="hint" i18n="@@overview.skewHint">
             The average asking price sits {{ skewPercent() | number: '1.0-0' }}% above the median, so a
             few expensive listings are carrying it. The median is the one to quote.
           </p>
@@ -189,12 +192,12 @@
 
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Price distribution</span>
-        <span class="meta">{{ overview()!.distribution.length }} bars</span>
+        <span class="card-title" i18n="@@overview.distribution.title">Price distribution</span>
+        <span class="meta" i18n="@@overview.distribution.bars">{overview()!.distribution.length, plural, =1 {1 bar} other {{{ overview()!.distribution.length }} bars}}</span>
       </div>
       <div class="card-body stack">
         @if (distributionUnreadable()) {
-          <p class="warning">
+          <p class="warning" i18n="@@overview.distribution.unreadable">
             These bars came back without figures this build can read, so none of them is drawn. The
             rest of the screen is worked out from the same response and is fine &mdash; it is the
             shape of the distribution that does not match.
@@ -229,12 +232,12 @@
     @if (overview()!.breakdown; as breakdown) {
       <section class="card">
         <div class="card-head">
-          <span class="card-title">Inside {{ overview()!.placeName }}</span>
+          <span class="card-title" i18n="@@overview.breakdown.title">Inside {{ overview()!.placeName }}</span>
           <span class="meta">{{ breakdownHeading() }}</span>
         </div>
 
         <div class="card-body">
-          <p class="hint">
+          <p class="hint" i18n="@@overview.breakdown.hint">
             The numbers above are one median over every listing in the slice. This is where they
             come from &mdash; click a row to narrow the whole screen to that place.
           </p>
@@ -245,25 +248,26 @@
             <thead>
               <tr>
                 <th class="rank">#</th>
-                <th class="sortable" (click)="toggleBreakdownSort('place')">Place{{ breakdownArrow('place') }}</th>
+                <th class="sortable" (click)="toggleBreakdownSort('place')"><ng-container i18n="@@overview.col.place">Place</ng-container>{{ breakdownArrow('place') }}</th>
                 <th class="num sortable" (click)="toggleBreakdownSort('listings')">
-                  Listings{{ breakdownArrow('listings') }}
+                  <ng-container i18n="@@overview.col.listings">Listings</ng-container>{{ breakdownArrow('listings') }}
                 </th>
                 <th class="num sortable" (click)="toggleBreakdownSort('price')">
-                  Median price{{ breakdownArrow('price') }}
+                  <ng-container i18n="@@overview.col.medianPrice">Median price</ng-container>{{ breakdownArrow('price') }}
                 </th>
                 <th class="num sortable" (click)="toggleBreakdownSort('area')">
-                  Median m²{{ breakdownArrow('area') }}
+                  <ng-container i18n="@@overview.col.medianArea">Median m²</ng-container>{{ breakdownArrow('area') }}
                 </th>
                 <th class="num sortable" (click)="toggleBreakdownSort('pricePerM2')">
-                  Median &euro;/m²{{ breakdownArrow('pricePerM2') }}
+                  <ng-container i18n="@@overview.col.medianPerM2">Median &euro;/m²</ng-container>{{ breakdownArrow('pricePerM2') }}
                 </th>
                 <th
                   class="num sortable"
                   (click)="toggleBreakdownSort('vsSlice')"
                   title="How far this place sits from the slice's own €/m² median"
+                  i18n-title="@@overview.col.vsSliceTitle"
                 >
-                  vs slice{{ breakdownArrow('vsSlice') }}
+                  <ng-container i18n="@@overview.col.vsSlice">vs slice</ng-container>{{ breakdownArrow('vsSlice') }}
                 </th>
               </tr>
             </thead>
@@ -279,7 +283,7 @@
                       [town]="row.town"
                     >
                       @if (isThinPlace(row)) {
-                        <span class="tag tag-quiet" title="Fewer than 10 listings — read as those adverts">thin</span>
+                        <span class="tag tag-quiet" title="Fewer than 10 listings — read as those adverts" i18n-title="@@overview.thinPlaceTitle" i18n="@@overview.tag.thin">thin</span>
                       }
                     </app-place-name>
                   </td>
@@ -287,9 +291,9 @@
                     {{ row.listingCount | number }}
                     <span class="faint">{{ row.sharePercent | number: '1.0-1' }}%</span>
                   </td>
-                  <td class="num">&euro;{{ row.medianPrice | number: '1.0-0' }}</td>
+                  <td class="num">{{ row.medianPrice | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
                   <td class="num">{{ row.medianAreaM2 | number: '1.0-0' }}</td>
-                  <td class="num">&euro;{{ row.medianPricePerM2 | number: '1.0-0' }}</td>
+                  <td class="num">{{ row.medianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
                   <td class="num" [class]="vsSliceClass(row)">
                     {{ row.vsSlicePercent > 0 ? '+' : '' }}{{ row.vsSlicePercent | number: '1.0-0' }}%
                   </td>
@@ -301,13 +305,13 @@
 
         @if (hiddenBreakdownCount() > 0) {
           <div class="card-body">
-            <button type="button" class="secondary" (click)="showAllBreakdown.set(true)">
+            <button type="button" class="secondary" (click)="showAllBreakdown.set(true)" i18n="@@overview.breakdown.showAll">
               Show all {{ sortedBreakdown().length }} places ({{ hiddenBreakdownCount() }} more)
             </button>
           </div>
         } @else if (showAllBreakdown() && sortedBreakdown().length > 12) {
           <div class="card-body">
-            <button type="button" class="secondary" (click)="showAllBreakdown.set(false)">Show fewer</button>
+            <button type="button" class="secondary" (click)="showAllBreakdown.set(false)" i18n="@@overview.breakdown.showFewer">Show fewer</button>
           </div>
         }
       </section>
@@ -315,8 +319,8 @@
 
     <section class="card">
       <div class="card-head">
-        <span class="card-title">By typology</span>
-        <span class="meta">{{ overview()!.typologies.length }} layouts on sale here</span>
+        <span class="card-title" i18n="@@overview.typology.title">By typology</span>
+        <span class="meta" i18n="@@overview.typology.layouts">{overview()!.typologies.length, plural, =1 {1 layout on sale here} other {{{ overview()!.typologies.length }} layouts on sale here}}</span>
       </div>
 
       <div class="table-wrap">
@@ -324,19 +328,19 @@
           <thead>
             <tr>
               <th class="sortable" (click)="toggleTypologySort('typology')">
-                Typology{{ typologyArrow('typology') }}
+                <ng-container i18n="@@overview.col.typology">Typology</ng-container>{{ typologyArrow('typology') }}
               </th>
               <th class="num sortable" (click)="toggleTypologySort('listings')">
-                Listings{{ typologyArrow('listings') }}
+                <ng-container i18n="@@overview.col.listings">Listings</ng-container>{{ typologyArrow('listings') }}
               </th>
               <th class="num sortable" (click)="toggleTypologySort('price')">
-                Median price{{ typologyArrow('price') }}
+                <ng-container i18n="@@overview.col.medianPrice">Median price</ng-container>{{ typologyArrow('price') }}
               </th>
               <th class="num sortable" (click)="toggleTypologySort('area')">
-                Median m²{{ typologyArrow('area') }}
+                <ng-container i18n="@@overview.col.medianArea">Median m²</ng-container>{{ typologyArrow('area') }}
               </th>
               <th class="num sortable" (click)="toggleTypologySort('pricePerM2')">
-                Median &euro;/m²{{ typologyArrow('pricePerM2') }}
+                <ng-container i18n="@@overview.col.medianPerM2">Median &euro;/m²</ng-container>{{ typologyArrow('pricePerM2') }}
               </th>
             </tr>
           </thead>
@@ -346,13 +350,13 @@
                 <td>
                   {{ row.typology }}
                   @if (isThinRow(row.listingCount)) {
-                    <span class="tag tag-quiet" title="Fewer than 3 listings — this median is those adverts">thin</span>
+                    <span class="tag tag-quiet" title="Fewer than 3 listings — this median is those adverts" i18n-title="@@overview.thinTypologyTitle" i18n="@@overview.tag.thin">thin</span>
                   }
                 </td>
                 <td class="num">{{ row.listingCount | number }}</td>
-                <td class="num">&euro;{{ row.medianPrice | number: '1.0-0' }}</td>
+                <td class="num">{{ row.medianPrice | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
                 <td class="num">{{ row.medianAreaM2 | number: '1.0-0' }}</td>
-                <td class="num">&euro;{{ row.medianPricePerM2 | number: '1.0-0' }}</td>
+                <td class="num">{{ row.medianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
               </tr>
             }
           </tbody>

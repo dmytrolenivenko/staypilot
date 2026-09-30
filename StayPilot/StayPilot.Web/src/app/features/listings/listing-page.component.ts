@@ -44,6 +44,12 @@ export class ListingPageComponent implements OnInit {
   // bad id shows one "no listing found" rather than that plus a second failure underneath it.
   analysisId = signal<number | null>(null);
 
+  readonly emptyTitle = $localize`:@@listings.page.emptyTitle:Open a listing`;
+  readonly listingSub = $localize`:@@listings.page.listingSub:Everything held about this listing, and what the numbers say about buying it.`;
+  readonly emptySub = $localize`:@@listings.page.emptySub:Every listing has a page of its own. Browse to find one, or open it by id if you have one.`;
+  readonly openLabel = $localize`:@@listings.page.open:Open`;
+  readonly openingLabel = $localize`:@@listings.page.opening:Opening…`;
+
   constructor(
     private readonly propertyListingService: PropertyListingService,
     private readonly route: ActivatedRoute,
@@ -68,7 +74,7 @@ export class ListingPageComponent implements OnInit {
     const id = this.idInput();
 
     if (!id || id <= 0) {
-      this.error.set('Enter a valid listing id.');
+      this.error.set($localize`:@@listings.page.error.invalidId:Enter a valid listing id.`);
 
       return;
     }
@@ -96,7 +102,9 @@ export class ListingPageComponent implements OnInit {
       },
       error: err => {
         this.error.set(
-          err.status === 404 ? `No listing found with id ${id}.` : 'Could not reach the API.'
+          err.status === 404
+            ? $localize`:@@listings.page.error.notFound:No listing found with id ${id}:id:.`
+            : $localize`:@@listings.page.error.api:Could not reach the API.`
         );
         this.loading.set(false);
       }

@@ -149,19 +149,29 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
 
     switch (this.sortColumn()) {
       case 'listings':
-        return descending ? 'Most listings' : 'Fewest listings';
+        return descending
+          ? $localize`:@@areas.leaderboard.headline.mostListings:Most listings`
+          : $localize`:@@areas.leaderboard.headline.fewestListings:Fewest listings`;
 
       case 'place':
-        return descending ? 'Z to A' : 'A to Z';
+        return descending
+          ? $localize`:@@areas.leaderboard.headline.zToA:Z to A`
+          : $localize`:@@areas.leaderboard.headline.aToZ:A to Z`;
 
       case 'area':
-        return descending ? 'Biggest homes' : 'Smallest homes';
+        return descending
+          ? $localize`:@@areas.leaderboard.headline.biggest:Biggest homes`
+          : $localize`:@@areas.leaderboard.headline.smallest:Smallest homes`;
 
       case 'deals':
-        return descending ? 'Most under-priced' : 'Fewest under-priced';
+        return descending
+          ? $localize`:@@areas.leaderboard.headline.mostUnderPriced:Most under-priced`
+          : $localize`:@@areas.leaderboard.headline.fewestUnderPriced:Fewest under-priced`;
 
       default:
-        return descending ? 'Most expensive' : 'Best value';
+        return descending
+          ? $localize`:@@areas.leaderboard.headline.mostExpensive:Most expensive`
+          : $localize`:@@areas.leaderboard.headline.bestValue:Best value`;
     }
   });
 
@@ -261,7 +271,7 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
   recalculate(): void {
     this.recalculating.set(true);
     this.error.set(null);
-    this.recalcNote.set('Starting…');
+    this.recalcNote.set($localize`:@@areas.leaderboard.recalc.starting:Starting…`);
 
     // The stamp on the rows we already have. A finished run has to beat this to have landed.
     const stampBefore = this.calculatedAtUtc();
@@ -274,7 +284,10 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
       error: (err: HttpErrorResponse) => {
         this.stopRecalculating();
         this.error.set(
-          apiErrorMessage(err, 'Could not start the recalculation. Check the API is running and you are signed in.')
+          apiErrorMessage(
+            err,
+            $localize`:@@areas.leaderboard.error.recalcStart:Could not start the recalculation. Check the API is running and you are signed in.`
+          )
         );
       }
     });
@@ -304,7 +317,9 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
         },
         error: (err: HttpErrorResponse) => {
           this.stopRecalculating();
-          this.error.set(apiErrorMessage(err, 'Lost track of the recalculation. Reload to see where it got to.'));
+          this.error.set(
+            apiErrorMessage(err, $localize`:@@areas.leaderboard.error.recalcLost:Lost track of the recalculation. Reload to see where it got to.`)
+          );
         }
       });
   }
@@ -314,7 +329,7 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
     this.stopRecalculating();
 
     if (status.failureReason) {
-      this.error.set(`The recalculation failed: ${status.failureReason}`);
+      this.error.set($localize`:@@areas.leaderboard.error.recalcFailed:The recalculation failed: ${status.failureReason}:reason:`);
 
       return;
     }
@@ -323,7 +338,9 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
     // landed. The API runs on a plan with no "Always On", so an idle recycle can take a run down
     // with it — saying nothing here would leave the old numbers on screen looking rebuilt.
     if (!status.calculatedAtUtc || status.calculatedAtUtc === stampBefore) {
-      this.error.set('The recalculation stopped before it finished. Nothing was changed — try again.');
+      this.error.set(
+        $localize`:@@areas.leaderboard.error.recalcStopped:The recalculation stopped before it finished. Nothing was changed — try again.`
+      );
 
       return;
     }
@@ -335,7 +352,7 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
   // it stays right across a reload or a second tab.
   private showProgress(status: RecalculateMarketAreaStatsResponse): void {
     if (!status.isRunning || !status.startedAtUtc) {
-      this.recalcNote.set('Working…');
+      this.recalcNote.set($localize`:@@areas.leaderboard.recalc.working:Working…`);
 
       return;
     }
@@ -343,7 +360,7 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
     const seconds = Math.max(0, Math.round((Date.now() - new Date(status.startedAtUtc).getTime()) / 1000));
     const elapsed = seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 
-    this.recalcNote.set(`Working through every listing… ${elapsed}`);
+    this.recalcNote.set($localize`:@@areas.leaderboard.recalc.progress:Working through every listing… ${elapsed}:elapsed:`);
   }
 
   private stopRecalculating(): void {
@@ -376,7 +393,7 @@ export class MarketAreaLeaderboardComponent implements OnInit, OnChanges, OnDest
           // "47 places · 5 thinly evidenced" directly above a red box saying it failed.
           this.areas.set([]);
           this.calculatedAtUtc.set(null);
-          this.error.set(apiErrorMessage(err, 'Could not load the leaderboard.'));
+          this.error.set(apiErrorMessage(err, $localize`:@@areas.leaderboard.error.load:Could not load the leaderboard.`));
           this.loading.set(false);
         }
       });

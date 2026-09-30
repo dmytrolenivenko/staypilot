@@ -2,10 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { MsalService } from '@azure/msal-angular';
+import { API_SCOPES } from '../../core/interceptors/auth.interceptor';
 import { InvestmentAnalysisService } from '../../core/services/investment-analysis.service';
 import { RecentListingsService } from '../../core/services/recent-listings.service';
 import { InvestmentAnalysisResponse } from '../../core/models/investment-analysis';
 import { BuildCostOption } from '../../core/models/build-cost';
+import { PROPERTY_CONDITION_OPTIONS } from '../../core/models/enums';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 
 export type InvestmentAnalysisMode = 'listing' | 'owned';
@@ -56,11 +59,30 @@ export class InvestmentAnalysisComponent implements OnInit {
   // (self-sourced materials, no labor hired) for one build-rate formula to fit everyone.
   renovationCostInput = signal<number | null>(null);
 
+  readonly listingIdLabel = $localize`:@@listings.analysis.listingId:Listing id`;
+  readonly propertyIdLabel = $localize`:@@listings.analysis.propertyId:Property id`;
+  readonly listingIdPlaceholder = $localize`:@@listings.analysis.listingIdPlaceholder:e.g. 1042`;
+  readonly propertyIdPlaceholder = $localize`:@@listings.analysis.propertyIdPlaceholder:e.g. 12`;
+  readonly analyzeLabel = $localize`:@@listings.analysis.analyze:Analyze`;
+  readonly analyzingLabel = $localize`:@@listings.analysis.analyzing:Analyzing…`;
+  readonly askPriceLabel = $localize`:@@listings.analysis.askPrice:Ask price`;
+  readonly purchasePriceLabel = $localize`:@@listings.analysis.purchasePrice:Purchase price`;
+  readonly estimatedCostLabel = $localize`:@@listings.analysis.estimatedCost:Estimated renovation cost`;
+  readonly ownEstimateLabel = $localize`:@@listings.analysis.ownEstimate:Your renovation estimate`;
+  readonly askPlusRenovation = $localize`:@@listings.analysis.askPlusRenovation:(ask + renovation)`;
+  readonly purchasePlusRenovation = $localize`:@@listings.analysis.purchasePlusRenovation:(purchase + renovation)`;
+
   constructor(
     private readonly service: InvestmentAnalysisService,
     private readonly route: ActivatedRoute,
+    private readonly msal: MsalService,
     readonly recentListings: RecentListingsService
   ) {}
+
+  // Back to this same listing once signed in, now with the AI narrative.
+  signIn(): void {
+    this.msal.instance.loginRedirect({ scopes: API_SCOPES });
+  }
 
   ngOnInit(): void {
     // Embedded, the listing id came from the page around us and the analysis is already running.
@@ -101,7 +123,11 @@ export class InvestmentAnalysisComponent implements OnInit {
   analyze(id?: number, renovationCostOverride?: number): void {
     const targetId = id ?? this.idInput();
     if (!targetId || targetId <= 0) {
-      this.error.set(this.mode() === 'owned' ? 'Enter a valid property id.' : 'Enter a valid listing id.');
+      this.error.set(
+        this.mode() === 'owned'
+          ? $localize`:@@listings.analysis.error.invalidPropertyId:Enter a valid property id.`
+          : $localize`:@@listings.analysis.error.invalidListingId:Enter a valid listing id.`
+      );
       return;
     }
     this.idInput.set(targetId);
@@ -127,6 +153,11 @@ export class InvestmentAnalysisComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  // The condition as the reader sees it; the API's wire value is left alone.
+  conditionLabel(condition: string): string {
+    return PROPERTY_CONDITION_OPTIONS.find(option => option.value === condition)?.label ?? condition;
   }
 
   /** Re-runs the analysis with the user's own renovation cost instead of the calculated one. */
@@ -159,17 +190,22 @@ export class InvestmentAnalysisComponent implements OnInit {
     this.analyze(targetId);
   }
 
+  // Whole sentences per mode rather than a spliced-in noun: the words around it change with it.
   private messageFor(status: number, id: number): string {
-    const subject = this.mode() === 'owned' ? 'property' : 'listing';
+    const owned = this.mode() === 'owned';
 
     if (status === 404) {
-      return `No ${subject} found with id ${id}.`;
+      return owned
+        ? $localize`:@@listings.analysis.error.propertyNotFound:No property found with id ${id}:id:.`
+        : $localize`:@@listings.analysis.error.listingNotFound:No listing found with id ${id}:id:.`;
     }
 
     if (status === 400) {
-      return `This ${subject}'s town doesn't have enough move-in-ready comps to estimate a resale value against.`;
+      return owned
+        ? $localize`:@@listings.analysis.error.propertyNoComps:This property's town doesn't have enough move-in-ready comps to estimate a resale value against.`
+        : $localize`:@@listings.analysis.error.listingNoComps:This listing's town doesn't have enough move-in-ready comps to estimate a resale value against.`;
     }
 
-    return 'Could not reach the API.';
+    return $localize`:@@listings.analysis.error.api:Could not reach the API.`;
   }
 }

@@ -33,10 +33,14 @@ namespace StayPilot.Api.Controllers
         /// everyone.
         /// </param>
         /// <param name="cancellationToken"></param>
+        // Stays anonymous so anyone can see the numbers; the AI narrative only runs for a
+        // signed-in caller, because each one is a paid call.
         [HttpGet("{propertyListingId}")]
         public async Task<ActionResult<InvestmentAnalysisResponse>> Analyze(int propertyListingId, [FromQuery] decimal? renovationCostOverride, CancellationToken cancellationToken)
         {
-            var result = await _service.AnalyzeAsync(propertyListingId, renovationCostOverride, cancellationToken);
+            var isSignedIn = User.Identity?.IsAuthenticated == true;
+
+            var result = await _service.AnalyzeAsync(propertyListingId, renovationCostOverride, isSignedIn, cancellationToken);
 
             return this.ToActionResult(result);
         }

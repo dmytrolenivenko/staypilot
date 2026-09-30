@@ -13,7 +13,13 @@ dotnet run --project StayPilot.Api
 # Terminal 2 — this app
 npm install
 ng serve
+
+# Terminal 3 — only to see Portuguese: the PT build on :4202, reached through /pt/ on the main server
+npm run start:pt
 ```
+
+Each language is its own build, so the EN/PT switch in the header needs Terminal 3 running.
+Strings live in `src/locale/`; after changing any UI text, run `npm run i18n`.
 
 Open `http://localhost:4200`. Requests to `/api/*` are proxied to
 `http://localhost:5278` (see `proxy.conf.json`) — if the API listens on a

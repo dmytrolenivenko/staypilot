@@ -1,8 +1,9 @@
 <div class="page">
-  <app-page-header title="Calculators" [sub]="sub()" />
+  <app-page-header title="Calculators" i18n-title="@@core.nav.tools.title" [sub]="sub()" />
 
   <app-segmented
     label="Which tool"
+    i18n-label="@@hub.tools.segmented.aria"
     [options]="lenses"
     [value]="lens()"
     (valueChange)="pickLens($event)"

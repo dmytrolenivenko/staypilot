@@ -1,5 +1,5 @@
 <div class="shell" (keydown.escape)="closeOverlays()">
-  <a class="skip-link" href="#main">Skip to content</a>
+  <a class="skip-link" href="#main" i18n="@@shell.skipLink">Skip to content</a>
 
   <header class="topbar">
     <div class="topbar-inner">
@@ -13,35 +13,36 @@
           </span>
           <span class="brand-title">StayPilot</span>
         </a>
-
-        <!-- Flat: four destinations fit in a row, so there is nothing to hover open and no hub
-             page to land on before you reach the thing you wanted. Below 900px the whole group
-             collapses behind the menu button instead of wrapping onto a second line. -->
-        <nav class="nav" [class.is-open]="menuOpen()" aria-label="Main">
-          <a
-            class="nav-link"
-            routerLink="/"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            Home
-          </a>
-
-          @for (link of navLinks; track link.path) {
-            <a class="nav-link" [routerLink]="link.path" routerLinkActive="active">
-              {{ link.title }}
-            </a>
-          }
-
-          <!-- Inside the collapsed menu the theme control comes along, because on a phone it
-               has nowhere else to be. -->
-          <div class="nav-extras">
-            <button type="button" class="btn-ghost nav-extra" (click)="toggleTheme()">
-              {{ theme() === 'light' ? 'Dark theme' : 'Light theme' }}
-            </button>
-          </div>
-        </nav>
       </div>
+
+      <!-- Centred between brand and tools. Flat: the destinations fit in a row, so there is
+           nothing to hover open. Below 900px the whole group collapses behind the menu button
+           instead of wrapping onto a second line. -->
+      <nav class="nav" [class.is-open]="menuOpen()" aria-label="Main" i18n-aria-label="@@shell.nav.aria">
+        <a
+          class="nav-link"
+          routerLink="/"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          i18n="@@shell.nav.home"
+        >
+          Home
+        </a>
+
+        @for (link of navLinks; track link.path) {
+          <a class="nav-link" [routerLink]="link.path" routerLinkActive="active">
+            {{ link.title }}
+          </a>
+        }
+
+        <!-- Inside the collapsed menu the theme control comes along, because on a phone it
+             has nowhere else to be. -->
+        <div class="nav-extras">
+          <button type="button" class="btn-ghost nav-extra" (click)="toggleTheme()">
+            {{ theme() === 'light' ? labels.darkTheme : labels.lightTheme }}
+          </button>
+        </div>
+      </nav>
 
       <div class="topbar-actions">
         <form class="search" role="search" (submit)="$event.preventDefault(); runSearch()">
@@ -59,21 +60,33 @@
             <circle cx="11" cy="11" r="7"></circle>
             <path d="m20 20-3.5-3.5"></path>
           </svg>
-          <label class="sr-only" for="site-search">Search a place, or a listing id</label>
+          <label class="sr-only" for="site-search" i18n="@@shell.search.label">Search a place, or a listing id</label>
           <input
             id="site-search"
             type="search"
-            [placeholder]="searching() ? 'Searching…' : 'Search a place…'"
+            [placeholder]="searching() ? labels.searching : labels.searchPlaceholder"
             [(ngModel)]="searchText"
             [ngModelOptions]="{ standalone: true }"
           />
         </form>
 
+        <!-- A plain href, not routerLink: the other language is a separate build under its own
+             base path, so switching is a full page load. Labelled in the target language. -->
+        <a
+          class="icon-btn lang-btn"
+          [href]="otherLanguage.href()"
+          [attr.hreflang]="otherLanguage.code"
+          [attr.lang]="otherLanguage.code"
+          [attr.aria-label]="otherLanguage.label"
+        >
+          {{ otherLanguage.short }}
+        </a>
+
         <button
           type="button"
           class="icon-btn"
           (click)="toggleTheme()"
-          [attr.aria-label]="theme() === 'light' ? 'Switch to dark theme' : 'Switch to light theme'"
+          [attr.aria-label]="theme() === 'light' ? labels.switchToDark : labels.switchToLight"
         >
           @if (theme() === 'light') {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -94,7 +107,7 @@
               class="avatar"
               (click)="toggleAccount()"
               [attr.aria-expanded]="accountOpen()"
-              [attr.aria-label]="'Account: ' + (accountName() ?? accountEmail() ?? 'signed in')"
+              [attr.aria-label]="accountAriaLabel()"
             >
               {{ accountInitials() }}
             </button>
@@ -107,11 +120,11 @@
                 @if (accountEmail()) {
                   <span class="account-email">{{ accountEmail() }}</span>
                 }
-                <button type="button" class="btn-secondary btn-sm" (click)="logout()">Sign out</button>
+                <button type="button" class="btn-secondary btn-sm" (click)="logout()" i18n="@@shell.account.signOut">Sign out</button>
               </div>
             }
           } @else {
-            <button type="button" class="btn btn-ink btn-sm" (click)="login()">Sign in</button>
+            <button type="button" class="btn btn-ink btn-sm" (click)="login()" i18n="@@shell.account.signIn">Sign in</button>
           }
         </div>
 
@@ -121,6 +134,7 @@
           (click)="toggleMenu()"
           [attr.aria-expanded]="menuOpen()"
           aria-label="Menu"
+          i18n-aria-label="@@shell.menu.aria"
         >
           @if (menuOpen()) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -163,7 +177,7 @@
             </span>
             <span class="footer-brand-title">StayPilot</span>
           </a>
-          <p class="site-footer-tagline">
+          <p class="site-footer-tagline" i18n="@@shell.footer.tagline">
             Every advert in Portugal, read as one market — medians over averages, sample size
             always shown, and rentals never dressed up as sale prices.
           </p>
@@ -171,7 +185,7 @@
 
         <!-- Every destination with the questions inside it, so the footer is a real map of the
              app rather than a second copy of the header. -->
-        <nav class="site-footer-cols" aria-label="Footer">
+        <nav class="site-footer-cols" aria-label="Footer" i18n-aria-label="@@shell.footer.aria">
           @for (link of navLinks; track link.path) {
             <div class="site-footer-col">
               <h4>{{ link.title }}</h4>
@@ -185,7 +199,7 @@
 
       <div class="site-footer-bottom">
         <p>© {{ currentYear }} StayPilot Comps.</p>
-        <p>
+        <p i18n="@@shell.footer.disclaimer">
           Figures are asking prices from public adverts, not confirmed sale prices — medians shown
           only for places with {{ reliableListings }}+ listings behind them.
         </p>

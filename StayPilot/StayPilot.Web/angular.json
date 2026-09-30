@@ -13,6 +13,18 @@
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
+      "i18n": {
+        "sourceLocale": {
+          "code": "en-GB",
+          "baseHref": "/"
+        },
+        "locales": {
+          "pt-PT": {
+            "translation": "src/locale/messages.pt-PT.xlf",
+            "baseHref": "/pt/"
+          }
+        }
+      },
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:application",
@@ -21,7 +33,8 @@
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
-              "zone.js"
+              "zone.js",
+              "@angular/localize/init"
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -43,7 +56,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "600kB",
-                  "maximumError": "1MB"
+                  "maximumError": "1.25MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -51,7 +64,8 @@
                   "maximumError": "16kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "localize": true
             },
             "development": {
               "optimization": false,
@@ -79,6 +93,10 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ]
+            },
+            "pt": {
+              "localize": ["pt-PT"],
+              "baseHref": "/pt/"
             }
           },
           "defaultConfiguration": "production"
@@ -95,19 +113,30 @@
             },
             "development": {
               "buildTarget": "StayPilot.Web:build:development"
+            },
+            "pt": {
+              "buildTarget": "StayPilot.Web:build:development,pt",
+              "port": 4202,
+              "servePath": "/pt/",
+              "proxyConfig": "proxy.conf.pt.mjs"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n"
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "format": "xlf2",
+            "outputPath": "src/locale"
+          }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "polyfills": [
               "zone.js",
-              "zone.js/testing"
+              "zone.js/testing",
+              "@angular/localize/init"
             ],
             "tsConfig": "tsconfig.spec.json",
             "assets": [

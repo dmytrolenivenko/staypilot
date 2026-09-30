@@ -29,18 +29,18 @@ export const LISTING_STATUSES: ListingStatus[] = ['Sold', 'Active', 'PriceChange
 // The wire names are C# identifiers - "NeedsRenovation", "NewBuild", "PriceChanged" - and
 // putting them straight into a dropdown shows the user our enum rather than their language.
 export const PROPERTY_CONDITION_OPTIONS: { value: PropertyCondition; label: string }[] = [
-  { value: 'Unknown', label: 'Not stated' },
-  { value: 'NeedsRenovation', label: 'Needs renovation' },
-  { value: 'Used', label: 'Used' },
-  { value: 'Good', label: 'Good' },
-  { value: 'Renovated', label: 'Renovated' },
-  { value: 'NewBuild', label: 'New build' }
+  { value: 'Unknown', label: $localize`:@@core.condition.unknown:Not stated` },
+  { value: 'NeedsRenovation', label: $localize`:@@core.condition.needsRenovation:Needs renovation` },
+  { value: 'Used', label: $localize`:@@core.condition.used:Used` },
+  { value: 'Good', label: $localize`:@@core.condition.good:Good` },
+  { value: 'Renovated', label: $localize`:@@core.condition.renovated:Renovated` },
+  { value: 'NewBuild', label: $localize`:@@core.condition.newBuild:New build` }
 ];
 
 export const LISTING_STATUS_OPTIONS: { value: ListingStatus; label: string }[] = [
-  { value: 'Sold', label: 'Sold' },
-  { value: 'Active', label: 'Active' },
-  { value: 'PriceChanged', label: 'Price changed' }
+  { value: 'Sold', label: $localize`:@@core.listingStatus.sold:Sold` },
+  { value: 'Active', label: $localize`:@@core.listingStatus.active:Active` },
+  { value: 'PriceChanged', label: $localize`:@@core.listingStatus.priceChanged:Price changed` }
 ];
 
 // The field the API can sort the listing browser by. Names match StayPilot.Domain/Enums/SortBy.cs.
@@ -58,14 +58,14 @@ export type SortBy =
 
 // value = what we send to the API, label = what the user reads in the dropdown.
 export const SORT_OPTIONS: { value: SortBy; label: string }[] = [
-  { value: 'Id', label: 'Newest (id)' },
-  { value: 'Price', label: 'Price' },
-  { value: 'PricePerM2', label: 'Price per m²' },
-  { value: 'AreaM2', label: 'Area' },
-  { value: 'DistanceToBeachMeters', label: 'Distance to beach' },
-  { value: 'CreatedAtUtc', label: 'Date added' },
-  { value: 'Location', label: 'Location' },
-  { value: 'PropertyType', label: 'Type' },
-  { value: 'Typology', label: 'Typology' },
-  { value: 'ListingStatus', label: 'Status' }
+  { value: 'Id', label: $localize`:@@core.sort.id:Newest (id)` },
+  { value: 'Price', label: $localize`:@@core.sort.price:Price` },
+  { value: 'PricePerM2', label: $localize`:@@core.sort.pricePerM2:Price per m²` },
+  { value: 'AreaM2', label: $localize`:@@core.sort.area:Area` },
+  { value: 'DistanceToBeachMeters', label: $localize`:@@core.sort.distanceToBeach:Distance to beach` },
+  { value: 'CreatedAtUtc', label: $localize`:@@core.sort.dateAdded:Date added` },
+  { value: 'Location', label: $localize`:@@core.sort.location:Location` },
+  { value: 'PropertyType', label: $localize`:@@core.sort.type:Type` },
+  { value: 'Typology', label: $localize`:@@core.sort.typology:Typology` },
+  { value: 'ListingStatus', label: $localize`:@@core.sort.status:Status` }
 ];

@@ -51,9 +51,9 @@ export function levelsInside(scope: AreaScope): AreaLevel[] {
   imports: [CommonModule, FormsModule],
   template: `
     <label class="control">
-      Distrito
+      <ng-container i18n="@@shared.areaScopePicker.district">Distrito</ng-container>
       <select [ngModel]="scope.district" (ngModelChange)="pickDistrict($event)">
-        <option value="">All of Portugal</option>
+        <option value="" i18n="@@shared.areaScopePicker.allOfPortugal">All of Portugal</option>
         @for (option of districts(); track option) {
           <option [value]="option">{{ option }}</option>
         }
@@ -61,9 +61,9 @@ export function levelsInside(scope: AreaScope): AreaLevel[] {
     </label>
 
     <label class="control">
-      Município
+      <ng-container i18n="@@shared.areaScopePicker.municipality">Município</ng-container>
       <select [ngModel]="scope.municipality" (ngModelChange)="pickMunicipality($event)" [disabled]="!scope.district">
-        <option value="">All</option>
+        <option value="" i18n="@@shared.areaScopePicker.all">All</option>
         @for (option of municipalities(); track option) {
           <option [value]="option">{{ option }}</option>
         }

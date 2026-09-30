@@ -3,6 +3,18 @@
     {
       "route": "/*.{js,css}",
       "headers": { "cache-control": "public, max-age=31536000, immutable" }
+    },
+    {
+      "route": "/pt/*.{png,jpg,jpeg,svg,ico,woff,woff2,txt}",
+      "allowedRoles": ["anonymous", "authenticated"]
+    },
+    {
+      "route": "/pt",
+      "rewrite": "/pt/index.html"
+    },
+    {
+      "route": "/pt/*",
+      "rewrite": "/pt/index.html"
     }
   ],
   "navigationFallback": {

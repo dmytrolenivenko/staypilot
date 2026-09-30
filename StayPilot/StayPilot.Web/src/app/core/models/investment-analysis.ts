@@ -27,4 +27,6 @@ export interface InvestmentAnalysisResponse {
   confidence: ValuationConfidence;
   calculatedAtUtc: string;
   narrative: string | null;
+  // True when the AI narrative was skipped because nobody is signed in.
+  narrativeRequiresSignIn: boolean;
 }

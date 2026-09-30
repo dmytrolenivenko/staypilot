@@ -2,13 +2,13 @@
      shell's, and what stays here is the budget itself and how far it may stretch. -->
 <div class="page">
   <app-explainer>
-    <p>
+    <p i18n="@@areas.budget.explainer.bestFit">
       <strong>Best fit</strong> is the most rooms a place usually sells for your budget, judged on
       what that typology <em>typically</em> costs there &mdash; not on the cheapest advert in it. One
       bargain T3 in Cascais does not make Cascais a place where €300,000 buys a T3. Places where the
       budget reaches nothing are left out rather than shown empty.
     </p>
-    <p>
+    <p i18n="@@areas.budget.explainer.minRooms">
       <strong>Min rooms</strong> turns the question from &ldquo;where does my money buy
       something&rdquo; into &ldquo;where does it buy the T3 I actually need&rdquo;, which has far
       fewer answers and is the one worth acting on. <strong>Stretch</strong> answers the question
@@ -16,13 +16,13 @@
       Places reached only by the stretch are marked <span class="tag tag-muted">stretch</span>,
       never quietly mixed in with the ones that fit.
     </p>
-    <p>
+    <p i18n="@@areas.budget.explainer.rows">
       Click any row to see <strong>every</strong> typology the budget reaches there, not only the
       biggest. The headline answer assumes more rooms is what you want, and often it is not: the
       same money that reaches a small T3 also reaches a larger, cheaper-per-metre T2, and that
       trade is the actual decision.
     </p>
-    <p>
+    <p i18n="@@areas.budget.explainer.medians">
       The three number columns will not multiply out, and that is correct: each is its own middle
       value taken separately, and the middle price is not the middle size times the middle rate. Read
       each as &ldquo;typically about this&rdquo;, not as one worked example.
@@ -31,15 +31,15 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Your budget</span>
+      <span class="card-title" i18n="@@areas.budget.yourBudget">Your budget</span>
       @if (calculatedAtUtc()) {
-        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+        <span class="meta" i18n="@@areas.budget.workedOut">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
       }
     </div>
     <div class="card-body">
       <div class="toolbar">
         <label class="control">
-          Budget €
+          <ng-container i18n="@@areas.budget.budgetLabel">Budget €</ng-container>
           <input
             class="budget-input"
             type="number"
@@ -51,20 +51,20 @@
         </label>
 
         <label class="control">
-          Stretch
+          <ng-container i18n="@@areas.budget.stretchLabel">Stretch</ng-container>
           <select [ngModel]="stretchPercent()" (ngModelChange)="changeStretch($event)">
             @for (option of stretchChoices; track option) {
-              <option [ngValue]="option">{{ option === 0 ? 'None' : '+' + option + '%' }}</option>
+              <option [ngValue]="option">{{ stretchLabel(option) }}</option>
             }
           </select>
         </label>
 
         <label class="control">
-          Min rooms
+          <ng-container i18n="@@areas.budget.minRoomsLabel">Min rooms</ng-container>
           <select [ngModel]="minTypology()" (ngModelChange)="changeMinTypology($event)">
-            <option value="">Any</option>
+            <option value="" i18n="@@areas.budget.minRoomsAny">Any</option>
             @for (option of typologies; track option) {
-              <option [value]="option">{{ option }} or more</option>
+              <option [value]="option" i18n="@@areas.budget.minRoomsOption">{{ option }} or more</option>
             }
           </select>
         </label>
@@ -75,30 +75,32 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Within reach</span>
+      <span class="card-title" i18n="@@areas.budget.withinReach">Within reach</span>
       <span class="meta">
-        {{ sortedAreas().length }} places
+        <ng-container i18n="@@areas.budget.placeCount">{sortedAreas().length, plural, =1 {1 place} other {{{ sortedAreas().length }} places}}</ng-container>
         @if (stretchPercent() > 0) {
-          · up to €{{ reach() | number: '1.0-0' }} with the stretch
+          <ng-container i18n="@@areas.budget.upTo">· up to {{ reach() | currency: 'EUR' : 'symbol' : '1.0-0' }} with the stretch</ng-container>
           @if (stretchedCount() > 0) {
-            · {{ stretchedCount() }} need it
+            <ng-container i18n="@@areas.budget.needStretch">· {stretchedCount(), plural, =1 {1 needs it} other {{{ stretchedCount() }} need it}}</ng-container>
           }
         }
       </span>
     </div>
 
     @if (loading()) {
-      <p class="empty">Loading…</p>
+      <p class="empty" i18n="@@areas.budget.loading">Loading…</p>
     } @else if (error()) {
       <div class="card-body"><p class="error">{{ error() }}</p></div>
     } @else if (sortedAreas().length === 0) {
+      <!-- level() is the API value; the select turns it into copy. -->
       <p class="empty">
-        Nothing is within €{{ reach() | number: '1.0-0' }}
         @if (minTypology()) {
-          for a {{ minTypology() }} or bigger
+          <ng-container i18n="@@areas.budget.emptyTypology">Nothing is within {{ reach() | currency: 'EUR' : 'symbol' : '1.0-0' }} for a {{ minTypology() }} or bigger at {level(), select, District {distrito} Municipality {município} other {freguesia}} level.</ng-container>
+        } @else {
+          <ng-container i18n="@@areas.budget.empty">Nothing is within {{ reach() | currency: 'EUR' : 'symbol' : '1.0-0' }} at {level(), select, District {distrito} Municipality {município} other {freguesia}} level.</ng-container>
         }
-        at {{ levelName(level()).toLowerCase() }} level. Raise the budget, add a stretch, drop the
-        room floor, widen the area, or lower Min listings.
+        <ng-container i18n="@@areas.budget.emptyHint">Raise the budget, add a stretch, drop the
+        room floor, widen the area, or lower Min listings.</ng-container>
       </p>
     } @else {
       <div class="table-wrap">
@@ -106,12 +108,12 @@
           <thead>
             <tr>
               <th class="rank">#</th>
-              <th class="sortable" (click)="toggleSort('place')">Place{{ arrow('place') }}</th>
-              <th class="sortable" (click)="toggleSort('typology')">Best fit{{ arrow('typology') }}</th>
-              <th class="num sortable" (click)="toggleSort('area')">Median m²{{ arrow('area') }}</th>
-              <th class="num sortable" (click)="toggleSort('price')">Typical price{{ arrow('price') }}</th>
-              <th class="num sortable" (click)="toggleSort('pricePerM2')"  title="Each column is its own median across the listings, so typical price ÷ median m² will not equal this exactly.">€/m²{{ arrow('pricePerM2') }}</th>
-              <th class="num sortable" (click)="toggleSort('listings')">Listings{{ arrow('listings') }}</th>
+              <th class="sortable" (click)="toggleSort('place')"><ng-container i18n="@@areas.budget.col.place">Place</ng-container>{{ arrow('place') }}</th>
+              <th class="sortable" (click)="toggleSort('typology')"><ng-container i18n="@@areas.budget.col.bestFit">Best fit</ng-container>{{ arrow('typology') }}</th>
+              <th class="num sortable" (click)="toggleSort('area')"><ng-container i18n="@@areas.budget.col.medianArea">Median m²</ng-container>{{ arrow('area') }}</th>
+              <th class="num sortable" (click)="toggleSort('price')"><ng-container i18n="@@areas.budget.col.typicalPrice">Typical price</ng-container>{{ arrow('price') }}</th>
+              <th class="num sortable" (click)="toggleSort('pricePerM2')"  title="Each column is its own median across the listings, so typical price ÷ median m² will not equal this exactly." i18n-title="@@areas.budget.col.pricePerM2Title">€/m²{{ arrow('pricePerM2') }}</th>
+              <th class="num sortable" (click)="toggleSort('listings')"><ng-container i18n="@@areas.budget.col.listings">Listings</ng-container>{{ arrow('listings') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -126,7 +128,7 @@
                     [town]="area.town"
                   >
                     @if (area.needsStretch) {
-                      <span class="tag tag-muted" title="Only in reach because the budget was stretched">
+                      <span class="tag tag-muted" title="Only in reach because the budget was stretched" i18n-title="@@areas.budget.stretchTagTitle" i18n="@@areas.budget.stretchTag">
                         stretch
                       </span>
                     }
@@ -138,7 +140,7 @@
                 <td class="num">{{ area.medianPricePerM2 | number: '1.0-0' }}</td>
                 <td class="num">
                   {{ area.typologyListingCount }}
-                  <span class="faint">of {{ area.listingCount }}</span>
+                  <span class="faint" i18n="@@areas.budget.ofListings">of {{ area.listingCount }}</span>
                 </td>
               </tr>
 
@@ -146,24 +148,24 @@
                 <tr class="expansion">
                   <td colspan="7">
                     @if (area.affordableTypologies.length <= 1) {
-                      <p class="note-inline">
+                      <p class="note-inline" i18n="@@areas.budget.onlyLayout">
                         A {{ area.bestTypology }} is the only layout the budget reaches here, so
                         there is no trade to weigh up.
                       </p>
                     } @else {
-                      <span class="expansion-title">
-                        Everything €{{ reach() | number: '1.0-0' }} reaches in
+                      <span class="expansion-title" i18n="@@areas.budget.everythingReaches">
+                        Everything {{ reach() | currency: 'EUR' : 'symbol' : '1.0-0' }} reaches in
                         {{ area.displayName }}
                       </span>
 
                       <table class="data-table nested">
                         <thead>
                           <tr>
-                            <th>Layout</th>
-                            <th class="num">Median m²</th>
-                            <th class="num">Typical price</th>
-                            <th class="num" title="Its own median, not typical price ÷ median m².">€/m²</th>
-                            <th class="num">Listings</th>
+                            <th i18n="@@areas.budget.col.layout">Layout</th>
+                            <th class="num" i18n="@@areas.budget.col.medianArea">Median m²</th>
+                            <th class="num" i18n="@@areas.budget.col.typicalPrice">Typical price</th>
+                            <th class="num" title="Its own median, not typical price ÷ median m²." i18n-title="@@areas.budget.col.ownMedianTitle">€/m²</th>
+                            <th class="num" i18n="@@areas.budget.col.listings">Listings</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -172,7 +174,7 @@
                               <td>
                                 <span class="tag typology">{{ option.typology }}</span>
                                 @if (option.typology === area.bestTypology) {
-                                  <span class="tag tag-quiet">best fit</span>
+                                  <span class="tag tag-quiet" i18n="@@areas.budget.bestFitTag">best fit</span>
                                 }
                               </td>
                               <td class="num">{{ option.medianAreaM2 | number: '1.0-0' }}</td>
@@ -190,7 +192,7 @@
             }
           </tbody>
         </table>
-        <p class="note-inline faint">
+        <p class="note-inline faint" i18n="@@areas.budget.mediansNote">
           Each column is its own median across the listings here, so a typical price divided by median m² will not land exactly on the €/m² beside it. Both are true of the place; neither is derived from the other.
         </p>
       </div>

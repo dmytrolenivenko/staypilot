@@ -9,15 +9,16 @@ import { TopDealsComponent } from './top-deals.component';
 export type ListingsLens = 'browse' | 'deals';
 
 const LENSES: SegmentedOption<ListingsLens>[] = [
-  { value: 'browse', label: 'Browse', hint: 'Filter and sort every listing collected' },
-  { value: 'deals', label: 'Top deals', hint: 'Asking the most below their own median' }
+  // Labels share the footer's ids (nav-groups.ts) so the two can never disagree.
+  { value: 'browse', label: $localize`:@@core.nav.ask.browse:Browse`, hint: $localize`:@@hub.listings.browse.hint:Filter and sort every listing collected` },
+  { value: 'deals', label: $localize`:@@core.nav.ask.deals:Top deals`, hint: $localize`:@@hub.listings.deals.hint:Asking the most below their own median` }
 ];
 
 const LENS_SUBS: Record<ListingsLens, string> = {
   browse:
-    'Set the filters, then Search. Sorting and paging happen on the server — leave a box empty to ignore that filter.',
+    $localize`:@@hub.listings.browse.sub:Set the filters, then Search. Sorting and paging happen on the server — leave a box empty to ignore that filter.`,
   deals:
-    "Active listings asking the most below their own typology's median €/m² in the same town — under-priced, not merely cheap."
+    $localize`:@@hub.listings.deals.sub:Active listings asking the most below their own typology's median €/m² in the same town — under-priced, not merely cheap.`
 };
 
 /**

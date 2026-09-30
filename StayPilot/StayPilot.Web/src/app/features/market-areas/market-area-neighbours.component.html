@@ -2,38 +2,38 @@
      questions below (every pair, or one place against its neighbours) are this lens's own. -->
 <div class="page">
   <app-explainer>
-    <p>
+    <p i18n="@@areas.neighbours.explainer.gap">
       A gap is the difference in <strong>median €/m²</strong> between two places close enough to be
       a real choice. This is where the money is: a border you cannot see on a price list.
     </p>
-    <p>
+    <p i18n="@@areas.neighbours.explainer.rows">
       <strong>Click any row to open it.</strong> These tables are wide, and reading a comparison
       across ten columns is the wrong shape for it &mdash; inside, the two places sit side by side
       with the listings behind each one, and the gap is worked out as money on a flat of the size
       that place actually sells. A rate per square metre is the honest way to compare two places
       and a useless way to picture the decision.
     </p>
-    <p>
+    <p i18n="@@areas.neighbours.explainer.distance">
       Distances are measured between the <strong>middle point of each place's listings</strong>, not
       between real borders &mdash; we hold no boundaries. So read 3 km as roughly how far you would
       move, not as an exact figure. Two places can also sit close on the map and still be separated
       by water or a motorway, which no distance here knows about.
     </p>
-    <p>
+    <p i18n="@@areas.neighbours.explainer.modes">
       <strong>Around one place</strong> shows every neighbour, including the ones priced much the
       same &mdash; &ldquo;what is around Lisbon&rdquo; means everything around it. <strong>Biggest
       gaps</strong> starts at a 20% floor instead, because every pair 1% apart across a whole level
       is thousands of rows of noise. Both floors live in <strong>Thresholds</strong>, and both can be
       changed.
     </p>
-    <p>
+    <p i18n="@@areas.neighbours.explainer.grain">
       Every place names itself with the places it sits inside underneath, and a chip saying which
       grain it is: a <strong>distrito</strong> is the broadest, a <strong>munic&iacute;pio</strong>
       is a council inside one, a <strong>freguesia</strong> is a parish inside that. Both halves of
       a pair are always the same grain &mdash; <strong>Level</strong> sets it, and it decides what
       counts as a neighbour at all.
     </p>
-    <p>
+    <p i18n="@@areas.neighbours.explainer.compare">
       <strong>Compare</strong> is the control that makes a gap trustworthy. On <em>all stock</em>,
       two places can sit 30% apart purely because one of them sells villas and the other sells
       studios &mdash; that gap is a fact about the buildings, not about the places, and moving
@@ -46,9 +46,9 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">What to show</span>
+      <span class="card-title" i18n="@@areas.neighbours.whatToShow">What to show</span>
       @if (calculatedAtUtc()) {
-        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+        <span class="meta" i18n="@@areas.neighbours.workedOut">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
       }
     </div>
     <div class="card-body stack">
@@ -56,50 +56,51 @@
            so the mode of the whole screen had to be read out of a list of place names. -->
       <div class="mode-switch">
         <button type="button" [class.on]="mode() === 'pairs'" (click)="showEveryPair()">
-          Biggest gaps
-          <small>Every pair at this grain, widest gap first</small>
+          <ng-container i18n="@@areas.neighbours.mode.pairs">Biggest gaps</ng-container>
+          <small i18n="@@areas.neighbours.mode.pairsHint">Every pair at this grain, widest gap first</small>
         </button>
         <button type="button" [class.on]="mode() === 'around'" (click)="showAroundOnePlace()">
-          Around one place
-          <small>One place against everything near it</small>
+          <ng-container i18n="@@areas.neighbours.mode.around">Around one place</ng-container>
+          <small i18n="@@areas.neighbours.mode.aroundHint">One place against everything near it</small>
         </button>
       </div>
 
       @if (mode() === 'around') {
         <div class="picker-row">
-          <span class="picker-label">Around</span>
+          <span class="picker-label" i18n="@@areas.neighbours.aroundLabel">Around</span>
           <label class="control anchor-picker">
             <select [ngModel]="anchor()" (ngModelChange)="changeAnchor($event)">
-              <option value="">Pick a {{ levelName(level()).toLowerCase() }}&hellip;</option>
+              <!-- level() is the API value; the select turns it into copy. -->
+              <option value="" i18n="@@areas.neighbours.pickPlace">Pick a {level(), select, District {distrito} Municipality {município} other {freguesia}}&hellip;</option>
               @for (place of places(); track place) {
                 <option [value]="place">{{ place }}</option>
               }
             </select>
           </label>
           <span class="picker-label">
-            {{ places().length }} to choose from
+            <ng-container i18n="@@areas.neighbours.toChooseFrom">{{ places().length }} to choose from</ng-container>
             @if (scope().municipality) {
-              inside {{ scope().municipality }}
+              <ng-container i18n="@@areas.neighbours.insideMunicipality">inside {{ scope().municipality }}</ng-container>
             } @else if (scope().district) {
-              inside {{ scope().district }}
+              <ng-container i18n="@@areas.neighbours.insideDistrict">inside {{ scope().district }}</ng-container>
             }
           </span>
         </div>
       }
 
       <div class="picker-row">
-        <span class="picker-label">Compare on</span>
+        <span class="picker-label" i18n="@@areas.neighbours.compareOn">Compare on</span>
         <label class="control">
           <select [ngModel]="typology()" (ngModelChange)="changeTypology($event)">
-            <option value="">All stock at once</option>
+            <option value="" i18n="@@areas.neighbours.allStockAtOnce">All stock at once</option>
             @for (option of typologies; track option) {
-              <option [value]="option">{{ option }} against {{ option }}</option>
+              <option [value]="option" i18n="@@areas.neighbours.typologyAgainst">{{ option }} against {{ option }}</option>
             }
           </select>
         </label>
         @if (typology()) {
           <label class="control">
-            counting places with at least
+            <ng-container i18n="@@areas.neighbours.countingAtLeast">counting places with at least</ng-container>
             <input
               type="number"
               min="1"
@@ -107,7 +108,7 @@
               [ngModel]="minTypologyListings()"
               (ngModelChange)="changeMinTypologyListings($event)"
             />
-            {{ typology() }}s
+            <ng-container i18n="@@areas.neighbours.typologyPlural">{{ typology() }}s</ng-container>
           </label>
         }
       </div>
@@ -115,18 +116,18 @@
       <!-- The three numbers that decide what qualifies. Real controls, and the wrong thing to meet
            first: they used to sit in the same row as the place pickers, all of them looking equal. -->
       <details class="thresholds">
-        <summary>
+        <summary i18n="@@areas.neighbours.thresholds">
           Thresholds &mdash; within {{ maxDistanceKm() }} km · gap at least {{ minGapPercent() }}% ·
           {{ minListings() }}+ listings a place
         </summary>
         <div class="toolbar">
           <label class="control">
-            Within km
+            <ng-container i18n="@@areas.neighbours.withinKm">Within km</ng-container>
             <input type="number" min="1" max="500" [ngModel]="maxDistanceKm()" (ngModelChange)="changeMaxDistance($event)" />
           </label>
 
           <label class="control">
-            Min gap %
+            <ng-container i18n="@@areas.neighbours.minGap">Min gap %</ng-container>
             <input type="number" min="1" max="100" [ngModel]="minGapPercent()" (ngModelChange)="changeMinGap($event)" />
           </label>
 
@@ -136,44 +137,42 @@
   </section>
 
   @if (loading()) {
-    <section class="card"><p class="empty">Loading…</p></section>
+    <section class="card"><p class="empty" i18n="@@areas.neighbours.loading">Loading…</p></section>
   } @else if (error()) {
     <section class="card"><div class="card-body"><p class="error">{{ error() }}</p></div></section>
   } @else if (awaitingAnchor()) {
     <section class="card">
-      <p class="empty">
-        Pick a {{ levelName(level()).toLowerCase() }} above and this fills with everything within
+      <p class="empty" i18n="@@areas.neighbours.awaitingAnchor">
+        Pick a {level(), select, District {distrito} Municipality {município} other {freguesia}} above and this fills with everything within
         {{ maxDistanceKm() }} km of it, nearest first, each one priced against it. Or switch back to
         <strong>Biggest gaps</strong> for the league table of the whole
-        {{ scope().municipality || scope().district || 'country' }}.
+        {{ scope().municipality || scope().district || countryWord }}.
       </p>
     </section>
   } @else if (anchor()) {
     <!-- ANCHORED: everything around one place, read from that place's point of view. -->
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Around {{ anchor() }}</span>
+        <span class="card-title" i18n="@@areas.neighbours.aroundPlace">Around {{ anchor() }}</span>
         <span class="meta">
-          {{ neighbours().length }} within {{ maxDistanceKm() }} km
+          <ng-container i18n="@@areas.neighbours.withinKmCount">{{ neighbours().length }} within {{ maxDistanceKm() }} km</ng-container>
           @if (comparedOn()) {
-            · compared on {{ comparedOn() }} only
+            <ng-container i18n="@@areas.neighbours.comparedOnOnly">· compared on {{ comparedOn() }} only</ng-container>
           }
           @if (anchorPricePerM2(); as own) {
-            · {{ anchor() }}
             @if (comparedOn()) {
-              {{ comparedOn() }}s ask
+              <ng-container i18n="@@areas.neighbours.anchorTypologyAsk">· {{ anchor() }} {{ comparedOn() }}s ask {{ own | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</ng-container>
             } @else {
-              asks
+              <ng-container i18n="@@areas.neighbours.anchorAsks">· {{ anchor() }} asks {{ own | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</ng-container>
             }
-            €{{ own | number: '1.0-0' }}/m²
           }
         </span>
       </div>
 
       @if (neighbours().length === 0) {
-        <p class="empty">
+        <p class="empty" i18n="@@areas.neighbours.emptyAround">
           Nothing sits within {{ maxDistanceKm() }} km of {{ anchor() }} at
-          {{ levelName(level()).toLowerCase() }} grain with at least {{ minListings() }} listings. Widen
+          {level(), select, District {distrito} Municipality {município} other {freguesia}} grain with at least {{ minListings() }} listings. Widen
           the distance, lower Min listings, or compare freguesias, which sit closer together.
         </p>
       } @else {
@@ -182,21 +181,19 @@
             <thead>
               <tr>
                 <th class="rank">#</th>
-                <th class="sortable" (click)="toggleAnchorSort('place')">Neighbour{{ anchorArrow('place') }}</th>
-                <th class="num sortable" (click)="toggleAnchorSort('distance')">Apart{{ anchorArrow('distance') }}</th>
-                <th class="num sortable" (click)="toggleAnchorSort('listings')">Listings{{ anchorArrow('listings') }}</th>
+                <th class="sortable" (click)="toggleAnchorSort('place')"><ng-container i18n="@@areas.neighbours.col.neighbour">Neighbour</ng-container>{{ anchorArrow('place') }}</th>
+                <th class="num sortable" (click)="toggleAnchorSort('distance')"><ng-container i18n="@@areas.neighbours.col.apart">Apart</ng-container>{{ anchorArrow('distance') }}</th>
+                <th class="num sortable" (click)="toggleAnchorSort('listings')"><ng-container i18n="@@areas.neighbours.col.listings">Listings</ng-container>{{ anchorArrow('listings') }}</th>
                 <th class="num sortable" (click)="toggleAnchorSort('pricePerM2')">
-                  Their €/m²{{ anchorArrow('pricePerM2') }}
+                  <ng-container i18n="@@areas.neighbours.col.theirPricePerM2">Their €/m²</ng-container>{{ anchorArrow('pricePerM2') }}
                 </th>
                 @if (comparedOn()) {
-                  <th class="num" title="This place's median across all its stock, for comparison">
-                    All stock
-                  </th>
+                  <th class="num" title="This place's median across all its stock, for comparison" i18n-title="@@areas.neighbours.col.allStockAnchorTitle" i18n="@@areas.neighbours.col.allStock">All stock</th>
                 }
                 <th class="num sortable" (click)="toggleAnchorSort('gap')">
-                  vs {{ anchor() }}{{ anchorArrow('gap') }}
+                  <ng-container i18n="@@areas.neighbours.col.versus">vs {{ anchor() }}</ng-container>{{ anchorArrow('gap') }}
                 </th>
-                <th class="num sortable" (click)="toggleAnchorSort('perM2')">Per m²{{ anchorArrow('perM2') }}</th>
+                <th class="num sortable" (click)="toggleAnchorSort('perM2')"><ng-container i18n="@@areas.neighbours.col.perM2">Per m²</ng-container>{{ anchorArrow('perM2') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -223,12 +220,19 @@
                   <!-- Direction is the whole point of this column, so it says the word. -->
                   <td class="num">
                     <span [class.pos]="n.cheaper" [class.neg]="!n.cheaper">
-                      {{ n.cheaper ? '−' : '+' }}{{ n.gapPercent | number: '1.0-0' }}%
-                      {{ n.cheaper ? 'cheaper' : 'dearer' }}
+                      @if (n.cheaper) {
+                        <ng-container i18n="@@areas.neighbours.pctCheaper">−{{ n.gapPercent | number: '1.0-0' }}% cheaper</ng-container>
+                      } @else {
+                        <ng-container i18n="@@areas.neighbours.pctDearer">+{{ n.gapPercent | number: '1.0-0' }}% dearer</ng-container>
+                      }
                     </span>
                   </td>
                   <td class="num muted">
-                    {{ n.cheaper ? 'save' : 'pay' }} {{ n.differencePerM2 | number: '1.0-0' }}
+                    @if (n.cheaper) {
+                      <ng-container i18n="@@areas.neighbours.save">save {{ n.differencePerM2 | number: '1.0-0' }}</ng-container>
+                    } @else {
+                      <ng-container i18n="@@areas.neighbours.pay">pay {{ n.differencePerM2 | number: '1.0-0' }}</ng-container>
+                    }
                   </td>
                 </tr>
 
@@ -237,17 +241,23 @@
                     <td [attr.colspan]="anchorColspan()">
                       <div class="compare">
                         <div class="compare-block">
-                          <h4>{{ anchor() }} &mdash; where you are looking from</h4>
+                          <h4 i18n="@@areas.neighbours.lookingFrom">{{ anchor() }} &mdash; where you are looking from</h4>
                           <dl class="kv">
                             @if (anchorPricePerM2(); as own) {
-                              <dt>{{ comparedOn() ? comparedOn() + 's ask' : 'Asks' }}</dt>
-                              <dd>€{{ own | number: '1.0-0' }}/m²</dd>
+                              <dt>{{ askLabel() }}</dt>
+                              <dd>{{ own | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</dd>
                             }
                           </dl>
                         </div>
 
                         <div class="compare-block">
-                          <h4>{{ n.cheaper ? 'Cheaper here' : 'Dearer here' }}</h4>
+                          <h4>
+                            @if (n.cheaper) {
+                              <ng-container i18n="@@areas.neighbours.cheaperHere">Cheaper here</ng-container>
+                            } @else {
+                              <ng-container i18n="@@areas.neighbours.dearerHere">Dearer here</ng-container>
+                            }
+                          </h4>
                           <app-place-name
                             [level]="n.place.level"
                             [district]="n.place.district"
@@ -255,61 +265,69 @@
                             [town]="n.place.town"
                           />
                           <dl class="kv">
-                            <dt>{{ comparedOn() ? comparedOn() + 's ask' : 'Asks' }}</dt>
-                            <dd>€{{ n.pricePerM2 | number: '1.0-0' }}/m²</dd>
-                            <dt>Listings behind it</dt>
+                            <dt>{{ askLabel() }}</dt>
+                            <dd>{{ n.pricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</dd>
+                            <dt i18n="@@areas.neighbours.listingsBehind">Listings behind it</dt>
                             <dd>{{ n.listingCount | number }}</dd>
                             @if (comparedOn()) {
-                              <dt>All its stock</dt>
+                              <dt i18n="@@areas.neighbours.allItsStock">All its stock</dt>
                               <dd class="muted">
-                                €{{ n.place.allStockPricePerM2 | number: '1.0-0' }}/m²
+                                {{ n.place.allStockPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²
                                 <span class="faint">n={{ n.place.allStockListingCount | number }}</span>
                               </dd>
                             }
                             @if (typicalAreaM2(n.place); as area) {
-                              <dt>Typical flat</dt>
+                              <dt i18n="@@areas.neighbours.typicalFlat">Typical flat</dt>
                               <dd class="muted">{{ area | number: '1.0-0' }} m²</dd>
                             }
                           </dl>
                         </div>
 
                         <div class="compare-block wide">
-                          <h4>What moving there would mean</h4>
+                          <h4 i18n="@@areas.neighbours.movingMeans">What moving there would mean</h4>
                           <div class="stat-grid">
                             <div class="stat">
                               <span class="stat-value" [class.pos]="n.cheaper" [class.neg]="!n.cheaper">
                                 {{ n.cheaper ? '−' : '+' }}{{ n.gapPercent | number: '1.0-0' }}%
                               </span>
                               <span class="stat-label">
-                                {{ n.cheaper ? 'Cheaper' : 'Dearer' }} than {{ anchor() }}
+                                @if (n.cheaper) {
+                                  <ng-container i18n="@@areas.neighbours.cheaperThan">Cheaper than {{ anchor() }}</ng-container>
+                                } @else {
+                                  <ng-container i18n="@@areas.neighbours.dearerThan">Dearer than {{ anchor() }}</ng-container>
+                                }
                                 @if (comparedOn()) {
-                                  , on {{ comparedOn() }}s
+                                  <ng-container i18n="@@areas.neighbours.onTypology">, on {{ comparedOn() }}s</ng-container>
                                 }
                               </span>
                             </div>
                             <div class="stat">
-                              <span class="stat-value">€{{ n.differencePerM2 | number: '1.0-0' }}/m²</span>
+                              <span class="stat-value">{{ n.differencePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</span>
                               <span class="stat-label">
-                                {{ n.cheaper ? 'Saved' : 'Paid extra' }} on every square metre
+                                @if (n.cheaper) {
+                                  <ng-container i18n="@@areas.neighbours.savedPerM2">Saved on every square metre</ng-container>
+                                } @else {
+                                  <ng-container i18n="@@areas.neighbours.paidExtraPerM2">Paid extra on every square metre</ng-container>
+                                }
                               </span>
                             </div>
                             @if (neighbourDifferenceOnATypicalFlat(n); as onAFlat) {
                               <div class="stat">
                                 <span class="stat-value" [class.pos]="n.cheaper" [class.neg]="!n.cheaper">
-                                  €{{ onAFlat | number: '1.0-0' }}
+                                  {{ onAFlat | currency: 'EUR' : 'symbol' : '1.0-0' }}
                                 </span>
-                                <span class="stat-label">
+                                <span class="stat-label" i18n="@@areas.neighbours.onTypicalFlat">
                                   On a typical {{ typicalAreaM2(n.place) | number: '1.0-0' }} m² flat there
                                 </span>
                               </div>
                             }
                             <div class="stat">
                               <span class="stat-value">{{ n.distanceKm | number: '1.1-1' }} km</span>
-                              <span class="stat-label">From {{ anchor() }}, middle point to middle point</span>
+                              <span class="stat-label" i18n="@@areas.neighbours.fromAnchor">From {{ anchor() }}, middle point to middle point</span>
                             </div>
                           </div>
 
-                          <p class="note-inline">
+                          <p class="note-inline" i18n="@@areas.neighbours.distanceNoteAround">
                             Distance is measured between the middle point of each place&rsquo;s listings, not
                             between real borders &mdash; this neighbour can sit this close and still be
                             separated by water or a motorway. The money assumes you buy the size this place
@@ -330,15 +348,19 @@
     <!-- UNANCHORED: every pair at this level, biggest gap first. -->
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Every pair</span>
+        <span class="card-title" i18n="@@areas.neighbours.everyPair">Every pair</span>
         <span class="meta">
-          {{ sortedGaps().length }} pairs · {{ levelName(level()) }}
-          · compared on {{ comparedOn() ? comparedOn() + ' only' : 'all stock' }}
+          <ng-container i18n="@@areas.neighbours.pairCount">{sortedGaps().length, plural, =1 {1 pair} other {{{ sortedGaps().length }} pairs}}</ng-container> · {{ levelName(level()) }}
+          @if (comparedOn()) {
+            <ng-container i18n="@@areas.neighbours.comparedOnOnly">· compared on {{ comparedOn() }} only</ng-container>
+          } @else {
+            <ng-container i18n="@@areas.neighbours.comparedOnAll">· compared on all stock</ng-container>
+          }
         </span>
       </div>
 
       @if (sortedGaps().length === 0) {
-        <p class="empty">
+        <p class="empty" i18n="@@areas.neighbours.emptyPairs">
           No pairs within {{ maxDistanceKm() }} km differ by {{ minGapPercent() }}% or more. Widen the
           distance, lower the gap, or compare freguesias, which sit closer together.
         </p>
@@ -348,23 +370,23 @@
             <thead>
               <tr>
                 <th class="rank">#</th>
-                <th class="sortable" (click)="togglePairSort('expensive')">Pay more in{{ pairArrow('expensive') }}</th>
+                <th class="sortable" (click)="togglePairSort('expensive')"><ng-container i18n="@@areas.neighbours.col.payMore">Pay more in</ng-container>{{ pairArrow('expensive') }}</th>
                 <th class="num sortable" (click)="togglePairSort('expensivePrice')">
                   €/m²{{ pairArrow('expensivePrice') }}
                 </th>
                 @if (comparedOn()) {
-                  <th class="num" title="Its median across all stock, for comparison">All stock</th>
+                  <th class="num" title="Its median across all stock, for comparison" i18n-title="@@areas.neighbours.col.allStockPairTitle" i18n="@@areas.neighbours.col.allStock">All stock</th>
                 }
-                <th class="sortable" (click)="togglePairSort('cheaper')">Pay less in{{ pairArrow('cheaper') }}</th>
+                <th class="sortable" (click)="togglePairSort('cheaper')"><ng-container i18n="@@areas.neighbours.col.payLess">Pay less in</ng-container>{{ pairArrow('cheaper') }}</th>
                 <th class="num sortable" (click)="togglePairSort('cheaperPrice')">
                   €/m²{{ pairArrow('cheaperPrice') }}
                 </th>
                 @if (comparedOn()) {
-                  <th class="num" title="Its median across all stock, for comparison">All stock</th>
+                  <th class="num" title="Its median across all stock, for comparison" i18n-title="@@areas.neighbours.col.allStockPairTitle" i18n="@@areas.neighbours.col.allStock">All stock</th>
                 }
-                <th class="num sortable" (click)="togglePairSort('distance')">Apart{{ pairArrow('distance') }}</th>
-                <th class="num sortable" (click)="togglePairSort('saving')">You save{{ pairArrow('saving') }}</th>
-                <th class="num sortable" (click)="togglePairSort('gap')">Gap{{ pairArrow('gap') }}</th>
+                <th class="num sortable" (click)="togglePairSort('distance')"><ng-container i18n="@@areas.neighbours.col.apart">Apart</ng-container>{{ pairArrow('distance') }}</th>
+                <th class="num sortable" (click)="togglePairSort('saving')"><ng-container i18n="@@areas.neighbours.col.youSave">You save</ng-container>{{ pairArrow('saving') }}</th>
+                <th class="num sortable" (click)="togglePairSort('gap')"><ng-container i18n="@@areas.neighbours.col.gap">Gap</ng-container>{{ pairArrow('gap') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -378,7 +400,7 @@
                       [municipality]="gap.expensive.municipality"
                       [town]="gap.expensive.town"
                     >
-                      <span class="faint">n={{ gap.expensive.listingCount }}</span>@if (isThin(gap.expensive)) { <span class="tag tag-quiet">thin</span> }
+                      <span class="faint">n={{ gap.expensive.listingCount }}</span>@if (isThin(gap.expensive)) { <span class="tag tag-quiet" i18n="@@areas.neighbours.thin">thin</span> }
                     </app-place-name>
                   </td>
                   <td class="num">{{ gap.expensive.medianPricePerM2 | number: '1.0-0' }}</td>
@@ -392,7 +414,7 @@
                       [municipality]="gap.cheaper.municipality"
                       [town]="gap.cheaper.town"
                     >
-                      <span class="faint">n={{ gap.cheaper.listingCount }}</span>@if (isThin(gap.cheaper)) { <span class="tag tag-quiet">thin</span> }
+                      <span class="faint">n={{ gap.cheaper.listingCount }}</span>@if (isThin(gap.cheaper)) { <span class="tag tag-quiet" i18n="@@areas.neighbours.thin">thin</span> }
                     </app-place-name>
                   </td>
                   <td class="num">{{ gap.cheaper.medianPricePerM2 | number: '1.0-0' }}</td>
@@ -411,7 +433,7 @@
                         <!-- The two halves stacked rather than read across a wide row: this is the
                              whole comparison, and it should not need scrolling to take in. -->
                         <div class="compare-block">
-                          <h4>Pay more in</h4>
+                          <h4 i18n="@@areas.neighbours.payMoreHeading">Pay more in</h4>
                           <app-place-name
                             [level]="gap.expensive.level"
                             [district]="gap.expensive.district"
@@ -419,26 +441,26 @@
                             [town]="gap.expensive.town"
                           />
                           <dl class="kv">
-                            <dt>{{ comparedOn() ? comparedOn() + 's ask' : 'Asks' }}</dt>
-                            <dd>€{{ gap.expensive.medianPricePerM2 | number: '1.0-0' }}/m²</dd>
-                            <dt>Listings behind it</dt>
+                            <dt>{{ askLabel() }}</dt>
+                            <dd>{{ gap.expensive.medianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</dd>
+                            <dt i18n="@@areas.neighbours.listingsBehind">Listings behind it</dt>
                             <dd>{{ gap.expensive.listingCount | number }}</dd>
                             @if (comparedOn()) {
-                              <dt>All its stock</dt>
+                              <dt i18n="@@areas.neighbours.allItsStock">All its stock</dt>
                               <dd class="muted">
-                                €{{ gap.expensive.allStockPricePerM2 | number: '1.0-0' }}/m²
+                                {{ gap.expensive.allStockPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²
                                 <span class="faint">n={{ gap.expensive.allStockListingCount | number }}</span>
                               </dd>
                             }
                             @if (typicalAreaM2(gap.expensive); as area) {
-                              <dt>Typical flat</dt>
+                              <dt i18n="@@areas.neighbours.typicalFlat">Typical flat</dt>
                               <dd class="muted">{{ area | number: '1.0-0' }} m²</dd>
                             }
                           </dl>
                         </div>
 
                         <div class="compare-block">
-                          <h4>Pay less in</h4>
+                          <h4 i18n="@@areas.neighbours.payLessHeading">Pay less in</h4>
                           <app-place-name
                             [level]="gap.cheaper.level"
                             [district]="gap.cheaper.district"
@@ -446,19 +468,19 @@
                             [town]="gap.cheaper.town"
                           />
                           <dl class="kv">
-                            <dt>{{ comparedOn() ? comparedOn() + 's ask' : 'Asks' }}</dt>
-                            <dd>€{{ gap.cheaper.medianPricePerM2 | number: '1.0-0' }}/m²</dd>
-                            <dt>Listings behind it</dt>
+                            <dt>{{ askLabel() }}</dt>
+                            <dd>{{ gap.cheaper.medianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</dd>
+                            <dt i18n="@@areas.neighbours.listingsBehind">Listings behind it</dt>
                             <dd>{{ gap.cheaper.listingCount | number }}</dd>
                             @if (comparedOn()) {
-                              <dt>All its stock</dt>
+                              <dt i18n="@@areas.neighbours.allItsStock">All its stock</dt>
                               <dd class="muted">
-                                €{{ gap.cheaper.allStockPricePerM2 | number: '1.0-0' }}/m²
+                                {{ gap.cheaper.allStockPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²
                                 <span class="faint">n={{ gap.cheaper.allStockListingCount | number }}</span>
                               </dd>
                             }
                             @if (typicalAreaM2(gap.cheaper); as area) {
-                              <dt>Typical flat</dt>
+                              <dt i18n="@@areas.neighbours.typicalFlat">Typical flat</dt>
                               <dd class="muted">{{ area | number: '1.0-0' }} m²</dd>
                             }
                           </dl>
@@ -466,50 +488,50 @@
 
                         <!-- What the gap is worth, which is the only reason to read the row. -->
                         <div class="compare-block wide">
-                          <h4>What the gap is worth</h4>
+                          <h4 i18n="@@areas.neighbours.gapWorth">What the gap is worth</h4>
                           <div class="stat-grid">
                             <div class="stat">
                               <span class="stat-value">−{{ gap.gapPercent | number: '1.0-0' }}%</span>
                               <span class="stat-label">
-                                Cheaper in {{ gap.cheaper.displayName }}
+                                <ng-container i18n="@@areas.neighbours.cheaperIn">Cheaper in {{ gap.cheaper.displayName }}</ng-container>
                                 @if (comparedOn()) {
-                                  , on {{ comparedOn() }}s
+                                  <ng-container i18n="@@areas.neighbours.onTypology">, on {{ comparedOn() }}s</ng-container>
                                 }
                               </span>
                             </div>
                             <div class="stat">
-                              <span class="stat-value">€{{ saving(gap) | number: '1.0-0' }}/m²</span>
-                              <span class="stat-label">Saved on every square metre</span>
+                              <span class="stat-value">{{ saving(gap) | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</span>
+                              <span class="stat-label" i18n="@@areas.neighbours.savedPerM2">Saved on every square metre</span>
                             </div>
                             @if (savingOnATypicalFlat(gap); as onAFlat) {
                               <div class="stat">
-                                <span class="stat-value pos">€{{ onAFlat | number: '1.0-0' }}</span>
-                                <span class="stat-label">
+                                <span class="stat-value pos">{{ onAFlat | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
+                                <span class="stat-label" i18n="@@areas.neighbours.onTypicalFlatPair">
                                   On a typical {{ typicalAreaM2(gap.cheaper) | number: '1.0-0' }} m² flat there
                                 </span>
                               </div>
                             }
                             <div class="stat">
                               <span class="stat-value">{{ gap.distanceKm | number: '1.1-1' }} km</span>
-                              <span class="stat-label">Between the two, middle point to middle point</span>
+                              <span class="stat-label" i18n="@@areas.neighbours.betweenTheTwo">Between the two, middle point to middle point</span>
                             </div>
                           </div>
 
                           @if (comparedOn() && allStockGapPercent(gap) !== null) {
                             <p class="note-inline">
-                              On all their stock the two are
-                              <strong>{{ allStockGapPercent(gap)! | number: '1.0-0' }}%</strong> apart.
+                              <ng-container i18n="@@areas.neighbours.allStockApart">On all their stock the two are
+                              <strong>{{ allStockGapPercent(gap)! | number: '1.0-0' }}%</strong> apart.</ng-container>
                               @if (allStockGapPercent(gap)! > -5) {
-                                So this gap is about the {{ comparedOn() }}s specifically rather than about
-                                the places &mdash; overall the two are priced much the same.
+                                <ng-container i18n="@@areas.neighbours.typologySpecific">So this gap is about the {{ comparedOn() }}s specifically rather than about
+                                the places &mdash; overall the two are priced much the same.</ng-container>
                               } @else {
-                                The places differ overall as well, so the {{ comparedOn() }} gap is part of a
-                                wider difference rather than a quirk of one typology.
+                                <ng-container i18n="@@areas.neighbours.widerDifference">The places differ overall as well, so the {{ comparedOn() }} gap is part of a
+                                wider difference rather than a quirk of one typology.</ng-container>
                               }
                             </p>
                           }
 
-                          <p class="note-inline">
+                          <p class="note-inline" i18n="@@areas.neighbours.distanceNotePair">
                             Distance is measured between the middle point of each place&rsquo;s listings, not
                             between real borders &mdash; two places can sit this close and still be separated
                             by water or a motorway. The money assumes you buy the size that place typically
@@ -527,13 +549,13 @@
 
         @if (hiddenPairCount() > 0) {
           <div class="card-body">
-            <button type="button" class="secondary" (click)="showAllPairs.set(true)">
+            <button type="button" class="secondary" (click)="showAllPairs.set(true)" i18n="@@areas.neighbours.showAll">
               Show all {{ sortedGaps().length | number }} pairs ({{ hiddenPairCount() | number }} more)
             </button>
           </div>
         } @else if (showAllPairs() && sortedGaps().length > 25) {
           <div class="card-body">
-            <button type="button" class="secondary" (click)="showAllPairs.set(false)">Show fewer</button>
+            <button type="button" class="secondary" (click)="showAllPairs.set(false)" i18n="@@areas.neighbours.showFewer">Show fewer</button>
           </div>
         }
       }

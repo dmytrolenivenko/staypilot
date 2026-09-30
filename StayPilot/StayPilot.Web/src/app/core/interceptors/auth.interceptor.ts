@@ -22,7 +22,7 @@ import { catchError, from, switchMap, throwError } from 'rxjs';
 // git history is a live credential in git history.
 export const TOKEN_KEY = 'staypilot_token';
 
-const SCOPES = ['api://c447c11c-f8a9-4bf5-a9b1-6d176064370c/access_as_user'];
+export const API_SCOPES = ['api://c447c11c-f8a9-4bf5-a9b1-6d176064370c/access_as_user'];
 
 // The only GETs the API guards with [Authorize]. Every other GET is a public read, and
 // every write (POST/PUT/DELETE) always gets the token. Add a path here when a new GET
@@ -30,6 +30,8 @@ const SCOPES = ['api://c447c11c-f8a9-4bf5-a9b1-6d176064370c/access_as_user'];
 const PROTECTED_GET_PATHS = [
   '/api/OwnedProperty/',
   '/api/InvestmentAnalysis/AnalyzeOwnedProperty',
+  // Public, but only a signed-in caller gets the AI narrative - so send the token when there is one.
+  '/api/InvestmentAnalysis/Analyze/',
   '/api/MarketArea/GetRecalculationStatus'
 ];
 
@@ -56,7 +58,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const withToken = () =>
-    from(msal.instance.acquireTokenSilent({ scopes: SCOPES, account })).pipe(
+    from(msal.instance.acquireTokenSilent({ scopes: API_SCOPES, account })).pipe(
       switchMap(result => next(req.clone({ setHeaders: { Authorization: `Bearer ${result.accessToken}` } }))),
       // Silent renewal can fail (session expired, etc.) - fall back to no token
       // rather than breaking the request. The API's 401 is the real signal that
