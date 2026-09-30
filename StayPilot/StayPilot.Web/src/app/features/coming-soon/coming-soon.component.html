@@ -1,11 +1,11 @@
 <div class="page">
   <app-page-header [title]="info.title" [sub]="info.description">
-    <span actions class="badge badge-soon">Planned</span>
+    <span actions class="badge badge-soon" i18n="@@hub.comingSoon.planned">Planned</span>
   </app-page-header>
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Waiting on</span>
+      <span class="card-title" i18n="@@hub.comingSoon.waitingOn">Waiting on</span>
     </div>
     <div class="card-body">
       <p class="hint">{{ info.needs }}</p>

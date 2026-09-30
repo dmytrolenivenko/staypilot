@@ -1,11 +1,7 @@
 <div class="page">
   <app-page-header
-    [title]="listing() ? '#' + listing()!.id + ' · ' + listing()!.marketAreaTown : 'Open a listing'"
-    [sub]="
-      listing()
-        ? 'Everything held about this listing, and what the numbers say about buying it.'
-        : 'Every listing has a page of its own. Browse to find one, or open it by id if you have one.'
-    "
+    [title]="listing() ? '#' + listing()!.id + ' · ' + listing()!.marketAreaTown : emptyTitle"
+    [sub]="listing() ? listingSub : emptySub"
   />
 
   <!-- The empty state IS the old lookup screen: no listing chosen yet, so the page asks which.
@@ -13,28 +9,29 @@
   @if (!listing()) {
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Open by id</span>
+        <span class="card-title" i18n="@@listings.page.openById">Open by id</span>
       </div>
       <div class="card-body stack">
         <form class="toolbar" (ngSubmit)="goToTyped()">
           <label class="field">
-            <span>Listing id</span>
+            <span i18n="@@listings.page.listingId">Listing id</span>
             <input
               class="id-input"
               type="number"
               min="1"
               placeholder="e.g. 1042"
+              i18n-placeholder="@@listings.page.idPlaceholder"
               [ngModel]="idInput()"
               (ngModelChange)="idInput.set($event)"
               name="id"
             />
           </label>
-          <button type="submit" [disabled]="loading()">{{ loading() ? 'Opening…' : 'Open' }}</button>
+          <button type="submit" [disabled]="loading()">{{ loading() ? openingLabel : openLabel }}</button>
         </form>
 
         @if (recentListings.ids().length > 0) {
           <div class="row">
-            <span class="field-label">Recently viewed</span>
+            <span class="field-label" i18n="@@listings.page.recent">Recently viewed</span>
             @for (id of recentListings.ids(); track id) {
               <button class="link" type="button" (click)="open(id)">#{{ id }}</button>
             }

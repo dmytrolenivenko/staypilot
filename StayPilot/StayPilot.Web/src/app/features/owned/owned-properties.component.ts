@@ -8,6 +8,7 @@ import { MarketAreaService } from '../../core/services/market-area.service';
 import { MarketArea } from '../../core/models/market-area';
 import { OwnedPropertyRequest, OwnedPropertyResponse } from '../../core/models/owned-property';
 import { clickedRowControl } from '../../shared/row-click';
+import { LocationPickerComponent } from '../../shared/location-picker.component';
 import {
   PROPERTY_CONDITION_OPTIONS,
   PROPERTY_TYPES,
@@ -24,7 +25,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-owned-properties',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LocationPickerComponent],
   templateUrl: './owned-properties.component.html',
   styleUrl: './owned-properties.component.css'
 })
@@ -105,6 +106,9 @@ export class OwnedPropertiesComponent implements OnInit {
 
   form: OwnedPropertyRequest = this.emptyForm();
 
+  // Whether the "Choose on map" picker is open under the coordinate inputs.
+  showMap = signal(false);
+
   constructor(
     private readonly service: OwnedPropertyService,
     private readonly marketAreas: MarketAreaService,
@@ -155,7 +159,7 @@ export class OwnedPropertiesComponent implements OnInit {
         this.router.navigate(['/portfolio'], { queryParams: { ask: 'valuation', propertyId: p.id } });
       },
       error: () => {
-        this.error.set('Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.');
+        this.error.set($localize`:@@owned.error.price:Could not price your properties. Check the API is running, and that there are enough listings collected to fit the model.`);
         this.analysingId.set(null);
       }
     });
@@ -189,7 +193,7 @@ export class OwnedPropertiesComponent implements OnInit {
         this.listLoading.set(false);
       },
       error: () => {
-        this.error.set('Could not load your properties from the API.');
+        this.error.set($localize`:@@owned.error.load:Could not load your properties from the API.`);
         this.listLoading.set(false);
       }
     });
@@ -284,6 +288,10 @@ export class OwnedPropertiesComponent implements OnInit {
   }
 
   // --- Multi-select --------------------------------------------------------
+  selectLabel(name: string): string {
+    return $localize`:@@owned.row.selectAria:Select ${name}:name:`;
+  }
+
   isSelected(id: number): boolean {
     return this.selectedIds().has(id);
   }
@@ -306,7 +314,13 @@ export class OwnedPropertiesComponent implements OnInit {
     if (ids.length === 0) {
       return;
     }
-    if (!confirm(`Delete ${ids.length} propert${ids.length === 1 ? 'y' : 'ies'}? This cannot be undone.`)) {
+    const count = ids.length;
+    const question =
+      count === 1
+        ? $localize`:@@owned.confirm.deleteOne:Delete 1 property? This cannot be undone.`
+        : $localize`:@@owned.confirm.deleteMany:Delete ${count}:count: properties? This cannot be undone.`;
+
+    if (!confirm(question)) {
       return;
     }
     this.loading.set(true);
@@ -315,7 +329,11 @@ export class OwnedPropertiesComponent implements OnInit {
 
     forkJoin(ids.map(id => this.service.delete(id))).subscribe({
       next: () => {
-        this.message.set(`Deleted ${ids.length} propert${ids.length === 1 ? 'y' : 'ies'}.`);
+        this.message.set(
+          count === 1
+            ? $localize`:@@owned.message.deletedOne:Deleted 1 property.`
+            : $localize`:@@owned.message.deletedMany:Deleted ${count}:count: properties.`
+        );
         // If the property open in the form was among them, reset the form.
         if (this.editingId() && ids.includes(this.editingId()!)) {
           this.newProperty();
@@ -325,7 +343,7 @@ export class OwnedPropertiesComponent implements OnInit {
         this.loadAll();
       },
       error: () => {
-        this.error.set('Could not delete one or more properties. The list may be partly out of date — refresh.');
+        this.error.set($localize`:@@owned.error.deleteSome:Could not delete one or more properties. The list may be partly out of date — refresh.`);
         this.loading.set(false);
         this.loadAll();
       }
@@ -373,7 +391,7 @@ export class OwnedPropertiesComponent implements OnInit {
   lookup(): void {
     const id = this.idInput();
     if (!id || id <= 0) {
-      this.error.set('Enter a valid property id.');
+      this.error.set($localize`:@@owned.error.invalidId:Enter a valid property id.`);
       return;
     }
     this.loading.set(true);
@@ -388,7 +406,11 @@ export class OwnedPropertiesComponent implements OnInit {
         this.loading.set(false);
       },
       error: err => {
-        this.error.set(err.status === 404 ? `No property found with id ${id}.` : 'Could not reach the API.');
+        this.error.set(
+          err.status === 404
+            ? $localize`:@@owned.error.notFound:No property found with id ${id}:id:.`
+            : $localize`:@@owned.error.unreachable:Could not reach the API.`
+        );
         this.current.set(null);
         this.loading.set(false);
       }
@@ -455,17 +477,17 @@ export class OwnedPropertiesComponent implements OnInit {
     const problems: string[] = [];
 
     if (!this.form.name.trim()) {
-      problems.push('Name is required.');
+      problems.push($localize`:@@owned.validation.nameRequired:Name is required.`);
     }
 
     if (!this.form.areaM2 || this.form.areaM2 < 1) {
-      problems.push('Area (m²) must be at least 1.');
+      problems.push($localize`:@@owned.validation.areaMin:Area (m²) must be at least 1.`);
     }
 
     // District + Municipality are what the server matches a property to a market
     // area on, so both must be chosen or the save fails server-side.
     if (!this.form.district || !this.form.municipality) {
-      problems.push('Pick at least a District and a Municipality.');
+      problems.push($localize`:@@owned.validation.location:Pick at least a District and a Municipality.`);
     }
 
     if (problems.length > 0) {
@@ -491,7 +513,11 @@ export class OwnedPropertiesComponent implements OnInit {
         this.current.set(prop);
         this.editingId.set(prop.id);
         this.idInput.set(prop.id);
-        this.message.set(editing ? `Property #${prop.id} updated.` : `Property #${prop.id} created.`);
+        this.message.set(
+          editing
+            ? $localize`:@@owned.message.updated:Property #${prop.id}:id: updated.`
+            : $localize`:@@owned.message.created:Property #${prop.id}:id: created.`
+        );
         this.loading.set(false);
         this.loadAll();
       },
@@ -514,7 +540,7 @@ export class OwnedPropertiesComponent implements OnInit {
           apiMessage ??
             validationMessage ??
             problem?.detail ??
-            'Could not save the property. Check the required fields.'
+            $localize`:@@owned.error.save:Could not save the property. Check the required fields.`
         );
         this.loading.set(false);
       }
@@ -527,7 +553,7 @@ export class OwnedPropertiesComponent implements OnInit {
     if (!id) {
       return;
     }
-    if (!confirm(`Delete property #${id}? This cannot be undone.`)) {
+    if (!confirm($localize`:@@owned.confirm.deleteById:Delete property #${id}:id:? This cannot be undone.`)) {
       return;
     }
     this.loading.set(true);
@@ -535,13 +561,13 @@ export class OwnedPropertiesComponent implements OnInit {
 
     this.service.delete(id).subscribe({
       next: () => {
-        this.message.set(`Property #${id} deleted.`);
+        this.message.set($localize`:@@owned.message.deleted:Property #${id}:id: deleted.`);
         this.newProperty();
         this.loading.set(false);
         this.loadAll();
       },
       error: () => {
-        this.error.set('Could not delete the property.');
+        this.error.set($localize`:@@owned.error.delete:Could not delete the property.`);
         this.loading.set(false);
       }
     });

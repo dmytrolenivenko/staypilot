@@ -180,7 +180,7 @@ export class MarketAreaBudgetComponent implements OnInit, OnChanges {
           this.areas.set([]);
           this.reach.set(0);
           this.calculatedAtUtc.set(null);
-          this.error.set(apiErrorMessage(err, 'Could not work out what the budget buys.'));
+          this.error.set(apiErrorMessage(err, $localize`:@@areas.budget.error.load:Could not work out what the budget buys.`));
           this.loading.set(false);
         }
       });
@@ -204,6 +204,10 @@ export class MarketAreaBudgetComponent implements OnInit, OnChanges {
   changeMinTypology(minTypology: Typology | ''): void {
     this.minTypology.set(minTypology);
     this.reload();
+  }
+
+  stretchLabel(option: number): string {
+    return option === 0 ? $localize`:@@areas.budget.stretchNone:None` : `+${option}%`;
   }
 
   changeStretch(stretchPercent: number): void {

@@ -4,7 +4,10 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:pt": "ng serve -c pt",
     "build": "ng build",
+    "postbuild": "node scripts/flatten-locales.mjs",
+    "i18n": "ng extract-i18n && node scripts/i18n-sync.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -20,6 +23,7 @@
     "@angular/router": "^18.2.0",
     "@azure/msal-angular": "^6.2.0",
     "@azure/msal-browser": "^5.20.0",
+    "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"
@@ -28,7 +32,9 @@
     "@angular-devkit/build-angular": "^18.2.21",
     "@angular/cli": "^18.2.21",
     "@angular/compiler-cli": "^18.2.0",
+    "@angular/localize": "^18.2.14",
     "@types/jasmine": "~5.1.0",
+    "@types/leaflet": "^1.9.22",
     "jasmine-core": "~5.2.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

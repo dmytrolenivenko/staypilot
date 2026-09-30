@@ -21,22 +21,23 @@ import { MarketAreaRenovationComponent } from '../market-areas/market-area-renov
 export type PlacesLens = 'value' | 'budget' | 'neighbours' | 'renovation';
 
 const LENSES: SegmentedOption<PlacesLens>[] = [
-  { value: 'value', label: 'Where value sits', hint: 'Ranked on median €/m²' },
-  { value: 'budget', label: 'What money buys', hint: 'The most rooms a budget reaches' },
-  { value: 'neighbours', label: 'Neighbour gaps', hint: 'Nearby places priced far apart' },
-  { value: 'renovation', label: 'Renovation upside', hint: 'Where a fixer-upper pays' }
+  // Labels share the footer's ids (nav-groups.ts) so the two can never disagree.
+  { value: 'value', label: $localize`:@@core.nav.ask.value:Where value sits`, hint: $localize`:@@hub.places.value.hint:Ranked on median €/m²` },
+  { value: 'budget', label: $localize`:@@core.nav.ask.budget:What money buys`, hint: $localize`:@@hub.places.budget.hint:The most rooms a budget reaches` },
+  { value: 'neighbours', label: $localize`:@@core.nav.ask.neighbours:Neighbour gaps`, hint: $localize`:@@hub.places.neighbours.hint:Nearby places priced far apart` },
+  { value: 'renovation', label: $localize`:@@core.nav.ask.renovation:Renovation upside`, hint: $localize`:@@hub.places.renovation.hint:Where a fixer-upper pays` }
 ];
 
 /** Lens → the one line under the title. The question in plain words, not the screen's name. */
 const LENS_SUBS: Record<PlacesLens, string> = {
   value:
-    'Places ranked on the middle price per square metre — not the middle asking price, so a town full of small flats cannot look cheap just for being small.',
+    $localize`:@@hub.places.value.sub:Places ranked on the middle price per square metre — not the middle asking price, so a town full of small flats cannot look cheap just for being small.`,
   budget:
-    'The other way round from every property portal: put in what you have, and see what it actually gets you in each place.',
+    $localize`:@@hub.places.budget.sub:The other way round from every property portal: put in what you have, and see what it actually gets you in each place.`,
   neighbours:
-    'Where the biggest price borders are, or what one place looks like against everything near it.',
+    $localize`:@@hub.places.neighbours.sub:Where the biggest price borders are, or what one place looks like against everything near it.`,
   renovation:
-    'Where the market pays you enough for taking the work on. The other three find value; this one says where to create it.'
+    $localize`:@@hub.places.renovation.sub:Where the market pays you enough for taking the work on. The other three find value; this one says where to create it.`
 };
 
 /**

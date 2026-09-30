@@ -283,14 +283,14 @@ export class MarketAreaRenovationComponent implements OnInit, OnChanges {
     const margin = this.margin(area);
 
     if (margin > 100) {
-      return 'Worth renovating';
+      return $localize`:@@areas.renovation.verdict.worth:Worth renovating`;
     }
 
     if (margin >= -100) {
-      return 'Break-even';
+      return $localize`:@@areas.renovation.verdict.breakEven:Break-even`;
     }
 
-    return 'Buy finished';
+    return $localize`:@@areas.renovation.verdict.buyFinished:Buy finished`;
   }
 
   verdictClass(area: MarketAreaStatsResponse): string {
@@ -406,7 +406,7 @@ export class MarketAreaRenovationComponent implements OnInit, OnChanges {
           this.loading.set(false);
         },
         error: () => {
-          this.error.set('Could not load the renovation numbers. Check the API is running.');
+          this.error.set($localize`:@@areas.renovation.error.load:Could not load the renovation numbers. Check the API is running.`);
           this.loading.set(false);
         }
       });

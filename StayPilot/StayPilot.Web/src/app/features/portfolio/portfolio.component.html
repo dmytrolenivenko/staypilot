@@ -1,8 +1,9 @@
 <div class="page">
-  <app-page-header title="My properties" [sub]="sub()" />
+  <app-page-header title="My properties" i18n-title="@@core.nav.portfolio.title" [sub]="sub()" />
 
   <app-segmented
     label="What to see about your properties"
+    i18n-label="@@hub.portfolio.segmented.aria"
     [options]="lenses"
     [value]="lens()"
     (valueChange)="pickLens($event)"

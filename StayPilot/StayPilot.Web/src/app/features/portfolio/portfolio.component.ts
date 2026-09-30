@@ -10,14 +10,15 @@ import { ValuationComponent } from '../valuation/valuation.component';
 export type PortfolioLens = 'properties' | 'valuation';
 
 const LENSES: SegmentedOption<PortfolioLens>[] = [
-  { value: 'properties', label: 'My properties', hint: 'Add, edit and delete what you own' },
-  { value: 'valuation', label: 'Valuation', hint: 'What each would be advertised at today' }
+  // Labels share the footer's ids (nav-groups.ts) so the two can never disagree.
+  { value: 'properties', label: $localize`:@@core.nav.portfolio.title:My properties`, hint: $localize`:@@hub.portfolio.properties.hint:Add, edit and delete what you own` },
+  { value: 'valuation', label: $localize`:@@core.nav.ask.valuation:Valuation`, hint: $localize`:@@hub.portfolio.valuation.hint:What each would be advertised at today` }
 ];
 
 const LENS_SUBS: Record<PortfolioLens, string> = {
-  properties: 'The apartments you own — the base a valuation compares against market listings.',
+  properties: $localize`:@@hub.portfolio.properties.sub:The apartments you own — the base a valuation compares against market listings.`,
   valuation:
-    'Every property you own, priced against the ASKING prices of the adverts around it. These are advertised prices, not sale prices — nothing here has been checked against a recorded transaction.'
+    $localize`:@@hub.portfolio.valuation.sub:Every property you own, priced against the ASKING prices of the adverts around it. These are advertised prices, not sale prices — nothing here has been checked against a recorded transaction.`
 };
 
 /**

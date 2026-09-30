@@ -11,37 +11,37 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">All properties</span>
+      <span class="card-title" i18n="@@owned.list.title">All properties</span>
       <div class="card-actions">
-        <span class="meta">{{ properties().length }} owned</span>
-        <button type="button" (click)="newProperty()">New property</button>
+        <span class="meta" i18n="@@owned.list.count">{properties().length, plural, =1 {1 owned} other {{{ properties().length }} owned}}</span>
+        <button type="button" (click)="newProperty()" i18n="@@owned.newProperty">New property</button>
         @if (selectedIds().size > 0) {
           <button type="button" class="danger sm" (click)="deleteSelected()" [disabled]="loading()">
-            Delete selected ({{ selectedIds().size }})
+            <ng-container i18n="@@owned.list.deleteSelected">Delete selected ({{ selectedIds().size }})</ng-container>
           </button>
         }
       </div>
     </div>
 
     @if (listLoading()) {
-      <p class="empty">Loading…</p>
+      <p class="empty" i18n="@@owned.list.loading">Loading…</p>
     } @else if (properties().length === 0) {
-      <p class="empty">You have no properties yet. Use <strong>New property</strong> to add the first one.</p>
+      <p class="empty" i18n="@@owned.list.empty">You have no properties yet. Use <strong>New property</strong> to add the first one.</p>
     } @else {
       <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
               <th class="pick">
-                <input type="checkbox" [checked]="allSelected()" (change)="toggleSelectAll()" title="Select all" />
+                <input type="checkbox" [checked]="allSelected()" (change)="toggleSelectAll()" title="Select all" i18n-title="@@owned.list.selectAll" />
               </th>
-              <th class="num sortable" (click)="sortBy('id')">Id{{ arrow('id') }}</th>
-              <th class="sortable" (click)="sortBy('name')">Name{{ arrow('name') }}</th>
-              <th class="sortable" (click)="sortBy('propertyType')">Type{{ arrow('propertyType') }}</th>
-              <th class="sortable" (click)="sortBy('typology')">Typology{{ arrow('typology') }}</th>
-              <th class="num sortable" (click)="sortBy('areaM2')">Area (m²){{ arrow('areaM2') }}</th>
-              <th class="num sortable" (click)="sortBy('purchasePrice')">Paid (€){{ arrow('purchasePrice') }}</th>
-              <th class="num">Valuation</th>
+              <th class="num sortable" (click)="sortBy('id')"><ng-container i18n="@@owned.id">Id</ng-container>{{ arrow('id') }}</th>
+              <th class="sortable" (click)="sortBy('name')"><ng-container i18n="@@owned.col.name">Name</ng-container>{{ arrow('name') }}</th>
+              <th class="sortable" (click)="sortBy('propertyType')"><ng-container i18n="@@owned.col.type">Type</ng-container>{{ arrow('propertyType') }}</th>
+              <th class="sortable" (click)="sortBy('typology')"><ng-container i18n="@@owned.col.typology">Typology</ng-container>{{ arrow('typology') }}</th>
+              <th class="num sortable" (click)="sortBy('areaM2')"><ng-container i18n="@@owned.col.area">Area (m²)</ng-container>{{ arrow('areaM2') }}</th>
+              <th class="num sortable" (click)="sortBy('purchasePrice')"><ng-container i18n="@@owned.col.paid">Paid (€)</ng-container>{{ arrow('purchasePrice') }}</th>
+              <th class="num" i18n="@@owned.col.valuation">Valuation</th>
               <th></th>
             </tr>
           </thead>
@@ -53,27 +53,28 @@
                 [class.row-editing]="editingId() === p.id"
                 (click)="openValuation(p, $event)"
                 title="Open this property's valuation"
+                i18n-title="@@owned.row.openTitle"
               >
                 <td class="pick">
-                  <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" [attr.aria-label]="'Select ' + p.name" />
+                  <input type="checkbox" [checked]="isSelected(p.id)" (change)="toggleSelect(p.id)" [attr.aria-label]="selectLabel(p.name)" />
                 </td>
                 <td class="num">#{{ p.id }}</td>
                 <td>{{ p.name }}</td>
-                <td>{{ p.propertyType }}</td>
+                <td i18n="@@owned.propertyType">{p.propertyType, select, Apartment {Apartment} Villa {Villa} House {House} Land {Land} other {{{ p.propertyType }}}}</td>
                 <td>{{ p.typology }}</td>
                 <td class="num">{{ p.areaM2 | number: '1.0-0' }}</td>
-                <td class="num">{{ p.purchasePrice != null ? ('€' + (p.purchasePrice | number: '1.0-0')) : '—' }}</td>
+                <td class="num">{{ p.purchasePrice != null ? (p.purchasePrice | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}</td>
                 <td class="num">
                   @if (p.valuatedAtUtc) {
-                    <span [title]="'Last priced ' + (p.valuatedAtUtc | date: 'medium')">
-                      €{{ p.valuatedMidPrice | number: '1.0-0' }}
+                    <span title="Last priced {{ p.valuatedAtUtc | date: 'medium' }}" i18n-title="@@owned.row.lastPriced">
+                      {{ p.valuatedMidPrice | currency: 'EUR' : 'symbol' : '1.0-0' }}
                     </span>
                   } @else {
-                    <span class="muted" title="Press Re-price on the Valuation screen to price it">Not evaluated yet</span>
+                    <span class="muted" title="Press Re-price on the Valuation screen to price it" i18n-title="@@owned.row.notEvaluatedTitle" i18n="@@owned.row.notEvaluated">Not evaluated yet</span>
                   }
                 </td>
                 <td class="row-actions">
-                  <button type="button" class="secondary sm" (click)="select(p)">Edit</button>
+                  <button type="button" class="secondary sm" (click)="select(p)" i18n="@@owned.row.edit">Edit</button>
                   <!-- Evaluate is the core action of this table, so it is the one filled button. -->
                   @if (p.valuatedAtUtc) {
                     <a
@@ -81,6 +82,8 @@
                       [routerLink]="['/portfolio']"
                       [queryParams]="{ ask: 'valuation', propertyId: p.id }"
                       title="See this property's valuation, comps and forecast"
+                      i18n-title="@@owned.row.evaluateTitle"
+                      i18n="@@owned.evaluate"
                       >Evaluate →</a
                     >
                   } @else {
@@ -90,8 +93,13 @@
                       (click)="analyse(p)"
                       [disabled]="analysingId() === p.id"
                       title="Price every owned property and open this one's valuation"
+                      i18n-title="@@owned.row.priceAllTitle"
                     >
-                      {{ analysingId() === p.id ? 'Pricing…' : 'Evaluate →' }}
+                      @if (analysingId() === p.id) {
+                        <ng-container i18n="@@owned.row.pricing">Pricing…</ng-container>
+                      } @else {
+                        <ng-container i18n="@@owned.evaluate">Evaluate →</ng-container>
+                      }
                     </button>
                   }
                   <a
@@ -99,6 +107,8 @@
                     [routerLink]="['/portfolio/analysis']"
                     [queryParams]="{ ownedId: p.id }"
                     title="Renovation cost, resale value, profit and an AI-written thesis for this property"
+                    i18n-title="@@owned.aiTitle"
+                    i18n="@@owned.aiAnalysis"
                     >AI analysis →</a
                   >
                 </td>
@@ -112,152 +122,182 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">{{ editingId() ? 'Edit property #' + editingId() : 'New property' }}</span>
+      <span class="card-title">
+        @if (editingId()) {
+          <ng-container i18n="@@owned.form.editTitle">Edit property #{{ editingId() }}</ng-container>
+        } @else {
+          <ng-container i18n="@@owned.newProperty">New property</ng-container>
+        }
+      </span>
       @if (editingId()) {
-        <button type="button" class="danger sm" (click)="remove()" [disabled]="loading()">Delete</button>
+        <button type="button" class="danger sm" (click)="remove()" [disabled]="loading()" i18n="@@owned.form.delete">Delete</button>
       }
     </div>
     <div class="card-body">
       <form class="form-grid" (ngSubmit)="save()">
         <label class="field wide">
-          <span>Name *</span>
-          <input type="text" [(ngModel)]="form.name" name="name" placeholder="e.g. Faro T2 flat" />
+          <span i18n="@@owned.field.name">Name *</span>
+          <input type="text" [(ngModel)]="form.name" name="name" placeholder="e.g. Faro T2 flat" i18n-placeholder="@@owned.field.namePlaceholder" />
         </label>
 
         <label class="field">
-          <span>Type *</span>
+          <span i18n="@@owned.field.type">Type *</span>
           <select [(ngModel)]="form.propertyType" name="propertyType">
-            @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
+            @for (t of propertyTypes; track t) { <option [value]="t" i18n="@@owned.propertyTypeOption">{t, select, Apartment {Apartment} Villa {Villa} House {House} Land {Land} other {{{ t }}}}</option> }
           </select>
         </label>
         <label class="field">
-          <span>Typology *</span>
+          <span i18n="@@owned.field.typology">Typology *</span>
           <select [(ngModel)]="form.typology" name="typology">
             @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
           </select>
         </label>
         <label class="field">
-          <span>Condition</span>
+          <span i18n="@@owned.field.condition">Condition</span>
           <select [(ngModel)]="form.condition" name="condition">
             @for (c of conditions; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Area (m²) *</span>
+          <span i18n="@@owned.field.area">Area (m²) *</span>
           <input type="number" min="1" [(ngModel)]="form.areaM2" name="areaM2" />
         </label>
         <label class="field">
-          <span>Bathrooms</span>
+          <span i18n="@@owned.field.bathrooms">Bathrooms</span>
           <input type="number" min="0" [(ngModel)]="form.bathrooms" name="bathrooms" />
         </label>
         <label class="field">
-          <span>Balconies</span>
+          <span i18n="@@owned.field.balconies">Balconies</span>
           <input type="number" min="0" [(ngModel)]="form.balconyCount" name="balconyCount" />
         </label>
         <label class="field">
-          <span>Floor</span>
+          <span i18n="@@owned.field.floor">Floor</span>
           <input type="number" [(ngModel)]="form.floor" name="floor" />
         </label>
         <label class="field">
-          <span>Total floors</span>
+          <span i18n="@@owned.field.totalFloors">Total floors</span>
           <input type="number" [(ngModel)]="form.totalFloors" name="totalFloors" />
         </label>
 
         <!-- Location cascade: District → Municipality → Town → Zone. Each pick loads
              the next, from the same market-area data the listing filters use. -->
         <label class="field">
-          <span>District *</span>
+          <span i18n="@@owned.field.district">District *</span>
           <select [(ngModel)]="form.district" name="district" (ngModelChange)="onDistrictChange()">
-            <option value="">— select —</option>
+            <option value="" i18n="@@owned.field.select">— select —</option>
             @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
           </select>
         </label>
         <label class="field">
-          <span>Municipality *</span>
+          <span i18n="@@owned.field.municipality">Municipality *</span>
           <select
             [(ngModel)]="form.municipality"
             name="municipality"
             (ngModelChange)="onMunicipalityChange()"
             [disabled]="!form.district"
           >
-            <option value="">— select —</option>
+            <option value="" i18n="@@owned.field.select">— select —</option>
             @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
           </select>
         </label>
         <label class="field">
-          <span>Town</span>
+          <span i18n="@@owned.field.town">Town</span>
           <select [(ngModel)]="form.town" name="town" (ngModelChange)="onTownChange()" [disabled]="!form.municipality">
-            <option value="">— any —</option>
+            <option value="" i18n="@@owned.field.any">— any —</option>
             @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
           </select>
         </label>
         <label class="field">
-          <span>Zone</span>
+          <span i18n="@@owned.field.zone">Zone</span>
           <select [(ngModel)]="form.zone" name="zone" [disabled]="!form.town">
-            <option [ngValue]="null">— any —</option>
+            <option [ngValue]="null" i18n="@@owned.field.any">— any —</option>
             @for (z of zoneOptions(); track z) { <option [ngValue]="z">{{ z }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Latitude *</span>
+          <span i18n="@@owned.field.latitude">Latitude *</span>
           <input type="number" step="any" [(ngModel)]="form.latitude" name="latitude" />
         </label>
         <label class="field">
-          <span>Longitude *</span>
+          <span i18n="@@owned.field.longitude">Longitude *</span>
           <input type="number" step="any" [(ngModel)]="form.longitude" name="longitude" />
         </label>
 
+        <!-- Pick the coordinates on a map instead of pasting them in. Typed values move the pin. -->
+        <div class="field map-toggle">
+          <button type="button" class="btn" (click)="showMap.set(!showMap())">
+            @if (showMap()) {
+              <ng-container i18n="@@owned.map.hide">Hide map</ng-container>
+            } @else {
+              <ng-container i18n="@@owned.map.choose">Choose on map</ng-container>
+            }
+          </button>
+        </div>
+        @if (showMap()) {
+          <div class="field wide">
+            <app-location-picker
+              [lat]="form.latitude"
+              [lng]="form.longitude"
+              (picked)="form.latitude = $event.lat; form.longitude = $event.lng" />
+            <span class="hint" i18n="@@owned.map.hint">Click the map or drag the pin to set the coordinates.</span>
+          </div>
+        }
+
         <label class="field">
-          <span>Purchase price (€)</span>
+          <span i18n="@@owned.field.purchasePrice">Purchase price (€)</span>
           <input type="number" min="0" [(ngModel)]="form.purchasePrice" name="purchasePrice" />
         </label>
         <label class="field">
-          <span>Purchase date</span>
+          <span i18n="@@owned.field.purchaseDate">Purchase date</span>
           <input type="date" [(ngModel)]="form.purchaseDate" name="purchaseDate" />
         </label>
         <label class="field">
-          <span>Renovation investment (€)</span>
+          <span i18n="@@owned.field.renovationInvestment">Renovation investment (€)</span>
           <input type="number" min="0" [(ngModel)]="form.renovationInvestment" name="renovationInvestment" />
         </label>
         <label class="field">
-          <span>Energy certificate</span>
+          <span i18n="@@owned.field.energyCertificate">Energy certificate</span>
           <input type="text" [(ngModel)]="form.energyCertificate" name="energyCertificate" placeholder="A / B / C…" />
         </label>
 
         <label class="field">
-          <span>Construction year</span>
+          <span i18n="@@owned.field.constructionYear">Construction year</span>
           <input type="number" [(ngModel)]="form.constructionYear" name="constructionYear" />
         </label>
         <label class="field">
-          <span>Renovation year</span>
+          <span i18n="@@owned.field.renovationYear">Renovation year</span>
           <input type="number" [(ngModel)]="form.renovationYear" name="renovationYear" />
         </label>
 
         <fieldset class="check-grid wide">
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasElevator" name="hasElevator" /> Elevator</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasAirConditioning" name="hasAirConditioning" /> A/C</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasGarage" name="hasGarage" /> Garage</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasParking" name="hasParking" /> Parking</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasTerrace" name="hasTerrace" /> Terrace</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasSwimmingPool" name="hasSwimmingPool" /> Pool</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.isFurnished" name="isFurnished" /> Furnished</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasSeaView" name="hasSeaView" /> Sea view</label>
-          <label class="check"><input type="checkbox" [(ngModel)]="form.hasCityView" name="hasCityView" /> City view</label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasElevator" name="hasElevator" /> <ng-container i18n="@@owned.feature.elevator">Elevator</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasAirConditioning" name="hasAirConditioning" /> <ng-container i18n="@@owned.feature.airConditioning">A/C</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasGarage" name="hasGarage" /> <ng-container i18n="@@owned.feature.garage">Garage</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasParking" name="hasParking" /> <ng-container i18n="@@owned.feature.parking">Parking</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasTerrace" name="hasTerrace" /> <ng-container i18n="@@owned.feature.terrace">Terrace</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasSwimmingPool" name="hasSwimmingPool" /> <ng-container i18n="@@owned.feature.pool">Pool</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.isFurnished" name="isFurnished" /> <ng-container i18n="@@owned.feature.furnished">Furnished</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasSeaView" name="hasSeaView" /> <ng-container i18n="@@owned.feature.seaView">Sea view</ng-container></label>
+          <label class="check"><input type="checkbox" [(ngModel)]="form.hasCityView" name="hasCityView" /> <ng-container i18n="@@owned.feature.cityView">City view</ng-container></label>
         </fieldset>
 
         <label class="field wide">
-          <span>Notes</span>
+          <span i18n="@@owned.field.notes">Notes</span>
           <textarea rows="2" [(ngModel)]="form.notes" name="notes"></textarea>
         </label>
 
         <div class="actions">
           <button type="submit" [disabled]="loading()">
-            {{ editingId() ? 'Save changes' : 'Create property' }}
+            @if (editingId()) {
+              <ng-container i18n="@@owned.form.save">Save changes</ng-container>
+            } @else {
+              <ng-container i18n="@@owned.form.create">Create property</ng-container>
+            }
           </button>
           @if (editingId()) {
-            <button type="button" class="secondary" (click)="newProperty()">Cancel</button>
+            <button type="button" class="secondary" (click)="newProperty()" i18n="@@owned.form.cancel">Cancel</button>
           }
         </div>
       </form>
@@ -267,30 +307,32 @@
   @if (current(); as p) {
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Resolved by the server</span>
+        <span class="card-title" i18n="@@owned.resolved.title">Resolved by the server</span>
         <div class="card-actions">
-          <a class="btn" [routerLink]="['/portfolio']" [queryParams]="{ ask: 'valuation', propertyId: p.id }">Evaluate →</a>
+          <a class="btn" [routerLink]="['/portfolio']" [queryParams]="{ ask: 'valuation', propertyId: p.id }" i18n="@@owned.evaluate">Evaluate →</a>
           <a
             class="btn btn-secondary"
             [routerLink]="['/portfolio/analysis']"
             [queryParams]="{ ownedId: p.id }"
             title="Renovation cost, resale value, profit and an AI-written thesis for this property"
+            i18n-title="@@owned.aiTitle"
+            i18n="@@owned.aiAnalysis"
             >AI analysis →</a
           >
         </div>
       </div>
       <div class="card-body stack">
         <dl class="kv">
-          <dt>Id</dt>
+          <dt i18n="@@owned.id">Id</dt>
           <dd>#{{ p.id }}</dd>
-          <dt>Market area id</dt>
+          <dt i18n="@@owned.resolved.marketAreaId">Market area id</dt>
           <dd>{{ p.marketAreaId }}</dd>
-          <dt>Nearest beach</dt>
+          <dt i18n="@@owned.resolved.nearestBeach">Nearest beach</dt>
           <dd>{{ p.nearestBeachName ?? '—' }}</dd>
-          <dt>Distance to beach</dt>
+          <dt i18n="@@owned.resolved.distanceToBeach">Distance to beach</dt>
           <dd>{{ p.distanceToBeachMeters != null ? (p.distanceToBeachMeters + ' m') : '—' }}</dd>
         </dl>
-        <p class="hint">
+        <p class="hint" i18n="@@owned.resolved.hint">
           Market area and nearest beach are resolved from the coordinates, not typed in.
         </p>
       </div>

@@ -7,6 +7,7 @@ import { Subject, filter, takeUntil } from 'rxjs';
 import { NAV_LINKS, NavLink } from './core/models/nav-groups';
 import { MarketAreaService } from './core/services/market-area.service';
 import { RELIABLE_LISTINGS } from './core/models/market-area-stats';
+import { IS_PORTUGUESE, otherLanguageUrl } from './core/locale';
 
 type Theme = 'light' | 'dark';
 
@@ -57,6 +58,24 @@ export class AppComponent implements OnInit, OnDestroy {
    * its padding and lets the screen run to the window's edges.
    */
   isHome = computed(() => this.url().split('?')[0] === '/');
+
+  /** The language switch: always the language you are not reading, named in itself. */
+  readonly otherLanguage = {
+    short: IS_PORTUGUESE ? 'EN' : 'PT',
+    code: IS_PORTUGUESE ? 'en-GB' : 'pt-PT',
+    label: IS_PORTUGUESE ? 'View in English' : 'Ver em português',
+    href: computed(() => otherLanguageUrl(this.url()))
+  };
+
+  // Header strings the template picks between with a ternary.
+  readonly labels = {
+    darkTheme: $localize`:@@shell.theme.dark:Dark theme`,
+    lightTheme: $localize`:@@shell.theme.light:Light theme`,
+    switchToDark: $localize`:@@shell.theme.switchToDark:Switch to dark theme`,
+    switchToLight: $localize`:@@shell.theme.switchToLight:Switch to light theme`,
+    searching: $localize`:@@shell.search.searching:Searching…`,
+    searchPlaceholder: $localize`:@@shell.search.placeholder:Search a place…`
+  };
 
   // What was typed in the header box: a place name, or a listing id.
   searchText = '';
@@ -145,6 +164,12 @@ export class AppComponent implements OnInit, OnDestroy {
     this.msal.instance.logoutRedirect();
   }
 
+  accountAriaLabel(): string {
+    const who = this.accountName() ?? this.accountEmail() ?? $localize`:@@shell.account.signedIn:signed in`;
+
+    return $localize`:@@shell.account.aria:Account: ${who}:account:`;
+  }
+
   /** The initials shown in the account button when there is no room for a name. */
   accountInitials(): string {
     const name = this.accountName() ?? this.accountEmail() ?? '';
@@ -193,7 +218,7 @@ export class AppComponent implements OnInit, OnDestroy {
         const match = page.items[0];
 
         if (!match) {
-          this.searchError.set(`Nothing found for “${text}”.`);
+          this.searchError.set($localize`:@@shell.search.nothingFound:Nothing found for “${text}:query:”.`);
 
           return;
         }
@@ -209,7 +234,7 @@ export class AppComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.searching.set(false);
-        this.searchError.set('Could not search right now.');
+        this.searchError.set($localize`:@@shell.search.error:Could not search right now.`);
       }
     });
   }

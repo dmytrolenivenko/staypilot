@@ -1,35 +1,37 @@
 <div class="listing-detail">
   <header class="listing-head">
-    <h2>Listing #{{ listing.id }}</h2>
+    <h2 i18n="@@listings.detail.title">Listing #{{ listing.id }}</h2>
     <div class="listing-head-actions">
       <a
         class="link"
         [routerLink]="['/listings/investment-analysis']"
         [queryParams]="{ id: listing.id }"
         title="Renovation cost, resale value and profit for this listing"
+        i18n-title="@@listings.detail.analyzeTitle"
+        i18n="@@listings.detail.analyze"
         >Analyze →</a
       >
       <a class="link" [href]="listing.sourceUrl" target="_blank" rel="noopener">
-        {{ listing.sourceName || 'Source' }} ↗
+        {{ listing.sourceName || sourceFallback }} ↗
       </a>
     </div>
   </header>
 
   <div class="fact-grid">
     <section class="fact">
-      <h3>Location</h3>
+      <h3 i18n="@@listings.detail.location">Location</h3>
       <dl class="kv">
-        <dt>District</dt>
+        <dt i18n="@@listings.detail.district">District</dt>
         <dd>{{ listing.marketAreaDistrict }}</dd>
-        <dt>Municipality</dt>
+        <dt i18n="@@listings.detail.municipality">Municipality</dt>
         <dd>{{ listing.marketAreaMunicipality }}</dd>
-        <dt>Town</dt>
+        <dt i18n="@@listings.detail.town">Town</dt>
         <dd>{{ listing.marketAreaTown }}</dd>
-        <dt>Zone</dt>
+        <dt i18n="@@listings.detail.zone">Zone</dt>
         <dd>{{ listing.marketAreaZone || '—' }}</dd>
-        <dt>Coordinates</dt>
+        <dt i18n="@@listings.detail.coordinates">Coordinates</dt>
         <dd>{{ listing.latitude ?? '—' }}, {{ listing.longitude ?? '—' }}</dd>
-        <dt>Nearest beach</dt>
+        <dt i18n="@@listings.detail.nearestBeach">Nearest beach</dt>
         <dd>
           @if (listing.nearestBeachName) {
             {{ listing.nearestBeachName }} ({{ listing.distanceToBeachMeters }} m)
@@ -41,7 +43,7 @@
     </section>
 
     <section class="fact">
-      <h3>Property</h3>
+      <h3 i18n="@@listings.detail.property">Property</h3>
       @if (propertyFacts.length) {
         <dl class="kv">
           @for (fact of propertyFacts; track fact.label) {
@@ -50,12 +52,12 @@
           }
         </dl>
       } @else {
-        <p class="hint">No property details available.</p>
+        <p class="hint" i18n="@@listings.detail.noProperty">No property details available.</p>
       }
     </section>
 
     <section class="fact">
-      <h3>Features</h3>
+      <h3 i18n="@@listings.detail.features">Features</h3>
       @if (presentFeatures.length) {
         <ul class="feature-list">
           @for (feature of presentFeatures; track feature) {
@@ -63,25 +65,25 @@
           }
         </ul>
       } @else {
-        <p class="hint">No features available.</p>
+        <p class="hint" i18n="@@listings.detail.noFeatures">No features available.</p>
       }
     </section>
 
     <section class="fact">
-      <h3>Latest snapshot</h3>
+      <h3 i18n="@@listings.detail.snapshot">Latest snapshot</h3>
       @if (listing.listingSnapshot) {
         <dl class="kv">
-          <dt>Price</dt>
-          <dd>€{{ listing.listingSnapshot.price | number: '1.0-0' }}</dd>
-          <dt>Price / m²</dt>
-          <dd>€{{ listing.listingSnapshot.pricePerM2 | number: '1.0-0' }}</dd>
-          <dt>Status</dt>
-          <dd>{{ listing.listingSnapshot.status }}</dd>
-          <dt>Snapshot date</dt>
+          <dt i18n="@@listings.detail.price">Price</dt>
+          <dd>{{ listing.listingSnapshot.price | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+          <dt i18n="@@listings.detail.pricePerM2">Price / m²</dt>
+          <dd>{{ listing.listingSnapshot.pricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}</dd>
+          <dt i18n="@@listings.detail.status">Status</dt>
+          <dd>{{ statusLabel(listing.listingSnapshot.status) }}</dd>
+          <dt i18n="@@listings.detail.snapshotDate">Snapshot date</dt>
           <dd>{{ listing.listingSnapshot.snapshotDateUtc | date: 'yyyy-MM-dd' }}</dd>
         </dl>
       } @else {
-        <p class="hint">
+        <p class="hint" i18n="@@listings.detail.noSnapshot">
           No snapshot on this response (expected on GET by id today — the price history endpoint
           isn't built yet).
         </p>
@@ -91,7 +93,7 @@
 
   @if (listing.notes) {
     <section class="fact">
-      <h3>Notes</h3>
+      <h3 i18n="@@listings.detail.notes">Notes</h3>
       <p class="notes-block">{{ listing.notes }}</p>
     </section>
   }

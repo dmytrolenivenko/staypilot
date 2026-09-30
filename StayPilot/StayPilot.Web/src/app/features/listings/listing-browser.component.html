@@ -4,125 +4,125 @@
   <!-- FILTERS (the only thing that calls the database — on Search) -->
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Filters</span>
+      <span class="card-title" i18n="@@listings.browser.filters">Filters</span>
     </div>
     <div class="card-body">
       <form class="form-grid" (ngSubmit)="search()">
         <!-- Location cascade: Distrito → Município → Freguesia → Zona. Each pick loads the next. -->
         <label class="field">
-          <span>Distrito</span>
+          <span i18n="@@listings.browser.district">Distrito</span>
           <select name="district" [(ngModel)]="form.district" (ngModelChange)="onDistrictChange()">
-            <option value="">Any</option>
+            <option value="" i18n="@@listings.browser.any">Any</option>
             @for (d of districtOptions(); track d) { <option [value]="d">{{ d }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Município</span>
+          <span i18n="@@listings.browser.municipality">Município</span>
           <select
             name="municipality"
             [(ngModel)]="form.municipality"
             (ngModelChange)="onMunicipalityChange()"
             [disabled]="!form.district"
           >
-            <option value="">Any</option>
+            <option value="" i18n="@@listings.browser.any">Any</option>
             @for (m of municipalityOptions(); track m) { <option [value]="m">{{ m }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Freguesia</span>
+          <span i18n="@@listings.browser.town">Freguesia</span>
           <select name="town" [(ngModel)]="form.town" (ngModelChange)="onTownChange()" [disabled]="!form.municipality">
-            <option value="">Any</option>
+            <option value="" i18n="@@listings.browser.any">Any</option>
             @for (t of townOptions(); track t) { <option [value]="t">{{ t }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Zona</span>
+          <span i18n="@@listings.browser.zone">Zona</span>
           <select name="zone" [(ngModel)]="form.zone" [disabled]="!form.town">
-            <option value="">Any</option>
+            <option value="" i18n="@@listings.browser.any">Any</option>
             @for (z of zoneOptions(); track z) { <option [value]="z">{{ z }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Property type</span>
+          <span i18n="@@listings.browser.propertyType">Property type</span>
           <select name="propertyType" [(ngModel)]="form.propertyType">
-            <option value="">Any</option>
-            @for (t of propertyTypes; track t) { <option [value]="t">{{ t }}</option> }
+            <option value="" i18n="@@listings.browser.any">Any</option>
+            @for (t of propertyTypes; track t) { <option [value]="t" i18n="@@listings.browser.typeOption">{t, select, Apartment {Apartment} Villa {Villa} House {House} Land {Land} other {{{ t }}}}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Typology</span>
+          <span i18n="@@listings.browser.typology">Typology</span>
           <select name="typology" [(ngModel)]="form.typology">
-            <option value="">Any</option>
+            <option value="" i18n="@@listings.browser.any">Any</option>
             @for (t of typologies; track t) { <option [value]="t">{{ t }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Condition</span>
+          <span i18n="@@listings.browser.condition">Condition</span>
           <select name="condition" [(ngModel)]="form.condition">
-            <option value="">Any</option>
+            <option value="" i18n="@@listings.browser.any">Any</option>
             @for (c of conditions; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
           </select>
         </label>
 
         <label class="field">
-          <span>Status</span>
+          <span i18n="@@listings.browser.status">Status</span>
           <select name="listingStatus" [(ngModel)]="form.listingStatus">
-            <option value="">Any</option>
+            <option value="" i18n="@@listings.browser.any">Any</option>
             @for (s of listingStatuses; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
           </select>
         </label>
 
         <!-- Number-range filters -->
         <label class="field">
-          <span>Min price (€)</span>
+          <span i18n="@@listings.browser.minPrice">Min price (€)</span>
           <input type="number" min="0" name="minPrice" [(ngModel)]="form.minPrice" />
         </label>
 
         <label class="field">
-          <span>Max price (€)</span>
+          <span i18n="@@listings.browser.maxPrice">Max price (€)</span>
           <input type="number" min="0" name="maxPrice" [(ngModel)]="form.maxPrice" />
         </label>
 
         <label class="field">
-          <span>Min area (m²)</span>
+          <span i18n="@@listings.browser.minArea">Min area (m²)</span>
           <input type="number" min="0" name="minAreaM2" [(ngModel)]="form.minAreaM2" />
         </label>
 
         <label class="field">
-          <span>Max area (m²)</span>
+          <span i18n="@@listings.browser.maxArea">Max area (m²)</span>
           <input type="number" min="0" name="maxAreaM2" [(ngModel)]="form.maxAreaM2" />
         </label>
 
         <label class="field">
-          <span>Max €/m²</span>
+          <span i18n="@@listings.browser.maxPricePerM2">Max €/m²</span>
           <input type="number" min="0" name="maxPricePerM2" [(ngModel)]="form.maxPricePerM2" />
         </label>
 
         <label class="field">
-          <span>Max beach distance (m)</span>
+          <span i18n="@@listings.browser.maxBeachDistance">Max beach distance (m)</span>
           <input type="number" min="0" name="distanceToBeachMeters" [(ngModel)]="form.distanceToBeachMeters" />
         </label>
 
         <!-- Feature checkboxes -->
         <div class="field wide">
-          <span>Must have</span>
+          <span i18n="@@listings.browser.mustHave">Must have</span>
           <fieldset class="check-grid">
-            <label class="check"><input type="checkbox" name="hasGarage" [(ngModel)]="form.hasGarage" /> Garage</label>
-            <label class="check"><input type="checkbox" name="hasSwimmingPool" [(ngModel)]="form.hasSwimmingPool" /> Pool</label>
-            <label class="check"><input type="checkbox" name="hasSeaView" [(ngModel)]="form.hasSeaView" /> Sea view</label>
-            <label class="check"><input type="checkbox" name="hasElevator" [(ngModel)]="form.hasElevator" /> Elevator</label>
+            <label class="check"><input type="checkbox" name="hasGarage" [(ngModel)]="form.hasGarage" /> <ng-container i18n="@@listings.browser.garage">Garage</ng-container></label>
+            <label class="check"><input type="checkbox" name="hasSwimmingPool" [(ngModel)]="form.hasSwimmingPool" /> <ng-container i18n="@@listings.browser.pool">Pool</ng-container></label>
+            <label class="check"><input type="checkbox" name="hasSeaView" [(ngModel)]="form.hasSeaView" /> <ng-container i18n="@@listings.browser.seaView">Sea view</ng-container></label>
+            <label class="check"><input type="checkbox" name="hasElevator" [(ngModel)]="form.hasElevator" /> <ng-container i18n="@@listings.browser.elevator">Elevator</ng-container></label>
           </fieldset>
         </div>
 
         <div class="actions">
-          <button type="submit" [disabled]="loading()">Search</button>
-          <button type="button" class="secondary" (click)="reset()" [disabled]="loading()">Reset</button>
+          <button type="submit" [disabled]="loading()" i18n="@@listings.browser.search">Search</button>
+          <button type="button" class="secondary" (click)="reset()" [disabled]="loading()" i18n="@@listings.browser.reset">Reset</button>
         </div>
       </form>
     </div>
@@ -131,14 +131,15 @@
   <!-- RESULTS -->
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Results</span>
+      <span class="card-title" i18n="@@listings.browser.results">Results</span>
       @if (hasSearched() && totalRecords() > 0) {
         <div class="card-actions">
           <span class="meta">
-            {{ totalRecords() | number }} match{{ totalRecords() === 1 ? '' : 'es' }} · page {{ page() }} of {{ totalPages() | number }}
+            <ng-container i18n="@@listings.browser.matches">{totalRecords(), plural, =1 {1 match} other {{{ totalRecords() | number }} matches}}</ng-container>
+            · <ng-container i18n="@@listings.browser.pageOf">page {{ page() }} of {{ totalPages() | number }}</ng-container>
           </span>
           <label class="control">
-            Per page
+            <ng-container i18n="@@listings.browser.perPage">Per page</ng-container>
             <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
               <option [ngValue]="20">20</option>
               <option [ngValue]="50">50</option>
@@ -150,13 +151,13 @@
     </div>
 
     @if (loading()) {
-      <p class="empty">Loading…</p>
+      <p class="empty" i18n="@@listings.browser.loading">Loading…</p>
     } @else if (error()) {
       <div class="card-body"><p class="error">{{ error() }}</p></div>
     } @else if (!hasSearched()) {
-      <p class="empty">Set your filters above and press Search.</p>
+      <p class="empty" i18n="@@listings.browser.prompt">Set your filters above and press Search.</p>
     } @else if (totalRecords() === 0) {
-      <p class="empty">No listings match those filters.</p>
+      <p class="empty" i18n="@@listings.browser.noMatches">No listings match those filters.</p>
     } @else {
       <!-- Click any header to sort by that column. The arrow shows the active one. -->
       <div class="table-wrap">
@@ -164,22 +165,22 @@
           <thead>
             <tr>
               <th class="sortable" (click)="toggleSort('id')">#{{ arrow('id') }}</th>
-              <th class="sortable" (click)="toggleSort('location')">Location{{ arrow('location') }}</th>
-              <th class="sortable" (click)="toggleSort('type')">Type{{ arrow('type') }}</th>
-              <th class="sortable" (click)="toggleSort('typology')">Typology{{ arrow('typology') }}</th>
-              <th class="num sortable" (click)="toggleSort('area')">Area{{ arrow('area') }}</th>
-              <th class="num sortable" (click)="toggleSort('price')">Price{{ arrow('price') }}</th>
+              <th class="sortable" (click)="toggleSort('location')"><ng-container i18n="@@listings.browser.col.location">Location</ng-container>{{ arrow('location') }}</th>
+              <th class="sortable" (click)="toggleSort('type')"><ng-container i18n="@@listings.browser.col.type">Type</ng-container>{{ arrow('type') }}</th>
+              <th class="sortable" (click)="toggleSort('typology')"><ng-container i18n="@@listings.browser.col.typology">Typology</ng-container>{{ arrow('typology') }}</th>
+              <th class="num sortable" (click)="toggleSort('area')"><ng-container i18n="@@listings.browser.col.area">Area</ng-container>{{ arrow('area') }}</th>
+              <th class="num sortable" (click)="toggleSort('price')"><ng-container i18n="@@listings.browser.col.price">Price</ng-container>{{ arrow('price') }}</th>
               <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
-              <th class="num sortable" (click)="toggleSort('beach')">Beach{{ arrow('beach') }}</th>
-              <th class="sortable" (click)="toggleSort('status')">Status{{ arrow('status') }}</th>
+              <th class="num sortable" (click)="toggleSort('beach')"><ng-container i18n="@@listings.browser.col.beach">Beach</ng-container>{{ arrow('beach') }}</th>
+              <th class="sortable" (click)="toggleSort('status')"><ng-container i18n="@@listings.browser.col.status">Status</ng-container>{{ arrow('status') }}</th>
             </tr>
           </thead>
           <tbody>
             @for (item of pagedRows(); track item.id) {
-              <tr class="row-link" (click)="openListing(item.id, $event)" title="Open this listing's details">
+              <tr class="row-link" (click)="openListing(item.id, $event)" title="Open this listing's details" i18n-title="@@listings.browser.openRow">
                 <td><a [routerLink]="['/listings', item.id]">#{{ item.id }}</a></td>
                 <td>{{ item.marketAreaTown || item.marketAreaMunicipality }}</td>
-                <td>{{ item.propertyType }}</td>
+                <td i18n="@@listings.browser.typeCell">{item.propertyType, select, Apartment {Apartment} Villa {Villa} House {House} Land {Land} other {{{ item.propertyType }}}}</td>
                 <td>{{ item.typology }}</td>
                 <td class="num">{{ item.areaM2 }} m²</td>
                 <td class="num">
@@ -189,7 +190,7 @@
                   {{ item.listingSnapshot ? (item.listingSnapshot.pricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}
                 </td>
                 <td class="num">{{ item.distanceToBeachMeters != null ? item.distanceToBeachMeters + ' m' : '—' }}</td>
-                <td class="muted">{{ item.listingSnapshot ? item.listingSnapshot.status : '—' }}</td>
+                <td class="muted">{{ item.listingSnapshot ? statusLabel(item.listingSnapshot.status) : '—' }}</td>
               </tr>
             }
           </tbody>
@@ -199,17 +200,17 @@
       <!-- Paging (instant, no API call): First · Prev · 1 2 3 … · Next · Last -->
       @if (totalPages() > 1) {
         <div class="pager">
-          <button type="button" class="page-btn" (click)="goToPage(1)" [disabled]="page() === 1">« First</button>
-          <button type="button" class="page-btn" (click)="goToPage(page() - 1)" [disabled]="page() === 1">‹ Prev</button>
+          <button type="button" class="page-btn" (click)="goToPage(1)" [disabled]="page() === 1" i18n="@@listings.browser.first">« First</button>
+          <button type="button" class="page-btn" (click)="goToPage(page() - 1)" [disabled]="page() === 1" i18n="@@listings.browser.prev">‹ Prev</button>
 
           @for (p of visiblePages(); track p) {
             <button type="button" class="page-btn" [class.active]="p === page()" (click)="goToPage(p)">{{ p }}</button>
           }
 
-          <button type="button" class="page-btn" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()">
+          <button type="button" class="page-btn" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()" i18n="@@listings.browser.next">
             Next ›
           </button>
-          <button type="button" class="page-btn" (click)="goToPage(totalPages())" [disabled]="page() === totalPages()">
+          <button type="button" class="page-btn" (click)="goToPage(totalPages())" [disabled]="page() === totalPages()" i18n="@@listings.browser.last">
             Last »
           </button>
         </div>

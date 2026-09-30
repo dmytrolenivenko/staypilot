@@ -121,6 +121,11 @@ export class TopDealsComponent implements OnInit {
     this.sortDirection.set(this.startsAscending(column) ? 'asc' : 'desc');
   }
 
+  // The condition as the reader sees it; sorting and filtering keep the wire value.
+  conditionLabel(condition: string): string {
+    return this.conditions.find(option => option.value === condition)?.label ?? condition;
+  }
+
   // The little arrow shown next to the active column header.
   arrow(column: DealSort): string {
     if (this.sortColumn() !== column) {
@@ -231,7 +236,7 @@ export class TopDealsComponent implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.deals.set([]);
           this.calculatedAtUtc.set(null);
-          this.error.set(apiErrorMessage(err, 'Could not load the top deals.'));
+          this.error.set(apiErrorMessage(err, $localize`:@@listings.deals.error.load:Could not load the top deals.`));
           this.loading.set(false);
         }
       });

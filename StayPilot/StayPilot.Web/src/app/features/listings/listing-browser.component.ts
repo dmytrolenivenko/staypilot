@@ -284,6 +284,11 @@ export class ListingBrowserComponent implements OnInit {
     return this.sortDir() === 'asc' ? ' ▲' : ' ▼'; // ▲ / ▼
   }
 
+  // The status as the reader sees it; the wire value stays for anything that compares it.
+  statusLabel(status: string): string {
+    return this.listingStatuses.find(option => option.value === status)?.label ?? status;
+  }
+
   // --- Paging --------------------------------------------------------------
 
   goToPage(page: number): void {
@@ -330,7 +335,7 @@ export class ListingBrowserComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.rows.set([]);
         this.totalRecords.set(0);
-        this.error.set(apiErrorMessage(err, 'Could not reach the API.'));
+        this.error.set(apiErrorMessage(err, $localize`:@@listings.browser.error.api:Could not reach the API.`));
         this.loading.set(false);
       }
     });

@@ -13,6 +13,7 @@ import { PlaceNameComponent, placeLevelLabel } from '../../shared/place-name.com
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { apiErrorMessage } from '../../core/api-error';
+import { APP_LOCALE } from '../../core/locale';
 
 // Bars offered for the distribution. Ten reads well on a normal window; the API caps at 20.
 const BUCKET_CHOICES = [6, 10, 14, 20];
@@ -40,7 +41,9 @@ const UNREADABLE = '—';
 
 // One price written out in full, for the tooltip that backs up the short label on a bar.
 function fullPrice(price: number): string {
-  return Number.isFinite(price) ? `€${Math.round(price).toLocaleString('en-GB')}` : UNREADABLE;
+  return Number.isFinite(price)
+    ? Math.round(price).toLocaleString(APP_LOCALE, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+    : UNREADABLE;
 }
 
 // Above this the price labels on the distribution are written short (€1.2M rather than
@@ -180,7 +183,7 @@ export class MarketOverviewComponent implements OnInit {
       // An empty dropdown and no message reads as "there are no distritos", which is never true.
       error: () => {
         this.districtOptions.set([]);
-        this.error.set('Could not load the list of places. Check the API is running.');
+        this.error.set($localize`:@@overview.error.places:Could not load the list of places. Check the API is running.`);
       }
     });
 
@@ -277,7 +280,7 @@ export class MarketOverviewComponent implements OnInit {
         error: (err: HttpErrorResponse) => {
           // The whole screen reads off this, so a stale slice would sit under the error.
           this.overview.set(null);
-          this.error.set(apiErrorMessage(err, 'Could not load the market overview.'));
+          this.error.set(apiErrorMessage(err, $localize`:@@overview.error.load:Could not load the market overview.`));
           this.loading.set(false);
         }
       });
@@ -325,11 +328,17 @@ export class MarketOverviewComponent implements OnInit {
     }
 
     if (price < COMPACT_PRICE_FROM) {
-      return `€${Math.round(price).toLocaleString('en-GB')}`;
+      return fullPrice(price);
     }
 
     // One decimal is enough to keep two neighbouring bars apart at this scale.
-    return `€${(price / 1_000_000).toFixed(1)}M`;
+    return price.toLocaleString(APP_LOCALE, {
+      style: 'currency',
+      currency: 'EUR',
+      notation: 'compact',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    });
   }
 
   bucketRange(fromPrice: number, toPrice: number): string {

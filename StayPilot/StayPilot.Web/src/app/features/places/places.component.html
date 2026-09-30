@@ -1,10 +1,11 @@
 <div class="page">
-  <app-page-header title="Places" [sub]="sub()" />
+  <app-page-header title="Places" i18n-title="@@core.nav.places.title" [sub]="sub()" />
 
   <!-- The question first, then the filters it is asked with. In that order because the filters
        do not change when the question does, and the strip is what used to be four menu items. -->
   <app-segmented
     label="What to ask about these places"
+    i18n-label="@@hub.places.segmented.aria"
     [options]="lenses"
     [value]="lens()"
     (valueChange)="pickLens($event)"
@@ -12,15 +13,15 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Where to look</span>
-      <span class="meta">These three stay put when you change the question above</span>
+      <span class="card-title" i18n="@@hub.places.filters.title">Where to look</span>
+      <span class="meta" i18n="@@hub.places.filters.meta">These three stay put when you change the question above</span>
     </div>
     <div class="card-body">
       <div class="toolbar">
         <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
 
         <label class="control">
-          Level
+          <ng-container i18n="@@hub.places.level">Level</ng-container>
           <select [ngModel]="level()" (ngModelChange)="changeLevel($event)">
             @for (option of levels(); track option) {
               <option [ngValue]="option">{{ levelName(option) }}</option>
@@ -29,7 +30,7 @@
         </label>
 
         <label class="control">
-          Min listings
+          <ng-container i18n="@@hub.places.minListings">Min listings</ng-container>
           <input type="number" min="1" max="1000" [ngModel]="minListings()" (ngModelChange)="changeMinListings($event)" />
         </label>
       </div>

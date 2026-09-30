@@ -3,20 +3,20 @@
 <div class="page">
 
   <app-explainer>
-    <p>
+    <p i18n="@@build.explainer.index">
       No price on this screen is stored. Each rate is a small 2021 anchor carried forward by INE's
       Índice de Custos de Construção de Habitação Nova, which INE publishes monthly and splits
       into labour and materials — so a concrete pool and an imported lift escalate at their own
       rates rather than at one blended number.
     </p>
-    <p>
+    <p i18n="@@build.explainer.ratios">
       Everything else is a ratio of one anchor: a standard build was about €1,000/m² in 2021, a
       concrete pool is 0.82 of the house rate per m² of water, a garage bay 0.55, a finished
       garden 0.041. Ratios do not go stale — what a pool costs relative to a house does not move
       with inflation, only the price of both does. Solar is the exception and is quoted flat:
       panels got cheaper since 2021 while building got dearer.
     </p>
-    <p>
+    <p i18n="@@build.explainer.band">
       The headline carries a −15% / +25% band, deliberately lopsided: estimates of this kind miss
       low far more often than high, because scope grows, ground surprises you, and finishes get
       upgraded halfway through. It is a projection, not a quote.
@@ -24,14 +24,14 @@
   </app-explainer>
 
   @if (loading()) {
-    <p class="hint">Reading the current rates…</p>
+    <p class="hint" i18n="@@build.loading">Reading the current rates…</p>
   } @else if (error()) {
     <p class="error">{{ error() }}</p>
   }
 
   @if (basis(); as basis) {
     @if (!basis.indexPeriod) {
-      <p class="note">
+      <p class="note" i18n="@@build.ineUnavailable">
         INE could not be reached, so these are 2021 prices — real, but a few years behind. It
         throttles repeat callers; the rates come back on their own once it answers again.
       </p>
@@ -40,9 +40,9 @@
     <!-- --- The house ------------------------------------------------------- -->
     <section class="card">
       <div class="card-head">
-        <span class="card-title">The house</span>
+        <span class="card-title" i18n="@@build.house.title">The house</span>
         @if (basis.indexPeriod) {
-          <span class="meta">
+          <span class="meta" i18n="@@build.house.indexMeta">
             {{ basis.indexPeriod }} — building is
             {{ basis.sinceBasePercent | number: '1.0-1' }}% dearer than 2021
           </span>
@@ -51,12 +51,12 @@
       <div class="card-body">
         <div class="form-grid">
           <label class="field">
-            <span>Built area (m²)</span>
+            <span i18n="@@build.house.area">Built area (m²)</span>
             <input type="number" min="1" [ngModel]="areaM2()" (ngModelChange)="areaM2.set($event)" />
           </label>
 
           <label class="field">
-            <span>Quality tier</span>
+            <span i18n="@@build.house.tier">Quality tier</span>
             <select [ngModel]="tierKey()" (ngModelChange)="tierKey.set($event)">
               @for (t of tiers(); track t.key) {
                 <option [value]="t.key">{{ optionLabel(t) }}</option>
@@ -65,10 +65,10 @@
           </label>
 
           <label class="field">
-            <span>Region</span>
+            <span i18n="@@build.house.region">Region</span>
             <select [ngModel]="region()" (ngModelChange)="region.set($event)">
               @for (r of regions; track r.key) {
-                <option [ngValue]="r">{{ r.label }} (×{{ r.multiplier }})</option>
+                <option [ngValue]="r">{{ r.label }} (×{{ r.multiplier | number }})</option>
               }
             </select>
           </label>
@@ -79,15 +79,15 @@
     <!-- --- The extras ------------------------------------------------------ -->
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Extras</span>
-        <span class="meta">Priced the way each trade quotes it — per m², per size, or flat</span>
+        <span class="card-title" i18n="@@build.extras.title">Extras</span>
+        <span class="meta" i18n="@@build.extras.meta">Priced the way each trade quotes it — per m², per size, or flat</span>
       </div>
       <div class="card-body stack">
         <!-- A pool is the one extra where a fixed price is plainly wrong: it is water surface
              times a rate, with a floor, because the plant room costs the same either way. -->
         <div class="form-grid">
           <label class="field">
-            <span>Pool</span>
+            <span i18n="@@build.pool">Pool</span>
             <select [ngModel]="poolKey()" (ngModelChange)="poolKey.set($event)">
               @for (p of pools(); track p.key) {
                 <option [value]="p.key">{{ optionLabel(p) }}</option>
@@ -97,12 +97,12 @@
 
           @if (poolShellCost() > 0) {
             <label class="field">
-              <span>Water surface (m²)</span>
+              <span i18n="@@build.pool.surface">Water surface (m²)</span>
               <input type="number" min="1" [ngModel]="poolAreaM2()" (ngModelChange)="poolAreaM2.set($event)" />
             </label>
 
             <div class="field">
-              <span>Common sizes</span>
+              <span i18n="@@build.pool.commonSizes">Common sizes</span>
               <div class="row">
                 @for (preset of poolPresets; track preset.label) {
                   <button type="button" class="btn btn-sm btn-secondary" (click)="applyPoolPreset(preset.areaM2)">
@@ -113,7 +113,7 @@
             </div>
 
             <div class="field wide">
-              <span>Pool equipment</span>
+              <span i18n="@@build.poolEquipment">Pool equipment</span>
               <fieldset class="check-grid">
                 @for (addon of poolAddons(); track addon.key) {
                   <label class="check">
@@ -122,7 +122,7 @@
                       [checked]="isPoolAddonSelected(addon.key)"
                       (change)="togglePoolAddon(addon.key)"
                     />
-                    {{ addon.label }} <span class="faint">+€{{ addon.cost | number: '1.0-0' }}</span>
+                    {{ addon.label }} <span class="faint">+{{ addon.cost | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
                   </label>
                 }
               </fieldset>
@@ -132,7 +132,7 @@
 
         <div class="form-grid">
           <label class="field">
-            <span>Garage</span>
+            <span i18n="@@build.garage">Garage</span>
             <select [ngModel]="garageKey()" (ngModelChange)="garageKey.set($event)">
               @for (g of garages(); track g.key) {
                 <option [value]="g.key">{{ optionLabel(g) }}</option>
@@ -141,7 +141,7 @@
           </label>
 
           <label class="field">
-            <span>Elevator</span>
+            <span i18n="@@build.elevator">Elevator</span>
             <select [ngModel]="elevatorKey()" (ngModelChange)="elevatorKey.set($event)">
               @for (e of elevators(); track e.key) {
                 <option [value]="e.key">{{ optionLabel(e) }}</option>
@@ -150,7 +150,7 @@
           </label>
 
           <label class="field">
-            <span>Home automation</span>
+            <span i18n="@@build.automation">Home automation</span>
             <select [ngModel]="automationKey()" (ngModelChange)="automationKey.set($event)">
               @for (a of automationLevels(); track a.key) {
                 <option [value]="a.key">{{ optionLabel(a) }}</option>
@@ -159,7 +159,7 @@
           </label>
 
           <label class="field">
-            <span>Garden</span>
+            <span i18n="@@build.garden">Garden</span>
             <select [ngModel]="gardenKey()" (ngModelChange)="gardenKey.set($event)">
               @for (g of gardens(); track g.key) {
                 <option [value]="g.key">{{ optionLabel(g) }}</option>
@@ -168,7 +168,7 @@
           </label>
 
           <label class="field">
-            <span>Solar</span>
+            <span i18n="@@build.solar">Solar</span>
             <select [ngModel]="solarKey()" (ngModelChange)="solarKey.set($event)">
               @for (s of solarOptions(); track s.key) {
                 <option [value]="s.key">{{ optionLabel(s) }}</option>
@@ -177,7 +177,7 @@
           </label>
 
           <div class="field wide">
-            <span>Everything else</span>
+            <span i18n="@@build.everythingElse">Everything else</span>
             <fieldset class="check-grid">
               @for (extra of extras(); track extra.key) {
                 <label class="check">
@@ -189,9 +189,9 @@
           </div>
         </div>
 
-        <p class="hint">
+        <p class="hint" i18n="@@build.gardenHint">
           Garden sizes are fixed on purpose — nobody knows their garden in m². All three price at
-          €{{ basis.gardenRatePerM2 | number: '1.0-0' }}/m² of finished garden: turf, irrigation,
+          {{ basis.gardenRatePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m² of finished garden: turf, irrigation,
           planting and paving.
         </p>
       </div>
@@ -200,23 +200,23 @@
     <!-- --- Fees, tax and land ---------------------------------------------- -->
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Fees, tax &amp; land</span>
-        <span class="meta">The half of a build that never shows up in the €/m² you get quoted</span>
+        <span class="card-title" i18n="@@build.fees.title">Fees, tax &amp; land</span>
+        <span class="meta" i18n="@@build.fees.meta">The half of a build that never shows up in the €/m² you get quoted</span>
       </div>
       <div class="card-body stack">
         <div class="form-grid">
           <label class="field">
-            <span>Architecture &amp; engineering (%)</span>
+            <span i18n="@@build.fees.design">Architecture &amp; engineering (%)</span>
             <input type="number" min="0" max="30" [ngModel]="designPct()" (ngModelChange)="designPct.set($event)" />
           </label>
 
           <label class="field">
-            <span>Licences &amp; municipal fees (%)</span>
+            <span i18n="@@build.fees.licences">Licences &amp; municipal fees (%)</span>
             <input type="number" min="0" max="30" [ngModel]="licencePct()" (ngModelChange)="licencePct.set($event)" />
           </label>
 
           <label class="field">
-            <span>Contingency (%)</span>
+            <span i18n="@@build.fees.contingency">Contingency (%)</span>
             <input
               type="number"
               min="0"
@@ -227,36 +227,36 @@
           </label>
 
           <div class="field">
-            <span>Tax</span>
+            <span i18n="@@build.fees.tax">Tax</span>
             <label class="check">
               <input type="checkbox" [checked]="includeVat()" (change)="includeVat.set(!includeVat())" />
-              VAT at {{ basis.vatPercent }}%
+              <ng-container i18n="@@build.fees.vatAt">VAT at {{ basis.vatPercent }}%</ng-container>
             </label>
-            <span class="faint">Standard rate — some rehab qualifies for 6%.</span>
+            <span class="faint" i18n="@@build.fees.vatNote">Standard rate — some rehab qualifies for 6%.</span>
           </div>
 
           <div class="field">
-            <span>Land</span>
+            <span i18n="@@build.land">Land</span>
             <label class="check">
               <input type="checkbox" [checked]="includeLand()" (change)="includeLand.set(!includeLand())" />
-              Include the plot
+              <ng-container i18n="@@build.fees.includePlot">Include the plot</ng-container>
             </label>
           </div>
 
           @if (includeLand()) {
             <label class="field">
-              <span>Plot area (m²)</span>
+              <span i18n="@@build.fees.plotArea">Plot area (m²)</span>
               <input type="number" min="0" [ngModel]="plotAreaM2()" (ngModelChange)="plotAreaM2.set($event)" />
             </label>
 
             <label class="field">
-              <span>Plot price (€/m²)</span>
+              <span i18n="@@build.fees.plotPrice">Plot price (€/m²)</span>
               <input type="number" min="0" [ngModel]="plotPricePerM2()" (ngModelChange)="plotPricePerM2.set($event)" />
             </label>
           }
         </div>
 
-        <p class="hint">
+        <p class="hint" i18n="@@build.fees.plotHint">
           The plot is typed by hand today. A land listing already carries an area and an asking
           price — the day this database holds them, these two boxes fill themselves in.
         </p>
@@ -266,45 +266,45 @@
     <!-- --- The estimate ---------------------------------------------------- -->
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Estimate</span>
-        <span class="meta">{{ months() }} months to the licença de utilização</span>
+        <span class="card-title" i18n="@@build.estimate.title">Estimate</span>
+        <span class="meta" i18n="@@build.estimate.months">{months(), plural, =1 {1 month to the licença de utilização} other {{{ months() }} months to the licença de utilização}}</span>
       </div>
 
       <div class="card-body stack">
         <div class="headline">
           <div class="headline-main">
-            <span class="headline-label">Projected build cost</span>
-            <span class="headline-price">€{{ total() | number: '1.0-0' }}</span>
-            <span class="headline-range">
-              somewhere between €{{ low() | number: '1.0-0' }} and €{{ high() | number: '1.0-0' }}
+            <span class="headline-label" i18n="@@build.estimate.projected">Projected build cost</span>
+            <span class="headline-price">{{ total() | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
+            <span class="headline-range" i18n="@@build.estimate.range">
+              somewhere between {{ low() | currency: 'EUR' : 'symbol' : '1.0-0' }} and {{ high() | currency: 'EUR' : 'symbol' : '1.0-0' }}
             </span>
           </div>
         </div>
 
         <div class="stat-grid">
           <div class="stat">
-            <span class="stat-value">€{{ worksTotal() | number: '1.0-0' }}</span>
-            <span class="stat-label">Works — everything built on site</span>
+            <span class="stat-value">{{ worksTotal() | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
+            <span class="stat-label" i18n="@@build.stat.works">Works — everything built on site</span>
           </div>
           <div class="stat">
-            <span class="stat-value">€{{ softTotal() | number: '1.0-0' }}</span>
-            <span class="stat-label">Design, licences &amp; contingency</span>
+            <span class="stat-value">{{ softTotal() | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
+            <span class="stat-label" i18n="@@build.stat.soft">Design, licences &amp; contingency</span>
           </div>
           <div class="stat">
-            <span class="stat-value">€{{ vatTotal() | number: '1.0-0' }}</span>
-            <span class="stat-label">VAT{{ includeVat() ? '' : ' — not applied' }}</span>
+            <span class="stat-value">{{ vatTotal() | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
+            <span class="stat-label">{{ includeVat() ? vatLabel : vatNotAppliedLabel }}</span>
           </div>
           <div class="stat">
-            <span class="stat-value">€{{ buildRatePerM2() | number: '1.0-0' }}/m²</span>
-            <span class="stat-label">Build only, land excluded</span>
+            <span class="stat-value">{{ buildRatePerM2() | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</span>
+            <span class="stat-label" i18n="@@build.stat.buildOnly">Build only, land excluded</span>
           </div>
           <div class="stat">
-            <span class="stat-value">€{{ allInRatePerM2() | number: '1.0-0' }}/m²</span>
-            <span class="stat-label">All-in, land included</span>
+            <span class="stat-value">{{ allInRatePerM2() | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</span>
+            <span class="stat-label" i18n="@@build.stat.allIn">All-in, land included</span>
           </div>
           <div class="stat">
-            <span class="stat-value">{{ months() }} months</span>
-            <span class="stat-label">First stone to licence</span>
+            <span class="stat-value" i18n="@@build.stat.months">{months(), plural, =1 {1 month} other {{{ months() }} months}}</span>
+            <span class="stat-label" i18n="@@build.stat.duration">First stone to licence</span>
           </div>
         </div>
 
@@ -343,9 +343,9 @@
               </tr>
             }
             <tr class="total-row">
-              <th>Total</th>
-              <td class="muted">−15% / +25% on a projection of this kind</td>
-              <td class="num">€{{ total() | number: '1.0-0' }}</td>
+              <th i18n="@@build.total">Total</th>
+              <td class="muted" i18n="@@build.totalBand">−15% / +25% on a projection of this kind</td>
+              <td class="num">{{ total() | currency: 'EUR' : 'symbol' : '1.0-0' }}</td>
             </tr>
           </tbody>
         </table>
@@ -355,8 +355,8 @@
     <!-- --- Build or buy? --------------------------------------------------- -->
     <section class="card">
       <div class="card-head">
-        <span class="card-title">Build or buy?</span>
-        <span class="meta">This projection against what finished houses actually ask</span>
+        <span class="card-title" i18n="@@build.buy.title">Build or buy?</span>
+        <span class="meta" i18n="@@build.buy.meta">This projection against what finished houses actually ask</span>
       </div>
 
       <div class="card-body stack">
@@ -365,37 +365,34 @@
         </div>
 
         @if (comparisonLoading()) {
-          <p class="hint">Reading market prices…</p>
+          <p class="hint" i18n="@@build.buy.loading">Reading market prices…</p>
         } @else if (!scope().district) {
-          <p class="empty">Pick a distrito to hold this estimate against the market there.</p>
+          <p class="empty" i18n="@@build.buy.pickDistrict">Pick a distrito to hold this estimate against the market there.</p>
         } @else if (!comparison()) {
-          <p class="empty">Not enough listings collected there yet for a median worth comparing against.</p>
+          <p class="empty" i18n="@@build.buy.notEnough">Not enough listings collected there yet for a median worth comparing against.</p>
         } @else {
           <div class="stat-grid">
             <div class="stat">
-              <span class="stat-value">€{{ comparison()!.medianPricePerM2 | number: '1.0-0' }}/m²</span>
-              <span class="stat-label">
+              <span class="stat-value">{{ comparison()!.medianPricePerM2 | currency: 'EUR' : 'symbol' : '1.0-0' }}/m²</span>
+              <span class="stat-label" i18n="@@build.buy.median">
                 Median asked in {{ comparison()!.displayName }}, over
-                {{ comparison()!.listingCount }} listings
+                {comparison()!.listingCount, plural, =1 {1 listing} other {{{ comparison()!.listingCount }} listings}}
               </span>
             </div>
             <div class="stat">
-              <span class="stat-value">€{{ marketValue() | number: '1.0-0' }}</span>
-              <span class="stat-label">What {{ areaM2() }} m² finished asks there</span>
+              <span class="stat-value">{{ marketValue() | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>
+              <span class="stat-label" i18n="@@build.buy.marketValue">What {{ areaM2() }} m² finished asks there</span>
             </div>
             <div class="stat">
               <span class="stat-value" [class.pos]="buildSaving() > 0" [class.neg]="buildSaving() < 0">
                 {{ signed(buildSaving()) }}
               </span>
-              <span class="stat-label">
-                {{ buildSaving() > 0 ? 'Cheaper to build' : 'Cheaper to buy' }},
-                {{ absPercent(buildSavingPercent()) }} of the asking price
-              </span>
+              <span class="stat-label">{{ buildSavingLabel() }}</span>
             </div>
           </div>
 
           @if (comparisonIsLandless()) {
-            <p class="note">
+            <p class="note" i18n="@@build.buy.landless">
               The plot is switched off, so this holds a house against a house-plus-land. Turn the
               land on above before reading that gap as a saving.
             </p>

@@ -5,3 +5,12 @@
   align-items: center;
   white-space: nowrap;
 }
+
+/* "Choose on map" sits in the grid cell beside Longitude, bottom-aligned with the inputs. */
+.map-toggle {
+  justify-content: flex-end;
+}
+
+.map-toggle .btn {
+  width: 100%;
+}

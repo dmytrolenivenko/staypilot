@@ -66,5 +66,5 @@ import { Component, Input } from '@angular/core';
   ]
 })
 export class ExplainerComponent {
-  @Input() label = 'How to read this';
+  @Input() label = $localize`:@@shared.explainer.label:How to read this`;
 }

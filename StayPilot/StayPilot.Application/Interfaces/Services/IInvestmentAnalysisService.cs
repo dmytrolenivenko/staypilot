@@ -18,8 +18,12 @@ namespace StayPilot.Application.Interfaces.Services
         /// much (self-sourced materials, no labor hired) for one build-rate formula to fit
         /// everyone. Must be zero or greater.
         /// </param>
+        /// <param name="includeNarrative">
+        /// False for anonymous callers: skips the paid AI narrative and sets
+        /// <see cref="InvestmentAnalysisResponse.NarrativeRequiresSignIn"/> instead.
+        /// </param>
         /// <param name="cancellationToken"></param>
-        Task<InvestmentAnalysisResponse> AnalyzeAsync(int propertyListingId, decimal? renovationCostOverride = null, CancellationToken cancellationToken = default);
+        Task<InvestmentAnalysisResponse> AnalyzeAsync(int propertyListingId, decimal? renovationCostOverride = null, bool includeNarrative = true, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Same analysis as <see cref="AnalyzeAsync"/>, but for one of the user's own properties

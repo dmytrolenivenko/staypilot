@@ -4,9 +4,9 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Scope</span>
+      <span class="card-title" i18n="@@listings.deals.scope">Scope</span>
       @if (calculatedAtUtc()) {
-        <span class="meta">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
+        <span class="meta" i18n="@@listings.deals.workedOut">Worked out {{ calculatedAtUtc() | date: 'medium' }}</span>
       }
     </div>
     <div class="card-body">
@@ -14,15 +14,15 @@
         <app-area-scope-picker [scope]="scope()" (scopeChange)="changeScope($event)" />
 
         <label class="control">
-          Condition
+          <ng-container i18n="@@listings.deals.condition">Condition</ng-container>
           <select [ngModel]="condition()" (ngModelChange)="changeCondition($event)">
-            <option value="">Any (graded separately)</option>
+            <option value="" i18n="@@listings.deals.anyCondition">Any (graded separately)</option>
             @for (c of conditions; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
           </select>
         </label>
 
         <label class="control">
-          How many
+          <ng-container i18n="@@listings.deals.howMany">How many</ng-container>
           <select [ngModel]="count()" (ngModelChange)="changeCount($event)">
             <option [ngValue]="10">10</option>
             <option [ngValue]="25">25</option>
@@ -35,16 +35,16 @@
 
   <section class="card">
     <div class="card-head">
-      <span class="card-title">Best deals</span>
-      <span class="meta">{{ deals().length }} found</span>
+      <span class="card-title" i18n="@@listings.deals.title">Best deals</span>
+      <span class="meta" i18n="@@listings.deals.found">{deals().length, plural, =1 {1 found} other {{{ deals().length }} found}}</span>
     </div>
 
     @if (loading()) {
-      <p class="empty">Loading…</p>
+      <p class="empty" i18n="@@listings.deals.loading">Loading…</p>
     } @else if (error()) {
       <div class="card-body"><p class="error">{{ error() }}</p></div>
     } @else if (deals().length === 0) {
-      <p class="empty">
+      <p class="empty" i18n="@@listings.deals.empty">
         No active listing here asks below its town's median. Widen the scope, or recalculate the
         market area stats if you have imported listings since the last run.
       </p>
@@ -53,20 +53,20 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th class="rank sortable" (click)="toggleSort('rank')" title="The ranking by discount, as worked out on the server">#{{ arrow('rank') }}</th>
-              <th class="sortable" (click)="toggleSort('location')">Location{{ arrow('location') }}</th>
-              <th class="sortable" (click)="toggleSort('type')">Type{{ arrow('type') }}</th>
-              <th class="sortable" (click)="toggleSort('condition')">Condition{{ arrow('condition') }}</th>
-              <th class="num sortable" (click)="toggleSort('area')">Area{{ arrow('area') }}</th>
-              <th class="num sortable" (click)="toggleSort('price')">Price{{ arrow('price') }}</th>
+              <th class="rank sortable" (click)="toggleSort('rank')" title="The ranking by discount, as worked out on the server" i18n-title="@@listings.deals.col.rankTitle">#{{ arrow('rank') }}</th>
+              <th class="sortable" (click)="toggleSort('location')"><ng-container i18n="@@listings.deals.col.location">Location</ng-container>{{ arrow('location') }}</th>
+              <th class="sortable" (click)="toggleSort('type')"><ng-container i18n="@@listings.deals.col.type">Type</ng-container>{{ arrow('type') }}</th>
+              <th class="sortable" (click)="toggleSort('condition')"><ng-container i18n="@@listings.deals.col.condition">Condition</ng-container>{{ arrow('condition') }}</th>
+              <th class="num sortable" (click)="toggleSort('area')"><ng-container i18n="@@listings.deals.col.area">Area</ng-container>{{ arrow('area') }}</th>
+              <th class="num sortable" (click)="toggleSort('price')"><ng-container i18n="@@listings.deals.col.price">Price</ng-container>{{ arrow('price') }}</th>
               <th class="num sortable" (click)="toggleSort('pricePerM2')">€/m²{{ arrow('pricePerM2') }}</th>
-              <th class="num sortable" (click)="toggleSort('median')" title="Median for this listing's own typology and a similar size, in this town">Own median €/m²{{ arrow('median') }}</th>
-              <th class="num sortable" (click)="toggleSort('discount')">Discount{{ arrow('discount') }}</th>
+              <th class="num sortable" (click)="toggleSort('median')" title="Median for this listing's own typology and a similar size, in this town" i18n-title="@@listings.deals.col.medianTitle"><ng-container i18n="@@listings.deals.col.median">Own median €/m²</ng-container>{{ arrow('median') }}</th>
+              <th class="num sortable" (click)="toggleSort('discount')"><ng-container i18n="@@listings.deals.col.discount">Discount</ng-container>{{ arrow('discount') }}</th>
             </tr>
           </thead>
           <tbody>
             @for (row of sortedDeals(); track row.deal.listing.id) {
-              <tr class="row-link" (click)="openListing(row.deal.listing.id, $event)" title="Open this listing's details">
+              <tr class="row-link" (click)="openListing(row.deal.listing.id, $event)" title="Open this listing's details" i18n-title="@@listings.deals.openRow">
                 <!-- The server's ranking, not the row number: sorting by price re-orders the
                      table without pretending the fourth-biggest discount is now the first. -->
                 <td class="rank">{{ row.rank }}</td>
@@ -75,8 +75,8 @@
                     {{ row.deal.listing.marketAreaTown || row.deal.listing.marketAreaMunicipality }}
                   </a>
                 </td>
-                <td>{{ row.deal.listing.propertyType }} · {{ row.deal.listing.typology }}</td>
-                <td class="muted">{{ row.deal.listing.condition }}</td>
+                <td><ng-container i18n="@@listings.deals.typeCell">{row.deal.listing.propertyType, select, Apartment {Apartment} Villa {Villa} House {House} Land {Land} other {{{ row.deal.listing.propertyType }}}}</ng-container> · {{ row.deal.listing.typology }}</td>
+                <td class="muted">{{ conditionLabel(row.deal.listing.condition) }}</td>
                 <td class="num">{{ row.deal.listing.areaM2 }} m²</td>
                 <td class="num">
                   {{ row.deal.listing.listingSnapshot ? (row.deal.listing.listingSnapshot.price | currency: 'EUR' : 'symbol' : '1.0-0') : '—' }}

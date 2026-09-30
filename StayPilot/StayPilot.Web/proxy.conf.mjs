@@ -119,6 +119,12 @@ await fetchToken().catch((error) => {
 });
 
 export default {
+  // The Portuguese build is its own dev server (npm run start:pt, port 4202). Forwarding /pt
+  // here means the EN/PT switch works on one URL, the same way it does on the deployed site.
+  '/pt': {
+    target: 'http://localhost:4202',
+    ws: true
+  },
   '/api': {
     target: 'https://localhost:7056/',
     secure: false, // the local API serves a dev certificate

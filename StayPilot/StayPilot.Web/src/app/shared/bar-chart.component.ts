@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { APP_LOCALE } from '../core/locale';
 
 /** One bar. `value` drives the length; `valueText` is what a human reads. */
 export interface BarChartItem {
@@ -320,7 +321,7 @@ export class BarChartComponent {
   }
 
   text(item: BarChartItem): string {
-    return item.valueText ?? item.value.toLocaleString('en-GB');
+    return item.valueText ?? item.value.toLocaleString(APP_LOCALE);
   }
 
   /** Nothing, half, all — three ticks is enough to read a bar against. */
@@ -331,7 +332,7 @@ export class BarChartComponent {
   }
 
   tickText(tick: number): string {
-    const rounded = Math.round(tick).toLocaleString('en-GB');
+    const rounded = Math.round(tick).toLocaleString(APP_LOCALE);
 
     return this.unit ? `${rounded} ${this.unit}` : rounded;
   }

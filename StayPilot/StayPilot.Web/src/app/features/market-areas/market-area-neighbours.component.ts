@@ -138,6 +138,18 @@ export class MarketAreaNeighboursComponent implements OnInit, OnChanges {
   // than off the control, so the caption can never claim a basis the numbers were not built on.
   comparedOn = signal<Typology | null>(null);
 
+  // "T2s ask" when compared on one typology, "Asks" on all stock.
+  askLabel(): string {
+    const typology = this.comparedOn();
+
+    return typology
+      ? $localize`:@@areas.neighbours.typologyAsk:${typology}:typology:s ask`
+      : $localize`:@@areas.neighbours.asks:Asks`;
+  }
+
+  // The whole-country fallback in "the league table of the whole …".
+  readonly countryWord = $localize`:@@areas.neighbours.country:country`;
+
   // Which of the two questions is on screen. A control of its own, because it decides which
   // table you get — and "leave the dropdown on every pair" was a rule you had to be told.
   mode = signal<NeighbourMode>('pairs');
@@ -583,7 +595,7 @@ export class MarketAreaNeighboursComponent implements OnInit, OnChanges {
 
         this.loadedKey.set('');
         this.loadedPlacesKey.set('');
-        this.error.set('Could not load the neighbour gaps. Check the API is running.');
+        this.error.set($localize`:@@areas.neighbours.error.load:Could not load the neighbour gaps. Check the API is running.`);
         this.loading.set(false);
       }
     });

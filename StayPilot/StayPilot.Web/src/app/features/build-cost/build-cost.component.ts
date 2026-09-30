@@ -18,6 +18,7 @@ import { BuildCostService } from '../../core/services/build-cost.service';
 import { MarketAreaStatsService } from '../../core/services/market-area-stats.service';
 import { AreaScope, AreaScopePickerComponent, emptyScope } from '../../shared/area-scope-picker.component';
 import { ExplainerComponent } from '../../shared/explainer.component';
+import { APP_LOCALE } from '../../core/locale';
 
 // What a line of the receipt is made of. Every group produces these, so the table, the
 // composition bar and the totals all read from one list instead of each doing the sums again.
@@ -41,11 +42,11 @@ interface CompositionSlice {
 }
 
 const GROUP_LABELS: Record<CostGroup, string> = {
-  works: 'Works',
-  soft: 'Design, licences & contingency',
-  tax: 'VAT',
-  grant: 'Grants',
-  land: 'Land'
+  works: $localize`:@@build.group.works:Works`,
+  soft: $localize`:@@build.group.soft:Design, licences & contingency`,
+  tax: $localize`:@@build.vat:VAT`,
+  grant: $localize`:@@build.group.grants:Grants`,
+  land: $localize`:@@build.land:Land`
 };
 
 // The "no thanks" row every dropdown needs. The API only sends real choices — it has no opinion
@@ -57,11 +58,16 @@ function noneOption(label: string): BuildCostOption {
 }
 
 function euros(value: number): string {
-  return `€${Math.round(value).toLocaleString('en-GB')}`;
+  return Math.round(value).toLocaleString(APP_LOCALE, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 }
 
 function rate(value: number): string {
-  return `€${Math.round(value).toLocaleString('en-GB')}/m²`;
+  return `${euros(value)}/m²`;
+}
+
+// A multiplier as written in the working ("× 1.15"), with the locale's decimal separator.
+function factor(value: number): string {
+  return value.toLocaleString(APP_LOCALE);
 }
 
 // Lowercases only the first letter, so a label reads as part of the sentence around it
@@ -94,11 +100,14 @@ export class BuildCostComponent implements OnInit {
   // Common water surfaces, so the m² box starts somewhere real. Sizes, not prices — there is
   // nothing here for an index to escalate, which is why these stayed in the browser.
   readonly poolPresets = [
-    { label: 'Plunge 4×2', areaM2: 8 },
-    { label: 'Small 6×3', areaM2: 18 },
-    { label: 'Family 8×4', areaM2: 32 },
-    { label: 'Large 10×5', areaM2: 50 }
+    { label: $localize`:@@build.pool.plunge:Plunge 4×2`, areaM2: 8 },
+    { label: $localize`:@@build.pool.small:Small 6×3`, areaM2: 18 },
+    { label: $localize`:@@build.pool.family:Family 8×4`, areaM2: 32 },
+    { label: $localize`:@@build.pool.large:Large 10×5`, areaM2: 50 }
   ];
+
+  readonly vatLabel = $localize`:@@build.vat:VAT`;
+  readonly vatNotAppliedLabel = $localize`:@@build.stat.vatNotApplied:VAT — not applied`;
 
   // --- Live rates ----------------------------------------------------------
   basis = signal<BuildCostBasis | null>(null);
@@ -151,7 +160,7 @@ export class BuildCostComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Could not read the current build rates.');
+        this.error.set($localize`:@@build.error.basis:Could not read the current build rates.`);
         this.loading.set(false);
       }
     });
@@ -163,13 +172,13 @@ export class BuildCostComponent implements OnInit {
   // priced product.
 
   tiers = computed(() => this.basis()?.tiers ?? []);
-  pools = computed(() => [noneOption('No pool'), ...(this.basis()?.pools ?? [])]);
+  pools = computed(() => [noneOption($localize`:@@build.none.pool:No pool`), ...(this.basis()?.pools ?? [])]);
   poolAddons = computed(() => this.basis()?.poolAddons ?? []);
-  garages = computed(() => [noneOption('No garage'), ...(this.basis()?.garages ?? [])]);
-  elevators = computed(() => [noneOption('No elevator'), ...(this.basis()?.elevators ?? [])]);
-  automationLevels = computed(() => [noneOption('None'), ...(this.basis()?.automation ?? [])]);
-  gardens = computed(() => [noneOption('No garden'), ...(this.basis()?.gardens ?? [])]);
-  solarOptions = computed(() => [noneOption('No solar'), ...(this.basis()?.solar ?? [])]);
+  garages = computed(() => [noneOption($localize`:@@build.none.garage:No garage`), ...(this.basis()?.garages ?? [])]);
+  elevators = computed(() => [noneOption($localize`:@@build.none.elevator:No elevator`), ...(this.basis()?.elevators ?? [])]);
+  automationLevels = computed(() => [noneOption($localize`:@@build.none.automation:None`), ...(this.basis()?.automation ?? [])]);
+  gardens = computed(() => [noneOption($localize`:@@build.none.garden:No garden`), ...(this.basis()?.gardens ?? [])]);
+  solarOptions = computed(() => [noneOption($localize`:@@build.none.solar:No solar`), ...(this.basis()?.solar ?? [])]);
   extras = computed(() => this.basis()?.extras ?? []);
 
   tier = computed(() => this.pick(this.tiers(), this.tierKey()));
@@ -220,8 +229,8 @@ export class BuildCostComponent implements OnInit {
       rows.push({
         key: 'shell',
         group: 'works',
-        label: 'Construction (shell & finishes)',
-        working: `${rate(tier.ratePerM2)} × ${area} m² × ${site} (${this.region().label})`,
+        label: $localize`:@@build.line.shell:Construction (shell & finishes)`,
+        working: `${rate(tier.ratePerM2)} × ${area} m² × ${factor(site)} (${this.region().label})`,
         amount: tier.ratePerM2 * area * site
       });
     }
@@ -234,10 +243,10 @@ export class BuildCostComponent implements OnInit {
       rows.push({
         key: 'pool',
         group: 'works',
-        label: `Pool — ${sentenceCase(pool.label)}`,
+        label: $localize`:@@build.line.pool:Pool — ${sentenceCase(pool.label)}:option:`,
         working: atFloor
-          ? `minimum ${euros(pool.minCost ?? 0)} (${surface} m² × ${rate(pool.ratePerM2 ?? 0)} is below it) × ${site}`
-          : `${surface} m² water × ${rate(pool.ratePerM2 ?? 0)} × ${site}`,
+          ? $localize`:@@build.working.poolMinimum:minimum ${euros(pool.minCost ?? 0)}:minimum: (${surface}:surface: m² × ${rate(pool.ratePerM2 ?? 0)}:rate: is below it) × ${factor(site)}:factor:`
+          : $localize`:@@build.working.poolSurface:${surface}:surface: m² water × ${rate(pool.ratePerM2 ?? 0)}:rate: × ${factor(site)}:factor:`,
         amount: this.poolShellCost() * site
       });
 
@@ -247,20 +256,22 @@ export class BuildCostComponent implements OnInit {
         rows.push({
           key: 'pool-addons',
           group: 'works',
-          label: 'Pool equipment',
+          label: $localize`:@@build.poolEquipment:Pool equipment`,
           working: addons.map(addon => addon.label).join(', '),
           amount: addons.reduce((sum, addon) => sum + (addon.cost ?? 0), 0)
         });
       }
     }
 
-    this.pushFixed(rows, this.garage(), 'Garage', site);
-    this.pushFixed(rows, this.garden(), 'Garden', site);
+    this.pushFixed(rows, this.garage(), $localize`:@@build.garage:Garage`, site);
+    this.pushFixed(rows, this.garden(), $localize`:@@build.garden:Garden`, site);
 
     // Equipment is bought at national prices, so the regional multiplier is left off it —
     // inflating a lift by a fifth for being in Lisboa would be inventing a number.
-    this.pushFixed(rows, this.elevator(), 'Elevator', 1, 'equipment price, installed');
-    this.pushFixed(rows, this.solar(), 'Solar', 1, 'turnkey, before the grant below');
+    this.pushFixed(rows, this.elevator(), $localize`:@@build.elevator:Elevator`, 1,
+      $localize`:@@build.working.elevator:equipment price, installed`);
+    this.pushFixed(rows, this.solar(), $localize`:@@build.solar:Solar`, 1,
+      $localize`:@@build.working.solar:turnkey, before the grant below`);
 
     const automation = this.automation();
 
@@ -268,7 +279,7 @@ export class BuildCostComponent implements OnInit {
       rows.push({
         key: 'automation',
         group: 'works',
-        label: `Home automation — ${automation.label}`,
+        label: $localize`:@@build.line.automation:Home automation — ${automation.label}:option:`,
         working: `${rate(automation.ratePerM2)} × ${area} m²`,
         amount: automation.ratePerM2 * area
       });
@@ -285,7 +296,9 @@ export class BuildCostComponent implements OnInit {
         key: extra.key,
         group: 'works',
         label: extra.label,
-        working: isPerM2 ? `${rate(extra.ratePerM2!)} × ${area} m² × ${site}` : `${euros(extra.cost ?? 0)} × ${site}`,
+        working: isPerM2
+          ? `${rate(extra.ratePerM2!)} × ${area} m² × ${factor(site)}`
+          : `${euros(extra.cost ?? 0)} × ${factor(site)}`,
         amount: (isPerM2 ? extra.ratePerM2! * area : (extra.cost ?? 0)) * site
       });
     }
@@ -296,24 +309,24 @@ export class BuildCostComponent implements OnInit {
     rows.push({
       key: 'design',
       group: 'soft',
-      label: 'Architecture & engineering',
-      working: `${this.designPct() || 0}% of ${euros(works)} of works`,
+      label: $localize`:@@build.line.design:Architecture & engineering`,
+      working: $localize`:@@build.working.design:${this.designPct() || 0}:percent:% of ${euros(works)}:works: of works`,
       amount: works * this.percent(this.designPct())
     });
 
     rows.push({
       key: 'licences',
       group: 'soft',
-      label: 'Licences & municipal fees',
-      working: `${this.licencePct() || 0}% of works`,
+      label: $localize`:@@build.line.licences:Licences & municipal fees`,
+      working: $localize`:@@build.working.percentOfWorks:${this.licencePct() || 0}:percent:% of works`,
       amount: works * this.percent(this.licencePct())
     });
 
     rows.push({
       key: 'contingency',
       group: 'soft',
-      label: 'Contingency',
-      working: `${this.contingencyPct() || 0}% of works`,
+      label: $localize`:@@build.line.contingency:Contingency`,
+      working: $localize`:@@build.working.percentOfWorks:${this.contingencyPct() || 0}:percent:% of works`,
       amount: works * this.percent(this.contingencyPct())
     });
 
@@ -323,8 +336,8 @@ export class BuildCostComponent implements OnInit {
       rows.push({
         key: 'vat',
         group: 'tax',
-        label: `VAT (IVA ${basis.vatPercent}%)`,
-        working: `on ${euros(taxable)} of works and fees`,
+        label: $localize`:@@build.line.vat:VAT (IVA ${basis.vatPercent}:percent:%)`,
+        working: $localize`:@@build.working.vat:on ${euros(taxable)}:taxable: of works and fees`,
         amount: taxable * (basis.vatPercent / 100)
       });
     }
@@ -335,8 +348,8 @@ export class BuildCostComponent implements OnInit {
       rows.push({
         key: 'grant',
         group: 'grant',
-        label: 'Solar grant (comparticipação)',
-        working: 'state support for panels and storage, 2026 ceiling',
+        label: $localize`:@@build.line.grant:Solar grant (comparticipação)`,
+        working: $localize`:@@build.working.grant:state support for panels and storage, 2026 ceiling`,
         amount: -solarGrant
       });
     }
@@ -345,8 +358,8 @@ export class BuildCostComponent implements OnInit {
       rows.push({
         key: 'land',
         group: 'land',
-        label: 'Land',
-        working: `${this.plotAreaM2() || 0} m² plot × ${rate(this.plotPricePerM2() || 0)}`,
+        label: $localize`:@@build.land:Land`,
+        working: $localize`:@@build.working.land:${this.plotAreaM2() || 0}:area: m² plot × ${rate(this.plotPricePerM2() || 0)}:rate:`,
         amount: this.landCost()
       });
     }
@@ -404,6 +417,14 @@ export class BuildCostComponent implements OnInit {
   buildSavingPercent = computed(() =>
     this.marketValue() > 0 ? (this.buildSaving() / this.marketValue()) * 100 : 0
   );
+
+  buildSavingLabel = computed(() => {
+    const percent = this.absPercent(this.buildSavingPercent());
+
+    return this.buildSaving() > 0
+      ? $localize`:@@build.buy.cheaperToBuild:Cheaper to build, ${percent}:percent: of the asking price`
+      : $localize`:@@build.buy.cheaperToBuy:Cheaper to buy, ${percent}:percent: of the asking price`;
+  });
 
   // The comparison is only fair once the land is priced in — building excludes the ground.
   comparisonIsLandless = computed(() => this.marketValue() > 0 && this.landCost() === 0);
@@ -523,7 +544,7 @@ export class BuildCostComponent implements OnInit {
       key: option.key,
       group: 'works',
       label: `${label} — ${sentenceCase(option.label)}`,
-      working: working ?? `${euros(option.cost)} × ${multiplier}`,
+      working: working ?? `${euros(option.cost)} × ${factor(multiplier)}`,
       amount: option.cost * multiplier
     });
   }

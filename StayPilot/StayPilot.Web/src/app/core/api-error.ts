@@ -37,7 +37,7 @@ export function apiErrorMessage(error: HttpErrorResponse, fallback: string): str
   }
 
   if (error?.status === 0 || error?.status >= 500) {
-    return fallback + ' Check the API is running.';
+    return fallback + ' ' + $localize`:@@core.apiError.checkRunning:Check the API is running.`;
   }
 
   return fallback;

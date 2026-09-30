@@ -44,8 +44,16 @@
   color: var(--text-muted);
 }
 
-.place {
-  white-space: nowrap;
+/* Long place names wrap instead of widening the whole table past its card. */
+.portfolio td:nth-child(3) {
+  white-space: normal;
+  min-width: 12rem;
+  max-width: 18rem;
+}
+
+/* The wrap is the container the panel sizes itself against (see .panel). */
+.portfolio-wrap {
+  container-type: inline-size;
 }
 
 /* Recalculates one row without disturbing the rest of the table - small and quiet
@@ -273,6 +281,13 @@
   gap: 1.4rem;
   padding: 1.2rem 1.4rem 1.6rem;
   border-top: 1px solid var(--border);
+
+  /* Always the visible width of the scroll box, pinned left. Otherwise it took the width
+     of the whole table, and anything past the card's edge was cut off. */
+  box-sizing: border-box;
+  width: 100cqi;
+  position: sticky;
+  left: 0;
 }
 
 .panel-block h3 {

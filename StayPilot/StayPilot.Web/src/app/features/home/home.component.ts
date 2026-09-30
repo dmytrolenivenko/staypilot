@@ -15,6 +15,7 @@ import { NavLink } from '../../core/models/nav-groups';
 import { apiErrorMessage } from '../../core/api-error';
 import { BarChartComponent, BarChartItem } from '../../shared/bar-chart.component';
 import { CompareBarsComponent, CompareSide } from '../../shared/compare-bars.component';
+import { APP_LOCALE } from '../../core/locale';
 
 // One example budget for the "what your money reaches" preview. Not configurable here — the
 // real control lives on /places?ask=budget; this is a single real illustration of it.
@@ -43,28 +44,28 @@ const TYPICAL_APARTMENT_M2 = 90;
 // The four "what else is in here" cards. A hand-picked cross-section, not a full nav group.
 const ELSEWHERE: NavLink[] = [
   {
-    title: 'Browse every listing',
+    title: $localize`:@@home.elsewhere.browse.title:Browse every listing`,
     path: '/listings',
     query: { ask: 'browse' },
-    desc: 'Filter and sort by area, typology, price, size and distance to the beach.'
+    desc: $localize`:@@home.elsewhere.browse.desc:Filter and sort by area, typology, price, size and distance to the beach.`
   },
   {
-    title: 'Best deals',
+    title: $localize`:@@home.elsewhere.deals.title:Best deals`,
     path: '/listings',
     query: { ask: 'deals' },
-    desc: "Listings asking the most below their own typology's median in the same town."
+    desc: $localize`:@@home.elsewhere.deals.desc:Listings asking the most below their own typology's median in the same town.`
   },
   {
-    title: 'What a feature is worth',
+    title: $localize`:@@home.elsewhere.features.title:What a feature is worth`,
     path: '/tools',
     query: { ask: 'features' },
-    desc: 'The premium on a garage, a lift or a sea view, with a confidence range.'
+    desc: $localize`:@@home.elsewhere.features.desc:The premium on a garage, a lift or a sea view, with a confidence range.`
   },
   {
-    title: 'Build cost',
+    title: $localize`:@@home.elsewhere.build.title:Build cost`,
     path: '/tools',
     query: { ask: 'build' },
-    desc: 'Shell, pool, garage, fees and VAT, held against local asking prices.'
+    desc: $localize`:@@home.elsewhere.build.desc:Shell, pool, garage, fees and VAT, held against local asking prices.`
   }
 ];
 
@@ -103,6 +104,7 @@ export class HomeComponent implements OnInit {
   readonly previewBudget = PREVIEW_BUDGET;
   readonly typicalApartmentM2 = TYPICAL_APARTMENT_M2;
   readonly elsewhere = ELSEWHERE;
+  readonly budgetCaption = $localize`:@@home.budget.caption:Budget ${this.euro(PREVIEW_BUDGET)}:budget:`;
 
   // --- Market stats: the hero strip and three of the four previews -------------------
   marketLoading = signal(true);
@@ -144,12 +146,15 @@ export class HomeComponent implements OnInit {
     const totalListings = this.districtRows().reduce((sum, row) => sum + row.listingCount, 0);
 
     return [
-      { label: 'Adverts tracked', value: this.formatCount(totalListings) },
+      { label: $localize`:@@home.coverage.adverts:Adverts tracked`, value: this.formatCount(totalListings) },
       // The raw Town-row count, not the reliable-only one: how many places have been measured
       // at all, not how many are trustworthy enough to rank.
-      { label: 'Places measured', value: this.formatCount(this.townRows().length) },
-      { label: 'Districts, wall to wall', value: this.formatCount(this.districtCount()) },
-      { label: 'Collection & recalculation', value: 'Daily' }
+      { label: $localize`:@@home.coverage.towns:Towns covered`, value: this.formatCount(this.townRows().length) },
+      { label: $localize`:@@home.coverage.districts:Districts, wall to wall`, value: this.formatCount(this.districtCount()) },
+      {
+        label: $localize`:@@home.coverage.cadence:Collection & recalculation`,
+        value: $localize`:@@home.coverage.daily:Daily`
+      }
     ];
   });
 
@@ -195,7 +200,7 @@ export class HomeComponent implements OnInit {
         label: row.displayName,
         value: row.medianPricePerM2,
         valueText: `${this.euro(row.medianPricePerM2)}`,
-        note: `${this.formatCount(row.listingCount)} listings`
+        note: this.listingsNote(row.listingCount)
       }))
   );
 
@@ -233,7 +238,7 @@ export class HomeComponent implements OnInit {
           label: gap.cheaper.displayName,
           value: gap.cheaper.medianPricePerM2,
           valueText: `${this.euro(gap.cheaper.medianPricePerM2)}/m²`,
-          note: `${this.formatCount(gap.cheaper.listingCount)} listings`
+          note: this.listingsNote(gap.cheaper.listingCount)
         }
       : null;
   });
@@ -246,7 +251,7 @@ export class HomeComponent implements OnInit {
           label: gap.expensive.displayName,
           value: gap.expensive.medianPricePerM2,
           valueText: `${this.euro(gap.expensive.medianPricePerM2)}/m²`,
-          note: `${this.formatCount(gap.expensive.listingCount)} listings`
+          note: this.listingsNote(gap.expensive.listingCount)
         }
       : null;
   });
@@ -255,7 +260,9 @@ export class HomeComponent implements OnInit {
   gapDelta = computed<string>(() => {
     const gap = this.topGap();
 
-    return gap ? `${this.roundPercent(gap.gapPercent)}% apart · ${this.formatKm(gap.distanceKm)}` : '';
+    return gap
+      ? $localize`:@@home.gap.delta:${this.roundPercent(gap.gapPercent)}:percent:% apart · ${this.formatKm(gap.distanceKm)}:distance:`
+      : '';
   });
 
   /** The same gap restated as money on a typical apartment, which is how people hold it. */
@@ -293,10 +300,10 @@ export class HomeComponent implements OnInit {
 
     return area?.projectMedianPricePerM2
       ? {
-          label: 'Needs work',
+          label: $localize`:@@home.renovation.needsWork:Needs work`,
           value: area.projectMedianPricePerM2,
           valueText: `${this.euro(area.projectMedianPricePerM2)}/m²`,
-          note: `${this.formatCount(area.projectCount)} listings`
+          note: this.listingsNote(area.projectCount)
         }
       : null;
   });
@@ -306,10 +313,10 @@ export class HomeComponent implements OnInit {
 
     return area?.moveInMedianPricePerM2
       ? {
-          label: 'Move-in ready',
+          label: $localize`:@@home.renovation.moveInReady:Move-in ready`,
           value: area.moveInMedianPricePerM2,
           valueText: `${this.euro(area.moveInMedianPricePerM2)}/m²`,
-          note: `${this.formatCount(area.moveInCount)} listings`
+          note: this.listingsNote(area.moveInCount)
         }
       : null;
   });
@@ -329,7 +336,7 @@ export class HomeComponent implements OnInit {
   renovationDelta = computed<string>(() => {
     const perM2 = this.renovationHighlight()?.renovationDiscountPerM2;
 
-    return perM2 ? `+${this.euro(perM2)}/m² finished` : '';
+    return perM2 ? $localize`:@@home.renovation.delta:+${this.euro(perM2)}:amount:/m² finished` : '';
   });
 
   /** What the renovation gap is worth in money on that town's own typical project. */
@@ -358,20 +365,29 @@ export class HomeComponent implements OnInit {
   // Public because the template reads them, and shared with the computeds above so a number
   // is written the same way wherever it appears.
 
+  // Currency style rather than a hand-placed '€': en-GB writes €320,000, pt-PT 320 000 €.
   euro(value: number): string {
-    return Number.isFinite(value) ? `€${Math.round(value).toLocaleString('en-GB')}` : '—';
+    return Number.isFinite(value)
+      ? Math.round(value).toLocaleString(APP_LOCALE, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+      : '—';
   }
 
   formatCount(value: number): string {
-    return Number.isFinite(value) ? value.toLocaleString('en-GB') : '—';
+    return Number.isFinite(value) ? value.toLocaleString(APP_LOCALE) : '—';
   }
 
   sqm(value: number): string {
-    return Number.isFinite(value) ? Math.round(value).toLocaleString('en-GB') : '—';
+    return Number.isFinite(value) ? Math.round(value).toLocaleString(APP_LOCALE) : '—';
   }
 
   formatKm(value: number): string {
-    return Number.isFinite(value) ? `${value.toFixed(1)} km` : '—';
+    return Number.isFinite(value)
+      ? `${value.toLocaleString(APP_LOCALE, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
+      : '—';
+  }
+
+  listingsNote(count: number): string {
+    return $localize`:@@home.listingsNote:${this.formatCount(count)}:count: listings`;
   }
 
   roundPercent(value: number): string {
@@ -383,7 +399,7 @@ export class HomeComponent implements OnInit {
 
     return Number.isNaN(date.getTime())
       ? '—'
-      : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      : date.toLocaleDateString(APP_LOCALE, { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   /** Mirrors the renovation screen's trustClass — same confidence, same badge. */
@@ -428,7 +444,7 @@ export class HomeComponent implements OnInit {
         this.townRows.set([]);
         this.municipalityRows.set([]);
         this.overview.set(null);
-        this.marketError.set(apiErrorMessage(err, 'Could not load the market stats.'));
+        this.marketError.set(apiErrorMessage(err, $localize`:@@home.error.market:Could not load the market stats.`));
         this.marketLoading.set(false);
       }
     });
@@ -451,7 +467,7 @@ export class HomeComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           this.budgetRows.set([]);
-          this.budgetError.set(apiErrorMessage(err, 'Could not load a budget example.'));
+          this.budgetError.set(apiErrorMessage(err, $localize`:@@home.error.budget:Could not load a budget example.`));
           this.budgetLoading.set(false);
         }
       });
@@ -476,7 +492,7 @@ export class HomeComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           this.topGap.set(null);
-          this.gapError.set(apiErrorMessage(err, 'Could not load a neighbour-gap example.'));
+          this.gapError.set(apiErrorMessage(err, $localize`:@@home.error.gap:Could not load a neighbour-gap example.`));
           this.gapLoading.set(false);
         }
       });
